@@ -1,0 +1,40 @@
+{
+	"name": "dashboard",
+	"version": "1.0.0",
+	"license": "OSL-3.0",
+	"description": "jsDelivr dashboard",
+	"private": true,
+	"dependencies": {
+		"bluebird": "^3.7.2",
+		"config": "^3.3.9",
+		"config-mapper-env": "^2.0.0",
+		"lodash": "^4.17.21"
+	},
+	"devDependencies": {
+		"@martin-kolarik/eslint-config": "^7.1.4",
+		"@types/bluebird": "^3.5.38",
+		"@types/config": "^3.3.0",
+		"@types/eslint": "^8.21.3",
+		"@types/lodash": "^4.14.191",
+		"cross-env": "^7.0.3",
+		"eslint": "^8.36.0",
+		"husky": "^8.0.3"
+	},
+	"scripts": {
+		"lint": "eslint --cache config migrations seeds *.js",
+		"lint:fix": "npm run lint -- --fix",
+		"migrate": "knex migrate:latest",
+		"prepare": "husky install || echo 'Failed to install husky'",
+		"test": "npm run lint"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:jsdelivr/dashboard.git"
+	},
+	"bugs": {
+		"url": "https://github.com/jsdelivr/dashboard/issues"
+	},
+	"engines": {
+		"node": "^18.15.0"
+	}
+}
