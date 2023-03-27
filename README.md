@@ -1,1 +1,1 @@
-# globalping-dash-directus
+# dashboard
