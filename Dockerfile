@@ -1,2 +1,2 @@
-FROM directus/directus:9.23
-
+FROM directus/directus:latest
+RUN npx pnpm install cross-fetch
