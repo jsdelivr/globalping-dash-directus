@@ -1,0 +1,47 @@
+{
+	"name": "directus-extension-token-value",
+	"version": "1.0.0",
+	"directus:extension": {
+		"host": "^9.25.2",
+		"type": "bundle",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"entries": [
+			{
+				"type": "endpoint",
+				"name": "token-generator",
+				"source": "src/token-generator/index.ts"
+			},
+			{
+				"type": "hook",
+				"name": "token-validator",
+				"source": "src/token-validator/index.ts"
+			}
+		]
+	},
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-bundle"
+	],
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"add": "directus-extension add"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "9.25.2",
+		"@types/nanoid": "^3.0.0",
+		"@types/node": "^18.16.2",
+		"typescript": "^5.0.4"
+	},
+	"dependencies": {
+		"@isaacs/ttlcache": "^1.2.2",
+		"nanoid": "^4.0.2"
+	}
+}
