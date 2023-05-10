@@ -1,5 +1,7 @@
+extensions/
 .local/
 node_modules/
 config/local*
 .DS_Store
 .eslintcache
+data.db
