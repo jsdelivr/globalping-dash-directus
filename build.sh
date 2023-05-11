@@ -10,6 +10,13 @@ cd "$cwd"
 mkdir -p ./extensions/hooks/tokens/
 cp -rp ./src/extensions/hooks/tokens/dist/ ./extensions/hooks/tokens/
 
+# Build and copy hooks/sign-up
+cd ./src/extensions/hooks/sign-up
+npm run build
+cd "$cwd"
+mkdir -p ./extensions/hooks/sign-up/
+cp -rp ./src/extensions/hooks/sign-up/dist/ ./extensions/hooks/sign-up/
+
 # Build and copy interfaces/token
 cd ./src/extensions/interfaces/token
 npm run build
