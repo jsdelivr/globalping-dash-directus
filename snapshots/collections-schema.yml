@@ -26,6 +26,126 @@ collections:
       name: tokens
 fields:
   - collection: tokens
+    field: date_created
+    type: timestamp
+    meta:
+      collection: tokens
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - cast-timestamp
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: tokens
+      data_type: datetime
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tokens
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: tokens
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 5
+      special:
+        - cast-timestamp
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: tokens
+      data_type: datetime
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tokens
+    field: expire
+    type: date
+    meta:
+      collection: tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: expire
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date after which the token will expire. Never expires if empty.
+      options: null
+      readonly: false
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: expire
+      table: tokens
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tokens
     field: id
     type: integer
     meta:
@@ -41,7 +161,7 @@ fields:
       options: null
       readonly: true
       required: false
-      sort: null
+      sort: 1
       special: null
       translations: null
       validation: null
@@ -75,11 +195,11 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: A unique name for this token.
       options: null
       readonly: false
       required: true
-      sort: null
+      sort: 6
       special: null
       translations: null
       validation: null
@@ -93,6 +213,51 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: tokens
+    field: origins
+    type: json
+    meta:
+      collection: tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: origins
+      group: null
+      hidden: false
+      interface: tags
+      note: >-
+        A list of origins which are allowed to use the token. Any origin is
+        valid if empty. Examples of valid origins: "www.jsdelivr.com",
+        "www.jsdelivr.com:10000". Enter a value and press Enter. Click on
+        existing origin to delete it.
+      options:
+        iconRight: globe_uk
+        placeholder: Add an origin and press Enter...
+      readonly: false
+      required: false
+      sort: null
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: origins
+      table: tokens
+      data_type: json
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
       is_nullable: true
       is_unique: false
       is_primary_key: false
@@ -102,8 +267,88 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: tokens
+    field: user_created
+    type: string
+    meta:
+      collection: tokens
+      conditions: null
+      display: user
+      display_options: null
+      field: user_created
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 2
+      special:
+        - user-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_created
+      table: tokens
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: tokens
+    field: user_updated
+    type: string
+    meta:
+      collection: tokens
+      conditions: null
+      display: user
+      display_options: null
+      field: user_updated
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 4
+      special:
+        - user-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_updated
+      table: tokens
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: tokens
     field: value
-    type: hash
+    type: string
     meta:
       collection: tokens
       conditions: null
@@ -113,13 +358,12 @@ fields:
       group: null
       hidden: false
       interface: token
-      note: null
+      note: A value of a token that is used to access the API.
       options: null
       readonly: false
       required: true
-      sort: null
-      special:
-        - hash
+      sort: 7
+      special: null
       translations: null
       validation: null
       validation_message: null
@@ -132,7 +376,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -140,4 +384,46 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-relations: []
+relations:
+  - collection: tokens
+    field: user_created
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: tokens
+      many_field: user_created
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: tokens
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: null
+      on_update: NO ACTION
+      on_delete: NO ACTION
+  - collection: tokens
+    field: user_updated
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: tokens
+      many_field: user_updated
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: tokens
+      column: user_updated
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: null
+      on_update: NO ACTION
+      on_delete: NO ACTION
