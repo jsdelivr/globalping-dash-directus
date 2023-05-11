@@ -1,4 +1,4 @@
-extensions/
+/extensions/
 .local/
 node_modules/
 config/local*

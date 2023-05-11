@@ -1,6 +1,6 @@
 {
 	"name": "directus-extension-sign-up",
-	"description": "Please enter a description for your extension",
+	"description": "Hook that manages user properties during registration",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [

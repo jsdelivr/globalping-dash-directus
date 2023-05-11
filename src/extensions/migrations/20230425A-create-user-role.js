@@ -1,8 +1,5 @@
-/* eslint-disable prefer-let/prefer-let */
-import fetch from 'cross-fetch';
-
 const BASE_DIRECTUS_URL = 'http://localhost:8055';
-const BASE_ACCESS_TOKEN = 'FCwfXXDushV7mtcoDTdjMfg0hbfdIYt6';
+const BASE_ACCESS_TOKEN = 'aMVw8gBtBqRQfpBtNHjc0270Dtq5AJGp';
 
 async function createRole () {
 	const URL = `${BASE_DIRECTUS_URL}/roles?access_token=${BASE_ACCESS_TOKEN}`;
