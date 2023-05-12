@@ -1,3 +1,7 @@
+#!/bin/bash
+
+set -e
+
 function confirm {
     local message="$1"
     echo "$message Continue? [Y/n]"
@@ -28,16 +32,29 @@ docker-compose up -d --build
 # Wait for the service to start
 ./wait-for.sh -t 60 http://localhost:8055/admin/login
 
-# Copy admin token value to migration script here
-confirm "Generate the admin token and copy it to the migration script."
+# Copy admin API key value to env file
+confirm "Generate the API key and copy it to the ADMIN_ACCESS_TOKEN in env file."
+
+# Restart
+docker-compose down
+docker-compose up -d --build
+
+# Wait for the service to start
+./wait-for.sh -t 60 http://localhost:8055/admin/login
 
 # Run migrations
 mkdir -p ./extensions/migrations/
 cp -rp ./src/extensions/migrations/ ./extensions/migrations/
 docker-compose exec directus npx directus database migrate:latest
 
-# Copy AUTH_GITHUB_DEFAULT_ROLE_ID to docker-compose.yml here
-confirm "Copy the User role id to the AUTH_GITHUB_DEFAULT_ROLE_ID inside docker-compose.yml."
+# Copy AUTH_GITHUB_DEFAULT_ROLE_ID to env file
+confirm "Copy the User role id to the AUTH_GITHUB_DEFAULT_ROLE_ID in env file."
+
+# Apply tokens schema
+docker-compose exec directus npx directus schema apply --yes /directus/snapshots/collections-schema.yml
+
+# Set AUTH_DISABLE_DEFAULT to true
+confirm "Set AUTH_DISABLE_DEFAULT to true in env file."
 
 # Restart
 docker-compose down

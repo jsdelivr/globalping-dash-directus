@@ -1,8 +1,8 @@
 const BASE_DIRECTUS_URL = 'http://localhost:8055';
-const BASE_ACCESS_TOKEN = 'aMVw8gBtBqRQfpBtNHjc0270Dtq5AJGp';
+const ADMIN_ACCESS_TOKEN = process.env['ADMIN_ACCESS_TOKEN'];
 
 async function createRole () {
-	const URL = `${BASE_DIRECTUS_URL}/roles?access_token=${BASE_ACCESS_TOKEN}`;
+	const URL = `${BASE_DIRECTUS_URL}/roles?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -22,7 +22,7 @@ async function createRole () {
 }
 
 async function createPermissions (roleId) {
-	const URL = `${BASE_DIRECTUS_URL}/permissions?access_token=${BASE_ACCESS_TOKEN}`;
+	const URL = `${BASE_DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify([
