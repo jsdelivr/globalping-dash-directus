@@ -2,6 +2,26 @@ version: 1
 directus: 10.1.0
 vendor: mysql
 collections:
+  - collection: jsdelivr
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: jsdelivr
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: folder
+      item_duplication_fields: null
+      note: null
+      singleton: false
+      sort: 1
+      sort_field: null
+      translations: null
+      unarchive_value: null
   - collection: tokens
     meta:
       accountability: all
@@ -12,13 +32,13 @@ collections:
       collection: tokens
       color: null
       display_template: null
-      group: null
+      group: jsdelivr
       hidden: false
       icon: null
       item_duplication_fields: null
       note: null
       singleton: false
-      sort: null
+      sort: 1
       sort_field: null
       translations: null
       unarchive_value: null
