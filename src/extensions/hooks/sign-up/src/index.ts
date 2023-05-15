@@ -6,6 +6,10 @@ export default defineHook(({ filter, action }) => {
 			handleGithubLogin(user);
 		}
 	});
+
+    filter('users.update', (user) => {
+        user.last_page = '/content'; // Fixes issue of `Empty .update() call detected!` during second github login.
+    });
 });
 
 const handleGithubLogin = (user) => {

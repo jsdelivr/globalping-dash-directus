@@ -1,4 +1,4 @@
-const BASE_DIRECTUS_URL = 'http://localhost:8055';
+const BASE_DIRECTUS_URL = 'http://127.0.0.1:8055';
 const ADMIN_ACCESS_TOKEN = process.env['ADMIN_ACCESS_TOKEN'];
 
 async function createRole () {

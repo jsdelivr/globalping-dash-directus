@@ -1,6 +1,6 @@
 version: 1
-directus: 9.26.0
-vendor: sqlite
+directus: 10.1.0
+vendor: mysql
 collections:
   - collection: tokens
     meta:
@@ -53,7 +53,7 @@ fields:
     schema:
       name: date_created
       table: tokens
-      data_type: datetime
+      data_type: timestamp
       default_value: null
       max_length: null
       numeric_precision: null
@@ -94,7 +94,7 @@ fields:
     schema:
       name: date_updated
       table: tokens
-      data_type: datetime
+      data_type: timestamp
       default_value: null
       max_length: null
       numeric_precision: null
@@ -170,11 +170,11 @@ fields:
     schema:
       name: id
       table: tokens
-      data_type: integer
+      data_type: int unsigned
       default_value: null
       max_length: null
-      numeric_precision: null
-      numeric_scale: null
+      numeric_precision: 10
+      numeric_scale: 0
       is_nullable: false
       is_unique: false
       is_primary_key: true
@@ -223,7 +223,7 @@ fields:
       foreign_key_column: null
   - collection: tokens
     field: origins
-    type: json
+    type: string
     meta:
       collection: tokens
       conditions: null
@@ -232,20 +232,18 @@ fields:
       field: origins
       group: null
       hidden: false
-      interface: tags
+      interface: input
       note: >-
-        A list of origins which are allowed to use the token. Any origin is
-        valid if empty. Examples of valid origins: "www.jsdelivr.com",
-        "www.jsdelivr.com:10000". Enter a value and press Enter. Click on
-        existing origin to delete it.
+        A comma-separated list of origins which are allowed to use the token. If
+        empty - any origin is valid. Examples of valid origins:
+        "www.jsdelivr.com", "www.jsdelivr.com:10000". Use ", " as a separator.
       options:
         iconRight: globe_uk
-        placeholder: Add an origin and press Enter...
+        placeholder: www.jsdelivr.com, www.jsdelivr.com:10000
       readonly: false
       required: false
       sort: null
-      special:
-        - cast-json
+      special: null
       translations: null
       validation: null
       validation_message: null
@@ -253,9 +251,9 @@ fields:
     schema:
       name: origins
       table: tokens
-      data_type: json
+      data_type: varchar
       default_value: null
-      max_length: null
+      max_length: 1023
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -403,8 +401,8 @@ relations:
       column: user_created
       foreign_key_table: directus_users
       foreign_key_column: id
-      constraint_name: null
-      on_update: NO ACTION
+      constraint_name: tokens_user_created_foreign
+      on_update: RESTRICT
       on_delete: NO ACTION
   - collection: tokens
     field: user_updated
@@ -424,6 +422,6 @@ relations:
       column: user_updated
       foreign_key_table: directus_users
       foreign_key_column: id
-      constraint_name: null
-      on_update: NO ACTION
+      constraint_name: tokens_user_updated_foreign
+      on_update: RESTRICT
       on_delete: NO ACTION
