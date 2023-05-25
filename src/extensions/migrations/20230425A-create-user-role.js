@@ -35,7 +35,7 @@ async function createPermissions (roleId) {
 						_eq: '$CURRENT_USER',
 					},
 				},
-				fields: [ '*' ],
+                fields: [ 'name', 'value', 'expire', 'origins' ]
 			},
 			{
 				collection: 'tokens',
@@ -57,7 +57,7 @@ async function createPermissions (roleId) {
 						_eq: '$CURRENT_USER',
 					},
 				},
-				fields: [ '*' ],
+                fields: [ 'name', 'value', 'expire', 'origins' ]
 			},
 			{
 				collection: 'tokens',

@@ -25,10 +25,10 @@ function get_token {
   echo "$token"
 }
 
-echo "Stop previous run..."
+echo "Stopping previous run..."
 docker-compose down
 
-echo "Clear extensions folder..."
+echo "Clearing extensions folder..."
 rm -rf ./extensions
 mkdir -p ./extensions/displays/
 mkdir -p ./extensions/endpoints/
@@ -40,52 +40,52 @@ mkdir -p ./extensions/modules/
 mkdir -p ./extensions/operations/
 mkdir -p ./extensions/panels/
 
-echo "Build and copy extensions..."
+echo "Building and copy extensions..."
 ./build.sh
 
-echo "Run..."
+echo "Running..."
 docker-compose up -d --build
 
-echo "Wait for the service to start..."
+echo "Waiting for the service to start..."
 ./wait-for.sh -t 60 http://localhost:8055/admin/login
 
-echo "Generate the API key and copy to env file..."
+echo "Generating the API key and copy to env file..."
 token=$(get_token)
-sed -i '' "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
+sed -i "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
 
-echo "Restart..."
+echo "Restarting..."
 docker-compose down
 docker-compose up -d --build
 
-echo "Wait for the service to start..."
+echo "Waiting for the service to start..."
 ./wait-for.sh -t 60 http://localhost:8055/admin/login
 
-echo "Apply tokens schema..."
+echo "Applying tokens schema..."
 docker-compose exec directus npx directus schema apply --yes /directus/snapshots/collections-schema.yml
 
-echo "Run migrations..."
+echo "Running migrations..."
 mkdir -p ./extensions/migrations/
 cp -rp ./src/extensions/migrations/* ./extensions/migrations/
 docker-compose exec directus npx directus database migrate:latest
 
-echo "Get AUTH_GITHUB_DEFAULT_ROLE_ID and copy to env file..."
+echo "Getting AUTH_GITHUB_DEFAULT_ROLE_ID and copy to env file..."
 token=$(get_token)
 user_role_id=$(curl -H "Authorization: Bearer $token" http://localhost:8055/roles | jq -r '.data[] | select(.name == "User") | .id')
-sed -i '' "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env
+sed -i "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env
 
-echo "Restart..."
+echo "Restarting..."
 docker-compose down
 docker-compose up -d --build
 
-echo "Wait for the service to start..."
+echo "Waiting for the service to start..."
 ./wait-for.sh -t 60 http://localhost:8055/admin/login
 
-echo "Switch to github user..."
+echo "Switching to github user..."
 confirm "Login using github, give yourself admin rights and set AUTH_DISABLE_DEFAULT to true in env file."
 
-echo "Restart..."
+echo "Restarting..."
 docker-compose down
 docker-compose up -d --build
 
-echo "Wait for the service to start..."
+echo "Waiting for the service to start..."
 ./wait-for.sh -t 60 http://localhost:8055/admin/login
