@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source .env
+
 set -e
 
 function confirm {
@@ -16,6 +18,11 @@ function confirm {
         echo "Invalid input. Aborting script..."
         exit 1
     fi
+}
+
+function get_token {
+  local token=$(curl -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' http://localhost:8055/auth/login | jq -r '.data.access_token')
+  echo "$token"
 }
 
 echo "Stop previous run..."
@@ -42,8 +49,9 @@ docker-compose up -d --build
 echo "Wait for the service to start..."
 ./wait-for.sh -t 60 http://localhost:8055/admin/login
 
-echo "Copy admin API key value to env file..."
-confirm "Generate the API key and copy it to the ADMIN_ACCESS_TOKEN in env file."
+echo "Generate the API key and copy to env file..."
+token=$(get_token)
+sed -i '' "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
 
 echo "Restart..."
 docker-compose down
@@ -60,8 +68,10 @@ mkdir -p ./extensions/migrations/
 cp -rp ./src/extensions/migrations/* ./extensions/migrations/
 docker-compose exec directus npx directus database migrate:latest
 
-echo "Copy AUTH_GITHUB_DEFAULT_ROLE_ID to env file..."
-confirm "Copy the User role id to the AUTH_GITHUB_DEFAULT_ROLE_ID in env file."
+echo "Get AUTH_GITHUB_DEFAULT_ROLE_ID and copy to env file..."
+token=$(get_token)
+user_role_id=$(curl -H "Authorization: Bearer $token" http://localhost:8055/roles | jq -r '.data[] | select(.name == "User") | .id')
+sed -i '' "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env
 
 echo "Restart..."
 docker-compose down
