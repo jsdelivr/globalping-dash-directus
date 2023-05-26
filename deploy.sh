@@ -47,7 +47,7 @@ echo "Running..."
 docker-compose up -d --build
 
 echo "Waiting for the service to start..."
-./wait-for.sh -t 60 http://localhost:8055/admin/login
+./sh-scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
 
 echo "Generating the API key and copy to env file..."
 token=$(get_token)
@@ -58,7 +58,7 @@ docker-compose down
 docker-compose up -d --build
 
 echo "Waiting for the service to start..."
-./wait-for.sh -t 60 http://localhost:8055/admin/login
+./sh-scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
 
 echo "Applying tokens schema..."
 docker-compose exec directus npx directus schema apply --yes /directus/snapshots/collections-schema.yml
@@ -78,7 +78,7 @@ docker-compose down
 docker-compose up -d --build
 
 echo "Waiting for the service to start..."
-./wait-for.sh -t 60 http://localhost:8055/admin/login
+./sh-scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
 
 echo "Switching to github user..."
 confirm "Login using github, give yourself admin rights and set AUTH_DISABLE_DEFAULT to true in env file."
@@ -88,4 +88,4 @@ docker-compose down
 docker-compose up -d --build
 
 echo "Waiting for the service to start..."
-./wait-for.sh -t 60 http://localhost:8055/admin/login
+./sh-scripts/wait-for.sh -t 60 http://localhost:8055/admin/login

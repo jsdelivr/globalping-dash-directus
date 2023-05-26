@@ -34,6 +34,6 @@ cd ./src/extensions/token-value
 npm i
 npm run build
 cd "$cwd"
-mkdir -p ./extensions/directus-extension-token-value/dist/
+mkdir -p ./extensions/directus-extension-token-value/
 cp -rp ./src/extensions/token-value/dist/* ./extensions/directus-extension-token-value/dist/
 cp -rp ./src/extensions/token-value/package.json ./extensions/directus-extension-token-value/
