@@ -70,6 +70,28 @@ async function createPermissions (roleId) {
 				},
 				fields: [ '*' ],
 			},
+			{
+				collection: 'directus_users',
+				action: 'read',
+				role: roleId,
+				permissions: {
+					id: {
+						_eq: '$CURRENT_USER',
+					},
+				},
+				fields: [ 'first_name', 'last_name', 'email', 'theme', 'token', 'status', 'external_identifier', 'provider' ],
+			},
+			{
+				collection: 'directus_users',
+				action: 'update',
+				role: roleId,
+				permissions: {
+					id: {
+						_eq: '$CURRENT_USER',
+					},
+				},
+				fields: [ 'theme', 'token', 'last_page' ],
+			},
 		]),
 		headers: {
 			'Content-Type': 'application/json',
