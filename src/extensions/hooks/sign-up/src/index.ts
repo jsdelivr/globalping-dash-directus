@@ -15,11 +15,6 @@ export default defineHook(({ filter }) => {
 			handleGithubLogin(user);
 		}
 	});
-
-    filter('users.update', (payload) => {
-        const user = payload as User;
-        user.last_page = '/content'; // Fixes issue of `Empty .update() call detected!` during second github login.
-    });
 });
 
 const handleGithubLogin = (user: User) => {
