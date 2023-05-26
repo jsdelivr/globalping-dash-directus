@@ -25,6 +25,11 @@ function get_token {
   echo "$token"
 }
 
+echo "Resetting .env file..."
+sed -i "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=/" .env
+sed -i "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=/" .env
+sed -i "s/AUTH_DISABLE_DEFAULT=.*/AUTH_DISABLE_DEFAULT=false/" .env
+
 echo "Stopping previous run..."
 docker-compose down
 
