@@ -1,3 +1,6 @@
 {
-	"extends": "@martin-kolarik/eslint-config"
+	"extends": "@martin-kolarik/eslint-config",
+    "rules": {
+        "prefer-let/prefer-let": "off"
+    }
 }

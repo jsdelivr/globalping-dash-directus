@@ -1,20 +1,31 @@
 import { defineHook } from '@directus/extensions-sdk';
 import { hashToken } from '../utils/token';
 
+type Token = {
+    id: number;
+    name: string;
+    value: string;
+    expire?: string;
+    origins?: string;
+    date_created: string;
+    date_updated?: string;
+    user_created: string;
+    user_updated?: string;
+};
 
-export default defineHook(({ filter, action }) => {
-	filter('tokens.items.create', (payload, query, collection) => {
-        const value = payload.value;
-        const hashedToken = hashToken(value);
-        payload.value = hashedToken;
+export default defineHook(({ filter }) => {
+	filter('tokens.items.create', (payload) => {
+        const token = payload as Token;
+        const hashedToken = hashToken(token.value);
+        token.value = hashedToken;
 	});
 
-	filter('tokens.items.update', (payload, query, collection) => {
-        const value = payload.value;
-        if (value === undefined) {
+	filter('tokens.items.update', (payload) => {
+        const token = payload as Partial<Token>;
+        if (token.value === undefined) {
             return;
         }
-        const hashedToken = hashToken(value);
-        payload.value = hashedToken;
+        const hashedToken = hashToken(token.value);
+        token.value = hashedToken;
 	});
 });

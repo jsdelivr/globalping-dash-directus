@@ -1,18 +1,28 @@
 import { defineHook } from '@directus/extensions-sdk';
 
-export default defineHook(({ filter, action }) => {
-	filter('users.create', (user, collection, database) => {
+type User = {
+    provider: string;
+    external_identifier: string;
+    first_name?: string;
+    last_name?: string;
+    last_page?: string;
+}
+
+export default defineHook(({ filter }) => {
+	filter('users.create', (payload) => {
+        const user = payload as User;
 		if (user.provider === 'github') {
 			handleGithubLogin(user);
 		}
 	});
 
-    filter('users.update', (user) => {
+    filter('users.update', (payload) => {
+        const user = payload as User;
         user.last_page = '/content'; // Fixes issue of `Empty .update() call detected!` during second github login.
     });
 });
 
-const handleGithubLogin = (user) => {
+const handleGithubLogin = (user: User) => {
 	const firstName = user.first_name;
 	const username = user.external_identifier;
 

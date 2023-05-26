@@ -48,7 +48,7 @@ interface Props {
 
 const api = useApi();
 
-const props = withDefaults(defineProps<Props>(), { value: () => null, disabled: false });
+const props = withDefaults(defineProps<Props>(), { value: () => null!, disabled: false });
 
 const emit = defineEmits(['input']);
 
