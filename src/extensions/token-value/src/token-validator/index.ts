@@ -15,17 +15,19 @@ type Token = {
 
 export default defineHook(({ filter }) => {
 	filter('tokens.items.create', (payload) => {
-        const token = payload as Token;
-        const hashedToken = hashToken(token.value);
-        token.value = hashedToken;
+		const token = payload as Token;
+		const hashedToken = hashToken(token.value);
+		token.value = hashedToken;
 	});
 
 	filter('tokens.items.update', (payload) => {
-        const token = payload as Partial<Token>;
-        if (token.value === undefined) {
-            return;
-        }
-        const hashedToken = hashToken(token.value);
-        token.value = hashedToken;
+		const token = payload as Partial<Token>;
+
+		if (token.value === undefined) {
+			return;
+		}
+
+		const hashedToken = hashToken(token.value);
+		token.value = hashedToken;
 	});
 });

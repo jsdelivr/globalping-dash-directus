@@ -10,7 +10,8 @@ type User = {
 
 export default defineHook(({ filter }) => {
 	filter('users.create', (payload) => {
-        const user = payload as User;
+		const user = payload as User;
+
 		if (user.provider === 'github') {
 			handleGithubLogin(user);
 		}
@@ -19,14 +20,15 @@ export default defineHook(({ filter }) => {
 
 const handleGithubLogin = (user: User) => {
 	const firstName = user.first_name;
-	const username = user.external_identifier;
+	const id = user.external_identifier;
 
 	if (!firstName) {
-		user.first_name = username;
+		user.first_name = id;
 		return;
 	}
 
 	const names = firstName.split(' ');
+
 	if (names.length > 1) {
 		user.first_name = names[0];
 		user.last_name = names.slice(1).join(' ');

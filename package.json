@@ -11,17 +11,18 @@
 		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
-		"@martin-kolarik/eslint-config": "^7.1.4",
+		"@martin-kolarik/eslint-config": "^7.1.6",
 		"@types/bluebird": "^3.5.38",
 		"@types/config": "^3.3.0",
 		"@types/eslint": "^8.21.3",
 		"@types/lodash": "^4.14.191",
+		"@typescript-eslint/eslint-plugin": "^5.59.7",
 		"cross-env": "^7.0.3",
 		"eslint": "^8.36.0",
 		"husky": "^8.0.3"
 	},
 	"scripts": {
-		"lint": "eslint --cache config migrations seeds *.js",
+		"lint": "eslint --cache .",
 		"lint:fix": "npm run lint -- --fix",
 		"migrate": "knex migrate:latest",
 		"prepare": "husky install || echo 'Failed to install husky'",

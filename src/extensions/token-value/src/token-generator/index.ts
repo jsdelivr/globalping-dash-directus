@@ -4,9 +4,9 @@ import { generateToken } from '../utils/token';
 
 export default defineEndpoint((router) => {
 	router.get('/', async (_req: Request, res: Response) => {
-        const token = await generateToken();
-        res.send({
-            data: token,
-        });
-    });
+		const token = await generateToken();
+		res.send({
+			data: token,
+		});
+	});
 });

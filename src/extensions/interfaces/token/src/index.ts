@@ -8,5 +8,5 @@ export default defineInterface({
 	description: 'Secured token, that is shown to the user only once',
 	component: InterfaceComponent,
 	options: null,
-	types: ['string'],
+	types: [ 'string' ],
 });
