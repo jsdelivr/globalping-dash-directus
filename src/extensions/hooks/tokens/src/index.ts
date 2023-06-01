@@ -18,30 +18,41 @@ type Revision = {
     delta: Token;
 };
 
-const hasField = (obj = {}, field: string): boolean => {
-	return _.some(obj, (value, key) => {
-		if (key === field) {
-			return true;
-		} else if (_.isObject(value)) {
-			return hasField(value, field);
-		}
-		return false;
+const getKeysDeep = (entity: object | object[] | string[]) => {
+	const keys = _.isArray(entity) ? [] : Object.keys(entity);
+
+	const nestedKeys: string[] = _.flatMapDeep(entity, (value) => {
+	  if (_.isObject(value)) {
+		  return getKeysDeep(value);
+	  }
+	  return [];
 	});
+
+	return [...keys, ...nestedKeys];
+}
+
+const validateQuery = (query: {filter?: object, search?: object} = {}, exceptions: any) => {
+	const { InvalidPayloadException } = exceptions;
+
+	if (query.filter) {
+		const filterKeys = getKeysDeep(query.filter);
+		const dataFields = _.uniq(filterKeys).filter(key => !key.startsWith('_'));
+		if (_.isEqual(dataFields, ['id'])) {
+			return; // Allow to query by "id", that is required to not break the UI
+		}
+	  	throw new InvalidPayloadException('Filtering is not availiable for "tokens" collection');
+	} else if (query.search) {
+	  	throw new InvalidPayloadException('Searching is not availiable for "tokens" collection');
+	}
 };
 
 export default defineHook(({ action, filter }, { exceptions }) => {
-	const { InvalidPayloadException } = exceptions;
-
 	filter('tokens.items.query', (query) => {
-		if (hasField(query?.filter, 'value')) {
-			throw new InvalidPayloadException('Filter by "value" is not available');
-		}
+		validateQuery(query as {}, exceptions);
 	});
 
-	filter('tokens.items.read', (query) => {
-		if (hasField(query?.query?.filter, 'value')) {
-			throw new InvalidPayloadException('Filter by "value" is not available');
-		}
+	filter('tokens.items.read', (_items, request) => {
+		validateQuery(request.query, exceptions);
 	});
 
 	action('tokens.items.read', (query) => {
