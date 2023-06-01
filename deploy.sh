@@ -69,8 +69,6 @@ echo "Applying tokens schema..."
 docker-compose exec directus npx directus schema apply --yes /directus/snapshots/collections-schema.yml
 
 echo "Running migrations..."
-mkdir -p ./extensions/migrations/
-cp -rp ./src/extensions/migrations/* ./extensions/migrations/
 docker-compose exec directus npx directus database migrate:latest
 
 echo "Getting AUTH_GITHUB_DEFAULT_ROLE_ID and copy to env file..."

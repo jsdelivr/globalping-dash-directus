@@ -17,7 +17,12 @@ async function createRole () {
 		headers: {
 			'Content-Type': 'application/json',
 		},
-	}).then(response => response.json());
+	}).then(response => {
+		if (!response.ok) {
+			throw new Error(`Fetch request failed. Status: ${response.status}`);
+		}
+		return response.json();
+	});
 	return response.data;
 }
 
@@ -96,7 +101,12 @@ async function createPermissions (roleId) {
 		headers: {
 			'Content-Type': 'application/json',
 		},
-	}).then(response => response.json());
+	}).then(response => {
+		if (!response.ok) {
+			throw new Error(`Fetch request failed. Status: ${response.status}`);
+		}
+		return response.json();
+	});
 	return response.data;
 }
 
