@@ -1,4 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
+import { createError } from '@directus/errors';
 import _ from 'lodash';
 
 type Token = {
@@ -18,6 +19,8 @@ type Revision = {
     delta: Token;
 };
 
+const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'Filtering is not availiable for "tokens" collection', 400);
+
 const getKeysDeep = (entity: object | object[] | string[]) => {
 	const keys = _.isArray(entity) ? [] : Object.keys(entity);
 
@@ -31,28 +34,26 @@ const getKeysDeep = (entity: object | object[] | string[]) => {
 	return [...keys, ...nestedKeys];
 }
 
-const validateQuery = (query: {filter?: object, search?: object} = {}, exceptions: any) => {
-	const { InvalidPayloadException } = exceptions;
-
+const validateQuery = (query: {filter?: object, search?: object} = {}) => {
 	if (query.filter) {
 		const filterKeys = getKeysDeep(query.filter);
 		const dataFields = _.uniq(filterKeys).filter(key => !key.startsWith('_'));
 		if (_.isEqual(dataFields, ['id'])) {
-			return; // Allow to query by "id", that is required to not break the UI
+			return; // Allow to query by "id". That is required to not break the UI.
 		}
-	  	throw new InvalidPayloadException('Filtering is not availiable for "tokens" collection');
+	  	throw new InvalidPayloadError();
 	} else if (query.search) {
-	  	throw new InvalidPayloadException('Searching is not availiable for "tokens" collection');
+	  	throw new InvalidPayloadError();
 	}
 };
 
-export default defineHook(({ action, filter }, { exceptions }) => {
+export default defineHook(({ action, filter }) => {
 	filter('tokens.items.query', (query) => {
-		validateQuery(query as {}, exceptions);
+		validateQuery(query as {});
 	});
 
 	filter('tokens.items.read', (_items, request) => {
-		validateQuery(request.query, exceptions);
+		validateQuery(request.query);
 	});
 
 	action('tokens.items.read', (query) => {

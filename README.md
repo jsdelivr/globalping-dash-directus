@@ -8,10 +8,11 @@
 
 ### 2. Start dev db
 
-- run `docker network create mariadbnt`
-- run `docker run --name mariadbcn --network mariadbnt -d --env-file=.env -p 3306:3306 mariadb:10.6`
-- `docker run -it --network mariadbnt --rm mariadb mariadb -h mariadbcn -u directus -p`
+- create network: `docker network create mariadbnt`
+- start mariadb: `docker run --name mariadbcn --network mariadbnt -d --env-file=.env -p 3306:3306 mariadb:10.6`
+- open mariadb cli (use MARIADB_PASSWORD): `docker run -it --network mariadbnt --rm mariadb mariadb -h mariadbcn -u directus -p`
 - inside mariadb `USE directus; ALTER DATABASE directus CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;`
+- close cli
 
 ### 3. Start dev dashboard
 

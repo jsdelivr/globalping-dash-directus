@@ -26,9 +26,9 @@ function get_token {
 }
 
 echo "Resetting .env file..."
-sed -i "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=/" .env
-sed -i "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=/" .env
-sed -i "s/AUTH_DISABLE_DEFAULT=.*/AUTH_DISABLE_DEFAULT=false/" .env
+perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=/" .env
+perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=/" .env
+perl -pi -e "s/AUTH_DISABLE_DEFAULT=.*/AUTH_DISABLE_DEFAULT=false/" .env
 
 echo "Stopping previous run..."
 docker-compose down
@@ -56,7 +56,7 @@ echo "Waiting for the service to start..."
 
 echo "Generating the API key and copy to env file..."
 token=$(get_token)
-sed -i "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
+perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
 
 echo "Restarting..."
 docker-compose down
@@ -76,7 +76,7 @@ docker-compose exec directus npx directus database migrate:latest
 echo "Getting AUTH_GITHUB_DEFAULT_ROLE_ID and copy to env file..."
 token=$(get_token)
 user_role_id=$(curl -H "Authorization: Bearer $token" http://localhost:8055/roles | jq -r '.data[] | select(.name == "User") | .id')
-sed -i "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env
+perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env
 
 echo "Restarting..."
 docker-compose down
@@ -86,7 +86,7 @@ echo "Waiting for the service to start..."
 ./sh-scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
 
 echo "Switching to github user..."
-confirm "Login using github, give yourself admin rights and set AUTH_DISABLE_DEFAULT to true in env file."
+confirm "Login using github. Re-login as admin and give github user admin rights. Then set AUTH_DISABLE_DEFAULT to true in env file."
 
 echo "Restarting..."
 docker-compose down
@@ -94,3 +94,5 @@ docker-compose up -d --build
 
 echo "Waiting for the service to start..."
 ./sh-scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
+
+echo "Finished!"
