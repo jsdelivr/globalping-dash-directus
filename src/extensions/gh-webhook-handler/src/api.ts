@@ -17,6 +17,7 @@ type Data = {
 					id: number;
 				},
 				tier: {
+					created_at: string;
 					monthly_price_in_dollars: number;
 					is_one_time: boolean;
 				}
@@ -48,16 +49,16 @@ const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignature
 	return isGithubSignatureValid;
 };
 
-type AddCreditsArgs = {
+type AddItemArgs = {
 	services: OperationContext['services'],
 	database: OperationContext['database'],
 	getSchema: OperationContext['getSchema'],
 	body: Data['$trigger']['body']
 };
-const addCredits = async ({ services, database, getSchema, body }: AddCreditsArgs) => {
+const addCredits = async ({ services, database, getSchema, body }: AddItemArgs) => {
 	const { ItemsService } = services;
 
-	const itemsService = new ItemsService('credits', {
+	const creditsService = new ItemsService('credits', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -73,7 +74,30 @@ const addCredits = async ({ services, database, getSchema, body }: AddCreditsArg
 		credits: body.sponsorship.tier.monthly_price_in_dollars * CREDITS_PER_DOLLAR
 	};
 
-	const result = await itemsService.createOne(payload);
+	const result = await creditsService.createOne(payload);
+	return result;
+};
+
+const addSponsor = async ({ services, database, getSchema, body }: AddItemArgs) => {
+	const { ItemsService } = services;
+
+	const sponsorsService = new ItemsService('sponsors', {
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	if (!body?.sponsorship?.sponsor) {
+		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor}`);
+	}
+
+	const payload = {
+		githubLogin: body.sponsorship.sponsor.login,
+		githubId: body.sponsorship.sponsor.id,
+		monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
+		lastEarningDate: body.sponsorship.tier.created_at
+	};
+
+	const result = await sponsorsService.createOne(payload);
 	return result;
 };
 
@@ -96,7 +120,13 @@ export default defineOperationApi({
 			throw new Error('Signature is not valid');
 		}
 
-		const itemId = await addCredits({ services, database, getSchema, body });
-		return `Credits item with id: ${itemId} created`;
+		const creditsId = await addCredits({ services, database, getSchema, body });
+
+		if (body.sponsorship.tier.is_one_time) {
+			return `Credits item with id: ${creditsId} created. One-time sponsorship handled.`;
+		} else {
+			const sponsorId = await addSponsor({ services, database, getSchema, body });
+			return `Sponsor with id: ${sponsorId} created. Credits item with id: ${creditsId} created. Recurring sponsorship handled.`
+		}
 	},
 });

@@ -11,14 +11,14 @@ const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 const env = { GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8' };
 const createOne = mock(() => 1);
 const services = {
-	ItemsService: mock(function () { return { createOne }})
+	ItemsService: mock(function () { return { createOne }}),
 };
 
 test('gh-webhook-handler should handle valid one-time sponsorship', async () => {
 	const data = {
 		$trigger: {
 			headers: {
-				'x-hub-signature-256': 'sha256=b5ab444bc909d62e7c25f3c0a324b1be12291f9b17f0e220e3b95a5668c5bfda'
+				'x-hub-signature-256': 'sha256=005bb451b83a393675d01ae33e2f778c2c245b4093d46702ad15917717384c9b'
 			},
 			body: oneTimeSponsorshipCreated
 		}
@@ -38,7 +38,7 @@ test('gh-webhook-handler should handle valid one-time sponsorship', async () => 
 		amount: 5,
 		credits: 50000
 	}]);
-	expect(result).toEqual('Credits item with id: 1 created');
+	expect(result).toEqual('Credits item with id: 1 created. One-time sponsorship handled.');
 });
 
 test('gh-webhook-handler should throw without GITHUB_WEBHOOK_TOKEN env', async () => {
@@ -89,7 +89,7 @@ test('gh-webhook-handler should throw without sponsor field in sponsorship objec
 	const data = {
 		$trigger: {
 			headers: {
-				'x-hub-signature-256': 'sha256=dcf53208a93f23ec31c085f7c99c4142b4227ca2b0e155a571ad80eea399e951'
+				'x-hub-signature-256': 'sha256=d58d9027d97211d8378194a43ca5ca2c6ee3ed5e7afcdabb2ce373048f9f9acc'
 			},
 			body: {
 				action,
