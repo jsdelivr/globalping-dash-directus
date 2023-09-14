@@ -1,15 +1,38 @@
 import crypto from 'node:crypto';
 import { defineOperationApi } from '@directus/extensions-sdk';
-import { ApiExtensionContext } from '@directus/types';
+import { OperationContext } from '@directus/types';
+
+const CREDITS_PER_DOLLAR = 10_000;
+
+type Data = {
+	$trigger: {
+		headers: {
+			'x-hub-signature-256'?: string;
+		},
+		body: {
+			action: 'created',
+			sponsorship: {
+				sponsor?: {
+					login: string;
+					id: number;
+				},
+				tier: {
+					monthly_price_in_dollars: number;
+					is_one_time: boolean;
+				}
+			}
+		}
+	}
+};
 
 type ValidateGithubSignatureArgs = {
-	headers: Record<string, unknown>,
-	body: Record<string, unknown>,
-	env: ApiExtensionContext['env']
+	headers: Data['$trigger']['headers'],
+	body: Data['$trigger']['body'],
+	env: OperationContext['env']
 };
 const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignatureArgs) => {
 	const GITHUB_WEBHOOK_TOKEN = env['GITHUB_WEBHOOK_TOKEN'] as string | undefined;
-	const githubSignature = headers['x-hub-signature-256'] as string | undefined;
+	const githubSignature = headers['x-hub-signature-256'];
 
 	if (!GITHUB_WEBHOOK_TOKEN) {
 		throw new Error('GITHUB_WEBHOOK_TOKEN was not provided');
@@ -26,10 +49,10 @@ const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignature
 };
 
 type AddCreditsArgs = {
-	services: ApiExtensionContext['services'],
-	database: ApiExtensionContext['database'],
-	getSchema: ApiExtensionContext['getSchema'],
-	body: Record<string, unknown>
+	services: OperationContext['services'],
+	database: OperationContext['database'],
+	getSchema: OperationContext['getSchema'],
+	body: Data['$trigger']['body']
 };
 const addCredits = async ({ services, database, getSchema, body }: AddCreditsArgs) => {
 	const { ItemsService } = services;
@@ -39,28 +62,19 @@ const addCredits = async ({ services, database, getSchema, body }: AddCreditsArg
 		knex: database,
 	});
 
-	const sender = body?.sender as Record<string, unknown>;
-
-	if (!sender) {
-		throw new Error(`"sender" field is ${sender}`);
+	if (!body?.sponsorship?.sponsor) {
+		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor}`);
 	}
 
 	const payload = {
-		githubLogin: sender.login,
-		githubId: sender.id,
-		amount: 1,
-		credits: 10
+		githubLogin: body.sponsorship.sponsor.login,
+		githubId: body.sponsorship.sponsor.id,
+		amount: body.sponsorship.tier.monthly_price_in_dollars,
+		credits: body.sponsorship.tier.monthly_price_in_dollars * CREDITS_PER_DOLLAR
 	};
 
 	const result = await itemsService.createOne(payload);
 	return result;
-};
-
-type Data = {
-	$trigger: {
-		headers: Record<string, unknown>,
-		body: Record<string, unknown>
-	}
 };
 
 export default defineOperationApi({

@@ -23,11 +23,14 @@
 	"scripts": {
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
-		"link": "directus-extension link"
+		"link": "directus-extension link",
+		"test": "bun test"
 	},
 	"devDependencies": {
 		"@directus/extensions-sdk": "9.25.2",
 		"@types/node": "^20.6.0",
+		"bun": "^1.0.1",
+		"bun-types": "^1.0.1",
 		"typescript": "^5.2.2",
 		"vue": "^3.3.4"
 	}

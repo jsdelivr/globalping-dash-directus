@@ -41,6 +41,7 @@ cp -rp ./src/extensions/token-value/package.json ./extensions/directus-extension
 # Build and copy token-value
 cd ./src/extensions/gh-webhook-handler
 npm i
+npm run test
 npm run build
 cd "$cwd"
 mkdir -p ./extensions/directus-extension-gh-webhook-handler/dist/
