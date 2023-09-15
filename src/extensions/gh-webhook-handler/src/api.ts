@@ -1,30 +1,9 @@
 import crypto from 'node:crypto';
 import { defineOperationApi } from '@directus/extensions-sdk';
 import { OperationContext } from '@directus/types';
-
-const CREDITS_PER_DOLLAR = 10_000;
-
-type Data = {
-	$trigger: {
-		headers: {
-			'x-hub-signature-256'?: string;
-		},
-		body: {
-			action: 'created',
-			sponsorship: {
-				sponsor?: {
-					login: string;
-					id: number;
-				},
-				tier: {
-					created_at: string;
-					monthly_price_in_dollars: number;
-					is_one_time: boolean;
-				}
-			}
-		}
-	}
-};
+import { createdAction } from './actions/created.js';
+import { tierChangedAction } from './actions/tier-changed.js';
+import { Data } from './types.js';
 
 type ValidateGithubSignatureArgs = {
 	headers: Data['$trigger']['headers'],
@@ -49,58 +28,6 @@ const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignature
 	return isGithubSignatureValid;
 };
 
-type AddItemArgs = {
-	services: OperationContext['services'],
-	database: OperationContext['database'],
-	getSchema: OperationContext['getSchema'],
-	body: Data['$trigger']['body']
-};
-const addCredits = async ({ services, database, getSchema, body }: AddItemArgs) => {
-	const { ItemsService } = services;
-
-	const creditsService = new ItemsService('credits', {
-		schema: await getSchema({ database }),
-		knex: database,
-	});
-
-	if (!body?.sponsorship?.sponsor) {
-		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor}`);
-	}
-
-	const payload = {
-		githubLogin: body.sponsorship.sponsor.login,
-		githubId: body.sponsorship.sponsor.id,
-		amount: body.sponsorship.tier.monthly_price_in_dollars,
-		credits: body.sponsorship.tier.monthly_price_in_dollars * CREDITS_PER_DOLLAR
-	};
-
-	const result = await creditsService.createOne(payload);
-	return result;
-};
-
-const addSponsor = async ({ services, database, getSchema, body }: AddItemArgs) => {
-	const { ItemsService } = services;
-
-	const sponsorsService = new ItemsService('sponsors', {
-		schema: await getSchema({ database }),
-		knex: database,
-	});
-
-	if (!body?.sponsorship?.sponsor) {
-		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor}`);
-	}
-
-	const payload = {
-		githubLogin: body.sponsorship.sponsor.login,
-		githubId: body.sponsorship.sponsor.id,
-		monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
-		lastEarningDate: body.sponsorship.tier.created_at
-	};
-
-	const result = await sponsorsService.createOne(payload);
-	return result;
-};
-
 export default defineOperationApi({
 	id: 'gh-webhook-handler',
 	handler: async ({}, { data, database, env, getSchema, services }) => {
@@ -120,13 +47,12 @@ export default defineOperationApi({
 			throw new Error('Signature is not valid');
 		}
 
-		const creditsId = await addCredits({ services, database, getSchema, body });
-
-		if (body.sponsorship.tier.is_one_time) {
-			return `Credits item with id: ${creditsId} created. One-time sponsorship handled.`;
+		if (body.action === 'created') {
+			return await createdAction({ body, services, database, getSchema });
+		} else if (body.action === 'tier_changed') {
+			return await tierChangedAction({ body, services, database, getSchema });
 		} else {
-			const sponsorId = await addSponsor({ services, database, getSchema, body });
-			return `Sponsor with id: ${sponsorId} created. Credits item with id: ${creditsId} created. Recurring sponsorship handled.`
+			return `Handler for action: ${body.action} is not defined`;
 		}
 	},
 });

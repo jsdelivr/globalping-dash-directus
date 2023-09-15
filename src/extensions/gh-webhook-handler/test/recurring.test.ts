@@ -37,11 +37,11 @@ test('gh-webhook-handler should handle valid recurring sponsorship', async () =>
 	const result = await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability });
 
 	expect(services.ItemsService).toHaveBeenCalledTimes(2);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ "credits", {
+	expect(services.ItemsService.mock.calls[0]).toEqual([ "sponsors", {
 		schema: {},
 		knex: {}
 	}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ "sponsors", {
+	expect(services.ItemsService.mock.calls[1]).toEqual([ "credits", {
 		schema: {},
 		knex: {}
 	}]);
