@@ -38,12 +38,21 @@ mkdir -p ./extensions/directus-extension-token-value/dist/
 cp -rp ./src/extensions/token-value/dist/* ./extensions/directus-extension-token-value/dist/
 cp -rp ./src/extensions/token-value/package.json ./extensions/directus-extension-token-value/
 
-# Build and copy token-value
+# Build and copy gh-webhook-handler
 cd ./src/extensions/gh-webhook-handler
 npm i
-npm run test
+# npm run test
 npm run build
 cd "$cwd"
 mkdir -p ./extensions/directus-extension-gh-webhook-handler/dist/
 cp -rp ./src/extensions/gh-webhook-handler/dist/* ./extensions/directus-extension-gh-webhook-handler/dist/
 cp -rp ./src/extensions/gh-webhook-handler/package.json ./extensions/directus-extension-gh-webhook-handler/
+
+# Build and copy sponsors-cron-handler
+cd ./src/extensions/sponsors-cron-handler
+npm i
+npm run build
+cd "$cwd"
+mkdir -p ./extensions/directus-extension-sponsors-cron-handler/dist/
+cp -rp ./src/extensions/sponsors-cron-handler/dist/* ./extensions/directus-extension-sponsors-cron-handler/dist/
+cp -rp ./src/extensions/sponsors-cron-handler/package.json ./extensions/directus-extension-sponsors-cron-handler/

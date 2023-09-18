@@ -2,19 +2,18 @@ import { OperationContext } from '@directus/types';
 
 type AddItemData = {
 	githubLogin: string;
-	githubId: number;
+	githubId: string;
 	amount: number;
 }
 
 type Context = {
-	services: OperationContext['services'],
-	database: OperationContext['database'],
-	getSchema: OperationContext['getSchema'],
+	services: OperationContext['services'];
+	database: OperationContext['database'];
+	getSchema: OperationContext['getSchema'];
+	env: OperationContext['env'];
 };
 
-const CREDITS_PER_DOLLAR = 10_000;
-
-export const addCredits = async ({ githubLogin, githubId, amount }: AddItemData, { services, database, getSchema }: Context) => {
+export const addCredits = async ({ githubLogin, githubId, amount }: AddItemData, { services, database, getSchema, env }: Context) => {
 	const { ItemsService } = services;
 
 	const creditsService = new ItemsService('credits', {
@@ -26,7 +25,7 @@ export const addCredits = async ({ githubLogin, githubId, amount }: AddItemData,
 		githubLogin,
 		githubId,
 		amount,
-		credits: amount * CREDITS_PER_DOLLAR
+		credits: amount * parseInt(env.CREDITS_PER_DOLLAR, 10)
 	});
 	return result;
 };

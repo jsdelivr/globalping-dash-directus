@@ -2,7 +2,7 @@ import { OperationContext } from '@directus/types';
 
 type AddItemData = {
 	githubLogin: string;
-	githubId: number;
+	githubId: string;
 	monthlyAmount: number;
 	lastEarningDate: string;
 }
@@ -31,7 +31,7 @@ export const addSponsor = async ({ githubLogin, githubId, monthlyAmount, lastEar
 };
 
 type UpdateItemData = {
-	githubId: number;
+	githubId: string;
 	monthlyAmount: number;
 }
 

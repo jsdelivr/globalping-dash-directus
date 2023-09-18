@@ -37,27 +37,27 @@ test('gh-webhook-handler should handle valid recurring sponsorship', async () =>
 	const result = await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability });
 
 	expect(services.ItemsService).toHaveBeenCalledTimes(2);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ "sponsors", {
+	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
 		schema: {},
 		knex: {}
 	}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ "credits", {
+	expect(services.ItemsService.mock.calls[1]).toEqual([ 'credits', {
 		schema: {},
 		knex: {}
 	}]);
 	expect(creditsCreateOne).toHaveBeenCalledTimes(1);
 	expect(creditsCreateOne.mock.calls[0]).toEqual([{
-		githubLogin: "monalisa",
-		githubId: 2,
+		githubLogin: 'monalisa',
+		githubId: '2',
 		amount: 15,
 		credits: 150000
 	}]);
 	expect(sponsorsCreateOne).toHaveBeenCalledTimes(1);
 	expect(sponsorsCreateOne.mock.calls[0]).toEqual([{
-		githubLogin: "monalisa",
-		githubId: 2,
+		githubLogin: 'monalisa',
+		githubId: '2',
 		monthlyAmount: 15,
-		lastEarningDate: "2019-12-20T19:17:05Z"
+		lastEarningDate: '2019-12-20T19:17:05Z'
 	}]);
 	expect(result).toEqual('Sponsor with id: 2 created. Credits item with id: 1 created. Recurring sponsorship handled.');
 });

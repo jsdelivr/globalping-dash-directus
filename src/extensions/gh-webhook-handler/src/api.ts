@@ -48,9 +48,9 @@ export default defineOperationApi({
 		}
 
 		if (body.action === 'created') {
-			return await createdAction({ body, services, database, getSchema });
+			return await createdAction({ body, services, database, getSchema, env });
 		} else if (body.action === 'tier_changed') {
-			return await tierChangedAction({ body, services, database, getSchema });
+			return await tierChangedAction({ body, services, database, getSchema, env });
 		} else {
 			return `Handler for action: ${body.action} is not defined`;
 		}

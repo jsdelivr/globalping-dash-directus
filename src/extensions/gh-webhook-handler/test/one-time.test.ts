@@ -32,14 +32,14 @@ test('gh-webhook-handler should handle valid one-time sponsorship', async () => 
 	const result = await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability });
 
 	expect(services.ItemsService).toHaveBeenCalledTimes(1);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ "credits", {
+	expect(services.ItemsService.mock.calls[0]).toEqual([ 'credits', {
 		schema: {},
 		knex: {}
 	}]);
 	expect(createOne).toHaveBeenCalledTimes(1);
 	expect(createOne.mock.calls[0]).toEqual([{
-		githubLogin: "monalisa",
-		githubId: 2,
+		githubLogin: 'monalisa',
+		githubId: '2',
 		amount: 5,
 		credits: 50000
 	}]);
