@@ -20,7 +20,7 @@ export const getDirectusSponsors = async ({ services, database, getSchema }: Con
 	return result;
 };
 
-export const updateDirectusSponsor = async ({ githubId, monthlyAmount }: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
+export const updateDirectusSponsor = async (id: string, data: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
@@ -28,7 +28,7 @@ export const updateDirectusSponsor = async ({ githubId, monthlyAmount }: Partial
 		knex: database,
 	});
 
-	const result = await sponsorsService.updateByQuery({ filter: { githubId } }, { monthlyAmount });
+	const result = await sponsorsService.updateOne(id, data);
 	return result;
 }
 

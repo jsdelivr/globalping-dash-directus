@@ -43,15 +43,16 @@ export const handleSponsor = async ({ directusSponsor, githubSponsors }: HandleS
 	}
 
 	if (githubSponsor.monthlyAmount !== directusSponsor.monthlyAmount) {
-		await updateDirectusSponsor({ githubId: githubSponsor.githubId, monthlyAmount: githubSponsor.monthlyAmount }, { services, database, getSchema, env });
+		await updateDirectusSponsor(directusSponsor.id, { monthlyAmount: githubSponsor.monthlyAmount }, { services, database, getSchema, env });
 	}
 
 	const shouldCreditsBeAdded = is30DaysAgo(directusSponsor.lastEarningDate);
 	if ((shouldCreditsBeAdded)) {
+		await updateDirectusSponsor(directusSponsor.id, { lastEarningDate: new Date().toISOString() }, { services, database, getSchema, env });
 		const creditsId = await addCredits({
-			githubLogin: directusSponsor.githubLogin,
-			githubId: directusSponsor.githubId,
-			amount: directusSponsor.monthlyAmount
+			githubLogin: githubSponsor.githubLogin,
+			githubId: githubSponsor.githubId,
+			amount: githubSponsor.monthlyAmount
 		}, { services, database, getSchema, env });
 		return `Credits item with id: ${creditsId} for user with github id: ${id} created. Recurring sponsorship handled.`;
 	}
