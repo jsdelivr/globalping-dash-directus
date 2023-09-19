@@ -37,7 +37,7 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 	return result;
 }
 
-export const updateDirectusSponsor = async (id: string, data: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
+export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {

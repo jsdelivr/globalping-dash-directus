@@ -1,5 +1,5 @@
 export type DirectusSponsor = {
-	id: string;
+	id: number;
 	githubLogin: string;
 	githubId: string;
 	monthlyAmount: number;

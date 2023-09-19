@@ -24,11 +24,14 @@
 	"scripts": {
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
-		"link": "directus-extension link"
+		"link": "directus-extension link",
+		"test": "bun test"
 	},
 	"devDependencies": {
 		"@directus/extensions-sdk": "10.1.9",
 		"@types/node": "^20.6.2",
+		"axios-mock-adapter": "^1.22.0",
+		"bun": "^1.0.2",
 		"typescript": "^5.2.2",
 		"vue": "^3.3.4"
 	}
