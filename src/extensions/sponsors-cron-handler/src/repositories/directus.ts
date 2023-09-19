@@ -1,5 +1,5 @@
 import { OperationContext } from '@directus/types';
-import { DirectusSponsor } from '../types';
+import { DirectusSponsor, GithubSponsor } from '../types';
 
 type Context = {
 	services: OperationContext['services'];
@@ -19,6 +19,23 @@ export const getDirectusSponsors = async ({ services, database, getSchema }: Con
 	const result = await sponsorsService.readByQuery({}) as DirectusSponsor[];
 	return result;
 };
+
+export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { services, database, getSchema }: Context) => {
+	const { ItemsService } = services;
+
+	const sponsorsService = new ItemsService('sponsors', {
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	const result = await sponsorsService.createOne({
+		githubLogin: githubSponsor.githubLogin,
+		githubId: githubSponsor.githubId,
+		monthlyAmount: githubSponsor.monthlyAmount,
+		lastEarningDate: new Date().toISOString()
+	});
+	return result;
+}
 
 export const updateDirectusSponsor = async (id: string, data: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
 	const { ItemsService } = services;

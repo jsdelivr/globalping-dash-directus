@@ -15,7 +15,7 @@ const is30DaysAgo = (dateString: string) => {
 
 type HandleSponsorData = {
 	directusSponsor: DirectusSponsor;
-	githubSponsors: GithubSponsor[]
+	githubSponsors: GithubSponsor[];
 }
 type HandleSponsorContext = {
 		services: OperationContext['services'];
@@ -23,23 +23,23 @@ type HandleSponsorContext = {
 		getSchema: OperationContext['getSchema'];
 		env: OperationContext['env'];
 }
-export const handleSponsor = async ({ directusSponsor, githubSponsors }: HandleSponsorData, { services, database, getSchema, env }: HandleSponsorContext) => {
+export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }: HandleSponsorData, { services, database, getSchema, env }: HandleSponsorContext) => {
 	const id = directusSponsor.githubId;
 	const githubSponsor = githubSponsors.find(githubSponsor => githubSponsor.githubId === id);
 
 	if (!githubSponsor) {
 		await deleteDirectusSponsor({ id: directusSponsor.id }, { services, database, getSchema, env });
-		return `Sponsor with github id: ${id} not found on github sponsors list. User deleted from directus.`;
+		return `Sponsor with github id: ${id} not found on github sponsors list. Sponsor deleted from directus.`;
 	}
 
 	if (!githubSponsor.isActive) {
 		await deleteDirectusSponsor({ id: directusSponsor.id }, { services, database, getSchema, env });
-		return `User with github id: ${id} is not active on github sponsors list. User deleted from directus.`;
+		return `Sponsor with github id: ${id} is not active on github sponsors list. Sponsor deleted from directus.`;
 	}
 
 	if (githubSponsor.isOneTimePayment) {
 		await deleteDirectusSponsor({ id: directusSponsor.id }, { services, database, getSchema, env });
-		return `Sponsorship of user with github id: ${id} is one-time. User deleted from directus.`;
+		return `Sponsorship of user with github id: ${id} is one-time. Sponsor deleted from directus.`;
 	}
 
 	if (githubSponsor.monthlyAmount !== directusSponsor.monthlyAmount) {
