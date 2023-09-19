@@ -21,3 +21,11 @@
 ## Generate the schema:
 
 `docker compose exec directus npx directus schema snapshot --yes /directus/snapshots/collections-schema.yml`
+
+## Run migration
+
+`docker-compose exec directus npx directus database migrate:latest`
+
+## Create extension
+
+`npx create-directus-extension@latest`

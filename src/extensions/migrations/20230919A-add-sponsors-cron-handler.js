@@ -1,6 +1,6 @@
 const BASE_DIRECTUS_URL = 'http://127.0.0.1:8055';
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
-const FLOW_ID = 'e8a4c2b2-3ed4-4ddc-b98e-34c1952c2323'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
+const FLOW_ID = '6847946c-858c-4d8d-a0a1-5a586bb55923'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
 
 async function createFlow () {
 	const URL = `${BASE_DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;
@@ -8,14 +8,14 @@ async function createFlow () {
 		method: 'POST',
 		body: JSON.stringify({
 			id: FLOW_ID,
-			name: 'Github webhook',
-			description: 'Add Globalping credits for the Github sponsorship',
+			name: 'Sponsors CRON',
+			description: 'Add Globalping credits for recurring sponsorships',
 			status: 'active',
-			trigger: 'webhook',
+			trigger: 'schedule',
 			accountability: 'all',
 			options: {
-				method: 'POST'
-			}
+				"cron": "0 8 * * *"
+			},
 		}),
 		headers: {
 			'Content-Type': 'application/json',
@@ -35,9 +35,9 @@ async function createOperation () {
 		method: 'POST',
 		body: JSON.stringify({
 			flow: FLOW_ID,
-			name: 'Sponsorship handler',
-			key: 'sponsorship_handler',
-			type: 'gh-webhook-handler',
+			name: 'Sponsors CRON handler',
+			key: 'sponsorship_cron_handler',
+			type: 'sponsors-cron-handler',
 			position_x: 19,
 			position_y: 1,
 			options: {}
@@ -77,7 +77,7 @@ export async function up () {
 	await createFlow();
 	const operation = await createOperation();
 	await assignOperationToFlow(operation.id);
-	console.log('Github webhook handler added');
+	console.log('Sponsorship CRON handler added');
 }
 
 export async function down () {
