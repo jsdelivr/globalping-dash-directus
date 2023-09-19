@@ -41,7 +41,7 @@ cp -rp ./src/extensions/token-value/package.json ./extensions/directus-extension
 # Build and copy gh-webhook-handler
 cd ./src/extensions/gh-webhook-handler
 npm i
-# npm run test
+npm run test
 npm run build
 cd "$cwd"
 mkdir -p ./extensions/directus-extension-gh-webhook-handler/dist/
@@ -51,6 +51,7 @@ cp -rp ./src/extensions/gh-webhook-handler/package.json ./extensions/directus-ex
 # Build and copy sponsors-cron-handler
 cd ./src/extensions/sponsors-cron-handler
 npm i
+npm run test
 npm run build
 cd "$cwd"
 mkdir -p ./extensions/directus-extension-sponsors-cron-handler/dist/

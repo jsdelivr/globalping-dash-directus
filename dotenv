@@ -1,23 +1,24 @@
 # Db
-
 MARIADB_DATABASE=directus
 MARIADB_USER=directus
 MARIADB_PASSWORD=
 MARIADB_ROOT_PASSWORD=
 
-# Directus
+# GitHub
+GITHUB_WEBHOOK_TOKEN= # Is generated during enabling of gh webhook, then passed to the app
+GITHUB_ACCESS_TOKEN= # Token to access GraphQL api
 
+# Directus
 KEY=directus
 SECRET=
-
 AUTH_GITHUB_CLIENT_ID=
 AUTH_GITHUB_CLIENT_SECRET=
-GITHUB_WEBHOOK_TOKEN=
-
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
-
 PUBLIC_URL=
+
+# App
+CREDITS_PER_DOLLAR=10000
 
 # Are changed during deploy
 ADMIN_ACCESS_TOKEN=
