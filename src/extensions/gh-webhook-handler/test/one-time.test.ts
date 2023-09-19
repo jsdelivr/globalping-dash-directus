@@ -8,7 +8,10 @@ const exceptions = {} as OperationContext['exceptions'];
 const accountability = {} as OperationContext['accountability'];
 const logger = (() => {}) as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
-const env = { GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8' };
+const env = {
+	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+	CREDITS_PER_DOLLAR: '10000'
+};
 const createOne = mock(() => 1);
 const services = {
 	ItemsService: mock(function () { return { createOne }}),
