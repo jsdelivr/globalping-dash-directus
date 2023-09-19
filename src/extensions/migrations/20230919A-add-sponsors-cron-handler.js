@@ -14,7 +14,7 @@ async function createFlow () {
 			trigger: 'schedule',
 			accountability: 'all',
 			options: {
-				"cron": "0 8 * * *"
+				"cron": "0 0 * * *"
 			},
 		}),
 		headers: {
