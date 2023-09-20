@@ -18,14 +18,53 @@
 
 - run `./deploy.sh` and follow instructions
 
-## Generate the schema:
+## Commands:
+
+Generate the schema:
 
 `docker compose exec directus npx directus schema snapshot --yes /directus/snapshots/collections-schema.yml`
 
-## Run migration
+Run migration:
 
-`docker-compose exec directus npx directus database migrate:latest`
+`docker compose exec directus npx directus database migrate:latest`
 
-## Create extension
+Create extension:
 
 `npx create-directus-extension@latest`
+
+### Prepare host:
+
+```bash
+# Install haproxy
+sudo apt-get update
+sudo apt -y install haproxy
+
+# Configure and start haproxy
+sudo chmod a+w /etc/haproxy/haproxy.cfg
+cat <<EOF | sudo tee -a /etc/haproxy/haproxy.cfg > /dev/null
+frontend gp_fe
+    bind *:80
+    default_backend gp_be
+
+backend gp_be
+    server server1 127.0.0.1:8055
+EOF
+sudo systemctl stop haproxy
+sudo systemctl start haproxy
+
+# Install node
+sudo apt-get install -y ca-certificates curl gnupg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE_MAJOR=18
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+sudo apt-get update
+sudo apt-get install nodejs -y
+
+# Install docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Install jq
+apt install jq -y
+```

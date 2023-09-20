@@ -8,6 +8,7 @@
 		"directus-extension",
 		"directus-custom-operation"
 	],
+	"type": "module",
 	"directus:extension": {
 		"type": "operation",
 		"path": {
@@ -18,7 +19,7 @@
 			"app": "src/app.ts",
 			"api": "src/api.ts"
 		},
-		"host": "^9.25.2"
+		"host": "^10.1.9"
 	},
 	"scripts": {
 		"build": "directus-extension build",
@@ -27,10 +28,9 @@
 		"test": "bun test"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "9.25.2",
+		"@directus/extensions-sdk": "10.1.9",
 		"@types/node": "^20.6.0",
 		"bun": "^1.0.1",
-		"bun-types": "^1.0.1",
 		"typescript": "^5.2.2",
 		"vue": "^3.3.4"
 	}
