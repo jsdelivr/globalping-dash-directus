@@ -14,6 +14,7 @@ ADMIN_PASSWORD=
 PUBLIC_URL=
 
 # GitHub API
+WEBHOOK_FLOW_ID= # should be a valid uuid. The result webhook to be passsed to github is ${host}/flows/trigger/${WEBHOOK_FLOW_ID}
 GITHUB_WEBHOOK_TOKEN= # Is generated during enabling of gh webhook, then passed to the app
 GITHUB_ACCESS_TOKEN= # Token to access GraphQL api
 

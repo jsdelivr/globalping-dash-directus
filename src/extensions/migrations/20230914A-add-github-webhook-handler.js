@@ -1,13 +1,13 @@
 const BASE_DIRECTUS_URL = 'http://127.0.0.1:8055';
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
-const FLOW_ID = 'e8a4c2b2-3ed4-4ddc-b98e-34c1952c2323'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
+const WEBHOOK_FLOW_ID = process.env.WEBHOOK_FLOW_ID;
 
 async function createFlow () {
 	const URL = `${BASE_DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
-			id: FLOW_ID,
+			id: WEBHOOK_FLOW_ID,
 			name: 'Github webhook',
 			description: 'Add Globalping credits for the Github sponsorship',
 			status: 'active',
@@ -34,7 +34,7 @@ async function createOperation () {
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
-			flow: FLOW_ID,
+			flow: WEBHOOK_FLOW_ID,
 			name: 'Sponsorship handler',
 			key: 'sponsorship_handler',
 			type: 'gh-webhook-handler',
@@ -55,7 +55,7 @@ async function createOperation () {
 }
 
 async function assignOperationToFlow (operationId) {
-	const URL = `${BASE_DIRECTUS_URL}/flows/${FLOW_ID}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${BASE_DIRECTUS_URL}/flows/${WEBHOOK_FLOW_ID}?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({
