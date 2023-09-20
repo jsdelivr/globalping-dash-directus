@@ -105,7 +105,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: Amount of the sponsorship in dollars.
       options: null
       readonly: false
       required: true
@@ -143,7 +143,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: Amount of globalping credits assigned for the sponsorship.
       options: null
       readonly: false
       required: true
@@ -261,7 +261,9 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: >-
+        GitHub ID of a user or an organization. Can be found by login (e.g.
+        https://api.github.com/users/jsdelivr).
       options: null
       readonly: false
       required: true
@@ -299,7 +301,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: GitHub username or organisation name.
       options: null
       readonly: false
       required: true
@@ -535,7 +537,9 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: >-
+        GitHub ID of a user or an organization. Can be found by login (e.g.
+        https://api.github.com/users/jsdelivr).
       options: null
       readonly: false
       required: true
@@ -573,7 +577,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: GitHub username or organisation name.
       options: null
       readonly: false
       required: true
@@ -649,7 +653,7 @@ fields:
       group: null
       hidden: false
       interface: datetime
-      note: null
+      note: Date when user got it's credits last time.
       options: null
       readonly: false
       required: true
@@ -687,7 +691,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: Amount of the sponsorship in dollars that user donates every month.
       options: null
       readonly: false
       required: true

@@ -32,7 +32,7 @@ Create extension:
 
 `npx create-directus-extension@latest`
 
-### Prepare host:
+### Prepare dev host:
 
 ```bash
 # Install haproxy

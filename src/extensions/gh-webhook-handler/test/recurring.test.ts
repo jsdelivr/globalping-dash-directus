@@ -14,9 +14,9 @@ const env = {
 	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 	CREDITS_PER_DOLLAR: '10000'
 };
-const creditsCreateOne = mock(() => 1);
-const sponsorsCreateOne = mock(() => 2);
-const sponsorsUpdateByQuery = mock(() => 2);
+const creditsCreateOne = mock(() => Promise.resolve(1));
+const sponsorsCreateOne = mock(() => Promise.resolve(2));
+const sponsorsUpdateByQuery = mock(() => Promise.resolve(2));
 const services = {
 	ItemsService: mock(function (collection) {
 		switch (collection) {

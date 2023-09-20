@@ -4,7 +4,6 @@ import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json';
 
 const database = {} as OperationContext['database'];
-const exceptions = {} as OperationContext['exceptions'];
 const accountability = {} as OperationContext['accountability'];
 const logger = (() => {}) as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -12,7 +11,7 @@ const env = {
 	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 	CREDITS_PER_DOLLAR: '10000'
 };
-const createOne = mock(() => 1);
+const createOne = mock(() => Promise.resolve(1));
 const services = {
 	ItemsService: mock(function () { return { createOne }}),
 };
@@ -32,7 +31,7 @@ test('gh-webhook-handler should handle valid one-time sponsorship', async () => 
 		}
 	};
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability });
+	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 	expect(services.ItemsService).toHaveBeenCalledTimes(1);
 	expect(services.ItemsService.mock.calls[0]).toEqual([ 'credits', {
@@ -60,7 +59,7 @@ test('gh-webhook-handler should throw without GITHUB_WEBHOOK_TOKEN env', async (
 	};
 	const env = {};
 
-	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability }))
+	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }))
 		.toThrow(new Error('GITHUB_WEBHOOK_TOKEN was not provided'));
 	expect(createOne).toHaveBeenCalledTimes(0);
 });
@@ -73,7 +72,7 @@ test('gh-webhook-handler should throw without x-hub-signature-256 header', async
 		}
 	};
 
-	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability }))
+	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }))
 		.toThrow(new Error('"x-hub-signature-256" header was not provided'));
 	expect(services.ItemsService).toHaveBeenCalledTimes(0);
 	expect(createOne).toHaveBeenCalledTimes(0);
@@ -89,7 +88,7 @@ test('gh-webhook-handler should throw with wrong x-hub-signature-256 header', as
 		}
 	};
 
-	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability }))
+	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }))
 		.toThrow(new Error('Signature is not valid'));
 	expect(services.ItemsService).toHaveBeenCalledTimes(0);
 	expect(createOne).toHaveBeenCalledTimes(0);
@@ -114,7 +113,7 @@ test('gh-webhook-handler should throw without sponsor field in sponsorship objec
 		}
 	};
 
-	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, exceptions, logger, accountability }))
+	await expect(async () => await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }))
 		.toThrow(new Error('"sponsorship.sponsor" field is undefined'));
 	expect(createOne).toHaveBeenCalledTimes(0);
 });

@@ -1,6 +1,6 @@
 {
 	"name": "directus-extension-sponsors-cron-handler",
-	"description": "Please enter a description for your extension",
+	"description": "This extension manages recurring sponsors and adds credits to them",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [

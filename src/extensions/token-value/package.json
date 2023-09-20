@@ -22,7 +22,7 @@
 			}
 		]
 	},
-	"description": "Please enter a description for your extension",
+	"description": "This extension provides an endpoint to generate and validate tokens",
 	"icon": "extension",
 	"keywords": [
 		"directus",

@@ -1,6 +1,6 @@
 {
 	"name": "directus-extension-tokens",
-	"description": "Please enter a description for your extension",
+	"description": "This extension hides tokens values from user",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [

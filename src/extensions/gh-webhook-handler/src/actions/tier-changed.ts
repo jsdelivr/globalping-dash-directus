@@ -20,6 +20,10 @@ export const tierChangedAction = async ({ body, services, database, getSchema, e
 		throw new Error(`"body.changes" field is ${body.changes}`);
 	}
 
+	if (body.sponsorship.tier.is_one_time) {
+		throw new Error(`"body.sponsorship.tier.is_one_time" is ${body.sponsorship.tier.is_one_time} for "tier_changed" action`);
+	}
+
 	const tierDiff = body.sponsorship.tier.monthly_price_in_dollars - body.changes.tier.from.monthly_price_in_dollars;
 
 	if (tierDiff > 0) {
