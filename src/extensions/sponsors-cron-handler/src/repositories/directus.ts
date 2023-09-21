@@ -77,8 +77,8 @@ export const addCredits = async ({ githubLogin, githubId, amount }: AddCreditsDa
 	const result = await creditsService.createOne({
 		githubLogin,
 		githubId,
-		amount,
-		credits: amount * parseInt(env.CREDITS_PER_DOLLAR, 10)
+		credits: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
+		comment: `For ${amount}$ recurring sponsorship`,
 	});
 	return result;
 };

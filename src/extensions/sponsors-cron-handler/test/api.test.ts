@@ -90,10 +90,10 @@ test('sponsors-cron-handler should add credits to recurring sponsors with lastEa
 	}]);
 	expect(createOne).toHaveBeenCalledTimes(1);
 	expect(createOne.mock.calls[0]).toEqual([{
-		amount: 10,
 		credits: 100000,
 		githubId: '2',
-		githubLogin: 'monalisa'
+		githubLogin: 'monalisa',
+		comment: 'For 10$ recurring sponsorship'
 	}]);
 	expect(result).toEqual(['Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.']);
 });
@@ -328,10 +328,10 @@ test('sponsors-cron-handler should update directus "monthlyAmount" field if gith
 	}]);
 	expect(createOne).toHaveBeenCalledTimes(1);
 	expect(createOne.mock.calls[0]).toEqual([{
-		amount: 15,
 		credits: 150000,
 		githubId: '2',
-		githubLogin: 'monalisa'
+		githubLogin: 'monalisa',
+		comment: 'For 15$ recurring sponsorship'
 	}]);
 	expect(result).toEqual(['Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.']);
 });

@@ -34,8 +34,8 @@ async function createPermissions (roleId) {
 				fields: [
 					'githubLogin',
 					'githubId',
-					'amount',
 					'credits',
+					'comment',
 					'date_created'
 				]
 			}

@@ -42,8 +42,8 @@ test('gh-webhook-handler should handle valid one-time sponsorship', async () => 
 	expect(createOne.mock.calls[0]).toEqual([{
 		githubLogin: 'monalisa',
 		githubId: '2',
-		amount: 5,
-		credits: 50000
+		credits: 50000,
+		comment: 'For 5$ sponsorship'
 	}]);
 	expect(result).toEqual('Credits item with id: 1 created. One-time sponsorship handled.');
 });

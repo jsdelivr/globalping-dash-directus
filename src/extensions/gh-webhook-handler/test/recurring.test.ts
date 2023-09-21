@@ -66,8 +66,8 @@ test('gh-webhook-handler should handle valid recurring sponsorship', async () =>
 	expect(creditsCreateOne.mock.calls[0]).toEqual([{
 		githubLogin: 'monalisa',
 		githubId: '2',
-		amount: 15,
-		credits: 150000
+		credits: 150000,
+		comment: 'For 15$ sponsorship'
 	}]);
 	expect(sponsorsCreateOne).toHaveBeenCalledTimes(1);
 	expect(sponsorsCreateOne.mock.calls[0]).toEqual([{
@@ -113,8 +113,8 @@ test('gh-webhook-handler should handle tier change to the upper amount', async (
 	expect(creditsCreateOne.mock.calls[0]).toEqual([{
 		githubLogin: 'monalisa',
 		githubId: '2',
-		amount: 5,
-		credits: 50000
+		credits: 50000,
+		comment: 'For 5$ sponsorship'
 	}]);
 	expect(result).toEqual('Sponsor with id: 2 updated. Credits item with id: 1 created.');
 });
