@@ -1,7 +1,10 @@
 {
 	"compilerOptions": {
 		"target": "ES2019",
-		"lib": ["ES2019", "DOM"],
+		"lib": [
+			"ES2019",
+			"DOM"
+		],
 		"moduleResolution": "node",
 		"module": "ESNext",
 		"strict": true,
@@ -25,5 +28,7 @@
 		"isolatedModules": true,
 		"rootDir": "./src"
 	},
-	"include": ["./src/**/*.ts"]
+	"include": [
+		"./src/**/*.ts"
+	]
 }

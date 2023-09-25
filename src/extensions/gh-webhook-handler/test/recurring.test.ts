@@ -8,22 +8,22 @@ import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-change
 
 const database = {} as OperationContext['database'];
 const accountability = {} as OperationContext['accountability'];
-const logger = (() => {}) as unknown as OperationContext['logger'];
+const logger = (() => { /* empty function to satisfy typing */ }) as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 const env = {
 	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
-	CREDITS_PER_DOLLAR: '10000'
+	CREDITS_PER_DOLLAR: '10000',
 };
 const creditsCreateOne = sinon.stub().resolves(1);
 const sponsorsCreateOne = sinon.stub().resolves(2);
 const sponsorsUpdateByQuery = sinon.stub().resolves(2);
 const services = {
-	ItemsService: sinon.stub().callsFake(function (collection) {
+	ItemsService: sinon.stub().callsFake((collection) => {
 		switch (collection) {
 			case 'credits':
-				return {createOne: creditsCreateOne};
-				case 'sponsors':
-					return {createOne: sponsorsCreateOne, updateByQuery: sponsorsUpdateByQuery };
+				return { createOne: creditsCreateOne };
+			case 'sponsors':
+				return { createOne: sponsorsCreateOne, updateByQuery: sponsorsUpdateByQuery };
 			default:
 				throw new Error('Collection name wasn\'t provided');
 		}
@@ -43,37 +43,44 @@ describe('GitHub webhook recurring handler', () => {
 		const data = {
 			$trigger: {
 				headers: {
-					'x-hub-signature-256': 'sha256=5715395b41f79dfc4850a380297bb9fa7addf83d969cb712f9a053ae190f2e17'
+					'x-hub-signature-256': 'sha256=5715395b41f79dfc4850a380297bb9fa7addf83d969cb712f9a053ae190f2e17',
 				},
-				body: recurringSponsorshipCreated
-			}
+				body: recurringSponsorshipCreated,
+			},
 		};
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(services.ItemsService.callCount).to.equal(2);
+
 		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
 			schema: {},
-			knex: {}
+			knex: {},
 		}]);
+
 		expect(services.ItemsService.args[1]).to.deep.equal([ 'credits', {
 			schema: {},
-			knex: {}
+			knex: {},
 		}]);
+
 		expect(creditsCreateOne.callCount).to.equal(1);
+
 		expect(creditsCreateOne.args[0]).to.deep.equal([{
 			githubLogin: 'monalisa',
 			githubId: '2',
 			credits: 150000,
-			comment: 'For 15$ sponsorship'
+			comment: 'For 15$ sponsorship',
 		}]);
+
 		expect(sponsorsCreateOne.callCount).to.equal(1);
+
 		expect(sponsorsCreateOne.args[0]).to.deep.equal([{
 			githubLogin: 'monalisa',
 			githubId: '2',
 			monthlyAmount: 15,
-			lastEarningDate: '2023-09-19T00:00:00.000Z'
+			lastEarningDate: '2023-09-19T00:00:00.000Z',
 		}]);
+
 		expect(result).to.equal('Sponsor with id: 2 created. Credits item with id: 1 created. Recurring sponsorship handled.');
 	});
 
@@ -81,39 +88,46 @@ describe('GitHub webhook recurring handler', () => {
 		const data = {
 			$trigger: {
 				headers: {
-					'x-hub-signature-256': 'sha256=0b00755e53add3b61b5be9c5d2a237b59a9f6c9494721d46eae31f8fea06fdb9'
+					'x-hub-signature-256': 'sha256=0b00755e53add3b61b5be9c5d2a237b59a9f6c9494721d46eae31f8fea06fdb9',
 				},
-				body: recurringSponsorshipTierChanged
-			}
+				body: recurringSponsorshipTierChanged,
+			},
 		};
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(services.ItemsService.callCount).to.equal(2);
+
 		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
 			schema: {},
-			knex: {}
+			knex: {},
 		}]);
+
 		expect(services.ItemsService.args[1]).to.deep.equal([ 'credits', {
 			schema: {},
-			knex: {}
+			knex: {},
 		}]);
+
 		expect(sponsorsUpdateByQuery.callCount).to.equal(1);
+
 		expect(sponsorsUpdateByQuery.args[0]).to.deep.equal([{
-				filter: {
-					githubId: '2'
-				}
-			}, {
-				monthlyAmount: 15
-			}
+			filter: {
+				githubId: '2',
+			},
+		}, {
+			monthlyAmount: 15,
+		},
 		]);
+
 		expect(creditsCreateOne.callCount).to.equal(1);
+
 		expect(creditsCreateOne.args[0]).to.deep.equal([{
 			githubLogin: 'monalisa',
 			githubId: '2',
 			credits: 50000,
-			comment: 'For 5$ sponsorship'
+			comment: 'For 5$ sponsorship',
 		}]);
+
 		expect(result).to.equal('Sponsor with id: 2 updated. Credits item with id: 1 created.');
 	});
 
@@ -123,28 +137,32 @@ describe('GitHub webhook recurring handler', () => {
 		const data = {
 			$trigger: {
 				headers: {
-					'x-hub-signature-256': 'sha256=cf9000279263c1e48b30afe5052317a830c102c268580983fadaa3a4bb21e7b1'
+					'x-hub-signature-256': 'sha256=cf9000279263c1e48b30afe5052317a830c102c268580983fadaa3a4bb21e7b1',
 				},
-				body
-			}
+				body,
+			},
 		};
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(services.ItemsService.callCount).to.equal(1);
+
 		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
 			schema: {},
-			knex: {}
+			knex: {},
 		}]);
+
 		expect(sponsorsUpdateByQuery.callCount).to.equal(1);
+
 		expect(sponsorsUpdateByQuery.args[0]).to.deep.equal([{
-				filter: {
-					githubId: '2'
-				}
-			}, {
-				monthlyAmount: 5
-			}
+			filter: {
+				githubId: '2',
+			},
+		}, {
+			monthlyAmount: 5,
+		},
 		]);
+
 		expect(result).to.equal('Sponsor with id: 2 updated.');
 	});
 });

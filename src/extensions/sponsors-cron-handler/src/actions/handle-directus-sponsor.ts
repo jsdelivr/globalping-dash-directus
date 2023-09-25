@@ -1,14 +1,14 @@
 
 import { OperationContext } from '@directus/types';
-import { DirectusSponsor, GithubSponsor } from '../types'
+import { DirectusSponsor, GithubSponsor } from '../types';
 import { deleteDirectusSponsor, updateDirectusSponsor, addCredits } from '../repositories/directus';
 
 const is30DaysAgo = (dateString: string) => {
 	const inputDate = new Date(dateString);
-  const currentDate = new Date();
+	const currentDate = new Date();
 
 	const timeDifference = currentDate.getTime() - inputDate.getTime();
-  const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+	const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
 
 	return daysDifference >= 30;
 };
@@ -23,6 +23,7 @@ type HandleSponsorContext = {
 		getSchema: OperationContext['getSchema'];
 		env: OperationContext['env'];
 }
+
 export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }: HandleSponsorData, { services, database, getSchema, env }: HandleSponsorContext) => {
 	const id = directusSponsor.githubId;
 	const githubSponsor = githubSponsors.find(githubSponsor => githubSponsor.githubId === id);
@@ -47,12 +48,13 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 	}
 
 	const shouldCreditsBeAdded = is30DaysAgo(directusSponsor.lastEarningDate);
-	if ((shouldCreditsBeAdded)) {
+
+	if (shouldCreditsBeAdded) {
 		await updateDirectusSponsor(directusSponsor.id, { lastEarningDate: new Date().toISOString() }, { services, database, getSchema, env });
 		const creditsId = await addCredits({
 			githubLogin: githubSponsor.githubLogin,
 			githubId: githubSponsor.githubId,
-			amount: githubSponsor.monthlyAmount
+			amount: githubSponsor.monthlyAmount,
 		}, { services, database, getSchema, env });
 		return `Credits item with id: ${creditsId} for user with github id: ${id} created. Recurring sponsorship handled.`;
 	}

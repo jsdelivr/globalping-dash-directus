@@ -25,7 +25,7 @@ export const addSponsor = async ({ githubLogin, githubId, monthlyAmount, lastEar
 		githubLogin,
 		githubId,
 		monthlyAmount,
-		lastEarningDate
+		lastEarningDate,
 	});
 	return result;
 };
@@ -45,4 +45,4 @@ export const updateSponsor = async ({ githubId, monthlyAmount }: UpdateItemData,
 
 	const result = await sponsorsService.updateByQuery({ filter: { githubId } }, { monthlyAmount });
 	return result;
-}
+};

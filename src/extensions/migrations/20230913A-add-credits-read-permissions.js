@@ -4,10 +4,11 @@ const USER_ROLE_NAME = 'User';
 
 async function getUserRoleId () {
 	const URL = `${BASE_DIRECTUS_URL}/roles?filter[name][_eq]=${USER_ROLE_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
-	const response = await fetch(URL).then(response => {
+	const response = await fetch(URL).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
+
 		return response.json();
 	});
 	return response.data[0].id;
@@ -26,27 +27,28 @@ async function createPermissions (roleId) {
 					_and: [
 						{
 							githubId: {
-								_eq: '$CURRENT_USER.external_identifier'
-							}
-						}
-					]
+								_eq: '$CURRENT_USER.external_identifier',
+							},
+						},
+					],
 				},
 				fields: [
 					'githubLogin',
 					'githubId',
 					'credits',
 					'comment',
-					'date_created'
-				]
-			}
+					'date_created',
+				],
+			},
 		]),
 		headers: {
 			'Content-Type': 'application/json',
 		},
-	}).then(response => {
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
+
 		return response.json();
 	});
 	return response.data;

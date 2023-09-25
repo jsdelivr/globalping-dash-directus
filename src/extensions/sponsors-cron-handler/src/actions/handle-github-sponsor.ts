@@ -1,6 +1,6 @@
 
 import { OperationContext } from '@directus/types';
-import { DirectusSponsor, GithubSponsor } from '../types'
+import { DirectusSponsor, GithubSponsor } from '../types';
 import { createDirectusSponsor } from '../repositories/directus';
 
 type HandleSponsorData = {
@@ -13,6 +13,7 @@ type HandleSponsorContext = {
 		getSchema: OperationContext['getSchema'];
 		env: OperationContext['env'];
 }
+
 export const handleGithubSponsor = async ({ githubSponsor, directusSponsors }: HandleSponsorData, { services, database, getSchema, env }: HandleSponsorContext) => {
 	const id = githubSponsor.githubId;
 	const directusSponsor = directusSponsors.find(directusSponsor => directusSponsor.githubId === id);

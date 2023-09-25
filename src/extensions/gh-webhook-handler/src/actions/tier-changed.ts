@@ -36,12 +36,12 @@ export const tierChangedAction = async ({ body, services, database, getSchema, e
 			githubId: body.sponsorship.sponsor.id.toString(),
 			amount: tierDiff,
 		}, { services, database, getSchema, env });
-		return `Sponsor with id: ${sponsorId} updated. Credits item with id: ${creditsId} created.`
-	} else {
-		const sponsorId = await updateSponsor({
-			githubId: body.sponsorship.sponsor.id.toString(),
-			monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
-		}, { services, database, getSchema });
-		return `Sponsor with id: ${sponsorId} updated.`;
+		return `Sponsor with id: ${sponsorId} updated. Credits item with id: ${creditsId} created.`;
 	}
-}
+
+	const sponsorId = await updateSponsor({
+		githubId: body.sponsorship.sponsor.id.toString(),
+		monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
+	}, { services, database, getSchema });
+	return `Sponsor with id: ${sponsorId} updated.`;
+};

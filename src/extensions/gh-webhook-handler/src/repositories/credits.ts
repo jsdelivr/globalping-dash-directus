@@ -25,7 +25,7 @@ export const addCredits = async ({ githubLogin, githubId, amount }: AddItemData,
 		githubLogin,
 		githubId,
 		credits: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
-		comment: `For ${amount}$ sponsorship`
+		comment: `For ${amount}$ sponsorship`,
 	});
 	return result;
 };

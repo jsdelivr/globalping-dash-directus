@@ -14,16 +14,17 @@ async function createFlow () {
 			trigger: 'schedule',
 			accountability: 'all',
 			options: {
-				"cron": "0 0 * * *"
+				cron: '0 0 * * *',
 			},
 		}),
 		headers: {
 			'Content-Type': 'application/json',
 		},
-	}).then(response => {
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
+
 		return response.json();
 	});
 	return response.data;
@@ -40,15 +41,16 @@ async function createOperation () {
 			type: 'sponsors-cron-handler',
 			position_x: 19,
 			position_y: 1,
-			options: {}
+			options: {},
 		}),
 		headers: {
 			'Content-Type': 'application/json',
 		},
-	}).then(response => {
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
+
 		return response.json();
 	});
 	return response.data;
@@ -59,15 +61,16 @@ async function assignOperationToFlow (operationId) {
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({
-			operation: operationId
+			operation: operationId,
 		}),
 		headers: {
 			'Content-Type': 'application/json',
 		},
-	}).then(response => {
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
+
 		return response.json();
 	});
 	return response.data;

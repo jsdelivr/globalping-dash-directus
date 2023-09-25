@@ -60,7 +60,7 @@ const query = `
 `;
 
 export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] }): Promise<GithubSponsor[]> => {
-	let nodes: GithubSponsor[] = [];
+	const nodes: GithubSponsor[] = [];
 	let hasNextPage = true;
 	let cursor: string | null = null;
 
@@ -71,14 +71,14 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 			},
 			after: cursor,
 			request: {
-				fetch: globalThis.fetch ?? nodeFetch // Using node-fetch for tests and native fetch in prod as nock doesn't support native fetch right now.
-			}
+				fetch: globalThis.fetch ?? nodeFetch, // Using node-fetch for tests and native fetch in prod as nock doesn't support native fetch right now.
+			},
 		}) as GithubResponse;
 
 		const pageInfo = response.organization.sponsorshipsAsMaintainer.pageInfo;
 		const edges = response.organization.sponsorshipsAsMaintainer.edges;
 
-		const newNodes: GithubSponsor[] = edges.map((edge) => edge.node).map(node => ({
+		const newNodes: GithubSponsor[] = edges.map(edge => edge.node).map(node => ({
 			githubLogin: node.sponsorEntity.login,
 			githubId: node.sponsorEntity.databaseId.toString(),
 			isActive: node.isActive,

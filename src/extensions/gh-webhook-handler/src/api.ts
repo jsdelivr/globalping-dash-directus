@@ -10,6 +10,7 @@ type ValidateGithubSignatureArgs = {
 	body: Data['$trigger']['body'],
 	env: OperationContext['env']
 };
+
 const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignatureArgs) => {
 	const GITHUB_WEBHOOK_TOKEN = env['GITHUB_WEBHOOK_TOKEN'] as string | undefined;
 	const githubSignature = headers['x-hub-signature-256'];
@@ -30,8 +31,8 @@ const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignature
 
 export default defineOperationApi({
 	id: 'gh-webhook-handler',
-	handler: async ({}, { data, database, env, getSchema, services }) => {
-		const { $trigger: { headers, body }} = data as Data;
+	handler: async (_operationData, { data, database, env, getSchema, services }) => {
+		const { $trigger: { headers, body } } = data as Data;
 
 		if (!headers) {
 			throw new Error(`"headers" field is ${headers}`);
@@ -48,11 +49,11 @@ export default defineOperationApi({
 		}
 
 		if (body.action === 'created') {
-			return await createdAction({ body, services, database, getSchema, env });
+			return createdAction({ body, services, database, getSchema, env });
 		} else if (body.action === 'tier_changed') {
-			return await tierChangedAction({ body, services, database, getSchema, env });
-		} else {
-			return `Handler for action: ${body.action} is not defined`;
+			return tierChangedAction({ body, services, database, getSchema, env });
 		}
+
+		return `Handler for action: ${body.action} is not defined`;
 	},
 });

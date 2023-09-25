@@ -25,21 +25,21 @@ export const createdAction = async ({ body, services, database, getSchema, env }
 			services,
 			database,
 			getSchema,
-			env
+			env,
 		});
 		return `Credits item with id: ${creditsId} created. One-time sponsorship handled.`;
-	} else {
-		const sponsorId = await addSponsor({
-			githubLogin: body.sponsorship.sponsor.login,
-			githubId: body.sponsorship.sponsor.id.toString(),
-			monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
-			lastEarningDate: new Date().toISOString(),
-		}, { services, database, getSchema });
-		const creditsId = await addCredits({
-			githubLogin: body.sponsorship.sponsor.login,
-			githubId: body.sponsorship.sponsor.id.toString(),
-			amount: body.sponsorship.tier.monthly_price_in_dollars,
-		}, { services, database, getSchema, env });
-		return `Sponsor with id: ${sponsorId} created. Credits item with id: ${creditsId} created. Recurring sponsorship handled.`;
 	}
-}
+
+	const sponsorId = await addSponsor({
+		githubLogin: body.sponsorship.sponsor.login,
+		githubId: body.sponsorship.sponsor.id.toString(),
+		monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
+		lastEarningDate: new Date().toISOString(),
+	}, { services, database, getSchema });
+	const creditsId = await addCredits({
+		githubLogin: body.sponsorship.sponsor.login,
+		githubId: body.sponsorship.sponsor.id.toString(),
+		amount: body.sponsorship.tier.monthly_price_in_dollars,
+	}, { services, database, getSchema, env });
+	return `Sponsor with id: ${sponsorId} created. Credits item with id: ${creditsId} created. Recurring sponsorship handled.`;
+};

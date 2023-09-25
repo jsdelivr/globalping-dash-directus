@@ -6,7 +6,7 @@ import { handleGithubSponsor } from './actions/handle-github-sponsor';
 
 export default defineOperationApi({
 	id: 'sponsors-cron-handler',
-	handler: async ({}, { database, env, getSchema, services }) => {
+	handler: async (_operationData, { database, env, getSchema, services }) => {
 		const githubSponsors = await getGithubSponsors({ env });
 		const directusSponsors = await getDirectusSponsors({ services, database, getSchema, env });
 		const results: string[] = [];
@@ -14,6 +14,7 @@ export default defineOperationApi({
 		// Update the directus sponsors data with the github sponsors data
 		for (const directusSponsor of directusSponsors) {
 			const result = await handleDirectusSponsor({ directusSponsor, githubSponsors }, { services, database, getSchema, env });
+
 			if (result) {
 				results.push(result);
 			}
@@ -22,6 +23,7 @@ export default defineOperationApi({
 		// Add missing github sponsors
 		for (const githubSponsor of githubSponsors) {
 			const result = await handleGithubSponsor({ githubSponsor, directusSponsors }, { services, database, getSchema, env });
+
 			if (result) {
 				results.push(result);
 			}

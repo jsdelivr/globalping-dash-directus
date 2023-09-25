@@ -32,10 +32,10 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 		githubLogin: githubSponsor.githubLogin,
 		githubId: githubSponsor.githubId,
 		monthlyAmount: githubSponsor.monthlyAmount,
-		lastEarningDate: new Date().toISOString()
+		lastEarningDate: new Date().toISOString(),
 	});
 	return result;
-}
+};
 
 export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
 	const { ItemsService } = services;
@@ -47,7 +47,7 @@ export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSp
 
 	const result = await sponsorsService.updateOne(id, data);
 	return result;
-}
+};
 
 export const deleteDirectusSponsor = async ({ id }: { id: DirectusSponsor['id'] }, { services, database, getSchema }: Context) => {
 	const { ItemsService } = services;
@@ -59,13 +59,14 @@ export const deleteDirectusSponsor = async ({ id }: { id: DirectusSponsor['id'] 
 
 	const result = await sponsorsService.deleteOne(id);
 	return result;
-}
+};
 
 type AddCreditsData = {
 	githubLogin: string;
 	githubId: string;
 	amount: number;
 }
+
 export const addCredits = async ({ githubLogin, githubId, amount }: AddCreditsData, { services, database, getSchema, env }: Context) => {
 	const { ItemsService } = services;
 
