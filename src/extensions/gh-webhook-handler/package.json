@@ -25,12 +25,18 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"test": "bun test"
+		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
 		"@directus/extensions-sdk": "10.1.9",
+		"@types/chai": "^4.3.6",
+		"@types/mocha": "^10.0.1",
 		"@types/node": "^20.6.0",
-		"bun": "^1.0.1",
+		"@types/sinon": "^10.0.16",
+		"chai": "^4.3.8",
+		"mocha": "^10.2.0",
+		"sinon": "^16.0.0",
+		"ts-node": "^10.9.1",
 		"typescript": "^5.2.2",
 		"vue": "^3.3.4"
 	}
