@@ -1,10 +1,8 @@
-import axios from 'axios';
-import { test, expect, mock, beforeEach, beforeAll, setSystemTime } from 'bun:test';
-import MockAdapter from 'axios-mock-adapter';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
+import nock from 'nock';
 import { OperationContext } from '@directus/types';
 import operationApi from '../src/api.js';
-
-const axiosMock = new MockAdapter(axios);
 
 const data = {};
 const database = {} as OperationContext['database'];
@@ -16,461 +14,467 @@ const env = {
 	CREDITS_PER_DOLLAR: '10000'
 };
 
-const readByQuery = mock();
-const createOne = mock(() => Promise.resolve(1));
-const updateOne = mock(() => Promise.resolve(1));
-const deleteOne = mock(() => Promise.resolve(1));
+const readByQuery = sinon.stub().resolves([{
+	id: 1,
+	githubLogin: 'monalisa',
+	githubId: '2',
+	monthlyAmount: 10,
+	lastEarningDate: '2023-08-15 08:19:00',
+}]);
+const createOne = sinon.stub().resolves(1);
+const updateOne = sinon.stub().resolves(1);
+const deleteOne = sinon.stub().resolves(1);
 const services = {
-	ItemsService: mock(function () { return { createOne, readByQuery, updateOne, deleteOne }}),
+	ItemsService: sinon.stub().returns({ createOne, readByQuery, updateOne, deleteOne }),
 };
 
-beforeAll(() => {
-	setSystemTime(new Date('2023-09-19T00:00:00.000Z'));
+before(() => {
+	nock.disableNetConnect();
+	sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
 });
 
 beforeEach(() => {
-	services.ItemsService.mockClear();
-	readByQuery.mockClear().mockResolvedValue([{
+	sinon.resetHistory();
+	readByQuery.resolves([{
 		id: 1,
 		githubLogin: 'monalisa',
 		githubId: '2',
 		monthlyAmount: 10,
 		lastEarningDate: '2023-08-15 08:19:00',
 	}]);
-	createOne.mockClear();
-	updateOne.mockClear();
-	deleteOne.mockClear();
 });
 
-test('sponsors-cron-handler should add credits to recurring sponsors with lastEarningDate > 30 days', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 10
+describe('Sponsors cron handler', () => {
+	it('should add credits to recurring sponsors with lastEarningDate > 30 days', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(3);
+		expect(services.ItemsService.args[0]).deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(updateOne.callCount).to.equal(1);
+		expect(updateOne.args[0]).to.deep.equal([1, { lastEarningDate: '2023-09-19T00:00:00.000Z' }]);
+		expect(services.ItemsService.args[2]).to.deep.equal([ 'credits', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(createOne.callCount).to.equal(1);
+		expect(createOne.args[0]).to.deep.equal([{
+			credits: 100000,
+			githubId: '2',
+			githubLogin: 'monalisa',
+			comment: 'For 10$ recurring sponsorship'
+		}]);
+		expect(result).to.deep.equal(['Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.']);
 	});
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(3);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(updateOne).toHaveBeenCalledTimes(1);
-	expect(updateOne.mock.calls[0]).toEqual([1, { lastEarningDate: '2023-09-19T00:00:00.000Z' }]);
-	expect(services.ItemsService.mock.calls[2]).toEqual([ 'credits', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(createOne).toHaveBeenCalledTimes(1);
-	expect(createOne.mock.calls[0]).toEqual([{
-		credits: 100000,
-		githubId: '2',
-		githubLogin: 'monalisa',
-		comment: 'For 10$ recurring sponsorship'
-	}]);
-	expect(result).toEqual(['Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.']);
-});
-
-test('sponsors-cron-handler should not add credits to recurring sponsors with lastEarningDate < 30 days', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 10
+	it('should not add credits to recurring sponsors with lastEarningDate < 30 days', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+		readByQuery.resolves([{
+			id: 1,
+			githubLogin: 'monalisa',
+			githubId: '2',
+			monthlyAmount: 10,
+			lastEarningDate: '2023-09-15 08:19:00',
+		}]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(1);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(updateOne.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
+		expect(result).to.deep.equal([]);
 	});
-	readByQuery.mockResolvedValue([{
-		id: 1,
-		githubLogin: 'monalisa',
-		githubId: '2',
-		monthlyAmount: 10,
-		lastEarningDate: '2023-09-15 08:19:00',
-	}]);
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(1);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(updateOne).toHaveBeenCalledTimes(0);
-	expect(createOne).toHaveBeenCalledTimes(0);
-	expect(result).toEqual([]);
-});
-
-test('sponsors-cron-handler should delete sponsor from directus if it is not found on github', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: []
+	it('should delete sponsor from directus if it is not found on github', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: []
+					}
 				}
 			}
-		}
+		});
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(2);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(updateOne.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
+		expect(deleteOne.callCount).to.equal(1);
+		expect(deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(result).to.deep.equal(['Sponsor with github id: 2 not found on github sponsors list. Sponsor deleted from directus.']);
 	});
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(2);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(updateOne).toHaveBeenCalledTimes(0);
-	expect(createOne).toHaveBeenCalledTimes(0);
-	expect(deleteOne).toHaveBeenCalledTimes(1);
-	expect(deleteOne.mock.calls[0]).toEqual([ 1 ]);
-	expect(result).toEqual(['Sponsor with github id: 2 not found on github sponsors list. Sponsor deleted from directus.']);
-});
-
-test('sponsors-cron-handler should delete sponsor from directus if it is not active', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: false,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 10
+	it('should delete sponsor from directus if it is not active', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: false,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(2);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(updateOne.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
+		expect(deleteOne.callCount).to.equal(1);
+		expect(deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(result).to.deep.equal(['Sponsor with github id: 2 is not active on github sponsors list. Sponsor deleted from directus.']);
 	});
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(2);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(updateOne).toHaveBeenCalledTimes(0);
-	expect(createOne).toHaveBeenCalledTimes(0);
-	expect(deleteOne).toHaveBeenCalledTimes(1);
-	expect(deleteOne.mock.calls[0]).toEqual([ 1 ]);
-	expect(result).toEqual(['Sponsor with github id: 2 is not active on github sponsors list. Sponsor deleted from directus.']);
-});
-
-test('sponsors-cron-handler should delete sponsor from directus if his payment is one-time', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: true,
-							tier: {
-								monthlyPriceInDollars: 10
+	it('should delete sponsor from directus if his payment is one-time', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: true,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(2);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(updateOne.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
+		expect(deleteOne.callCount).to.equal(1);
+		expect(deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(result).to.deep.equal(['Sponsorship of user with github id: 2 is one-time. Sponsor deleted from directus.']);
 	});
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(2);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(updateOne).toHaveBeenCalledTimes(0);
-	expect(createOne).toHaveBeenCalledTimes(0);
-	expect(deleteOne).toHaveBeenCalledTimes(1);
-	expect(deleteOne.mock.calls[0]).toEqual([ 1 ]);
-	expect(result).toEqual(['Sponsorship of user with github id: 2 is one-time. Sponsor deleted from directus.']);
-});
-
-test('sponsors-cron-handler should update directus "monthlyAmount" field if github and directus fields do not match', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 15
+	it('should update directus "monthlyAmount" field if github and directus fields do not match', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 15
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(4);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(services.ItemsService.args[2]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(updateOne.callCount).to.equal(2);
+		expect(updateOne.args[0]).to.deep.equal([1, { monthlyAmount: 15 }]);
+		expect(updateOne.args[1]).to.deep.equal([1, { lastEarningDate: '2023-09-19T00:00:00.000Z' }]);
+		expect(services.ItemsService.args[3]).to.deep.equal([ 'credits', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(createOne.callCount).to.equal(1);
+		expect(createOne.args[0]).to.deep.equal([{
+			credits: 150000,
+			githubId: '2',
+			githubLogin: 'monalisa',
+			comment: 'For 15$ recurring sponsorship'
+		}]);
+		expect(result).to.deep.equal(['Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.']);
 	});
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(4);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(services.ItemsService.mock.calls[2]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(updateOne).toHaveBeenCalledTimes(2);
-	expect(updateOne.mock.calls[0]).toEqual([1, { monthlyAmount: 15 }]);
-	expect(updateOne.mock.calls[1]).toEqual([1, { lastEarningDate: '2023-09-19T00:00:00.000Z' }]);
-	expect(services.ItemsService.mock.calls[3]).toEqual([ 'credits', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(createOne).toHaveBeenCalledTimes(1);
-	expect(createOne.mock.calls[0]).toEqual([{
-		credits: 150000,
-		githubId: '2',
-		githubLogin: 'monalisa',
-		comment: 'For 15$ recurring sponsorship'
-	}]);
-	expect(result).toEqual(['Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.']);
-});
-
-test('sponsors-cron-handler should add missing recurring sponsors to the directus', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 10
+	it('should add missing recurring sponsors to the directus', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+		readByQuery.resolves([]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(2);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(createOne.callCount).to.equal(1);
+		expect(createOne.args[0]).to.deep.equal([{
+			githubId: '2',
+			githubLogin: 'monalisa',
+			lastEarningDate: '2023-09-19T00:00:00.000Z',
+			monthlyAmount: 10
+		}]);
+		expect(result).to.deep.equal(['Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus.']);
 	});
-	readByQuery.mockClear().mockResolvedValue([]);
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(2);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(services.ItemsService.mock.calls[1]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(createOne).toHaveBeenCalledTimes(1);
-	expect(createOne.mock.calls[0]).toEqual([{
-		githubId: '2',
-		githubLogin: 'monalisa',
-		lastEarningDate: '2023-09-19T00:00:00.000Z',
-		monthlyAmount: 10
-	}]);
-	expect(result).toEqual(['Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus.']);
-});
-
-test('sponsors-cron-handler should not add non-recurring sponsors to the directus', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: true,
-							tier: {
-								monthlyPriceInDollars: 10
+	it('should not add non-recurring sponsors to the directus', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: true,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+		readByQuery.resolves([]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(1);
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
+			schema: {},
+			knex: {}
+		}]);
+		expect(readByQuery.callCount).to.equal(1);
+		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(createOne.callCount).to.equal(0);
+		expect(result).to.deep.equal([]);
 	});
-	readByQuery.mockClear().mockResolvedValue([]);
 
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(services.ItemsService).toHaveBeenCalledTimes(1);
-	expect(services.ItemsService.mock.calls[0]).toEqual([ 'sponsors', {
-		schema: {},
-		knex: {}
-	}]);
-	expect(readByQuery).toHaveBeenCalledTimes(1);
-	expect(readByQuery.mock.calls[0]).toEqual([{}]);
-	expect(createOne).toHaveBeenCalledTimes(0);
-	expect(result).toEqual([]);
-});
-
-test('sponsors-cron-handler should handle multiple sponsors and return results for each', async () => {
-	axiosMock.onPost('https://api.github.com/graphql').reply(200, {
-		data: {
-			organization: {
-				sponsorshipsAsMaintainer: {
-					pageInfo: {
-						hasNextPage: false,
-						endCursor: 'NQ'
-					},
-					edges: [{
-						node: {
-							sponsorEntity: {
-								login: 'monalisa',
-								databaseId: 2
-							},
-							isActive: true,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 10
+	it('should handle multiple sponsors and return results for each', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: {
+							hasNextPage: false,
+							endCursor: 'NQ'
+						},
+						edges: [{
+							node: {
+								sponsorEntity: {
+									login: 'monalisa',
+									databaseId: 2
+								},
+								isActive: true,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 10
+								}
 							}
-						}
-					}, {
-						node: {
-							sponsorEntity: {
-								login: 'vangogh',
-								databaseId: 3
-							},
-							isActive: true,
-							isOneTimePayment: false,
-							tier: {
-								monthlyPriceInDollars: 3
+						}, {
+							node: {
+								sponsorEntity: {
+									login: 'vangogh',
+									databaseId: 3
+								},
+								isActive: true,
+								isOneTimePayment: false,
+								tier: {
+									monthlyPriceInDollars: 3
+								}
 							}
-						}
-					}]
+						}]
+					}
 				}
 			}
-		}
+		});
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(result).to.deep.equal([
+			'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.',
+			'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus.'
+		]);
 	});
-
-	const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-	expect(result).toEqual([
-		'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.',
-		'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus.'
-	]);
 });

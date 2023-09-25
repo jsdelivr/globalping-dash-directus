@@ -1,29 +1,28 @@
 import { OperationContext } from '@directus/types';
-import axios from 'axios';
-import { GithubSponsor } from "../types";
+import { graphql } from '@octokit/graphql';
+import nodeFetch from 'node-fetch';
+import { GithubSponsor } from '../types';
 
 type GithubResponse = {
-	data: {
-		organization: {
-			sponsorshipsAsMaintainer: {
-				pageInfo: {
-					hasNextPage: boolean;
-					endCursor: string;
-				},
-				edges: {
-					node: {
-						sponsorEntity: {
-							login: string;
-							databaseId: number;
-						},
-						isActive: boolean;
-						isOneTimePayment: boolean;
-						tier: {
-							monthlyPriceInDollars: number;
-						}
+	organization: {
+		sponsorshipsAsMaintainer: {
+			pageInfo: {
+				hasNextPage: boolean;
+				endCursor: string;
+			},
+			edges: {
+				node: {
+					sponsorEntity: {
+						login: string;
+						databaseId: number;
+					},
+					isActive: boolean;
+					isOneTimePayment: boolean;
+					tier: {
+						monthlyPriceInDollars: number;
 					}
-				}[]
-			}
+				}
+			}[]
 		}
 	}
 };
@@ -66,35 +65,30 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 	let cursor: string | null = null;
 
 	while (hasNextPage) {
-		const response = await axios.post('https://api.github.com/graphql', {
-			query,
-			variables: { after: cursor },
-		}, {
+		const response = await graphql(query, {
 			headers: {
-				'Content-Type': 'application/json',
 				Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
 			},
-		});
+			after: cursor,
+			request: {
+				fetch: globalThis.fetch ?? nodeFetch // Using node-fetch for tests and native fetch in prod as nock doesn't support native fetch right now.
+			}
+		}) as GithubResponse;
 
-		if (response.status === 200) {
-			const responseData = response.data as GithubResponse;
-			const pageInfo = responseData.data.organization.sponsorshipsAsMaintainer.pageInfo;
-			const edges = responseData.data.organization.sponsorshipsAsMaintainer.edges;
+		const pageInfo = response.organization.sponsorshipsAsMaintainer.pageInfo;
+		const edges = response.organization.sponsorshipsAsMaintainer.edges;
 
-			const newNodes: GithubSponsor[] = edges.map((edge) => edge.node).map(node => ({
-				githubLogin: node.sponsorEntity.login,
-				githubId: node.sponsorEntity.databaseId.toString(),
-				isActive: node.isActive,
-				isOneTimePayment: node.isOneTimePayment,
-				monthlyAmount: node.tier.monthlyPriceInDollars,
-			}));
+		const newNodes: GithubSponsor[] = edges.map((edge) => edge.node).map(node => ({
+			githubLogin: node.sponsorEntity.login,
+			githubId: node.sponsorEntity.databaseId.toString(),
+			isActive: node.isActive,
+			isOneTimePayment: node.isOneTimePayment,
+			monthlyAmount: node.tier.monthlyPriceInDollars,
+		}));
 
-			nodes.push(...newNodes);
-			hasNextPage = pageInfo.hasNextPage;
-			cursor = pageInfo.endCursor;
-		} else {
-			throw new Error(`Request failed with status ${response.status}`);
-		}
+		nodes.push(...newNodes);
+		hasNextPage = pageInfo.hasNextPage;
+		cursor = pageInfo.endCursor;
 	}
 
 	return nodes;
