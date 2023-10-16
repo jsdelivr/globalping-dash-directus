@@ -19,6 +19,7 @@
 		"@typescript-eslint/eslint-plugin": "^6.7.2",
 		"cross-env": "^7.0.3",
 		"eslint": "^8.50.0",
+		"eslint-plugin-vue": "^9.17.0",
 		"husky": "^8.0.3"
 	},
 	"scripts": {

@@ -1,4 +1,3 @@
-/* eslint-disable no-extra-parens */
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { OperationContext } from '@directus/types';
@@ -7,7 +6,7 @@ import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' asser
 
 const database = {} as OperationContext['database'];
 const accountability = {} as OperationContext['accountability'];
-const logger = (() => { /* empty function to satisfy typing */ }) as unknown as OperationContext['logger'];
+const logger = console.log as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 const env = {
 	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
@@ -65,7 +64,7 @@ describe('GitHub webhook one-time handler', () => {
 		};
 		const env = {};
 
-		const err = (await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
+		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
 		expect(err).to.deep.equal(new Error('GITHUB_WEBHOOK_TOKEN was not provided'));
 		expect(createOne.callCount).to.equal(0);
 	});
@@ -78,7 +77,7 @@ describe('GitHub webhook one-time handler', () => {
 			},
 		};
 
-		const err = (await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
+		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
 		expect(err).to.deep.equal(new Error('"x-hub-signature-256" header was not provided'));
 		expect(services.ItemsService.callCount).to.equal(0);
 		expect(createOne.callCount).to.equal(0);
@@ -94,7 +93,7 @@ describe('GitHub webhook one-time handler', () => {
 			},
 		};
 
-		const err = (await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
+		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
 		expect(err).to.deep.equal(new Error('Signature is not valid'));
 		expect(services.ItemsService.callCount).to.equal(0);
 		expect(createOne.callCount).to.equal(0);
@@ -119,7 +118,7 @@ describe('GitHub webhook one-time handler', () => {
 			},
 		};
 
-		const err = (await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
+		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
 		expect(err).to.deep.equal(new Error('"sponsorship.sponsor" field is undefined'));
 		expect(createOne.callCount).to.equal(0);
 	});

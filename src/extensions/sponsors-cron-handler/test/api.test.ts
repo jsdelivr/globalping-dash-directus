@@ -7,7 +7,7 @@ import operationApi from '../src/api.js';
 const data = {};
 const database = {} as OperationContext['database'];
 const accountability = {} as OperationContext['accountability'];
-const logger = (() => { /* empty function to satisfy typing */ }) as unknown as OperationContext['logger'];
+const logger = console.log as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 const env = {
 	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',

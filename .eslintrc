@@ -1,5 +1,8 @@
 {
-	"extends": "@martin-kolarik/eslint-config/typescript",
+	"extends": [
+		"plugin:vue/vue3-strongly-recommended",
+		"@martin-kolarik/eslint-config/typescript"
+	],
 	"ignorePatterns": [
 		"**/dist",
 		"/extensions",
@@ -13,6 +16,23 @@
 					"@directus/types"
 				]
 			}
-		]
-	}
+		],
+		"vue/html-indent": [
+			"error",
+			"tab"
+		],
+		"vue/max-attributes-per-line": "off",
+		"vue/multi-word-component-names": "off",
+		"vue/singleline-html-element-content-newline": "off"
+	},
+	"overrides": [
+		{
+			"files": [
+				"src/**/*.vue"
+			],
+			"parserOptions": {
+				"parser": "@typescript-eslint/parser"
+			}
+		}
+	]
 }

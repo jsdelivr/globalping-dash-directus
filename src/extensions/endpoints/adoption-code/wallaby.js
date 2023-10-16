@@ -1,0 +1,23 @@
+export default function wallaby () {
+	return {
+		testFramework: 'mocha',
+		files: [
+			'src/**/*.ts',
+			'package.json',
+		],
+		tests: [
+			'test/**/*.test.ts',
+		],
+
+		env: {
+			type: 'node',
+			params: {
+				runner: '--experimental-specifier-resolution=node',
+			},
+		},
+		preprocessors: {
+			'**/*.ts': file => file.content.replace(/\.ts/g, '.js'),
+		},
+		workers: { restart: true, initial: 1, regular: 1 },
+	};
+}

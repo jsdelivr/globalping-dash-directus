@@ -50,12 +50,13 @@ const api = useApi();
 
 const props = withDefaults(defineProps<Props>(), { value: () => null!, disabled: false });
 
-const emit = defineEmits(['input']);
+const emit = defineEmits([ 'input' ]);
 
 const { t } = useI18n();
 
 const placeholder = computed(() => {
-	if (props.disabled && !props.value) return null;
+	if (props.disabled && !props.value) { return null; }
+
 	return props.value ? t('interfaces.system-token.value_securely_saved') : t('interfaces.system-token.placeholder');
 });
 
@@ -77,10 +78,10 @@ watch(
 			isNewTokenGenerated.value = false;
 		}
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
-async function generateToken() {
+async function generateToken () {
 	loading.value = true;
 
 	try {
@@ -88,14 +89,14 @@ async function generateToken() {
 		emitValue(response.data.data);
 		isNewTokenGenerated.value = true;
 	} catch (err: any) {
-        console.error(err);
-        alert('Unexpected error occured, please contact the administrator');
+		console.error(err);
+		alert('Unexpected error occured, please contact the administrator');
 	} finally {
 		loading.value = false;
 	}
 }
 
-function emitValue(newValue: string | null) {
+function emitValue (newValue: string | null) {
 	emit('input', newValue);
 	localValue.value = newValue;
 }

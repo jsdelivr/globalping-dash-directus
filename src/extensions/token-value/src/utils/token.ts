@@ -4,7 +4,7 @@ import TTLCache from '@isaacs/ttlcache';
 
 const getRandomBytes = promisify(randomBytes);
 
-const tokens = new TTLCache({ ttl: 30 * 60 * 1000 });
+const tokens = new TTLCache<string, Buffer>({ ttl: 30 * 60 * 1000 });
 
 export const generateToken = async () => {
 	const bytes = await getRandomBytes(24);
@@ -18,7 +18,7 @@ export const hashToken = (token?: string) => {
 		throw new Error('Token value is empty');
 	}
 
-	const bytes = tokens.get(token) as Buffer | undefined;
+	const bytes = tokens.get(token);
 
 	if (!bytes) {
 		throw new Error('Token value is wrong, please regenerate the token');
