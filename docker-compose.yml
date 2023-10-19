@@ -2,9 +2,8 @@ version: '3'
 services:
   directus:
     image: directus/directus:10.6.1
-    network_mode: host
-    # ports:
-    #   - 8055:8055
+    ports:
+      - 8055:8055
     volumes:
       - ./uploads:/directus/uploads
       - ./extensions:/directus/extensions
@@ -13,7 +12,7 @@ services:
       - .env
     environment:
       DB_CLIENT: 'mysql'
-      DB_HOST: 'localhost'
+      DB_HOST: 'host.docker.internal'
       DB_PORT: 3306
       DB_DATABASE: ${MARIADB_DATABASE}
       DB_USER: ${MARIADB_USER}
@@ -27,4 +26,5 @@ services:
       AUTH_GITHUB_ALLOW_PUBLIC_REGISTRATION: 'true'
       AUTH_GITHUB_SCOPE: 'read:user,user:email'
       AUTH_GITHUB_FIRST_NAME_KEY: 'name'
+      # AUTH_GITHUB_LAST_NAME_KEY: 'login'
       AUTH_GITHUB_IDENTIFIER_KEY: 'id'

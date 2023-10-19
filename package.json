@@ -4,6 +4,7 @@
 	"license": "OSL-3.0",
 	"description": "jsDelivr dashboard",
 	"private": true,
+	"type": "module",
 	"dependencies": {
 		"bluebird": "^3.7.2",
 		"config": "^3.3.9",
@@ -25,7 +26,10 @@
 	"scripts": {
 		"lint": "eslint --cache .",
 		"lint:fix": "npm run lint -- --fix",
-		"migrate": "knex migrate:latest",
+		"init": "./init.sh",
+		"migrate": "mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && npx directus@latest database migrate:latest",
+		"schema:apply": "npx directus@latest schema apply --yes snapshots/collections-schema.yml",
+		"schema:snapshot": "npx directus@latest schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'",
 		"test": "npm run lint"
 	},

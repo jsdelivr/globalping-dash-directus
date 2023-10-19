@@ -1,5 +1,5 @@
 version: 1
-directus: 13.0.0
+directus: 13.1.1
 vendor: mysql
 collections:
   - collection: adopted_probes
@@ -17,7 +17,6 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
-      preview_url: null
       singleton: false
       sort: null
       sort_field: null
@@ -40,7 +39,6 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
-      preview_url: null
       singleton: false
       sort: null
       sort_field: null
@@ -63,7 +61,6 @@ collections:
       icon: folder
       item_duplication_fields: null
       note: null
-      preview_url: null
       singleton: false
       sort: 1
       sort_field: null
@@ -84,7 +81,6 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
-      preview_url: null
       singleton: false
       sort: null
       sort_field: null
@@ -107,7 +103,6 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
-      preview_url: null
       singleton: false
       sort: 1
       sort_field: null
