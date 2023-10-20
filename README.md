@@ -3,7 +3,7 @@
 ## Prod first deploy:
 
 - copy `dotenv` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `container.dotenv` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
+- copy `production.dotenv` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - run the remote container
 - `npm run init`
 

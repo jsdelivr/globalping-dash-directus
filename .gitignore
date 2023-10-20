@@ -5,5 +5,5 @@ config/local*
 .DS_Store
 .eslintcache
 .env
-container.env
+production.env
 .vscode/
