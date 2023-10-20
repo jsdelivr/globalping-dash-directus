@@ -1,7 +1,5 @@
 FROM node:18-alpine AS builder
 
-WORKDIR /builder
-
 # Build hooks/tokens
 COPY ./src/extensions/hooks/tokens /builder/src/extensions/hooks/tokens
 WORKDIR /builder/src/extensions/hooks/tokens

@@ -2,6 +2,7 @@
 
 set -e
 
+# Find all directories with a package.json file in /src (excluding node_modules)
 directories=$(find ./src -type d -name "node_modules" -prune -o -type f -name "package.json" -exec dirname {} \;)
 
 echo "Extensions directories:"
