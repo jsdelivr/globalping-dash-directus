@@ -1,30 +1,23 @@
 version: '3'
 services:
+  mariadb:
+    image: mariadb:10.11.5
+    environment:
+      - MARIADB_DATABASE=directus
+      - MARIADB_USER=directus
+      - MARIADB_PASSWORD=password
+      - MARIADB_RANDOM_ROOT_PASSWORD=1
+    ports:
+      - 3306:3306
+    volumes:
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
   directus:
-    image: directus/directus:10.6.1
+    depends_on:
+      - mariadb
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - local.env
     ports:
       - 8055:8055
-    volumes:
-      - ./uploads:/directus/uploads
-      - ./extensions:/directus/extensions
-      - ./snapshots:/directus/snapshots
-    env_file:
-      - .env
-    environment:
-      DB_CLIENT: 'mysql'
-      DB_HOST: 'host.docker.internal'
-      DB_PORT: 3306
-      DB_DATABASE: ${MARIADB_DATABASE}
-      DB_USER: ${MARIADB_USER}
-      DB_PASSWORD: ${MARIADB_PASSWORD}
-
-      AUTH_PROVIDERS: 'github'
-      AUTH_GITHUB_DRIVER: 'oauth2'
-      AUTH_GITHUB_AUTHORIZE_URL: 'https://github.com/login/oauth/authorize'
-      AUTH_GITHUB_ACCESS_URL: 'https://github.com/login/oauth/access_token'
-      AUTH_GITHUB_PROFILE_URL: 'https://api.github.com/user'
-      AUTH_GITHUB_ALLOW_PUBLIC_REGISTRATION: 'true'
-      AUTH_GITHUB_SCOPE: 'read:user,user:email'
-      AUTH_GITHUB_FIRST_NAME_KEY: 'name'
-      # AUTH_GITHUB_LAST_NAME_KEY: 'login'
-      AUTH_GITHUB_IDENTIFIER_KEY: 'id'

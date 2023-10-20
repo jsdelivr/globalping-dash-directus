@@ -1,0 +1,45 @@
+# DB
+DB_CLIENT=
+DB_HOST=
+DB_PORT=
+DB_DATABASE=
+DB_USER=
+DB_PASSWORD=
+
+# Directus
+KEY=directus
+SECRET=
+AUTH_GITHUB_CLIENT_ID=
+AUTH_GITHUB_CLIENT_SECRET=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+PUBLIC_URL=
+LOG_LEVEL=trace
+
+# Directus GitHub Auth
+AUTH_PROVIDERS=github
+AUTH_GITHUB_DRIVER=oauth2
+AUTH_GITHUB_AUTHORIZE_URL=https://github.com/login/oauth/authorize
+AUTH_GITHUB_ACCESS_URL=https://github.com/login/oauth/access_token
+AUTH_GITHUB_PROFILE_URL=https://api.github.com/user
+AUTH_GITHUB_ALLOW_PUBLIC_REGISTRATION=true
+AUTH_GITHUB_SCOPE=read:user,user:email
+AUTH_GITHUB_FIRST_NAME_KEY=name
+AUTH_GITHUB_IDENTIFIER_KEY=id
+
+# GitHub API
+# Is generated during enabling of webhooks and passed to the app, to validate requests
+GITHUB_WEBHOOK_TOKEN=
+# Token to access GraphQL api
+GITHUB_ACCESS_TOKEN=
+
+# Globalping API
+GP_SEND_CODE_ENDPOINT=https://api.globalping.io/v1/adoption-code
+GP_SYSTEM_KEY=
+
+# App
+CREDITS_PER_DOLLAR=10000
+
+# Are update during `npm run init`
+AUTH_GITHUB_DEFAULT_ROLE_ID=
+AUTH_DISABLE_DEFAULT=
