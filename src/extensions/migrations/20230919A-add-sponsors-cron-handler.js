@@ -1,9 +1,9 @@
-const BASE_DIRECTUS_URL = 'http://127.0.0.1:8055';
+const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 const FLOW_ID = '6847946c-858c-4d8d-a0a1-5a586bb55923'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
 
 async function createFlow () {
-	const URL = `${BASE_DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -31,7 +31,7 @@ async function createFlow () {
 }
 
 async function createOperation () {
-	const URL = `${BASE_DIRECTUS_URL}/operations?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/operations?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -57,7 +57,7 @@ async function createOperation () {
 }
 
 async function assignOperationToFlow (operationId) {
-	const URL = `${BASE_DIRECTUS_URL}/flows/${FLOW_ID}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/flows/${FLOW_ID}?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({

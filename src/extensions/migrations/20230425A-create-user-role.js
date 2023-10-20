@@ -1,8 +1,8 @@
-const BASE_DIRECTUS_URL = 'http://127.0.0.1:8055';
+const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 
 async function createRole () {
-	const URL = `${BASE_DIRECTUS_URL}/roles?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/roles?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -28,7 +28,7 @@ async function createRole () {
 }
 
 async function createPermissions (roleId) {
-	const URL = `${BASE_DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify([

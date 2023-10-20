@@ -1,8 +1,8 @@
-const BASE_DIRECTUS_URL = 'http://127.0.0.1:8055';
+const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 
 async function addCssRules () {
-	const URL = `${BASE_DIRECTUS_URL}/settings?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/settings?access_token=${ADMIN_ACCESS_TOKEN}`;
 
 	const result = await fetch(URL, {
 		method: 'PATCH',

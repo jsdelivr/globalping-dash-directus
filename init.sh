@@ -21,7 +21,7 @@ function confirm {
 }
 
 function get_token {
-  local token=$(curl -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' http://localhost:8055/auth/login | jq -r '.data.access_token')
+  local token=$(curl -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' $DIRECTUS_URL/auth/login | jq -r '.data.access_token')
   echo "$token"
 }
 
@@ -35,7 +35,7 @@ npm run schema:apply
 
 confirm "Restart the container." # Required because of https://github.com/directus/directus/issues/17117
 
-user_role_id=$(curl -H "Authorization: Bearer $token" http://localhost:8055/roles | jq -r '.data[] | select(.name == "User") | .id')
+user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
 confirm "Set that value to the container env vars: AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id . Then restart the container."
 
