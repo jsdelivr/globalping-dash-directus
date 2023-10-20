@@ -33,7 +33,8 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"add": "directus-extension add"
+		"add": "directus-extension add",
+		"test": "echo 'No tests for that extension'"
 	},
 	"devDependencies": {
 		"@directus/extensions-sdk": "10.1.1",

@@ -18,7 +18,8 @@
 	"scripts": {
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
-		"link": "directus-extension link"
+		"link": "directus-extension link",
+		"test": "echo 'No tests for that extension'"
 	},
 	"devDependencies": {
 		"@directus/extensions-sdk": "10.1.11",
