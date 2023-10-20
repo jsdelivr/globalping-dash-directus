@@ -26,6 +26,7 @@
 		"typescript": "^5.0.4"
 	},
 	"dependencies": {
+		"@directus/errors": "^0.0.2",
 		"lodash": "^4.17.21"
 	}
 }
