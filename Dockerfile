@@ -23,35 +23,30 @@ COPY ./src/extensions/token-value /builder/src/extensions/token-value
 WORKDIR /builder/src/extensions/token-value
 RUN npm ci
 RUN npm run build
-RUN mkdir -p /directus/extensions/directus-extension-token-value/dist
 
 # Build gh-webhook-handler
 COPY ./src/extensions/gh-webhook-handler /builder/src/extensions/gh-webhook-handler
 WORKDIR /builder/src/extensions/gh-webhook-handler
 RUN npm ci
 RUN npm run build
-RUN mkdir -p /directus/extensions/directus-extension-gh-webhook-handler/dist
 
 # Build sponsors-cron-handler
 COPY ./src/extensions/sponsors-cron-handler /builder/src/extensions/sponsors-cron-handler
 WORKDIR /builder/src/extensions/sponsors-cron-handler
 RUN npm ci
 RUN npm run build
-RUN mkdir -p /directus/extensions/directus-extension-sponsors-cron-handler/dist
 
 # Build modules/probes-adapter
 COPY ./src/extensions/modules/probes-adapter /builder/src/extensions/modules/probes-adapter
 WORKDIR /builder/src/extensions/modules/probes-adapter
 RUN npm ci
 RUN npm run build
-RUN mkdir -p /directus/extensions/modules/probes-adapter
 
 # Build endpoints/adoption-code
 COPY ./src/extensions/endpoints/adoption-code /builder/src/extensions/endpoints/adoption-code
 WORKDIR /builder/src/extensions/endpoints/adoption-code
 RUN npm ci
 RUN npm run build
-RUN mkdir -p /directus/extensions/endpoints/adoption-code
 
 FROM directus/directus:10.6.1
 
