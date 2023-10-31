@@ -1,5 +1,5 @@
 version: 1
-directus: 13.1.1
+directus: 13.2.0
 vendor: mysql
 collections:
   - collection: adopted_probes
@@ -17,6 +17,7 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
+      preview_url: null
       singleton: false
       sort: null
       sort_field: null
@@ -39,6 +40,7 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
+      preview_url: null
       singleton: false
       sort: null
       sort_field: null
@@ -61,6 +63,7 @@ collections:
       icon: folder
       item_duplication_fields: null
       note: null
+      preview_url: null
       singleton: false
       sort: 1
       sort_field: null
@@ -81,6 +84,7 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
+      preview_url: null
       singleton: false
       sort: null
       sort_field: null
@@ -103,6 +107,7 @@ collections:
       icon: null
       item_duplication_fields: null
       note: null
+      preview_url: null
       singleton: false
       sort: 1
       sort_field: null
@@ -111,6 +116,120 @@ collections:
     schema:
       name: tokens
 fields:
+  - collection: adopted_probes
+    field: asn
+    type: integer
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: asn
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 16
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: asn
+      table: adopted_probes
+      data_type: int
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: city
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: city
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: country
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: country
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 12
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: country
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: adopted_probes
     field: date_created
     type: timestamp
@@ -306,6 +425,158 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: adopted_probes
+    field: latitude
+    type: float
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: latitude
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 14
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: latitude
+      table: adopted_probes
+      data_type: float
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: longitude
+    type: float
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: longitude
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 15
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: longitude
+      table: adopted_probes
+      data_type: float
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: network
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: network
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 17
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: network
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: status
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: status
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: status
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
     field: userId
     type: string
     meta:
@@ -455,6 +726,44 @@ fields:
       numeric_scale: null
       is_nullable: true
       is_unique: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: version
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: version
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: version
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
       is_primary_key: false
       is_generated: false
       generation_expression: null

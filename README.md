@@ -25,7 +25,7 @@
 
 Generate the schema:
 
-`docker compose exec directus npx directus schema snapshot --yes /directus/snapshots/collections-schema.yml`
+`npx directus@latest schema snapshot --yes snapshots/collections-schema.yml`
 
 Run migration:
 
