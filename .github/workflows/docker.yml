@@ -1,0 +1,22 @@
+name: Publish Docker
+
+on:
+  push:
+    branches:
+      - master
+#    tags:
+#      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Registry
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        with:
+          name: jsdelivr/dashboard/dashboard
+          username: jsdelivr
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          tag_names: true
