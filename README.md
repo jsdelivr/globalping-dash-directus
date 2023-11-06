@@ -2,8 +2,8 @@
 
 ## Prod first deploy:
 
-- copy `dotenv` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `production.dotenv` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
+- copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
+- copy `.dotenv.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - run the remote container
 - `npm run init`
 
@@ -16,8 +16,8 @@
 
 ## Dev run:
 
-- copy `dotenv` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `local.dotenv` to the `local.env` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
+- copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
+- copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - `docker compose up`
 - `npm run init`
 
