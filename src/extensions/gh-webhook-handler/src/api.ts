@@ -12,18 +12,18 @@ type ValidateGithubSignatureArgs = {
 };
 
 const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignatureArgs) => {
-	const GITHUB_WEBHOOK_TOKEN = env['GITHUB_WEBHOOK_TOKEN'] as string | undefined;
+	const GITHUB_WEBHOOK_SECRET = env['GITHUB_WEBHOOK_SECRET'] as string | undefined;
 	const githubSignature = headers['x-hub-signature-256'];
 
-	if (!GITHUB_WEBHOOK_TOKEN) {
-		throw new Error('GITHUB_WEBHOOK_TOKEN was not provided');
+	if (!GITHUB_WEBHOOK_SECRET) {
+		throw new Error('GITHUB_WEBHOOK_SECRET was not provided');
 	}
 
 	if (!githubSignature) {
 		throw new Error('"x-hub-signature-256" header was not provided');
 	}
 
-	const hmac = crypto.createHmac('sha256', GITHUB_WEBHOOK_TOKEN);
+	const hmac = crypto.createHmac('sha256', GITHUB_WEBHOOK_SECRET);
 	const computedSignature = 'sha256=' + hmac.update(JSON.stringify(body), 'utf-8').digest('hex');
 	const isGithubSignatureValid = crypto.timingSafeEqual(Buffer.from(githubSignature), Buffer.from(computedSignature));
 	return isGithubSignatureValid;

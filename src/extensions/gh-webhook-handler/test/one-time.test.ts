@@ -9,7 +9,7 @@ const accountability = {} as OperationContext['accountability'];
 const logger = console.log as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 const env = {
-	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+	GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 	CREDITS_PER_DOLLAR: '10000',
 };
 const createOne = sinon.stub().resolves(1);
@@ -53,7 +53,7 @@ describe('GitHub webhook one-time handler', () => {
 		expect(result).to.equal('Credits item with id: 1 created. One-time sponsorship handled.');
 	});
 
-	it('should throw without GITHUB_WEBHOOK_TOKEN env', async () => {
+	it('should throw without GITHUB_WEBHOOK_SECRET env', async () => {
 		const data = {
 			$trigger: {
 				headers: {
@@ -65,7 +65,7 @@ describe('GitHub webhook one-time handler', () => {
 		const env = {};
 
 		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
-		expect(err).to.deep.equal(new Error('GITHUB_WEBHOOK_TOKEN was not provided'));
+		expect(err).to.deep.equal(new Error('GITHUB_WEBHOOK_SECRET was not provided'));
 		expect(createOne.callCount).to.equal(0);
 	});
 

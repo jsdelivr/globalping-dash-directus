@@ -11,7 +11,7 @@ const accountability = {} as OperationContext['accountability'];
 const logger = console.log as unknown as OperationContext['logger'];
 const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 const env = {
-	GITHUB_WEBHOOK_TOKEN: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+	GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 	CREDITS_PER_DOLLAR: '10000',
 };
 const creditsCreateOne = sinon.stub().resolves(1);
