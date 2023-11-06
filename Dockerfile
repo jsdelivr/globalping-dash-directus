@@ -62,7 +62,7 @@ RUN npm ci
 COPY ./src/extensions/endpoints/adoption-code .
 RUN npm run build
 
-FROM directus/directus:10.6.1
+FROM directus/directus:10.7.2
 
 COPY --from=builder-01 /builder/src/extensions/hooks/tokens/dist/* /directus/extensions/hooks/tokens/
 COPY --from=builder-02 /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/hooks/sign-up/
