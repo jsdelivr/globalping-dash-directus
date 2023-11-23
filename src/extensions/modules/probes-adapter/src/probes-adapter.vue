@@ -2,7 +2,7 @@
 	<private-view title="Adopt Your Probes">
 		<template #title-outer:prepend>
 			<v-button class="header-icon" rounded icon exact disabled>
-				<v-icon name="router" />
+				<v-icon name="router"/>
 			</v-button>
 		</template>
 
@@ -95,8 +95,8 @@ export default {
 
 <style lang="scss" scoped>
 .content {
-  padding: var(--content-padding);
-  padding-bottom: var(--content-padding-bottom);
+	padding: var(--content-padding);
+	padding-bottom: var(--content-padding-bottom);
 }
 
 .description {
@@ -119,10 +119,7 @@ form {
 }
 
 .header-icon {
-  --v-button-background-color-disabled: var(--primary-10);
-  --v-button-color-disabled: var(--primary);
-  --v-button-background-color-hover-disabled: var(--primary-25);
-  --v-button-color-hover-disabled: var(--primary);
+	--v-button-color-disabled: var(--theme--foreground);
 }
 
 .label {

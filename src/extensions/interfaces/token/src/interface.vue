@@ -108,7 +108,7 @@ function emitValue (newValue: string | null) {
 }
 
 .saved {
-	--v-input-placeholder-color: var(--primary);
+	--v-input-placeholder-color: var(--theme-primary);
 }
 
 .v-notice {
@@ -124,6 +124,6 @@ function emitValue (newValue: string | null) {
 }
 
 .default-icon {
-	--v-icon-color: var(--primary);
+	--v-icon-color: var(--theme-primary);
 }
 </style>
