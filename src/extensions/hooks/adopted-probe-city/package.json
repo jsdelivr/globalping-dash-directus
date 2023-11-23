@@ -1,0 +1,44 @@
+{
+	"name": "directus-extension-adopted-probe-city",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-hook"
+	],
+	"type": "module",
+	"directus:extension": {
+		"type": "hook",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.1.13"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "10.1.13",
+		"@types/chai": "^4.3.9",
+		"@types/mocha": "^10.0.3",
+		"@types/node": "^20.8.9",
+		"@types/sinon": "^17.0.0",
+		"chai": "^4.3.10",
+		"mocha": "^10.2.0",
+		"nock": "^13.3.8",
+		"sinon": "^17.0.1",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.2.2"
+	},
+	"dependencies": {
+		"@directus/errors": "^0.2.0",
+		"@directus/extensions": "^0.1.0",
+		"@isaacs/ttlcache": "^1.4.1",
+		"any-ascii": "^0.3.2",
+		"axios": "^1.6.0"
+	}
+}

@@ -1,5 +1,5 @@
 version: 1
-directus: 13.2.0
+directus: 14.1.0
 vendor: mysql
 collections:
   - collection: adopted_probes
@@ -23,6 +23,7 @@ collections:
       sort_field: null
       translations: null
       unarchive_value: null
+      versioning: false
     schema:
       name: adopted_probes
   - collection: credits
@@ -46,6 +47,7 @@ collections:
       sort_field: null
       translations: null
       unarchive_value: null
+      versioning: false
     schema:
       name: credits
   - collection: jsdelivr
@@ -69,6 +71,7 @@ collections:
       sort_field: null
       translations: null
       unarchive_value: null
+      versioning: false
   - collection: sponsors
     meta:
       accountability: all
@@ -90,6 +93,7 @@ collections:
       sort_field: null
       translations: null
       unarchive_value: null
+      versioning: false
     schema:
       name: sponsors
   - collection: tokens
@@ -113,6 +117,7 @@ collections:
       sort_field: null
       translations: null
       unarchive_value: null
+      versioning: false
     schema:
       name: tokens
 fields:
@@ -131,8 +136,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 16
+      required: true
+      sort: 20
       special: null
       translations: null
       validation: null
@@ -146,7 +151,7 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 0
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -166,11 +171,16 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: >-
+        City where the probe is located. If you know that city is wrong it can
+        be changed here: type in the valid city and click save. City edit is
+        only available within the country defined by Globalping ("country"
+        field). To reset the city value clear the field, save and wait for a few
+        mins while dashboard picks up the city from Globalping.
       options: null
       readonly: false
       required: false
-      sort: 13
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -204,11 +214,13 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: null
+      note: >-
+        Country value is not editable. If you are sure it is wrong please leave
+        a message here: https://github.com/jsdelivr/globalping/issues/268
       options: null
       readonly: false
-      required: false
-      sort: 12
+      required: true
+      sort: 10
       special: null
       translations: null
       validation: null
@@ -216,6 +228,44 @@ fields:
       width: full
     schema:
       name: country
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: countryOfCustomCity
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: countryOfCustomCity
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: countryOfCustomCity
       table: adopted_probes
       data_type: varchar
       default_value: null
@@ -364,7 +414,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 7
+      sort: 14
       special: null
       translations: null
       validation: null
@@ -387,6 +437,45 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: adopted_probes
+    field: isCustomCity
+    type: boolean
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: isCustomCity
+      group: null
+      hidden: false
+      interface: boolean
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 22
+      special:
+        - cast-boolean
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: isCustomCity
+      table: adopted_probes
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: 3
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
     field: lastSyncDate
     type: date
     meta:
@@ -398,11 +487,13 @@ fields:
       group: null
       hidden: false
       interface: datetime
-      note: null
+      note: >-
+        Last time probe was online. Adoption will expire after 30 days of being
+        offline.
       options: null
       readonly: false
       required: true
-      sort: 9
+      sort: 13
       special: null
       translations: null
       validation: null
@@ -439,8 +530,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 14
+      required: true
+      sort: 18
       special: null
       translations: null
       validation: null
@@ -477,8 +568,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 15
+      required: true
+      sort: 19
       special: null
       translations: null
       validation: null
@@ -492,6 +583,46 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: name
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        Non-public name of the probe. It doesn't affect anything and is only
+        visible on the dashboard "Adopted Probes" page.
+      options: null
+      readonly: false
+      required: false
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
       is_nullable: true
       is_unique: false
       is_primary_key: false
@@ -515,8 +646,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 17
+      required: true
+      sort: 21
       special: null
       translations: null
       validation: null
@@ -524,6 +655,44 @@ fields:
       width: full
     schema:
       name: network
+      table: adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: state
+    type: string
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: state
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: state
       table: adopted_probes
       data_type: varchar
       default_value: null
@@ -553,8 +722,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 10
+      required: true
+      sort: 17
       special: null
       translations: null
       validation: null
@@ -566,6 +735,48 @@ fields:
       data_type: varchar
       default_value: null
       max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: adopted_probes
+    field: tags
+    type: json
+    meta:
+      collection: adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: tags
+      group: null
+      hidden: false
+      interface: tags
+      note: >-
+        Public tags of the probe. They can be used as location filters for a
+        measurement. E.g. for user with github username `"jimaek"` and tag
+        `"home1"` location filter is `{ "tags": ["u-jimaek-home1"] }`
+      options: null
+      readonly: false
+      required: false
+      sort: 7
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: tags
+      table: adopted_probes
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -592,7 +803,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 6
+      sort: 12
       special: null
       translations: null
       validation: null
@@ -709,8 +920,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 8
+      required: true
+      sort: 15
       special: null
       translations: null
       validation: null
@@ -747,8 +958,8 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
-      sort: 11
+      required: true
+      sort: 16
       special: null
       translations: null
       validation: null
@@ -762,7 +973,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -1122,6 +1333,44 @@ fields:
       has_auto_increment: false
       foreign_key_table: directus_users
       foreign_key_column: id
+  - collection: directus_users
+    field: github
+    type: string
+    meta:
+      collection: directus_users
+      conditions: null
+      display: null
+      display_options: null
+      field: github
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: github
+      table: directus_users
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: sponsors
     field: date_created
     type: timestamp

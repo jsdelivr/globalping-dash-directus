@@ -44,6 +44,10 @@ beforeEach(() => {
 	sinon.resetHistory();
 });
 
+after(() => {
+	nock.cleanAll();
+});
+
 describe('/adoption-code/send-code endpoint', () => {
 	it('should accept ip, generate code and send it to globalping api', async () => {
 		endpoint(router, endpointContext);
@@ -60,7 +64,15 @@ describe('/adoption-code/send-code endpoint', () => {
 			expect(body.code.length).to.equal(6);
 			return true;
 		}).reply(200, {
-			result: 'Code was sent to the probe.',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 		});
 
 		await request('/send-code', req, res);
@@ -143,7 +155,15 @@ describe('/adoption-code/verify-code endpoint', () => {
 			code = body.code;
 			return true;
 		}).reply(200, {
-			result: 'Code was sent to the probe.',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 		});
 
 		await request('/send-code', {
@@ -172,6 +192,16 @@ describe('/adoption-code/verify-code endpoint', () => {
 
 		expect(createOne.args[0][0]).to.deep.equal({
 			ip: '1.1.1.1',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			state: null,
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 			userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 			lastSyncDate: new Date(),
 		});
@@ -186,7 +216,15 @@ describe('/adoption-code/verify-code endpoint', () => {
 			code = body.code;
 			return true;
 		}).reply(200, {
-			result: 'Code was sent to the probe.',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 		});
 
 		await request('/send-code', {
@@ -215,6 +253,16 @@ describe('/adoption-code/verify-code endpoint', () => {
 
 		expect(createOne.args[0][0]).to.deep.equal({
 			ip: '1.1.1.1',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			state: null,
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 			userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 			lastSyncDate: new Date(),
 		});
@@ -229,7 +277,15 @@ describe('/adoption-code/verify-code endpoint', () => {
 			code = body.code;
 			return true;
 		}).reply(200, {
-			result: 'Code was sent to the probe.',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 		});
 
 		await request('/send-code', {
@@ -262,7 +318,15 @@ describe('/adoption-code/verify-code endpoint', () => {
 			expect(body.code.length).to.equal(6);
 			return true;
 		}).reply(200, {
-			result: 'Code was sent to the probe.',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 		});
 
 		await request('/send-code', {
@@ -296,7 +360,15 @@ describe('/adoption-code/verify-code endpoint', () => {
 			expect(body.code.length).to.equal(6);
 			return true;
 		}).reply(200, {
-			result: 'Code was sent to the probe.',
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			version: '0.26.0',
+			status: 'ready',
+			city: 'Paris',
+			country: 'FR',
+			latitude: 48.8534,
+			longitude: 2.3488,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
 		});
 
 		await request('/send-code', {

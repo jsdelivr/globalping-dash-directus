@@ -6,6 +6,7 @@ type User = {
     first_name?: string;
     last_name?: string;
     last_page?: string;
+		github?: string;
 }
 
 export default defineHook(({ filter }) => {
@@ -19,15 +20,18 @@ export default defineHook(({ filter }) => {
 });
 
 const handleGithubLogin = (user: User) => {
-	const firstName = user.first_name;
-	const id = user.external_identifier;
+	const login = user.last_name;
+	user.last_name = undefined;
+	user.github = login;
 
-	if (!firstName) {
-		user.first_name = id;
+	const name = user.first_name;
+
+	if (!name) {
+		user.first_name = login;
 		return;
 	}
 
-	const names = firstName.split(' ');
+	const names = name.split(' ');
 
 	if (names.length > 1) {
 		user.first_name = names[0];

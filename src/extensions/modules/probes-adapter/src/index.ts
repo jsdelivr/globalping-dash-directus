@@ -3,7 +3,7 @@ import ProbesAdapter from './probes-adapter.vue';
 
 export default defineModule({
 	id: 'probes-adapter',
-	name: 'Adopt probes',
+	name: 'Adopt Probes',
 	icon: 'router',
 	routes: [
 		{

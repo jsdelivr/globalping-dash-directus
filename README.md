@@ -3,13 +3,14 @@
 ## Prod first deploy:
 
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `.dotenv.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
+- copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - run the remote container
 - `npm run init`
 
 ## Prod other deploys:
 
 - fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
+- if there are changes in `.env.production.example` copy them to the env vars of the container
 - `npm run migrate`
 - `npm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
 - stop prev container, run new container
@@ -33,7 +34,7 @@ Run migration:
 
 Create extension:
 
-`npx create-directus-extension@latest`
+`npx --yes create-directus-extension@latest`
 
 ### Prepare dev host:
 

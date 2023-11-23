@@ -44,6 +44,7 @@
 		"typescript": "^5.0.4"
 	},
 	"dependencies": {
+		"@directus/errors": "^0.2.0",
 		"@isaacs/ttlcache": "^1.4.0"
 	}
 }

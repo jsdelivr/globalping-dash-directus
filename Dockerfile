@@ -14,7 +14,7 @@ RUN npm ci
 COPY ./src/extensions/hooks/sign-up .
 RUN npm run build
 
-# # Build interfaces/token
+# Build interfaces/token
 FROM node:18-alpine AS builder-03
 WORKDIR /builder/src/extensions/interfaces/token
 ADD ./src/extensions/interfaces/token/package.json ./src/extensions/interfaces/token/package-lock.json ./
@@ -62,6 +62,14 @@ RUN npm ci
 COPY ./src/extensions/endpoints/adoption-code .
 RUN npm run build
 
+# Build hooks/adopted-probe-city
+FROM node:18-alpine AS builder-09
+WORKDIR /builder/src/extensions/hooks/adopted-probe-city
+ADD ./src/extensions/hooks/adopted-probe-city/package.json ./src/extensions/hooks/adopted-probe-city/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/hooks/adopted-probe-city .
+RUN npm run build
+
 FROM directus/directus:10.7.2
 
 COPY --from=builder-01 /builder/src/extensions/hooks/tokens/dist/* /directus/extensions/hooks/tokens/
@@ -75,3 +83,4 @@ COPY --from=builder-06 /builder/src/extensions/sponsors-cron-handler/dist/* /dir
 COPY --from=builder-06 /builder/src/extensions/sponsors-cron-handler/package.json /directus/extensions/directus-extension-sponsors-cron-handler/
 COPY --from=builder-07 /builder/src/extensions/modules/probes-adapter/dist/* /directus/extensions/modules/probes-adapter/
 COPY --from=builder-08 /builder/src/extensions/endpoints/adoption-code/dist/* /directus/extensions/endpoints/adoption-code/
+COPY --from=builder-09 /builder/src/extensions/hooks/adopted-probe-city/dist/* /directus/extensions/hooks/adopted-probe-city/

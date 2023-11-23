@@ -45,6 +45,10 @@ beforeEach(() => {
 	}]);
 });
 
+after(() => {
+	nock.cleanAll();
+});
+
 describe('Sponsors cron handler', () => {
 	it('should add credits to recurring sponsors with lastEarningDate > 30 days', async () => {
 		nock('https://api.github.com').post('/graphql').reply(200, {

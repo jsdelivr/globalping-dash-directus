@@ -6,14 +6,20 @@ services:
       - MARIADB_DATABASE=directus
       - MARIADB_USER=directus
       - MARIADB_PASSWORD=password
-      - MARIADB_RANDOM_ROOT_PASSWORD=1
+      - MARIADB_ROOT_PASSWORD=root
     ports:
       - "3306:3306"
     volumes:
       - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "directus", "-ppassword"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
   directus:
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     build:
       context: .
       dockerfile: Dockerfile

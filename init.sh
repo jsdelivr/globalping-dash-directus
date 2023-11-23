@@ -33,11 +33,9 @@ npm run migrate
 
 npm run schema:apply
 
-confirm "Restart the container." # Required because of https://github.com/directus/directus/issues/17117
-
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
-confirm "Set that value to the container env vars: AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id . Then restart the container."
+confirm "Set that value to the container env vars: AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id . Then restart the container." # Restart is requred to apply new role id and because of https://github.com/directus/directus/issues/17117
 
 confirm "Login using github. Re-login as admin and give github user admin rights. Then set that value to the container env vars: AUTH_DISABLE_DEFAULT=true . Then restart the container."
 

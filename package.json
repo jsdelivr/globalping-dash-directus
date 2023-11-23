@@ -27,9 +27,9 @@
 		"lint": "eslint --cache .",
 		"lint:fix": "npm run lint -- --fix",
 		"init": "./init.sh",
-		"migrate": "mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && npx directus@latest database migrate:latest",
-		"schema:apply": "npx directus@latest schema apply --yes snapshots/collections-schema.yml",
-		"schema:snapshot": "npx directus@latest schema snapshot --yes snapshots/collections-schema.yml",
+		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && npx --yes directus@latest database migrate:latest",
+		"schema:apply": "npx --yes directus@latest schema apply --yes snapshots/collections-schema.yml",
+		"schema:snapshot": "npx --yes directus@latest schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'",
 		"test": "./test.sh"
 	},
