@@ -70,6 +70,30 @@ RUN npm ci
 COPY ./src/extensions/hooks/adopted-probe-city .
 RUN npm run build
 
+# Build hooks/sign-in
+FROM node:18-alpine AS builder-10
+WORKDIR /builder/src/extensions/hooks/sign-in
+ADD ./src/extensions/hooks/sign-in/package.json ./src/extensions/hooks/sign-in/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/hooks/sign-in .
+RUN npm run build
+
+# Build endpoints/sync-github-username
+FROM node:18-alpine AS builder-11
+WORKDIR /builder/src/extensions/endpoints/sync-github-username
+ADD ./src/extensions/endpoints/sync-github-username/package.json ./src/extensions/endpoints/sync-github-username/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/endpoints/sync-github-username .
+RUN npm run build
+
+# Build interfaces/github-username
+FROM node:18-alpine AS builder-12
+WORKDIR /builder/src/extensions/interfaces/github-username
+ADD ./src/extensions/interfaces/github-username/package.json ./src/extensions/interfaces/github-username/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/interfaces/github-username .
+RUN npm run build
+
 FROM directus/directus:10.7.2
 
 COPY --from=builder-01 /builder/src/extensions/hooks/tokens/dist/* /directus/extensions/hooks/tokens/
@@ -84,3 +108,6 @@ COPY --from=builder-06 /builder/src/extensions/sponsors-cron-handler/package.jso
 COPY --from=builder-07 /builder/src/extensions/modules/probes-adapter/dist/* /directus/extensions/modules/probes-adapter/
 COPY --from=builder-08 /builder/src/extensions/endpoints/adoption-code/dist/* /directus/extensions/endpoints/adoption-code/
 COPY --from=builder-09 /builder/src/extensions/hooks/adopted-probe-city/dist/* /directus/extensions/hooks/adopted-probe-city/
+COPY --from=builder-10 /builder/src/extensions/hooks/sign-in/dist/* /directus/extensions/hooks/sign-in/
+COPY --from=builder-11 /builder/src/extensions/endpoints/sync-github-username/dist/* /directus/extensions/endpoints/sync-github-username/
+COPY --from=builder-12 /builder/src/extensions/interfaces/github-username/dist/* /directus/extensions/interfaces/github-username/

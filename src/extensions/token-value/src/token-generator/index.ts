@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import { generateToken } from '../utils/token';
 

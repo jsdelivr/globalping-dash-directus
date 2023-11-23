@@ -1344,7 +1344,7 @@ fields:
       field: github
       group: null
       hidden: false
-      interface: input
+      interface: github-username
       note: null
       options: null
       readonly: false

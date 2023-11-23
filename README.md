@@ -1,13 +1,13 @@
 # dashboard
 
-## Prod first deploy:
+## Prod first deploy
 
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
 - copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - run the remote container
 - `npm run init`
 
-## Prod other deploys:
+## Prod other deploys
 
 - fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
 - if there are changes in `.env.production.example` copy them to the env vars of the container
@@ -15,14 +15,14 @@
 - `npm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
 - stop prev container, run new container
 
-## Dev run:
+## Dev run
 
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
 - copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - `docker compose up`
 - `npm run init`
 
-## Commands:
+## Commands
 
 Generate the schema:
 
@@ -36,7 +36,7 @@ Create extension:
 
 `npx --yes create-directus-extension@latest`
 
-### Prepare dev host:
+## Prepare dev host
 
 ```bash
 # Install haproxy

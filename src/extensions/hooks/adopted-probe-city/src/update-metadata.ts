@@ -1,4 +1,4 @@
-import { HookExtensionContext } from '@directus/extensions';
+import type { HookExtensionContext } from '@directus/extensions';
 import { Fields } from './index';
 import { geonamesCache, getKey } from './geonames-cache';
 

@@ -1,0 +1,30 @@
+{
+	"name": "directus-extension-github-username",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-interface"
+	],
+	"type": "module",
+	"directus:extension": {
+		"type": "interface",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.1.14"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"test": "echo 'No tests for that extension'"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "10.1.14",
+		"sass": "^1.69.5",
+		"typescript": "^5.2.2",
+		"vue": "^3.3.8"
+	}
+}
