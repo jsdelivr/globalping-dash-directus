@@ -73,7 +73,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 
 			const code = generateRandomCode();
 
-			const response = await axios.post<SendCodeResponse>(`${env.GP_SEND_CODE_ENDPOINT}?systemkey=${env.GP_SYSTEM_KEY}`, {
+			const response = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
 				ip,
 				code,
 			}, {

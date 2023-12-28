@@ -4,52 +4,52 @@ import nock from 'nock';
 import { OperationContext } from '@directus/types';
 import operationApi from '../src/api.js';
 
-const data = {};
-const database = {} as OperationContext['database'];
-const accountability = {} as OperationContext['accountability'];
-const logger = console.log as unknown as OperationContext['logger'];
-const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
-const env = {
-	GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
-	CREDITS_PER_DOLLAR: '10000',
-};
+describe('Sponsors cron handler', () => {
+	const data = {};
+	const database = {} as OperationContext['database'];
+	const accountability = {} as OperationContext['accountability'];
+	const logger = console.log as unknown as OperationContext['logger'];
+	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
+	const env = {
+		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+		CREDITS_PER_DOLLAR: '10000',
+	};
 
-const readByQuery = sinon.stub().resolves([{
-	id: 1,
-	githubLogin: 'monalisa',
-	githubId: '2',
-	monthlyAmount: 10,
-	lastEarningDate: '2023-08-15 08:19:00',
-}]);
-const createOne = sinon.stub().resolves(1);
-const updateOne = sinon.stub().resolves(1);
-const deleteOne = sinon.stub().resolves(1);
-const services = {
-	ItemsService: sinon.stub().returns({ createOne, readByQuery, updateOne, deleteOne }),
-};
-
-before(() => {
-	nock.disableNetConnect();
-	sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
-});
-
-beforeEach(() => {
-	sinon.resetHistory();
-
-	readByQuery.resolves([{
+	const readByQuery = sinon.stub().resolves([{
 		id: 1,
 		githubLogin: 'monalisa',
 		githubId: '2',
 		monthlyAmount: 10,
 		lastEarningDate: '2023-08-15 08:19:00',
 	}]);
-});
+	const createOne = sinon.stub().resolves(1);
+	const updateOne = sinon.stub().resolves(1);
+	const deleteOne = sinon.stub().resolves(1);
+	const services = {
+		ItemsService: sinon.stub().returns({ createOne, readByQuery, updateOne, deleteOne }),
+	};
 
-after(() => {
-	nock.cleanAll();
-});
+	before(() => {
+		nock.disableNetConnect();
+		sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
+	});
 
-describe('Sponsors cron handler', () => {
+	beforeEach(() => {
+		sinon.resetHistory();
+
+		readByQuery.resolves([{
+			id: 1,
+			githubLogin: 'monalisa',
+			githubId: '2',
+			monthlyAmount: 10,
+			lastEarningDate: '2023-08-15 08:19:00',
+		}]);
+	});
+
+	after(() => {
+		nock.cleanAll();
+	});
+
 	it('should add credits to recurring sponsors with lastEarningDate > 30 days', async () => {
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
@@ -107,7 +107,6 @@ describe('Sponsors cron handler', () => {
 		expect(createOne.args[0]).to.deep.equal([{
 			credits: 100000,
 			githubId: '2',
-			githubLogin: 'monalisa',
 			comment: 'For 10$ recurring sponsorship',
 		}]);
 
@@ -369,7 +368,6 @@ describe('Sponsors cron handler', () => {
 		expect(createOne.args[0]).to.deep.equal([{
 			credits: 150000,
 			githubId: '2',
-			githubLogin: 'monalisa',
 			comment: 'For 15$ recurring sponsorship',
 		}]);
 

@@ -94,7 +94,23 @@ RUN npm ci
 COPY ./src/extensions/interfaces/github-username .
 RUN npm run build
 
-FROM directus/directus:10.7.2
+# Build adopted-probes-status-cron-handler
+FROM node:18-alpine AS builder-13
+WORKDIR /builder/src/extensions/adopted-probes-status-cron-handler
+ADD ./src/extensions/adopted-probes-status-cron-handler/package.json ./src/extensions/adopted-probes-status-cron-handler/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/adopted-probes-status-cron-handler .
+RUN npm run build
+
+# Build adopted-probes-credits-cron-handler
+FROM node:18-alpine AS builder-14
+WORKDIR /builder/src/extensions/adopted-probes-credits-cron-handler
+ADD ./src/extensions/adopted-probes-credits-cron-handler/package.json ./src/extensions/adopted-probes-credits-cron-handler/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/adopted-probes-credits-cron-handler .
+RUN npm run build
+
+FROM directus/directus:10.8.2
 
 COPY --from=builder-01 /builder/src/extensions/hooks/tokens/dist/* /directus/extensions/hooks/tokens/
 COPY --from=builder-02 /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/hooks/sign-up/
@@ -111,3 +127,7 @@ COPY --from=builder-09 /builder/src/extensions/hooks/adopted-probe-city/dist/* /
 COPY --from=builder-10 /builder/src/extensions/hooks/sign-in/dist/* /directus/extensions/hooks/sign-in/
 COPY --from=builder-11 /builder/src/extensions/endpoints/sync-github-username/dist/* /directus/extensions/endpoints/sync-github-username/
 COPY --from=builder-12 /builder/src/extensions/interfaces/github-username/dist/* /directus/extensions/interfaces/github-username/
+COPY --from=builder-13 /builder/src/extensions/adopted-probes-status-cron-handler/dist/* /directus/extensions/directus-extension-adopted-probes-status-cron-handler/dist/
+COPY --from=builder-13 /builder/src/extensions/adopted-probes-status-cron-handler/package.json /directus/extensions/directus-extension-adopted-probes-status-cron-handler/
+COPY --from=builder-14 /builder/src/extensions/adopted-probes-credits-cron-handler/dist/* /directus/extensions/directus-extension-adopted-probes-credits-cron-handler/dist/
+COPY --from=builder-14 /builder/src/extensions/adopted-probes-credits-cron-handler/package.json /directus/extensions/directus-extension-adopted-probes-credits-cron-handler/

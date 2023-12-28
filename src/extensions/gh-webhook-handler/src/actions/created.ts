@@ -18,7 +18,6 @@ export const createdAction = async ({ body, services, database, getSchema, env }
 
 	if (body.sponsorship.tier.is_one_time) {
 		const creditsId = await addCredits({
-			githubLogin: body.sponsorship.sponsor.login,
 			githubId: body.sponsorship.sponsor.id.toString(),
 			amount: body.sponsorship.tier.monthly_price_in_dollars,
 		}, {
@@ -37,7 +36,6 @@ export const createdAction = async ({ body, services, database, getSchema, env }
 		lastEarningDate: new Date().toISOString(),
 	}, { services, database, getSchema });
 	const creditsId = await addCredits({
-		githubLogin: body.sponsorship.sponsor.login,
 		githubId: body.sponsorship.sponsor.id.toString(),
 		amount: body.sponsorship.tier.monthly_price_in_dollars,
 	}, { services, database, getSchema, env });

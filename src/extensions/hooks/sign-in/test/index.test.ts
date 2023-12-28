@@ -4,33 +4,33 @@ import * as sinon from 'sinon';
 import nock from 'nock';
 import hook from '../src/index.js';
 
-const callbacks = {
-	action: {},
-};
-const actions = {
-	action: (name, cb) => {
-		callbacks.action[name] = cb;
-	},
-} as any;
-const createOne = sinon.stub();
-const readOne = sinon.stub();
-const context = {
-	services: {
-		ItemsService: sinon.stub().callsFake(() => {
-			return { readOne };
-		}),
-		NotificationsService: sinon.stub().callsFake(() => {
-			return { createOne };
-		}),
-	},
-	env: {
-		GITHUB_ACCESS_TOKEN: 'fakeToken',
-	},
-	database: {},
-	getSchema: () => Promise.resolve({}),
-} as any;
-
 describe('syncGithubLogin hook', () => {
+	const callbacks = {
+		action: {},
+	};
+	const actions = {
+		action: (name, cb) => {
+			callbacks.action[name] = cb;
+		},
+	} as any;
+	const createOne = sinon.stub();
+	const readOne = sinon.stub();
+	const context = {
+		services: {
+			ItemsService: sinon.stub().callsFake(() => {
+				return { readOne };
+			}),
+			NotificationsService: sinon.stub().callsFake(() => {
+				return { createOne };
+			}),
+		},
+		env: {
+			GITHUB_ACCESS_TOKEN: 'fakeToken',
+		},
+		database: {},
+		getSchema: () => Promise.resolve({}),
+	} as any;
+
 	before(() => {
 		nock.disableNetConnect();
 	});
@@ -57,7 +57,7 @@ describe('syncGithubLogin hook', () => {
 
 		hook(actions, context);
 
-		await callbacks.action['auth.login']({ user: userId });
+		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
 
 		expect(readOne.callCount).to.equal(1);
 		expect(readOne.args[0]).to.deep.equal([ userId ]);
@@ -86,7 +86,7 @@ describe('syncGithubLogin hook', () => {
 
 		hook(actions, context);
 
-		await callbacks.action['auth.login']({ user: userId });
+		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
 
 		expect(readOne.callCount).to.equal(1);
 		expect(readOne.args[0]).to.deep.equal([ userId ]);
@@ -102,7 +102,7 @@ describe('syncGithubLogin hook', () => {
 
 		hook(actions, context);
 
-		const error = await callbacks.action['auth.login']({ user: userId }).catch(err => err);
+		const error = await callbacks.action['auth.login']({ user: userId, provider: 'github' }).catch(err => err);
 		expect(error.message).to.equal('Not enough data to check GitHub username');
 
 		expect(readOne.callCount).to.equal(1);

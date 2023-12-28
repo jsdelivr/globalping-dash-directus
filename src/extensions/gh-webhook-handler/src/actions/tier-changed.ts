@@ -32,7 +32,6 @@ export const tierChangedAction = async ({ body, services, database, getSchema, e
 			monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
 		}, { services, database, getSchema });
 		const creditsId = await addCredits({
-			githubLogin: body.sponsorship.sponsor.login,
 			githubId: body.sponsorship.sponsor.id.toString(),
 			amount: tierDiff,
 		}, { services, database, getSchema, env });

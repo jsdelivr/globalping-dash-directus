@@ -6,39 +6,39 @@ import operationApi from '../src/api.js';
 import recurringSponsorshipCreated from './recurring-sponsorship-created.json' assert { type: 'json' };
 import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' assert { type: 'json' };
 
-const database = {} as OperationContext['database'];
-const accountability = {} as OperationContext['accountability'];
-const logger = console.log as unknown as OperationContext['logger'];
-const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
-const env = {
-	GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
-	CREDITS_PER_DOLLAR: '10000',
-};
-const creditsCreateOne = sinon.stub().resolves(1);
-const sponsorsCreateOne = sinon.stub().resolves(2);
-const sponsorsUpdateByQuery = sinon.stub().resolves(2);
-const services = {
-	ItemsService: sinon.stub().callsFake((collection) => {
-		switch (collection) {
-			case 'credits':
-				return { createOne: creditsCreateOne };
-			case 'sponsors':
-				return { createOne: sponsorsCreateOne, updateByQuery: sponsorsUpdateByQuery };
-			default:
-				throw new Error('Collection name wasn\'t provided');
-		}
-	}),
-};
-
-before(() => {
-	sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
-});
-
-beforeEach(() => {
-	sinon.resetHistory();
-});
-
 describe('GitHub webhook recurring handler', () => {
+	const database = {} as OperationContext['database'];
+	const accountability = {} as OperationContext['accountability'];
+	const logger = console.log as unknown as OperationContext['logger'];
+	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
+	const env = {
+		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+		CREDITS_PER_DOLLAR: '10000',
+	};
+	const creditsCreateOne = sinon.stub().resolves(1);
+	const sponsorsCreateOne = sinon.stub().resolves(2);
+	const sponsorsUpdateByQuery = sinon.stub().resolves(2);
+	const services = {
+		ItemsService: sinon.stub().callsFake((collection) => {
+			switch (collection) {
+				case 'credits':
+					return { createOne: creditsCreateOne };
+				case 'sponsors':
+					return { createOne: sponsorsCreateOne, updateByQuery: sponsorsUpdateByQuery };
+				default:
+					throw new Error('Collection name wasn\'t provided');
+			}
+		}),
+	};
+
+	before(() => {
+		sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
+	});
+
+	beforeEach(() => {
+		sinon.resetHistory();
+	});
+
 	it('should handle valid recurring sponsorship', async () => {
 		const data = {
 			$trigger: {
@@ -66,7 +66,6 @@ describe('GitHub webhook recurring handler', () => {
 		expect(creditsCreateOne.callCount).to.equal(1);
 
 		expect(creditsCreateOne.args[0]).to.deep.equal([{
-			githubLogin: 'monalisa',
 			githubId: '2',
 			credits: 150000,
 			comment: 'For 15$ sponsorship',
@@ -122,7 +121,6 @@ describe('GitHub webhook recurring handler', () => {
 		expect(creditsCreateOne.callCount).to.equal(1);
 
 		expect(creditsCreateOne.args[0]).to.deep.equal([{
-			githubLogin: 'monalisa',
 			githubId: '2',
 			credits: 50000,
 			comment: 'For 5$ sponsorship',

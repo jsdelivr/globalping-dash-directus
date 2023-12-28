@@ -52,7 +52,6 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 	if (shouldCreditsBeAdded) {
 		await updateDirectusSponsor(directusSponsor.id, { lastEarningDate: new Date().toISOString() }, { services, database, getSchema, env });
 		const creditsId = await addCredits({
-			githubLogin: githubSponsor.githubLogin,
 			githubId: githubSponsor.githubId,
 			amount: githubSponsor.monthlyAmount,
 		}, { services, database, getSchema, env });

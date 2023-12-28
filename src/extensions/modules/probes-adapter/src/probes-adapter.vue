@@ -2,17 +2,17 @@
 	<private-view title="Adopt Your Probes">
 		<template #title-outer:prepend>
 			<v-button class="header-icon" rounded icon exact disabled>
-				<v-icon name="router"/>
+				<v-icon name="router" />
 			</v-button>
 		</template>
 
 		<div class="content">
 			<p class="description">
-				This page allows to adopt your own probes. You need follow these steps (Note: multiple probes should be adopted one by one):<br>
+				This page allows to adopt your own probes. Follow these steps (Note, multiple probes should be adopted one by one):<br>
 				1. Enter the IP address of your probe;<br>
 				2. Go to the probe logs and find a 6 digit adoption code;<br>
-				3. Enter the code to the verification input.<br>
-				4. Probe can be found on the <a class="link" href="/admin/content/adopted_probes">adopted probes</a> page.
+				3. Enter the code to the verification input;<br>
+				4. Done. Probe can be found on the <a class="link" href="/admin/content/adopted_probes">adopted probes</a> page.
 			</p>
 
 			<form @submit.prevent="sendCode">

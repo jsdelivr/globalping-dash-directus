@@ -62,12 +62,11 @@ export const deleteDirectusSponsor = async ({ id }: { id: DirectusSponsor['id'] 
 };
 
 type AddCreditsData = {
-	githubLogin: string;
 	githubId: string;
 	amount: number;
 }
 
-export const addCredits = async ({ githubLogin, githubId, amount }: AddCreditsData, { services, database, getSchema, env }: Context) => {
+export const addCredits = async ({ githubId, amount }: AddCreditsData, { services, database, getSchema, env }: Context) => {
 	const { ItemsService } = services;
 
 	const creditsService = new ItemsService('credits', {
@@ -76,7 +75,6 @@ export const addCredits = async ({ githubLogin, githubId, amount }: AddCreditsDa
 	});
 
 	const result = await creditsService.createOne({
-		githubLogin,
 		githubId,
 		credits: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
 		comment: `For ${amount}$ recurring sponsorship`,

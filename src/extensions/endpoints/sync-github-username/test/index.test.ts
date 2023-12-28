@@ -5,60 +5,60 @@ import { Router } from 'express';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import endpoint from '../src/index.js';
 
-const updateOne = sinon.stub();
-const readOne = sinon.stub().resolves({
-	external_identifier: 'github-id',
-	github: 'old-username',
-});
-const itemsServiceStub = sinon.stub().returns({
-	readOne,
-});
-const usersServiceStub = sinon.stub().returns({
-	updateOne,
-});
-const endpointContext = {
-	logger: {
-		error: console.error,
-	},
-	env: {
-		GITHUB_ACCESS_TOKEN: 'your-github-access-token',
-	},
-	services: {
-		ItemsService: itemsServiceStub,
-		UsersService: usersServiceStub,
-	},
-	database: {},
-	getSchema: sinon.stub().resolves({}),
-} as unknown as EndpointExtensionContext;
-const resSend = sinon.stub();
-const resStatus = sinon.stub().returns({ send: resSend });
-const res = { status: resStatus, send: resSend };
-
-const routes = {};
-const request = (route, req, res) => {
-	const handler = routes[route];
-
-	if (!handler) {
-		throw new Error('Handler for the route is not defined');
-	}
-
-	return handler(req, res);
-};
-const router = { post: (route, handler) => { routes[route] = handler; } } as Router;
-
-before(() => {
-	nock.disableNetConnect();
-});
-
-beforeEach(() => {
-	sinon.resetHistory();
-});
-
-after(() => {
-	nock.cleanAll();
-});
-
 describe('Sync Github Username endpoint', () => {
+	const updateOne = sinon.stub();
+	const readOne = sinon.stub().resolves({
+		external_identifier: 'github-id',
+		github: 'old-username',
+	});
+	const itemsServiceStub = sinon.stub().returns({
+		readOne,
+	});
+	const usersServiceStub = sinon.stub().returns({
+		updateOne,
+	});
+	const endpointContext = {
+		logger: {
+			error: console.error,
+		},
+		env: {
+			GITHUB_ACCESS_TOKEN: 'your-github-access-token',
+		},
+		services: {
+			ItemsService: itemsServiceStub,
+			UsersService: usersServiceStub,
+		},
+		database: {},
+		getSchema: sinon.stub().resolves({}),
+	} as unknown as EndpointExtensionContext;
+	const resSend = sinon.stub();
+	const resStatus = sinon.stub().returns({ send: resSend });
+	const res = { status: resStatus, send: resSend };
+
+	const routes = {};
+	const request = (route, req, res) => {
+		const handler = routes[route];
+
+		if (!handler) {
+			throw new Error('Handler for the route is not defined');
+		}
+
+		return handler(req, res);
+	};
+	const router = { post: (route, handler) => { routes[route] = handler; } } as Router;
+
+	before(() => {
+		nock.disableNetConnect();
+	});
+
+	beforeEach(() => {
+		sinon.resetHistory();
+	});
+
+	after(() => {
+		nock.cleanAll();
+	});
+
 	it('should sync GitHub username', async () => {
 		endpoint(router, endpointContext);
 		const req = {

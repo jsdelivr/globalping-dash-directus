@@ -4,24 +4,24 @@ import { OperationContext } from '@directus/types';
 import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' assert { type: 'json' };
 
-const database = {} as OperationContext['database'];
-const accountability = {} as OperationContext['accountability'];
-const logger = console.log as unknown as OperationContext['logger'];
-const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
-const env = {
-	GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
-	CREDITS_PER_DOLLAR: '10000',
-};
-const createOne = sinon.stub().resolves(1);
-const services = {
-	ItemsService: sinon.stub().returns({ createOne }),
-};
-
-beforeEach(() => {
-	sinon.resetHistory();
-});
-
 describe('GitHub webhook one-time handler', () => {
+	const database = {} as OperationContext['database'];
+	const accountability = {} as OperationContext['accountability'];
+	const logger = console.log as unknown as OperationContext['logger'];
+	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
+	const env = {
+		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+		CREDITS_PER_DOLLAR: '10000',
+	};
+	const createOne = sinon.stub().resolves(1);
+	const services = {
+		ItemsService: sinon.stub().returns({ createOne }),
+	};
+
+	beforeEach(() => {
+		sinon.resetHistory();
+	});
+
 	it('should handle valid one-time sponsorship', async () => {
 		const data = {
 			$trigger: {
@@ -44,7 +44,6 @@ describe('GitHub webhook one-time handler', () => {
 		expect(createOne.callCount).to.equal(1);
 
 		expect(createOne.args[0]).to.deep.equal([{
-			githubLogin: 'monalisa',
 			githubId: '2',
 			credits: 50000,
 			comment: 'For 5$ sponsorship',

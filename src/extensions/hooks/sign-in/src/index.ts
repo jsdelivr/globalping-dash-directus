@@ -15,13 +15,19 @@ type User = {
 export default defineHook(({ action }, context) => {
 	action('auth.login', async (payload) => {
 		const userId = payload.user;
-		await syncGithubLogin(userId, context);
+		const provider = payload.provider;
+		await syncGithubLogin(userId, provider, context);
 	});
 });
 
-const syncGithubLogin = async (userId: string, context: HookExtensionContext) => {
+const syncGithubLogin = async (userId: string, provider: string, context: HookExtensionContext) => {
 	const { services, database, getSchema, env } = context;
 	const { ItemsService } = services;
+
+	// On initial dashboard setup script is logging in as non-github user => need to return to avoid throwing errors.
+	if (provider !== 'github') {
+		return;
+	}
 
 	const itemsService = new ItemsService('directus_users', {
 		schema: await getSchema({ database }),

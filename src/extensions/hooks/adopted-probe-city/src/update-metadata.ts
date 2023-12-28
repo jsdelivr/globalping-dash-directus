@@ -15,6 +15,7 @@ export const resetMetadata = async (_fields: Fields, keys: string[], { services,
 		longitude: null,
 		state: null,
 		isCustomCity: false,
+		countryOfCustomCity: null,
 	}, {
 		emitEvents: false,
 	});

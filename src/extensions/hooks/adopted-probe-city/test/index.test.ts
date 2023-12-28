@@ -5,37 +5,37 @@ import * as sinon from 'sinon';
 import hook from '../src/index.js';
 import { CountryNotDefinedError, DifferentCountriesError, InvalidCityError, InvalidTagError, ProbesNotFoundError, TooBigTagError, TooManyTagsError } from '../src/validate-fields.js';
 
-const callbacks = {
-	filter: {},
-	action: {},
-};
-const hooks = {
-	filter: (name, cb) => {
-		callbacks.filter[name] = cb;
-	},
-	action: (name, cb) => {
-		callbacks.action[name] = cb;
-	},
-} as any;
-const updateMany = sinon.stub();
-const readMany = sinon.stub();
-const context = {
-	accountability: {
-		user: 'userId',
-	},
-	env: {
-		GEONAMES_USERNAME: 'username',
-	},
-	database: {},
-	getSchema: () => Promise.resolve({}),
-	services: {
-		ItemsService: sinon.stub().callsFake(() => {
-			return { updateMany, readMany };
-		}),
-	},
-} as any;
-
 describe('adopted-probe-city hook', () => {
+	const callbacks = {
+		filter: {},
+		action: {},
+	};
+	const hooks = {
+		filter: (name, cb) => {
+			callbacks.filter[name] = cb;
+		},
+		action: (name, cb) => {
+			callbacks.action[name] = cb;
+		},
+	} as any;
+	const updateMany = sinon.stub();
+	const readMany = sinon.stub();
+	const context = {
+		accountability: {
+			user: 'userId',
+		},
+		env: {
+			GEONAMES_USERNAME: 'username',
+		},
+		database: {},
+		getSchema: () => Promise.resolve({}),
+		services: {
+			ItemsService: sinon.stub().callsFake(() => {
+				return { updateMany, readMany };
+			}),
+		},
+	} as any;
+
 	before(() => {
 		nock.disableNetConnect();
 	});
@@ -184,7 +184,7 @@ describe('adopted-probe-city hook', () => {
 
 		expect(updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ latitude: null, longitude: null, isCustomCity: false, state: null },
+			{ latitude: null, longitude: null, isCustomCity: false, countryOfCustomCity: null, state: null },
 			{ emitEvents: false },
 		]);
 
