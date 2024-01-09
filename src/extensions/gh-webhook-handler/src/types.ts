@@ -4,7 +4,7 @@ export type Data = {
 			'x-hub-signature-256'?: string;
 		},
 		body: {
-			action: 'created' | 'tier_changed',
+			action?: 'created' | 'tier_changed',
 			sponsorship: {
 				sponsor?: {
 					login: string;

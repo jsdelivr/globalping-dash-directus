@@ -19,14 +19,14 @@ const props = withDefaults(
 
 async function sync () {
 	try {
-		await api.post('/sync-github-username', {
+		await api.post('/sync-github-data', {
 			userId: props.primaryKey,
 		});
 
 		window.location.reload();
 	} catch (err: any) {
 		console.error(err);
-		alert(err.response?.data || err.toString());
+		alert(err.message || err.toString());
 	}
 }
 
@@ -41,7 +41,7 @@ defineEmits([ 'input' ]);
 		:class="font"
 		@update:model-value="$emit('input', $event)"
 	/>
-	<v-button secondary @click="sync">Sync GitHub Username</v-button>
+	<v-button secondary @click="sync">Sync GitHub Data</v-button>
 </template>
 
 <style lang="scss" scoped>

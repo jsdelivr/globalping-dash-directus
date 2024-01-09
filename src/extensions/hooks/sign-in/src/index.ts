@@ -1,4 +1,5 @@
 import axios from 'axios';
+import _ from 'lodash';
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 
@@ -7,24 +8,29 @@ type GithubUserResponse = {
 	id: number;
 };
 
+type GithubOrgsResponse = {
+	login: string;
+}[];
+
 type User = {
-	external_identifier?: string;
-	github?: string;
+	id: string;
+	external_identifier: string | null;
+	github_username: string | null;
+	github_organizations: string[];
 }
 
 export default defineHook(({ action }, context) => {
 	action('auth.login', async (payload) => {
 		const userId = payload.user;
 		const provider = payload.provider;
-		await syncGithubLogin(userId, provider, context);
+		await syncGithubData(userId, provider, context);
 	});
 });
 
-const syncGithubLogin = async (userId: string, provider: string, context: HookExtensionContext) => {
-	const { services, database, getSchema, env } = context;
+const syncGithubData = async (userId: string, provider: string, context: HookExtensionContext) => {
+	const { services, database, getSchema } = context;
 	const { ItemsService } = services;
 
-	// On initial dashboard setup script is logging in as non-github user => need to return to avoid throwing errors.
 	if (provider !== 'github') {
 		return;
 	}
@@ -35,38 +41,52 @@ const syncGithubLogin = async (userId: string, provider: string, context: HookEx
 	});
 
 	const user = await itemsService.readOne(userId) as User | undefined;
-	const githubId = user?.external_identifier;
-	const username = user?.github;
 
-	if (!user || !githubId || !username) {
-		throw new Error('Not enough data to check GitHub username');
+	if (!user || !user.external_identifier) {
+		throw new Error('Not enough data to sync with GitHub');
 	}
 
-	const response = await axios.get<GithubUserResponse>(`https://api.github.com/user/${githubId}`, {
+	await Promise.all([
+		syncGitHubUsername(user, context),
+		syncGitHubOrganizations(user, context),
+	]);
+};
+
+const syncGitHubUsername = async (user: User, context: HookExtensionContext) => {
+	const githubResponse = await axios.get<GithubUserResponse>(`https://api.github.com/user/${user.external_identifier}`, {
 		timeout: 5000,
 		headers: {
-			Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
+			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
 		},
 	});
-	const githubUsername = response.data.login;
+	const githubUsername = githubResponse.data.login;
 
-	if (username !== githubUsername) {
-		await sendNotification(userId, username, githubUsername, context);
+	if (user.github_username !== githubUsername) {
+		await updateUser(user, { github_username: githubUsername }, context);
 	}
 };
 
-const sendNotification = async (userId: string, username: string, githubUsername: string, context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
-	const { NotificationsService } = services;
+const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
+	const orgsResponse = await axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
+		timeout: 5000,
+		headers: {
+			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
+		},
+	});
+	const githubOrgs = orgsResponse.data.map(org => org.login);
 
-	const notificationsService = new NotificationsService({
+	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
+		await updateUser(user, { github_organizations: githubOrgs }, context);
+	}
+};
+
+const updateUser = async (user: User, updateObject: Partial<User>, context: HookExtensionContext) => {
+	const { services, database, getSchema } = context;
+	const { UsersService } = services;
+
+	const usersService = new UsersService({
 		schema: await getSchema({ database }),
 		knex: database,
 	});
-
-	notificationsService.createOne({
-		recipient: userId,
-		subject: 'Github username update',
-		message: `Looks like your GitHub username was updated from "${username}" to "${githubUsername}". Tags of the adopted probes are constructed as \`u-\${githubUsername}-\${tagValue}\`. If you want tags to use the new value click "Sync GitHub Username" button on the [user page](/admin/users/${userId}).`,
-	});
+	await usersService.updateOne(user.id, updateObject);
 };

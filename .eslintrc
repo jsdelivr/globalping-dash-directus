@@ -28,6 +28,23 @@
 	"overrides": [
 		{
 			"files": [
+				"src/**/src/**/*.ts"
+			],
+			"extends": "@martin-kolarik/eslint-config/typescript-type-checking",
+			"parserOptions": {
+				"project": true
+			},
+			"rules": {
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"@typescript-eslint/no-unsafe-assignment": "off",
+				"@typescript-eslint/no-unsafe-call": "off",
+				"@typescript-eslint/no-unsafe-member-access": "off",
+				"@typescript-eslint/no-unsafe-return": "off",
+				"@typescript-eslint/no-misused-promises": "off"
+			}
+		},
+		{
+			"files": [
 				"src/**/*.vue"
 			],
 			"parserOptions": {

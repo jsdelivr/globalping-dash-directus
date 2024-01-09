@@ -1,5 +1,5 @@
 version: 1
-directus: 14.1.2
+directus: 10.8.3
 vendor: mysql
 collections:
   - collection: adopted_probes
@@ -794,11 +794,13 @@ fields:
       field: tags
       group: null
       hidden: false
-      interface: tags
+      interface: gp-tags
       note: >-
         Public tags of the probe. They can be used as location filters for a
-        measurement. E.g. for user with github username `"jimaek"` and tag
-        `"home1"` location filter is `{ "tags": ["u-jimaek-home1"] }`
+        measurement. Format is `u-${prefix}-{value}` where prefix is
+        user/organization github login, and value is your custom string. E.g.
+        for user with github username `"jimaek"` and tag `"home1"` location
+        filter is `{ "tags": ["u-jimaek-home1"] }`.
       options: null
       readonly: false
       required: false
@@ -1334,14 +1336,54 @@ fields:
       foreign_key_table: directus_users
       foreign_key_column: id
   - collection: directus_users
-    field: github
+    field: github_organizations
+    type: json
+    meta:
+      collection: directus_users
+      conditions: null
+      display: null
+      display_options: null
+      field: github_organizations
+      group: null
+      hidden: false
+      interface: input-code
+      note: null
+      options:
+        lineNumber: false
+      readonly: false
+      required: false
+      sort: 1
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: github_organizations
+      table: directus_users
+      data_type: longtext
+      default_value: []
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: directus_users
+    field: github_username
     type: string
     meta:
       collection: directus_users
       conditions: null
       display: null
       display_options: null
-      field: github
+      field: github_username
       group: null
       hidden: false
       interface: github-username
@@ -1349,14 +1391,14 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 1
+      sort: 2
       special: null
       translations: null
       validation: null
       validation_message: null
       width: full
     schema:
-      name: github
+      name: github_username
       table: directus_users
       data_type: varchar
       default_value: null
@@ -1503,7 +1545,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: GitHub username or organisation name.
+      note: GitHub username or organization name.
       options: null
       readonly: false
       required: true

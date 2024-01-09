@@ -13,7 +13,7 @@ type CreatedActionArgs = {
 
 export const createdAction = async ({ body, services, database, getSchema, env }: CreatedActionArgs) => {
 	if (!body?.sponsorship?.sponsor) {
-		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor}`);
+		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor?.toString()}`);
 	}
 
 	if (body.sponsorship.tier.is_one_time) {

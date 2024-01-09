@@ -5,12 +5,9 @@ import { Router } from 'express';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import endpoint from '../src/index.js';
 
-describe('Sync Github Username endpoint', () => {
+describe('/sync-github-data endpoint', () => {
 	const updateOne = sinon.stub();
-	const readOne = sinon.stub().resolves({
-		external_identifier: 'github-id',
-		github: 'old-username',
-	});
+	const readOne = sinon.stub();
 	const itemsServiceStub = sinon.stub().returns({
 		readOne,
 	});
@@ -53,13 +50,19 @@ describe('Sync Github Username endpoint', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+
+		readOne.resolves({
+			external_identifier: 'github-id',
+			github_username: 'old-username',
+			github_organizations: [ 'old-org' ],
+		});
 	});
 
 	after(() => {
 		nock.cleanAll();
 	});
 
-	it('should sync GitHub username', async () => {
+	it('should sync GitHub data', async () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
@@ -74,17 +77,104 @@ describe('Sync Github Username endpoint', () => {
 			login: 'new-username',
 		});
 
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+			login: 'new-org',
+		}]);
+
 		await request('/', req, res);
 
 		expect(nock.isDone()).to.equal(true);
 		expect(resSend.callCount).to.equal(1);
-		expect(resSend.args[0]).to.deep.equal([ 'Synced' ]);
+
+		expect(resSend.args[0]).to.deep.equal([{
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
+		}]);
+
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(1);
 
 		expect(updateOne.args[0][1]).to.deep.equal({
-			github: 'new-username',
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
 		});
+	});
+
+	it('should work if current github data is null', async () => {
+		endpoint(router, endpointContext);
+		const req = {
+			accountability: {
+				user: 'requester-id',
+			},
+			body: {
+				userId: 'user-id',
+			},
+		};
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, {
+			login: 'new-username',
+		});
+
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+			login: 'new-org',
+		}]);
+
+		readOne.resolves({
+			external_identifier: 'github-id',
+			github_username: null,
+			github_organizations: [],
+		});
+
+		await request('/', req, res);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(resSend.callCount).to.equal(1);
+
+		expect(resSend.args[0]).to.deep.equal([{
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
+		}]);
+
+		expect(readOne.callCount).to.equal(1);
+		expect(updateOne.callCount).to.equal(1);
+
+		expect(updateOne.args[0][1]).to.deep.equal({
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
+		});
+	});
+
+	it('should not call update if data is the same', async () => {
+		endpoint(router, endpointContext);
+		const req = {
+			accountability: {
+				user: 'requester-id',
+			},
+			body: {
+				userId: 'user-id',
+			},
+		};
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, {
+			login: 'old-username',
+		});
+
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+			login: 'old-org',
+		}]);
+
+		await request('/', req, res);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(resSend.callCount).to.equal(1);
+
+		expect(resSend.args[0]).to.deep.equal([{
+			github_username: 'old-username',
+			github_organizations: [ 'old-org' ],
+		}]);
+
+		expect(readOne.callCount).to.equal(1);
+		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should reject non authorized requests', async () => {
@@ -138,7 +228,7 @@ describe('Sync Github Username endpoint', () => {
 		expect(resStatus.callCount).to.equal(1);
 		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
 		expect(resSend.callCount).to.equal(1);
-		expect(resSend.args[0]).to.deep.equal([ 'Not enough data to check GitHub username' ]);
+		expect(resSend.args[0]).to.deep.equal([ 'Not enough data to sync with GitHub' ]);
 	});
 
 	it('should handle internal server error', async () => {

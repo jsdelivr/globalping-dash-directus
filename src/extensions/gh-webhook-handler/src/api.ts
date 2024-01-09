@@ -12,7 +12,7 @@ type ValidateGithubSignatureArgs = {
 };
 
 const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignatureArgs) => {
-	const GITHUB_WEBHOOK_SECRET = env['GITHUB_WEBHOOK_SECRET'] as string | undefined;
+	const GITHUB_WEBHOOK_SECRET = env.GITHUB_WEBHOOK_SECRET as string | undefined;
 	const githubSignature = headers['x-hub-signature-256'];
 
 	if (!GITHUB_WEBHOOK_SECRET) {
@@ -32,7 +32,7 @@ const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignature
 export default defineOperationApi({
 	id: 'gh-webhook-handler',
 	handler: async (_operationData, { data, database, env, getSchema, services }) => {
-		const { $trigger: { headers, body } } = data as Data;
+		const { $trigger: { headers, body } } = data as {$trigger: Partial<Data['$trigger']>};
 
 		if (!headers) {
 			throw new Error(`"headers" field is ${headers}`);

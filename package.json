@@ -31,6 +31,7 @@
 		"schema:apply": "npx --yes directus@latest schema apply --yes snapshots/collections-schema.yml",
 		"schema:snapshot": "npx --yes directus@latest schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'",
+		"build:in-sequence": "grep -E 'AS builder-[0-9]+' Dockerfile | awk -F 'AS ' '{print $2}' | xargs -r -P 1 -I STAGE docker build --target STAGE .",
 		"test": "./test.sh"
 	},
 	"repository": {

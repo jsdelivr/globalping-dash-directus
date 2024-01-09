@@ -1,8 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk';
 import { createError } from '@directus/errors';
-import { validateCity, validateTags } from './validate-fields';
-import { resetMetadata, updateMetadata } from './update-metadata';
-
+import { validateCity, validateTags } from './validate-fields.js';
+import { resetMetadata, updateMetadata } from './update-metadata.js';
 
 export type AdoptedProbe = {
 	city: string | null;
@@ -11,7 +10,8 @@ export type AdoptedProbe = {
 	longitude: string | null;
 	country: string | null;
 	isCustomCity: boolean;
-	tags: string[] | null;
+	tags: {value: string; prefix: string}[] | null;
+	userId: string | null;
 };
 
 export type Fields = Partial<AdoptedProbe>;
@@ -27,7 +27,7 @@ export default defineHook(({ filter, action }, context) => {
 		}
 
 		if (fields.tags && fields.tags.length > 0) {
-			validateTags(fields);
+			await validateTags(fields, keys, accountability, context);
 		}
 
 		if (fields.city || fields.city === '') {

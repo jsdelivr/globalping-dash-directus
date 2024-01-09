@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import nock from 'nock';
 import hook from '../src/index.js';
 
-describe('syncGithubLogin hook', () => {
+describe('Sign-in hook', () => {
 	const callbacks = {
 		action: {},
 	};
@@ -13,15 +13,19 @@ describe('syncGithubLogin hook', () => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
-	const createOne = sinon.stub();
-	const readOne = sinon.stub();
+	const itemsService = {
+		readOne: sinon.stub(),
+	};
+	const usersService = {
+		updateOne: sinon.stub(),
+	};
 	const context = {
 		services: {
 			ItemsService: sinon.stub().callsFake(() => {
-				return { readOne };
+				return itemsService;
 			}),
-			NotificationsService: sinon.stub().callsFake(() => {
-				return { createOne };
+			UsersService: sinon.stub().callsFake(() => {
+				return usersService;
 			}),
 		},
 		env: {
@@ -29,6 +33,9 @@ describe('syncGithubLogin hook', () => {
 		},
 		database: {},
 		getSchema: () => Promise.resolve({}),
+		logger: {
+			error: () => {},
+		},
 	} as any;
 
 	before(() => {
@@ -43,70 +50,93 @@ describe('syncGithubLogin hook', () => {
 		nock.cleanAll();
 	});
 
-	it('should sync GitHub login and send notification if username is different', async () => {
+	it('should sync GitHub username and organizations if data is different', async () => {
 		const userId = '123';
 		const githubId = '456';
-		const username = 'oldUsername';
-		const githubUsername = 'newUsername';
 
-		readOne.resolves({ external_identifier: githubId, github: username });
+		itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: null, github_organizations: [] });
 
 		nock('https://api.github.com')
 			.get(`/user/${githubId}`)
-			.reply(200, { login: githubUsername });
+			.reply(200, { login: 'newUsername' });
+
+		nock('https://api.github.com')
+			.get(`/user/${githubId}/orgs`)
+			.reply(200, [{ login: 'jsdelivr' }]);
 
 		hook(actions, context);
 
 		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
 
-		expect(readOne.callCount).to.equal(1);
-		expect(readOne.args[0]).to.deep.equal([ userId ]);
+		expect(itemsService.readOne.callCount).to.equal(1);
+		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
 		expect(nock.isDone()).to.equal(true);
-		expect(createOne.callCount).to.equal(1);
-
-		expect(createOne.args[0]).to.deep.equal([
-			{
-				recipient: userId,
-				subject: 'Github username update',
-				message: `Looks like your GitHub username was updated from "${username}" to "${githubUsername}". Tags of the adopted probes are constructed as \`u-\${githubUsername}-\${tagValue}\`. If you want tags to use the new value click "Sync GitHub Username" button on the [user page](/admin/users/${userId}).`,
-			},
-		]);
+		expect(usersService.updateOne.callCount).to.equal(2);
+		expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_username: 'newUsername' }]);
+		expect(usersService.updateOne.args[1]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
 	});
 
-	it('should not send notification if username is the same', async () => {
+	it('should not update username if it is the same', async () => {
 		const userId = '123';
 		const githubId = '456';
-		const username = 'sameUsername';
 
-		readOne.resolves({ external_identifier: githubId, github: username });
+		itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [] });
 
 		nock('https://api.github.com')
 			.get(`/user/${githubId}`)
-			.reply(200, { login: username });
+			.reply(200, { login: 'oldUsername' });
+
+		nock('https://api.github.com')
+			.get(`/user/${githubId}/orgs`)
+			.reply(200, [{ login: 'jsdelivr' }]);
 
 		hook(actions, context);
 
 		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
 
-		expect(readOne.callCount).to.equal(1);
-		expect(readOne.args[0]).to.deep.equal([ userId ]);
+		expect(itemsService.readOne.callCount).to.equal(1);
+		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
 		expect(nock.isDone()).to.equal(true);
-		expect(createOne.callCount).to.equal(0);
+		expect(usersService.updateOne.callCount).to.equal(1);
+		expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
+	});
+
+	it('should not update organizations if it is the same', async () => {
+		const userId = '123';
+		const githubId = '456';
+
+		itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ] });
+
+		nock('https://api.github.com')
+			.get(`/user/${githubId}`)
+			.reply(200, { login: 'newUsername' });
+
+		nock('https://api.github.com')
+			.get(`/user/${githubId}/orgs`)
+			.reply(200, [{ login: 'jsdelivr' }]);
+
+		hook(actions, context);
+
+		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
+
+		expect(itemsService.readOne.callCount).to.equal(1);
+		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+		expect(nock.isDone()).to.equal(true);
+		expect(usersService.updateOne.callCount).to.equal(1);
+		expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_username: 'newUsername' }]);
 	});
 
 	it('should send error if there is no enough data to check username', async () => {
 		const userId = '123';
-		const githubId = '456';
 
-		readOne.resolves({ external_identifier: githubId });
+		itemsService.readOne.resolves({ external_identifier: null });
 
 		hook(actions, context);
 
 		const error = await callbacks.action['auth.login']({ user: userId, provider: 'github' }).catch(err => err);
-		expect(error.message).to.equal('Not enough data to check GitHub username');
+		expect(error.message).to.equal('Not enough data to sync with GitHub');
 
-		expect(readOne.callCount).to.equal(1);
-		expect(readOne.args[0]).to.deep.equal([ userId ]);
-		expect(createOne.callCount).to.equal(0);
+		expect(itemsService.readOne.callCount).to.equal(1);
+		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
 	});
 });

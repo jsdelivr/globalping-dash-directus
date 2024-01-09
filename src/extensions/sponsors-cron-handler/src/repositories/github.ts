@@ -65,7 +65,7 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 	let cursor: string | null = null;
 
 	while (hasNextPage) {
-		const response = await graphql(query, {
+		const response: GithubResponse = await graphql(query, {
 			headers: {
 				Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
 			},
@@ -73,7 +73,7 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 			request: {
 				fetch: globalThis.fetch ?? nodeFetch, // Using node-fetch for tests and native fetch in prod as nock doesn't support native fetch right now.
 			},
-		}) as GithubResponse;
+		});
 
 		const pageInfo = response.organization.sponsorshipsAsMaintainer.pageInfo;
 		const edges = response.organization.sponsorshipsAsMaintainer.edges;

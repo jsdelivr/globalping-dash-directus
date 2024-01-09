@@ -1,6 +1,6 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { Fields } from './index';
-import { geonamesCache, getKey } from './geonames-cache';
+import { geonamesCache, getKey } from './geonames-cache.js';
 
 export const resetMetadata = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;

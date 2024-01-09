@@ -158,7 +158,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 			});
 
 			probesToAdopt.delete(userId);
-			rateLimiter.delete(userId);
+			await rateLimiter.delete(userId);
 			res.send('Code successfully validated. Probe was assigned to you.');
 		} catch (error: unknown) {
 			logger.error(error);

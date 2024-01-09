@@ -1,4 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk';
+import { HookExtensionContext } from '@directus/types';
+import axios from 'axios';
 
 type User = {
     provider: string;
@@ -6,24 +8,42 @@ type User = {
     first_name?: string;
     last_name?: string;
     last_page?: string;
-		github?: string;
+		github_username?: string;
+		github_organizations: string[];
 }
 
-export default defineHook(({ filter }) => {
-	filter('users.create', (payload) => {
+type GithubOrgsResponse = {
+	login: string;
+}[];
+
+export default defineHook(({ filter, action }, context) => {
+	filter('users.create', async (payload) => {
 		const user = payload as User;
 
 		if (user.provider === 'github') {
-			handleGithubLogin(user);
+			fulfillUsername(user);
+			fulfillFirstNameAndLastName(user);
+		}
+	});
+
+	action('users.create', async (payload) => {
+		const userId = payload.key;
+		const user = payload.payload as User;
+
+		if (user.provider === 'github') {
+			await fulfillOrganizations(userId, user, context);
 		}
 	});
 });
 
-const handleGithubLogin = (user: User) => {
+const fulfillUsername = (user: User) => {
 	const login = user.last_name;
 	user.last_name = undefined;
-	user.github = login;
+	user.github_username = login;
+};
 
+const fulfillFirstNameAndLastName = (user: User) => {
+	const login = user.github_username;
 	const name = user.first_name;
 
 	if (!name) {
@@ -37,4 +57,27 @@ const handleGithubLogin = (user: User) => {
 		user.first_name = names[0];
 		user.last_name = names.slice(1).join(' ');
 	}
+};
+
+const fulfillOrganizations = async (userId: string, user: User, context: HookExtensionContext) => {
+	const orgsResponse = await axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
+		timeout: 5000,
+		headers: {
+			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
+		},
+	});
+	const githubOrgs = orgsResponse.data.map(org => org.login);
+
+	await updateUser(userId, { github_organizations: githubOrgs }, context);
+};
+
+const updateUser = async (userId: string, updateObject: Partial<User>, context: HookExtensionContext) => {
+	const { services, database, getSchema } = context;
+	const { UsersService } = services;
+
+	const usersService = new UsersService({
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+	await usersService.updateOne(userId, updateObject);
 };

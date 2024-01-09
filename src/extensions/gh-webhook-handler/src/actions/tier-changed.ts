@@ -13,7 +13,7 @@ type TierChangedActionArgs = {
 
 export const tierChangedAction = async ({ body, services, database, getSchema, env }: TierChangedActionArgs) => {
 	if (!body?.sponsorship?.sponsor) {
-		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor}`);
+		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor?.toString()}`);
 	}
 
 	if (!body.changes) {

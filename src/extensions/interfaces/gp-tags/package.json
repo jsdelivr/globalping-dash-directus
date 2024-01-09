@@ -1,19 +1,19 @@
 {
-	"name": "directus-extension-sign-up",
-	"description": "Hook that manages user properties during registration",
+	"name": "directus-extension-gp-tags",
+	"description": "Please enter a description for your extension",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
 		"directus",
 		"directus-extension",
-		"directus-custom-hook"
+		"directus-custom-interface"
 	],
 	"type": "module",
 	"directus:extension": {
-		"type": "hook",
+		"type": "interface",
 		"path": "dist/index.js",
 		"source": "src/index.ts",
-		"host": "^10.1.1"
+		"host": "^10.3.0"
 	},
 	"scripts": {
 		"build": "directus-extension build",
@@ -22,11 +22,9 @@
 		"test": "echo 'No tests for that extension'"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "10.1.1",
-		"@types/node": "^20.2.3",
-		"typescript": "^5.0.4"
-	},
-	"dependencies": {
-		"axios": "^1.6.2"
+		"@directus/extensions-sdk": "10.3.0",
+		"sass": "^1.69.5",
+		"typescript": "^5.3.3",
+		"vue": "^3.3.13"
 	}
 }

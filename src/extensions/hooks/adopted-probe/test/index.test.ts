@@ -3,9 +3,9 @@ import nock from 'nock';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
-import { CountryNotDefinedError, DifferentCountriesError, InvalidCityError, InvalidTagError, ProbesNotFoundError, TooBigTagError, TooManyTagsError } from '../src/validate-fields.js';
+import { payloadError } from '../src/validate-fields.js';
 
-describe('adopted-probe-city hook', () => {
+describe('adopted-probe hook', () => {
 	const callbacks = {
 		filter: {},
 		action: {},
@@ -18,11 +18,16 @@ describe('adopted-probe-city hook', () => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
-	const updateMany = sinon.stub();
-	const readMany = sinon.stub();
+	const users = {
+		readOne: sinon.stub(),
+	};
+	const adoptedProbes = {
+		updateMany: sinon.stub(),
+		readMany: sinon.stub(),
+	};
 	const context = {
 		accountability: {
-			user: 'userId',
+			user: '1',
 		},
 		env: {
 			GEONAMES_USERNAME: 'username',
@@ -30,8 +35,14 @@ describe('adopted-probe-city hook', () => {
 		database: {},
 		getSchema: () => Promise.resolve({}),
 		services: {
-			ItemsService: sinon.stub().callsFake(() => {
-				return { updateMany, readMany };
+			ItemsService: sinon.stub().callsFake((collection) => {
+				if (collection === 'directus_users') {
+					return users;
+				} else if (collection === 'adopted_probes') {
+					return adoptedProbes;
+				}
+
+				throw new Error('stubs for collection are not defined');
 			}),
 		},
 	} as any;
@@ -42,6 +53,11 @@ describe('adopted-probe-city hook', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+
+		users.readOne.resolves({
+			github_username: 'jimaek',
+			github_organizations: [ 'jsdelivr' ],
+		});
 	});
 
 	after(() => {
@@ -49,7 +65,8 @@ describe('adopted-probe-city hook', () => {
 	});
 
 	it('should update city, lat and long of the adopted probe', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85341',
@@ -89,17 +106,16 @@ describe('adopted-probe-city hook', () => {
 		const payload = { city: 'marsel' };
 		await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context);
 
-		expect(readMany.callCount).to.equal(1);
-		expect(readMany.args[0]).to.deep.equal([ [ '1' ] ]);
+		expect(adoptedProbes.readMany.callCount).to.equal(1);
+		expect(adoptedProbes.readMany.args[0]).to.deep.equal([ [ '1' ] ]);
 		expect(nock.isDone()).to.equal(true);
-		expect(updateMany.callCount).to.equal(0);
 		expect(payload.city).to.equal('Marseille');
 
 		await callbacks.action['adopted_probes.items.update']({ payload, keys: [ '1' ] }, context);
 
-		expect(updateMany.callCount).to.equal(1);
+		expect(adoptedProbes.updateMany.callCount).to.equal(1);
 
-		expect(updateMany.args[0]).to.deep.equal([
+		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
 			{ latitude: '43.29695', longitude: '5.38107', isCustomCity: true, countryOfCustomCity: 'FR', state: null },
 			{ emitEvents: false },
@@ -107,7 +123,8 @@ describe('adopted-probe-city hook', () => {
 	});
 
 	it('should additionally update state for the US cities', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Detroit',
 			state: 'MI',
 			latitude: '42.33143',
@@ -147,17 +164,16 @@ describe('adopted-probe-city hook', () => {
 		const payload = { city: 'miami' };
 		await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context);
 
-		expect(readMany.callCount).to.equal(1);
-		expect(readMany.args[0]).to.deep.equal([ [ '1' ] ]);
+		expect(adoptedProbes.readMany.callCount).to.equal(1);
+		expect(adoptedProbes.readMany.args[0]).to.deep.equal([ [ '1' ] ]);
 		expect(nock.isDone()).to.equal(true);
-		expect(updateMany.callCount).to.equal(0);
 		expect(payload.city).to.equal('Miami');
 
 		await callbacks.action['adopted_probes.items.update']({ payload, keys: [ '1' ] }, context);
 
-		expect(updateMany.callCount).to.equal(1);
+		expect(adoptedProbes.updateMany.callCount).to.equal(1);
 
-		expect(updateMany.args[0]).to.deep.equal([
+		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
 			{ latitude: '25.77427', longitude: '-80.19366', isCustomCity: true, countryOfCustomCity: 'US', state: 'FL' },
 			{ emitEvents: false },
@@ -165,7 +181,8 @@ describe('adopted-probe-city hook', () => {
 	});
 
 	it('should reset city, lat and long of the adopted probe', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85341',
@@ -180,9 +197,9 @@ describe('adopted-probe-city hook', () => {
 		await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context);
 		await callbacks.action['adopted_probes.items.update']({ payload, keys: [ '1' ] }, context);
 
-		expect(updateMany.callCount).to.equal(1);
+		expect(adoptedProbes.updateMany.callCount).to.equal(1);
 
-		expect(updateMany.args[0]).to.deep.equal([
+		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
 			{ latitude: null, longitude: null, isCustomCity: false, countryOfCustomCity: null, state: null },
 			{ emitEvents: false },
@@ -192,7 +209,8 @@ describe('adopted-probe-city hook', () => {
 	});
 
 	it('should update non-city meta fields of the adopted probe', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85341',
@@ -202,32 +220,38 @@ describe('adopted-probe-city hook', () => {
 		}]);
 
 		hook(hooks, context);
-		const payload = { name: 'My Probe', tags: [ 'mytag', 'mytag2' ] };
+		const payload = { name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jsdelivr', value: 'mytag2' }] };
 		await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context);
 
-		expect(readMany.callCount).to.equal(0);
+		expect(adoptedProbes.readMany.callCount).to.equal(1);
 		expect(nock.isDone()).to.equal(true);
-		expect(updateMany.callCount).to.equal(0);
-		expect(payload).to.deep.equal({ name: 'My Probe', tags: [ 'mytag', 'mytag2' ] });
+
+		expect(payload).to.deep.equal({
+			name: 'My Probe',
+			tags: [
+				{ prefix: 'jimaek', value: 'mytag' },
+				{ prefix: 'jsdelivr', value: 'mytag2' },
+			],
+		});
 
 		await callbacks.action['adopted_probes.items.update']({ payload, keys: [ '1' ] }, context);
 
-		expect(updateMany.callCount).to.equal(0);
+		expect(adoptedProbes.updateMany.callCount).to.equal(0);
 	});
 
 	it('should send valid error if probes not found', async () => {
-		readMany.resolves([]);
+		adoptedProbes.readMany.resolves([]);
 
 		hook(hooks, context);
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
 
-		expect(err).to.deep.equal(new ProbesNotFoundError());
-		expect(updateMany.callCount).to.equal(0);
+		expect(err).to.deep.equal(payloadError('Adopted probes not found.'));
 	});
 
 	it('should send valid error if country is not defined', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85341',
@@ -240,12 +264,13 @@ describe('adopted-probe-city hook', () => {
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
 
-		expect(err).to.deep.equal(new CountryNotDefinedError());
-		expect(updateMany.callCount).to.equal(0);
+		expect(err.status).to.equal(400);
+		expect(adoptedProbes.updateMany.callCount).to.equal(0);
 	});
 
 	it('should send valid error if target probes are in different countries', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85341',
@@ -264,12 +289,12 @@ describe('adopted-probe-city hook', () => {
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
 
-		expect(err).to.deep.equal(new DifferentCountriesError());
-		expect(updateMany.callCount).to.equal(0);
+		expect(err.status).to.equal(400);
 	});
 
 	it('should send valid error if provided city is not valid', async () => {
-		readMany.resolves([{
+		adoptedProbes.readMany.resolves([{
+			userId: '1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85341',
@@ -289,37 +314,104 @@ describe('adopted-probe-city hook', () => {
 		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(err).to.deep.equal(new InvalidCityError());
-		expect(updateMany.callCount).to.equal(0);
+		expect(err.status).to.equal(400);
+		expect(adoptedProbes.updateMany.callCount).to.equal(0);
 	});
 
-	it('should send valid error if there are too many tags', async () => {
-		hook(hooks, context);
-		const payload = { tags: [ 'a', 'b', 'c', 'd', 'e', 'f' ] };
-		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+	describe('tags validation', () => {
+		before(() => {
+			adoptedProbes.readMany.resolves([{
+				userId: '1',
+				city: 'Paris',
+				state: null,
+				latitude: '48.85341',
+				longitude: '2.3488',
+				country: 'FR',
+				isCustomCity: false,
+			}]);
+		});
 
-		expect(nock.isDone()).to.equal(true);
-		expect(err).to.deep.equal(new TooManyTagsError());
-		expect(updateMany.callCount).to.equal(0);
-	});
+		it('should send valid error if prefix is wrong', async () => {
+			hook(hooks, context);
+			const payload = { tags: [{ prefix: 'wrong_organization', value: 'a' }] };
+			const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
 
-	it('should send valid error if the tag is too big', async () => {
-		hook(hooks, context);
-		const payload = { tags: [ 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ] };
-		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+			expect(err.message).to.equal('"[0].prefix" must be one of [jimaek, jsdelivr]');
+		});
 
-		expect(nock.isDone()).to.equal(true);
-		expect(err).to.deep.equal(new TooBigTagError());
-		expect(updateMany.callCount).to.equal(0);
-	});
+		it('should allow saving of prev values with outdated prefix', async () => {
+			hook(hooks, context);
 
-	it('should send valid error if the tag has invalid character', async () => {
-		hook(hooks, context);
-		const payload = { tags: [ '@mytag' ] };
-		const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+			adoptedProbes.readMany.resolves([{
+				userId: '1',
+				tags: [{ prefix: 'oldprefix', value: 'a' }],
+				city: 'Paris',
+				state: null,
+				latitude: '48.85341',
+				longitude: '2.3488',
+				country: 'FR',
+				isCustomCity: false,
+			}]);
 
-		expect(nock.isDone()).to.equal(true);
-		expect(err).to.deep.equal(new InvalidTagError());
-		expect(updateMany.callCount).to.equal(0);
+			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }] };
+
+			await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context);
+
+
+			expect(payload).to.deep.equal({ tags: [{ prefix: 'oldprefix', value: 'a' }] });
+		});
+
+		it('should not allow new values with outdated prefix', async () => {
+			hook(hooks, context);
+
+			adoptedProbes.readMany.resolves([{
+				userId: '1',
+				tags: [{ prefix: 'oldprefix', value: 'a' }],
+				city: 'Paris',
+				state: null,
+				latitude: '48.85341',
+				longitude: '2.3488',
+				country: 'FR',
+				isCustomCity: false,
+			}]);
+
+			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }, { prefix: 'oldprefix', value: 'b' }] };
+
+			const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+
+			expect(err.message).to.equal('"[0].prefix" must be one of [jimaek, jsdelivr]');
+		});
+
+		it('should send valid error if there are too many tags', async () => {
+			hook(hooks, context);
+			const payload = { tags: [
+				{ prefix: 'jimaek', value: 'a' },
+				{ prefix: 'jimaek', value: 'b' },
+				{ prefix: 'jimaek', value: 'c' },
+				{ prefix: 'jimaek', value: 'd' },
+				{ prefix: 'jimaek', value: 'e' },
+				{ prefix: 'jimaek', value: 'f' },
+			] };
+			const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+
+			expect(err.message).to.equal('"value" must contain less than or equal to 5 items');
+		});
+
+		it('should send valid error if the tag is too big', async () => {
+			hook(hooks, context);
+			const payload = { tags: [{ prefix: 'jimaek', value: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }] };
+			const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+
+			expect(err.message).to.equal('"[0].value" length must be less than or equal to 32 characters long');
+			expect(adoptedProbes.updateMany.callCount).to.equal(0);
+		});
+
+		it('should send valid error if the tag has invalid characters', async () => {
+			hook(hooks, context);
+			const payload = { tags: [{ prefix: 'jimaek', value: '@mytag' }] };
+			const err = await callbacks.filter['adopted_probes.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+
+			expect(err.message).to.equal('"[0].value" with value "@mytag" fails to match the required pattern: /^[a-zA-Z0-9-]+$/');
+		});
 	});
 });
