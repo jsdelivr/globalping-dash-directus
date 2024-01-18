@@ -17,3 +17,5 @@ for dir in $directories; do
 		npm run test
 	)
 done
+
+echo "Finished"

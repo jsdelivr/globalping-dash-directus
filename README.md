@@ -44,7 +44,7 @@ npm i --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node
 jq --tab '.compilerOptions.module = "ESNext"' tsconfig.json > temp.json && mv temp.json tsconfig.json
 jq --tab '.scripts.test = "TS_NODE_TRANSPILE_ONLY=true mocha"' package.json > temp.json && mv temp.json package.json
 mkdir test
-while [[ $PWD != */extensions ]]; do cd ..; done # Go to the /src/extensions folder
+while [[ $PWD != */extensions ]]; do cd ..; done
 cp ./gh-webhook-handler/.mocharc.json "$original_dir/"
 cp ./gh-webhook-handler/wallaby.js "$original_dir/"
 cd "$original_dir"

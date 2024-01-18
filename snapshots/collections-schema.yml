@@ -838,99 +838,21 @@ fields:
       field: userId
       group: null
       hidden: false
-      interface: input
+      interface: select-dropdown-m2o
       note: null
-      options: null
+      options:
+        enableCreate: false
       readonly: false
       required: true
       sort: 12
-      special: null
+      special:
+        - m2o
       translations: null
       validation: null
       validation_message: null
       width: full
     schema:
       name: userId
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: user_created
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: user
-      display_options: null
-      field: user_created
-      group: null
-      hidden: true
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
-      readonly: true
-      required: false
-      sort: 2
-      special:
-        - user-created
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: user_created
-      table: adopted_probes
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: adopted_probes
-    field: user_updated
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: user
-      display_options: null
-      field: user_updated
-      group: null
-      hidden: true
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
-      readonly: true
-      required: false
-      sort: 4
-      special:
-        - user-updated
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: user_updated
       table: adopted_probes
       data_type: char
       default_value: null
@@ -1255,46 +1177,6 @@ fields:
       has_auto_increment: true
       foreign_key_table: null
       foreign_key_column: null
-  - collection: credits
-    field: user_created
-    type: string
-    meta:
-      collection: credits
-      conditions: null
-      display: user
-      display_options: null
-      field: user_created
-      group: null
-      hidden: true
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
-      readonly: true
-      required: false
-      sort: 2
-      special:
-        - user-created
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: user_created
-      table: credits
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
   - collection: credits
     field: user_updated
     type: string
@@ -2124,12 +2006,12 @@ fields:
       foreign_key_column: null
 relations:
   - collection: adopted_probes
-    field: user_created
+    field: userId
     related_collection: directus_users
     meta:
       junction_field: null
       many_collection: adopted_probes
-      many_field: user_created
+      many_field: userId
       one_allowed_collections: null
       one_collection: directus_users
       one_collection_field: null
@@ -2138,54 +2020,12 @@ relations:
       sort_field: null
     schema:
       table: adopted_probes
-      column: user_created
+      column: userId
       foreign_key_table: directus_users
       foreign_key_column: id
-      constraint_name: adopted_probes_user_created_foreign
+      constraint_name: adopted_probes_userid_foreign
       on_update: RESTRICT
-      on_delete: RESTRICT
-  - collection: adopted_probes
-    field: user_updated
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: adopted_probes
-      many_field: user_updated
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: adopted_probes
-      column: user_updated
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: adopted_probes_user_updated_foreign
-      on_update: RESTRICT
-      on_delete: RESTRICT
-  - collection: credits
-    field: user_created
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: credits
-      many_field: user_created
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: credits
-      column: user_created
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: credits_user_created_foreign
-      on_update: RESTRICT
-      on_delete: RESTRICT
+      on_delete: CASCADE
   - collection: credits
     field: user_updated
     related_collection: directus_users
@@ -2269,7 +2109,7 @@ relations:
       foreign_key_column: id
       constraint_name: tokens_user_created_foreign
       on_update: RESTRICT
-      on_delete: NO ACTION
+      on_delete: CASCADE
   - collection: tokens
     field: user_updated
     related_collection: directus_users
@@ -2290,4 +2130,4 @@ relations:
       foreign_key_column: id
       constraint_name: tokens_user_updated_foreign
       on_update: RESTRICT
-      on_delete: NO ACTION
+      on_delete: CASCADE
