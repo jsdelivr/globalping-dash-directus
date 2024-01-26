@@ -69,7 +69,7 @@ type AddCreditsData = {
 export const addCredits = async ({ githubId, amount }: AddCreditsData, { services, database, getSchema, env }: Context) => {
 	const { ItemsService } = services;
 
-	const creditsService = new ItemsService('credits', {
+	const creditsService = new ItemsService('gp_credits', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});

@@ -16,7 +16,7 @@ type User = {
 export const getAdoptedProbes = async ({ services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
-	const itemsService = new ItemsService('adopted_probes', {
+	const itemsService = new ItemsService('gp_adopted_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -36,7 +36,7 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 
 	const { ItemsService } = services;
 
-	const creditsService = new ItemsService('credits', {
+	const creditsService = new ItemsService('gp_credits', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -61,7 +61,7 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 export const resetOnlineTimes = async ({ services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
-	const itemsService = new ItemsService('adopted_probes', {
+	const itemsService = new ItemsService('gp_adopted_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});

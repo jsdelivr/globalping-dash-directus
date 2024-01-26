@@ -45,8 +45,8 @@ jq --tab '.compilerOptions.module = "ESNext"' tsconfig.json > temp.json && mv te
 jq --tab '.scripts.test = "TS_NODE_TRANSPILE_ONLY=true mocha"' package.json > temp.json && mv temp.json package.json
 mkdir test
 while [[ $PWD != */extensions ]]; do cd ..; done
-cp ./gh-webhook-handler/.mocharc.json "$original_dir/"
-cp ./gh-webhook-handler/wallaby.js "$original_dir/"
+cp ./operations/gh-webhook-handler/.mocharc.json "$original_dir/"
+cp ./operations/gh-webhook-handler/wallaby.js "$original_dir/"
 cd "$original_dir"
 ```
 

@@ -19,7 +19,7 @@ export type Fields = Partial<AdoptedProbe>;
 export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 
 export default defineHook(({ filter, action }, context) => {
-	filter('adopted_probes.items.update', async (payload, { keys }, { accountability }) => {
+	filter('gp_adopted_probes.items.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
 
 		if (!accountability) {
@@ -36,7 +36,7 @@ export default defineHook(({ filter, action }, context) => {
 	});
 
 	// State, latitude and longitude are updated in a separate hook, because user operation doesn't have permission to edit them.
-	action('adopted_probes.items.update', async ({ keys, payload }) => {
+	action('gp_adopted_probes.items.update', async ({ keys, payload }) => {
 		const fields = payload as Fields;
 
 		if (fields.city) {

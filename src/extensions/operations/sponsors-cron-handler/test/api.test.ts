@@ -97,7 +97,7 @@ describe('Sponsors cron handler', () => {
 		expect(updateOne.callCount).to.equal(1);
 		expect(updateOne.args[0]).to.deep.equal([ 1, { lastEarningDate: '2023-09-19T00:00:00.000Z' }]);
 
-		expect(services.ItemsService.args[2]).to.deep.equal([ 'credits', {
+		expect(services.ItemsService.args[2]).to.deep.equal([ 'gp_credits', {
 			schema: {},
 			knex: {},
 		}]);
@@ -358,7 +358,7 @@ describe('Sponsors cron handler', () => {
 		expect(updateOne.args[0]).to.deep.equal([ 1, { monthlyAmount: 15 }]);
 		expect(updateOne.args[1]).to.deep.equal([ 1, { lastEarningDate: '2023-09-19T00:00:00.000Z' }]);
 
-		expect(services.ItemsService.args[3]).to.deep.equal([ 'credits', {
+		expect(services.ItemsService.args[3]).to.deep.equal([ 'gp_credits', {
 			schema: {},
 			knex: {},
 		}]);

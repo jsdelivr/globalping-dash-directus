@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { hashToken } from '../utils/token';
+import { hashToken } from '../utils/token.js';
 
 type Token = {
     id: number;
@@ -14,13 +14,30 @@ type Token = {
 };
 
 export default defineHook(({ filter }) => {
-	filter('tokens.items.create', (payload) => {
+	filter('jsd_purge_tokens.items.create', (payload) => {
 		const token = payload as Token;
 		const hashedToken = hashToken(token.value);
 		token.value = hashedToken;
 	});
 
-	filter('tokens.items.update', (payload) => {
+	filter('jsd_purge_tokens.items.update', (payload) => {
+		const token = payload as Partial<Token>;
+
+		if (token.value === undefined) {
+			return;
+		}
+
+		const hashedToken = hashToken(token.value);
+		token.value = hashedToken;
+	});
+
+	filter('gp_tokens.items.create', (payload) => {
+		const token = payload as Token;
+		const hashedToken = hashToken(token.value);
+		token.value = hashedToken;
+	});
+
+	filter('gp_tokens.items.update', (payload) => {
 		const token = payload as Partial<Token>;
 
 		if (token.value === undefined) {

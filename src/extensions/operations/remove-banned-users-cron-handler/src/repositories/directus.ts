@@ -28,7 +28,7 @@ export const deleteUser = async (user: DirectusUser, { services, database, getSc
 export const deleteCredits = async (user: DirectusUser, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
-	const usersService = new ItemsService('credits', {
+	const usersService = new ItemsService('gp_credits', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});

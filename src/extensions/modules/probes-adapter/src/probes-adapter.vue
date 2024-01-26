@@ -12,7 +12,7 @@
 				1. Enter the IP address of your probe;<br>
 				2. Go to the probe logs and find a 6 digit adoption code;<br>
 				3. Enter the code to the verification input;<br>
-				4. Done. Probe can be found on the <a class="link" href="/admin/content/adopted_probes">adopted probes</a> page.
+				4. Done. Probe can be found on the <a class="link" href="/admin/content/gp_adopted_probes">adopted probes</a> page.
 			</p>
 
 			<form @submit.prevent="sendCode">

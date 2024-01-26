@@ -85,7 +85,7 @@ async function generateToken () {
 	loading.value = true;
 
 	try {
-		const response = await api.get('/token-generator');
+		const response = await api.post('/token-generator');
 		emitValue(response.data.data);
 		isNewTokenGenerated.value = true;
 	} catch (err: any) {

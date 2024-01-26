@@ -56,14 +56,14 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0]).deep.equal([ 'adopted_probes', {
+		expect(services.ItemsService.args[0]).deep.equal([ 'gp_adopted_probes', {
 			schema: {},
 			knex: {},
 		}]);
 
 		expect(readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'adopted_probes', {
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_adopted_probes', {
 			schema: {},
 			knex: {},
 		}]);
@@ -86,7 +86,7 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0]).deep.equal([ 'adopted_probes', {
+		expect(services.ItemsService.args[0]).deep.equal([ 'gp_adopted_probes', {
 			schema: {},
 			knex: {},
 		}]);
@@ -110,7 +110,7 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0]).deep.equal([ 'adopted_probes', {
+		expect(services.ItemsService.args[0]).deep.equal([ 'gp_adopted_probes', {
 			schema: {},
 			knex: {},
 		}]);
@@ -138,7 +138,7 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0]).deep.equal([ 'adopted_probes', {
+		expect(services.ItemsService.args[0]).deep.equal([ 'gp_adopted_probes', {
 			schema: {},
 			knex: {},
 		}]);

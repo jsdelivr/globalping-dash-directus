@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS `directus-test`;
+GRANT ALL PRIVILEGES ON `directus-test`.* to 'directus'@'%';
+
 USE directus;
 
 -- Directus issue https://github.com/directus/directus/discussions/11786

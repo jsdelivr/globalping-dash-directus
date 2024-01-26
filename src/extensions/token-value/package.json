@@ -34,17 +34,24 @@
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
 		"add": "directus-extension add",
-		"test": "echo 'No tests for that extension'"
+		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
 		"@directus/extensions-sdk": "10.1.1",
+		"@types/chai": "^4.3.11",
 		"@types/express": "^4.17.17",
+		"@types/mocha": "^10.0.6",
 		"@types/node": "^20.2.4",
+		"@types/sinon": "^17.0.3",
+		"chai": "^5.0.0",
 		"express": "^4.18.2",
+		"mocha": "^10.2.0",
+		"sinon": "^17.0.1",
+		"ts-node": "^10.9.2",
 		"typescript": "^5.0.4"
 	},
 	"dependencies": {
-		"@directus/errors": "^0.2.0",
+		"@directus/errors": "^0.2.1",
 		"@isaacs/ttlcache": "^1.4.0"
 	}
 }

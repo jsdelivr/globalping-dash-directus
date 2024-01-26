@@ -9,7 +9,7 @@ export type AdoptedProbe = {
 export const getAdoptedProbes = async ({ services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
-	const itemsService = new ItemsService('adopted_probes', {
+	const itemsService = new ItemsService('gp_adopted_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -25,7 +25,7 @@ export const increaseOnlineTimes = async (adoptedProbes: AdoptedProbe[], { servi
 
 	const { ItemsService } = services;
 
-	const itemsService = new ItemsService('adopted_probes', {
+	const itemsService = new ItemsService('gp_adopted_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});

@@ -2,62 +2,114 @@ version: 1
 directus: 10.8.3
 vendor: mysql
 collections:
-  - collection: adopted_probes
+  - collection: Globalping
     meta:
       accountability: all
       archive_app_filter: true
       archive_field: null
       archive_value: null
       collapse: open
-      collection: adopted_probes
+      collection: Globalping
       color: null
       display_template: null
       group: null
+      hidden: false
+      icon: folder
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 2
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+  - collection: gp_adopted_probes
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: gp_adopted_probes
+      color: null
+      display_template: null
+      group: Globalping
       hidden: false
       icon: null
       item_duplication_fields: null
       note: null
       preview_url: null
       singleton: false
-      sort: null
+      sort: 1
       sort_field: null
-      translations: null
+      translations:
+        - language: en-US
+          translation: Adopted Probes
       unarchive_value: null
       versioning: false
     schema:
-      name: adopted_probes
-  - collection: credits
+      name: gp_adopted_probes
+  - collection: gp_credits
     meta:
       accountability: all
       archive_app_filter: true
       archive_field: null
       archive_value: null
       collapse: open
-      collection: credits
+      collection: gp_credits
       color: null
       display_template: null
-      group: null
+      group: Globalping
       hidden: false
       icon: null
       item_duplication_fields: null
       note: null
       preview_url: null
       singleton: false
-      sort: null
+      sort: 3
       sort_field: null
-      translations: null
+      translations:
+        - language: en-US
+          translation: Credits
       unarchive_value: null
       versioning: false
     schema:
-      name: credits
-  - collection: jsdelivr
+      name: gp_credits
+  - collection: gp_tokens
     meta:
       accountability: all
       archive_app_filter: true
       archive_field: null
       archive_value: null
       collapse: open
-      collection: jsdelivr
+      collection: gp_tokens
+      color: null
+      display_template: null
+      group: Globalping
+      hidden: false
+      icon: null
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 2
+      sort_field: null
+      translations:
+        - language: en-US
+          translation: Globalping Tokens
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: gp_tokens
+  - collection: jsDelivr
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: jsDelivr
       color: null
       display_template: null
       group: null
@@ -69,9 +121,37 @@ collections:
       singleton: false
       sort: 1
       sort_field: null
-      translations: null
+      translations:
+        - language: en-US
+          translation: jsDelivr
       unarchive_value: null
       versioning: false
+  - collection: jsd_purge_tokens
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: jsd_purge_tokens
+      color: null
+      display_template: null
+      group: jsDelivr
+      hidden: false
+      icon: null
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 1
+      sort_field: null
+      translations:
+        - language: en-US
+          translation: Purge API Tokens
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: jsd_purge_tokens
   - collection: sponsors
     meta:
       accountability: all
@@ -89,1134 +169,14 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: null
+      sort: 3
       sort_field: null
       translations: null
       unarchive_value: null
       versioning: false
     schema:
       name: sponsors
-  - collection: tokens
-    meta:
-      accountability: all
-      archive_app_filter: true
-      archive_field: null
-      archive_value: null
-      collapse: open
-      collection: tokens
-      color: null
-      display_template: null
-      group: jsdelivr
-      hidden: false
-      icon: null
-      item_duplication_fields: null
-      note: null
-      preview_url: null
-      singleton: false
-      sort: 1
-      sort_field: null
-      translations: null
-      unarchive_value: null
-      versioning: false
-    schema:
-      name: tokens
 fields:
-  - collection: adopted_probes
-    field: asn
-    type: integer
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: asn
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: true
-      sort: 20
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: asn
-      table: adopted_probes
-      data_type: int
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: city
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: city
-      group: null
-      hidden: false
-      interface: input
-      note: >-
-        City where the probe is located. If you know that city is wrong it can
-        be changed here: type in the valid city and click save. City edit is
-        only available within the country defined by Globalping ("country"
-        field). To reset the city value clear the field, save and wait for a few
-        mins while dashboard picks up the city from Globalping.
-      options: null
-      readonly: false
-      required: false
-      sort: 8
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: city
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: country
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: country
-      group: null
-      hidden: false
-      interface: input
-      note: >-
-        Country value is not editable. If you are sure it is wrong please leave
-        a message here: https://github.com/jsdelivr/globalping/issues/268
-      options: null
-      readonly: false
-      required: true
-      sort: 10
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: country
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: countryOfCustomCity
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: countryOfCustomCity
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 11
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: countryOfCustomCity
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: date_created
-    type: timestamp
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: date_created
-      group: null
-      hidden: true
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 3
-      special:
-        - date-created
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: date_created
-      table: adopted_probes
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: date_updated
-    type: timestamp
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: date_updated
-      group: null
-      hidden: true
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 5
-      special:
-        - date-updated
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: date_updated
-      table: adopted_probes
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: id
-    type: integer
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: id
-      group: null
-      hidden: true
-      interface: input
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 1
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: id
-      table: adopted_probes
-      data_type: int unsigned
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: true
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: true
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: ip
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: ip
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: true
-      sort: 14
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: ip
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: true
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: isCustomCity
-    type: boolean
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: isCustomCity
-      group: null
-      hidden: false
-      interface: boolean
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 22
-      special:
-        - cast-boolean
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: isCustomCity
-      table: adopted_probes
-      data_type: boolean
-      default_value: false
-      max_length: null
-      numeric_precision: 3
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: lastSyncDate
-    type: date
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: lastSyncDate
-      group: null
-      hidden: false
-      interface: datetime
-      note: >-
-        Last time probe was online. Adoption will expire after 30 days of being
-        offline.
-      options: null
-      readonly: false
-      required: true
-      sort: 13
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: lastSyncDate
-      table: adopted_probes
-      data_type: date
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: latitude
-    type: float
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: latitude
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 18
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: latitude
-      table: adopted_probes
-      data_type: float
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 5
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: longitude
-    type: float
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: longitude
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 19
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: longitude
-      table: adopted_probes
-      data_type: float
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 5
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: name
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: name
-      group: null
-      hidden: false
-      interface: input
-      note: >-
-        Non-public name of the probe. It doesn't affect anything and is only
-        visible on the dashboard "Adopted Probes" page.
-      options: null
-      readonly: false
-      required: false
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: name
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: network
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: network
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: true
-      sort: 21
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: network
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: onlineTimesToday
-    type: integer
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: onlineTimesToday
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 23
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: onlineTimesToday
-      table: adopted_probes
-      data_type: int
-      default_value: 0
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: state
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: state
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 9
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: state
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: status
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: status
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: true
-      sort: 17
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: status
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: tags
-    type: json
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: tags
-      group: null
-      hidden: false
-      interface: gp-tags
-      note: >-
-        Public tags of the probe. They can be used as location filters for a
-        measurement. Format is `u-${prefix}-{value}` where prefix is
-        user/organization github login, and value is your custom string. E.g.
-        for user with github username `"jimaek"` and tag `"home1"` location
-        filter is `{ "tags": ["u-jimaek-home1"] }`.
-      options: null
-      readonly: false
-      required: false
-      sort: 7
-      special:
-        - cast-json
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: tags
-      table: adopted_probes
-      data_type: longtext
-      default_value: null
-      max_length: 4294967295
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: userId
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: userId
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        enableCreate: false
-      readonly: false
-      required: true
-      sort: 12
-      special:
-        - m2o
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: userId
-      table: adopted_probes
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: adopted_probes
-    field: uuid
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: uuid
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: true
-      sort: 15
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: uuid
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: true
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: adopted_probes
-    field: version
-    type: string
-    meta:
-      collection: adopted_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: version
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: true
-      sort: 16
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: version
-      table: adopted_probes
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: comment
-    type: string
-    meta:
-      collection: credits
-      conditions: null
-      display: null
-      display_options: null
-      field: comment
-      group: null
-      hidden: false
-      interface: input
-      note: Why credits are added?
-      options: null
-      readonly: false
-      required: true
-      sort: 10
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: comment
-      table: credits
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: credits
-    type: integer
-    meta:
-      collection: credits
-      conditions: null
-      display: null
-      display_options: null
-      field: credits
-      group: null
-      hidden: false
-      interface: input
-      note: Amount of globalping credits assigned for the sponsorship.
-      options: null
-      readonly: false
-      required: true
-      sort: 9
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: credits
-      table: credits
-      data_type: int
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: date_created
-    type: timestamp
-    meta:
-      collection: credits
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: date_created
-      group: null
-      hidden: true
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 3
-      special:
-        - date-created
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: date_created
-      table: credits
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: date_updated
-    type: timestamp
-    meta:
-      collection: credits
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: date_updated
-      group: null
-      hidden: true
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 5
-      special:
-        - date-updated
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: date_updated
-      table: credits
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: githubId
-    type: string
-    meta:
-      collection: credits
-      conditions: null
-      display: null
-      display_options: null
-      field: githubId
-      group: null
-      hidden: false
-      interface: input
-      note: >-
-        GitHub ID of a user or an organization. Can be found by login (e.g.
-        https://api.github.com/users/jsdelivr)
-      options: null
-      readonly: false
-      required: true
-      sort: 7
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: githubId
-      table: credits
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: id
-    type: integer
-    meta:
-      collection: credits
-      conditions: null
-      display: null
-      display_options: null
-      field: id
-      group: null
-      hidden: true
-      interface: input
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 1
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: id
-      table: credits
-      data_type: int unsigned
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: true
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: true
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: credits
-    field: user_updated
-    type: string
-    meta:
-      collection: credits
-      conditions: null
-      display: user
-      display_options: null
-      field: user_updated
-      group: null
-      hidden: true
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
-      readonly: true
-      required: false
-      sort: 4
-      special:
-        - user-updated
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: user_updated
-      table: credits
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
   - collection: directus_users
     field: github_organizations
     type: json
@@ -1288,6 +248,1890 @@ fields:
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: asn
+    type: integer
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: asn
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 20
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: asn
+      table: gp_adopted_probes
+      data_type: int
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: city
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        City where the probe is located. If you know that city is wrong it can
+        be changed here: type in the valid city and click save. City edit is
+        only available within the country defined by Globalping ("country"
+        field). To reset the city value clear the field, save and wait for a few
+        mins while dashboard picks up the city from Globalping.
+      options: null
+      readonly: false
+      required: false
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: city
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: country
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: country
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        Country value is not editable. If you are sure it is wrong please leave
+        a message here: https://github.com/jsdelivr/globalping/issues/268
+      options: null
+      readonly: false
+      required: true
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: country
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: countryOfCustomCity
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: countryOfCustomCity
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: countryOfCustomCity
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: date_created
+    type: timestamp
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: gp_adopted_probes
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 5
+      special:
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: gp_adopted_probes
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: id
+    type: integer
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: gp_adopted_probes
+      data_type: int unsigned
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: ip
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: ip
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 14
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: ip
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: isCustomCity
+    type: boolean
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: isCustomCity
+      group: null
+      hidden: false
+      interface: boolean
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 22
+      special:
+        - cast-boolean
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: isCustomCity
+      table: gp_adopted_probes
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: 3
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: lastSyncDate
+    type: date
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: lastSyncDate
+      group: null
+      hidden: false
+      interface: datetime
+      note: >-
+        Last time probe was online. Adoption will expire after 30 days of being
+        offline.
+      options: null
+      readonly: false
+      required: true
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: lastSyncDate
+      table: gp_adopted_probes
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: latitude
+    type: float
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: latitude
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 18
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: latitude
+      table: gp_adopted_probes
+      data_type: float
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: longitude
+    type: float
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: longitude
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 19
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: longitude
+      table: gp_adopted_probes
+      data_type: float
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: name
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        Non-public name of the probe. It doesn't affect anything and is only
+        visible on the dashboard "Adopted Probes" page.
+      options: null
+      readonly: false
+      required: false
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: network
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: network
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 21
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: network
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: onlineTimesToday
+    type: integer
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: onlineTimesToday
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 23
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: onlineTimesToday
+      table: gp_adopted_probes
+      data_type: int
+      default_value: 0
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: state
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: state
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: state
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: status
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: status
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 17
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: status
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: tags
+    type: json
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: tags
+      group: null
+      hidden: false
+      interface: gp-tags
+      note: >-
+        Public tags of the probe. They can be used as location filters for a
+        measurement. Format is `u-${prefix}-{value}` where prefix is
+        user/organization github login, and value is your custom string. E.g.
+        for user with github username `"jimaek"` and tag `"home1"` location
+        filter is `{ "tags": ["u-jimaek-home1"] }`.
+      options: null
+      readonly: false
+      required: false
+      sort: 7
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: tags
+      table: gp_adopted_probes
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: userId
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: userId
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        enableCreate: false
+      readonly: false
+      required: true
+      sort: 12
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: userId
+      table: gp_adopted_probes
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_adopted_probes
+    field: uuid
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: uuid
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 15
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: uuid
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: version
+    type: string
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: version
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 16
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: version
+      table: gp_adopted_probes
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: comment
+    type: string
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: null
+      display_options: null
+      field: comment
+      group: null
+      hidden: false
+      interface: input
+      note: Why gp_credits are added?
+      options: null
+      readonly: false
+      required: true
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: comment
+      table: gp_credits
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: date_created
+    type: timestamp
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: gp_credits
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 5
+      special:
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: gp_credits
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: githubId
+    type: string
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: null
+      display_options: null
+      field: githubId
+      group: null
+      hidden: false
+      interface: input
+      note: >-
+        GitHub ID of a user or an organization. Can be found by login (e.g.
+        https://api.github.com/users/jsdelivr)
+      options: null
+      readonly: false
+      required: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: githubId
+      table: gp_credits
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: gp_credits
+    type: integer
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: null
+      display_options: null
+      field: gp_credits
+      group: null
+      hidden: false
+      interface: input
+      note: Amount of globalping credits assigned for the sponsorship.
+      options: null
+      readonly: false
+      required: true
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: gp_credits
+      table: gp_credits
+      data_type: int
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: id
+    type: integer
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: gp_credits
+      data_type: int unsigned
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits
+    field: user_updated
+    type: string
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: user
+      display_options: null
+      field: user_updated
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 4
+      special:
+        - user-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_updated
+      table: gp_credits
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_tokens
+    field: date_created
+    type: timestamp
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - cast-timestamp
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: gp_tokens
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: date_last_used
+    type: date
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: date_last_used
+      group: null
+      hidden: false
+      interface: datetime
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: date_last_used
+      table: gp_tokens
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 5
+      special:
+        - cast-timestamp
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: gp_tokens
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: expire
+    type: date
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: expire
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date after which the token will expire. Never expires if empty.
+      options: null
+      readonly: false
+      required: false
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: expire
+      table: gp_tokens
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: id
+    type: integer
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: gp_tokens
+      data_type: int unsigned
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: name
+    type: string
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: A unique name for this token.
+      options: null
+      readonly: false
+      required: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: gp_tokens
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: origins
+    type: json
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: origins
+      group: null
+      hidden: false
+      interface: tags
+      note: >-
+        A list of origins which are allowed to use the token. If empty - any
+        origin is valid. Examples of origins: "www.jsdelivr.com",
+        "www.jsdelivr.com:10000".
+      options: {}
+      readonly: false
+      required: false
+      sort: 8
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: origins
+      table: gp_tokens
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_tokens
+    field: user_created
+    type: string
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: user
+      display_options: null
+      field: user_created
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 2
+      special:
+        - user-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_created
+      table: gp_tokens
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_tokens
+    field: user_updated
+    type: string
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: user
+      display_options: null
+      field: user_updated
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 4
+      special:
+        - user-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_updated
+      table: gp_tokens
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_tokens
+    field: value
+    type: string
+    meta:
+      collection: gp_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: value
+      group: null
+      hidden: false
+      interface: token
+      note: A value of a token that is used to access the API.
+      options: null
+      readonly: false
+      required: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: value
+      table: gp_tokens
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: date_created
+    type: timestamp
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - cast-timestamp
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: jsd_purge_tokens
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: date_last_used
+    type: date
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: date_last_used
+      group: null
+      hidden: false
+      interface: datetime
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: date_last_used
+      table: jsd_purge_tokens
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 5
+      special:
+        - cast-timestamp
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: jsd_purge_tokens
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: expire
+    type: date
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: expire
+      group: null
+      hidden: false
+      interface: datetime
+      note: Date after which the token will expire. Never expires if empty.
+      options: null
+      readonly: false
+      required: false
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: expire
+      table: jsd_purge_tokens
+      data_type: date
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: id
+    type: integer
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: jsd_purge_tokens
+      data_type: int unsigned
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: name
+    type: string
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: name
+      group: null
+      hidden: false
+      interface: input
+      note: A unique name for this token.
+      options: null
+      readonly: false
+      required: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: name
+      table: jsd_purge_tokens
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: origins
+    type: json
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: origins
+      group: null
+      hidden: false
+      interface: tags
+      note: >-
+        A list of origins which are allowed to use the token. If empty - any
+        origin is valid. Examples of origins: "www.jsdelivr.com",
+        "www.jsdelivr.com:10000".
+      options: {}
+      readonly: false
+      required: false
+      sort: 8
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: origins
+      table: jsd_purge_tokens
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: jsd_purge_tokens
+    field: user_created
+    type: string
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: user
+      display_options: null
+      field: user_created
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 2
+      special:
+        - user-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_created
+      table: jsd_purge_tokens
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: jsd_purge_tokens
+    field: user_updated
+    type: string
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: user
+      display_options: null
+      field: user_updated
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 4
+      special:
+        - user-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_updated
+      table: jsd_purge_tokens
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: jsd_purge_tokens
+    field: value
+    type: string
+    meta:
+      collection: jsd_purge_tokens
+      conditions: null
+      display: null
+      display_options: null
+      field: value
+      group: null
+      hidden: false
+      interface: token
+      note: A value of a token that is used to access the API.
+      options: null
+      readonly: false
+      required: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: value
+      table: jsd_purge_tokens
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -1647,370 +2491,13 @@ fields:
       has_auto_increment: false
       foreign_key_table: directus_users
       foreign_key_column: id
-  - collection: tokens
-    field: date_created
-    type: timestamp
-    meta:
-      collection: tokens
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: date_created
-      group: null
-      hidden: true
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 3
-      special:
-        - cast-timestamp
-        - date-created
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: date_created
-      table: tokens
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: tokens
-    field: date_updated
-    type: timestamp
-    meta:
-      collection: tokens
-      conditions: null
-      display: datetime
-      display_options:
-        relative: true
-      field: date_updated
-      group: null
-      hidden: true
-      interface: datetime
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 5
-      special:
-        - cast-timestamp
-        - date-updated
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: date_updated
-      table: tokens
-      data_type: timestamp
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: tokens
-    field: expire
-    type: date
-    meta:
-      collection: tokens
-      conditions: null
-      display: null
-      display_options: null
-      field: expire
-      group: null
-      hidden: false
-      interface: datetime
-      note: Date after which the token will expire. Never expires if empty.
-      options: null
-      readonly: false
-      required: false
-      sort: null
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: expire
-      table: tokens
-      data_type: date
-      default_value: null
-      max_length: null
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: tokens
-    field: id
-    type: integer
-    meta:
-      collection: tokens
-      conditions: null
-      display: null
-      display_options: null
-      field: id
-      group: null
-      hidden: true
-      interface: input
-      note: null
-      options: null
-      readonly: true
-      required: false
-      sort: 1
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: id
-      table: tokens
-      data_type: int unsigned
-      default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
-      is_nullable: false
-      is_unique: false
-      is_primary_key: true
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: true
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: tokens
-    field: name
-    type: string
-    meta:
-      collection: tokens
-      conditions: null
-      display: null
-      display_options: null
-      field: name
-      group: null
-      hidden: false
-      interface: input
-      note: A unique name for this token.
-      options: null
-      readonly: false
-      required: true
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: name
-      table: tokens
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: tokens
-    field: origins
-    type: string
-    meta:
-      collection: tokens
-      conditions: null
-      display: null
-      display_options: null
-      field: origins
-      group: null
-      hidden: false
-      interface: input
-      note: >-
-        A comma-separated list of origins which are allowed to use the token. If
-        empty - any origin is valid. Examples of valid origins:
-        "www.jsdelivr.com", "www.jsdelivr.com:10000". Use ", " as a separator.
-      options:
-        iconRight: globe_uk
-        placeholder: www.jsdelivr.com, www.jsdelivr.com:10000
-      readonly: false
-      required: false
-      sort: null
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: origins
-      table: tokens
-      data_type: varchar
-      default_value: null
-      max_length: 1023
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: tokens
-    field: user_created
-    type: string
-    meta:
-      collection: tokens
-      conditions: null
-      display: user
-      display_options: null
-      field: user_created
-      group: null
-      hidden: true
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
-      readonly: true
-      required: false
-      sort: 2
-      special:
-        - user-created
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: user_created
-      table: tokens
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: tokens
-    field: user_updated
-    type: string
-    meta:
-      collection: tokens
-      conditions: null
-      display: user
-      display_options: null
-      field: user_updated
-      group: null
-      hidden: true
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
-      readonly: true
-      required: false
-      sort: 4
-      special:
-        - user-updated
-      translations: null
-      validation: null
-      validation_message: null
-      width: half
-    schema:
-      name: user_updated
-      table: tokens
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: tokens
-    field: value
-    type: string
-    meta:
-      collection: tokens
-      conditions: null
-      display: null
-      display_options: null
-      field: value
-      group: null
-      hidden: false
-      interface: token
-      note: A value of a token that is used to access the API.
-      options: null
-      readonly: false
-      required: true
-      sort: 7
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: value
-      table: tokens
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
 relations:
-  - collection: adopted_probes
+  - collection: gp_adopted_probes
     field: userId
     related_collection: directus_users
     meta:
       junction_field: null
-      many_collection: adopted_probes
+      many_collection: gp_adopted_probes
       many_field: userId
       one_allowed_collections: null
       one_collection: directus_users
@@ -2019,19 +2506,19 @@ relations:
       one_field: null
       sort_field: null
     schema:
-      table: adopted_probes
+      table: gp_adopted_probes
       column: userId
       foreign_key_table: directus_users
       foreign_key_column: id
-      constraint_name: adopted_probes_userid_foreign
+      constraint_name: gp_adopted_probes_userid_foreign
       on_update: RESTRICT
       on_delete: CASCADE
-  - collection: credits
+  - collection: gp_credits
     field: user_updated
     related_collection: directus_users
     meta:
       junction_field: null
-      many_collection: credits
+      many_collection: gp_credits
       many_field: user_updated
       one_allowed_collections: null
       one_collection: directus_users
@@ -2040,13 +2527,97 @@ relations:
       one_field: null
       sort_field: null
     schema:
-      table: credits
+      table: gp_credits
       column: user_updated
       foreign_key_table: directus_users
       foreign_key_column: id
-      constraint_name: credits_user_updated_foreign
+      constraint_name: gp_credits_user_updated_foreign
       on_update: RESTRICT
       on_delete: RESTRICT
+  - collection: gp_tokens
+    field: user_created
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: gp_tokens
+      many_field: user_created
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_tokens
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: gp_tokens_user_created_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
+  - collection: gp_tokens
+    field: user_updated
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: gp_tokens
+      many_field: user_updated
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_tokens
+      column: user_updated
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: gp_tokens_user_updated_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
+  - collection: jsd_purge_tokens
+    field: user_created
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: jsd_purge_tokens
+      many_field: user_created
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: jsd_purge_tokens
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: jsd_purge_tokens_user_created_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
+  - collection: jsd_purge_tokens
+    field: user_updated
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: jsd_purge_tokens
+      many_field: user_updated
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: jsd_purge_tokens
+      column: user_updated
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: jsd_purge_tokens_user_updated_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
   - collection: sponsors
     field: user_created
     related_collection: directus_users
@@ -2089,45 +2660,3 @@ relations:
       constraint_name: sponsors_user_updated_foreign
       on_update: RESTRICT
       on_delete: RESTRICT
-  - collection: tokens
-    field: user_created
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: tokens
-      many_field: user_created
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: tokens
-      column: user_created
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: tokens_user_created_foreign
-      on_update: RESTRICT
-      on_delete: CASCADE
-  - collection: tokens
-    field: user_updated
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: tokens
-      many_field: user_updated
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: tokens
-      column: user_updated
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: tokens_user_updated_foreign
-      on_update: RESTRICT
-      on_delete: CASCADE

@@ -1,9 +1,9 @@
-# Build hooks/tokens
+# Build hooks/jsd-purge-tokens
 FROM node:18-alpine AS builder-01
-WORKDIR /builder/src/extensions/hooks/tokens
-ADD ./src/extensions/hooks/tokens/package.json ./src/extensions/hooks/tokens/package-lock.json ./
+WORKDIR /builder/src/extensions/hooks/jsd-purge-tokens
+ADD ./src/extensions/hooks/jsd-purge-tokens/package.json ./src/extensions/hooks/jsd-purge-tokens/package-lock.json ./
 RUN npm ci
-COPY ./src/extensions/hooks/tokens .
+COPY ./src/extensions/hooks/jsd-purge-tokens .
 RUN npm run build
 
 # Build hooks/sign-up
@@ -126,9 +126,17 @@ RUN npm ci
 COPY ./src/extensions/operations/remove-banned-users-cron-handler .
 RUN npm run build
 
+# Build hooks/gp-tokens
+FROM node:18-alpine AS builder-17
+WORKDIR /builder/src/extensions/hooks/gp-tokens
+ADD ./src/extensions/hooks/gp-tokens/package.json ./src/extensions/hooks/gp-tokens/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/hooks/gp-tokens .
+RUN npm run build
+
 FROM directus/directus:10.8.2
 
-COPY --from=builder-01 /builder/src/extensions/hooks/tokens/dist/* /directus/extensions/hooks/tokens/
+COPY --from=builder-01 /builder/src/extensions/hooks/jsd-purge-tokens/dist/* /directus/extensions/hooks/jsd-purge-tokens/
 COPY --from=builder-02 /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/hooks/sign-up/
 COPY --from=builder-03 /builder/src/extensions/interfaces/token/dist/* /directus/extensions/interfaces/token/
 COPY --from=builder-04 /builder/src/extensions/token-value/dist/* /directus/extensions/directus-extension-token-value/dist/
@@ -145,3 +153,4 @@ COPY --from=builder-13 /builder/src/extensions/operations/adopted-probes-status-
 COPY --from=builder-14 /builder/src/extensions/operations/adopted-probes-credits-cron-handler/dist/* /directus/extensions/operations/adopted-probes-credits-cron-handler/
 COPY --from=builder-15 /builder/src/extensions/interfaces/gp-tags/dist/* /directus/extensions/interfaces/gp-tags/
 COPY --from=builder-16 /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/operations/remove-banned-users-cron-handler/
+COPY --from=builder-17 /builder/src/extensions/hooks/gp-tokens/dist/* /directus/extensions/hooks/gp-tokens/

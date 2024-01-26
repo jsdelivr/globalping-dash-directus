@@ -137,7 +137,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				throw new InvalidCodeError();
 			}
 
-			const itemsService = new services.ItemsService('adopted_probes', {
+			const itemsService = new services.ItemsService('gp_adopted_probes', {
 				schema: value.schema,
 			});
 

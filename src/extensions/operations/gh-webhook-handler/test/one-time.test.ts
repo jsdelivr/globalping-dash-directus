@@ -36,7 +36,7 @@ describe('GitHub webhook one-time handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'credits', {
+		expect(services.ItemsService.args[0]).to.deep.equal([ 'gp_credits', {
 			schema: {},
 			knex: {},
 		}]);

@@ -21,7 +21,7 @@ describe('GitHub webhook recurring handler', () => {
 	const services = {
 		ItemsService: sinon.stub().callsFake((collection) => {
 			switch (collection) {
-				case 'credits':
+				case 'gp_credits':
 					return { createOne: creditsCreateOne };
 				case 'sponsors':
 					return { createOne: sponsorsCreateOne, updateByQuery: sponsorsUpdateByQuery };
@@ -58,7 +58,7 @@ describe('GitHub webhook recurring handler', () => {
 			knex: {},
 		}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'credits', {
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_credits', {
 			schema: {},
 			knex: {},
 		}]);
@@ -102,7 +102,7 @@ describe('GitHub webhook recurring handler', () => {
 			knex: {},
 		}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'credits', {
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_credits', {
 			schema: {},
 			knex: {},
 		}]);
