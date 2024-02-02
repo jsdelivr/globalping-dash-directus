@@ -1089,7 +1089,7 @@ fields:
       group: null
       hidden: false
       interface: input
-      note: Why gp_credits are added?
+      note: Why credits are added?
       options: null
       readonly: false
       required: true
@@ -1236,14 +1236,14 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_credits
-    field: gp_credits
+    field: credits
     type: integer
     meta:
       collection: gp_credits
       conditions: null
       display: null
       display_options: null
-      field: gp_credits
+      field: credits
       group: null
       hidden: false
       interface: input
@@ -1258,7 +1258,7 @@ fields:
       validation_message: null
       width: full
     schema:
-      name: gp_credits
+      name: credits
       table: gp_credits
       data_type: int
       default_value: null

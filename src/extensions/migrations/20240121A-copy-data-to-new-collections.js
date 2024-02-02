@@ -7,9 +7,51 @@ export async function up (knex) {
 		if (!tokensTableExists || !probesTableExists || !usersTableExists) {
 			console.log('Old collections do not exist, migration of data is not required.');
 		} else {
-			await trx.raw('INSERT INTO jsd_purge_tokens SELECT * FROM tokens');
-			await trx.raw('INSERT INTO gp_adopted_probes SELECT * FROM adopted_probes');
-			await trx.raw('INSERT INTO gp_credits SELECT * FROM credits');
+			await trx.raw(`INSERT INTO jsd_purge_tokens (
+				date_created,
+				date_updated,
+				expire,
+				id,
+				name,
+				origins,
+				user_created,
+				user_updated,
+				value
+			) SELECT date_created, date_updated, expire, id, name, origins, user_created, user_updated, value FROM tokens`);
+
+			await trx.raw(`INSERT INTO gp_adopted_probes (
+				asn,
+				country,
+				city,
+				countryOfCustomCity,
+				date_created,
+				date_updated,
+				id,
+				ip,
+				isCustomCity,
+				lastSyncDate,
+				latitude,
+				longitude,
+				name,
+				network,
+				onlineTimesToday,
+				state,
+				status,
+				tags,
+				userId,
+				uuid,
+				version
+			) SELECT asn, country, city, countryOfCustomCity, date_created, date_updated, id, ip, isCustomCity, lastSyncDate, latitude, longitude, name, network, onlineTimesToday, state, status, tags, userId, uuid, version FROM adopted_probes`);
+
+			await trx.raw(`INSERT INTO gp_credits (
+				comment,
+				credits,
+				date_created,
+				date_updated,
+				githubId,
+				id,
+				user_updated
+			) SELECT comment, credits, date_created, date_updated, githubId, id, user_updated FROM credits`);
 		}
 
 		await trx('directus_permissions').where('collection', 'tokens').update({
