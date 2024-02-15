@@ -134,7 +134,7 @@ RUN npm ci
 COPY ./src/extensions/hooks/gp-tokens .
 RUN npm run build
 
-FROM directus/directus:10.8.2
+FROM directus/directus:10.9.0
 
 COPY --from=builder-01 /builder/src/extensions/hooks/jsd-purge-tokens/dist/* /directus/extensions/hooks/jsd-purge-tokens/
 COPY --from=builder-02 /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/hooks/sign-up/

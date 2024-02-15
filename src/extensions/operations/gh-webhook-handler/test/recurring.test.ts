@@ -21,7 +21,7 @@ describe('GitHub webhook recurring handler', () => {
 	const services = {
 		ItemsService: sinon.stub().callsFake((collection) => {
 			switch (collection) {
-				case 'gp_credits':
+				case 'gp_credits_additions':
 					return { createOne: creditsCreateOne };
 				case 'sponsors':
 					return { createOne: sponsorsCreateOne, updateByQuery: sponsorsUpdateByQuery };
@@ -58,7 +58,7 @@ describe('GitHub webhook recurring handler', () => {
 			knex: {},
 		}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_credits', {
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_credits_additions', {
 			schema: {},
 			knex: {},
 		}]);
@@ -66,18 +66,18 @@ describe('GitHub webhook recurring handler', () => {
 		expect(creditsCreateOne.callCount).to.equal(1);
 
 		expect(creditsCreateOne.args[0]).to.deep.equal([{
-			githubId: '2',
-			credits: 150000,
+			github_id: '2',
+			amount: 150000,
 			comment: 'For 15$ sponsorship',
 		}]);
 
 		expect(sponsorsCreateOne.callCount).to.equal(1);
 
 		expect(sponsorsCreateOne.args[0]).to.deep.equal([{
-			githubLogin: 'monalisa',
-			githubId: '2',
-			monthlyAmount: 15,
-			lastEarningDate: '2023-09-19T00:00:00.000Z',
+			github_login: 'monalisa',
+			github_id: '2',
+			monthly_amount: 15,
+			last_earning_date: '2023-09-19T00:00:00.000Z',
 		}]);
 
 		expect(result).to.equal('Sponsor with id: 2 created. Credits item with id: 1 created. Recurring sponsorship handled.');
@@ -102,7 +102,7 @@ describe('GitHub webhook recurring handler', () => {
 			knex: {},
 		}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_credits', {
+		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_credits_additions', {
 			schema: {},
 			knex: {},
 		}]);
@@ -111,18 +111,18 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(sponsorsUpdateByQuery.args[0]).to.deep.equal([{
 			filter: {
-				githubId: '2',
+				github_id: '2',
 			},
 		}, {
-			monthlyAmount: 15,
+			monthly_amount: 15,
 		},
 		]);
 
 		expect(creditsCreateOne.callCount).to.equal(1);
 
 		expect(creditsCreateOne.args[0]).to.deep.equal([{
-			githubId: '2',
-			credits: 50000,
+			github_id: '2',
+			amount: 50000,
 			comment: 'For 5$ sponsorship',
 		}]);
 
@@ -154,10 +154,10 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(sponsorsUpdateByQuery.args[0]).to.deep.equal([{
 			filter: {
-				githubId: '2',
+				github_id: '2',
 			},
 		}, {
-			monthlyAmount: 5,
+			monthly_amount: 5,
 		},
 		]);
 

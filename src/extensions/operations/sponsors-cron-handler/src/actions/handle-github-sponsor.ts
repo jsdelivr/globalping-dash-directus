@@ -16,7 +16,7 @@ type HandleSponsorContext = {
 
 export const handleGithubSponsor = async ({ githubSponsor, directusSponsors }: HandleSponsorData, { services, database, getSchema, env }: HandleSponsorContext) => {
 	const id = githubSponsor.githubId;
-	const directusSponsor = directusSponsors.find(directusSponsor => directusSponsor.githubId === id);
+	const directusSponsor = directusSponsors.find(directusSponsor => directusSponsor.github_id === id);
 
 	if (!directusSponsor && githubSponsor.isActive && !githubSponsor.isOneTimePayment) {
 		await createDirectusSponsor(githubSponsor, { services, database, getSchema, env });

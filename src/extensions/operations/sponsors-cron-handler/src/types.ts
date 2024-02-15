@@ -1,9 +1,9 @@
 export type DirectusSponsor = {
 	id: number;
-	githubLogin: string;
-	githubId: string;
-	monthlyAmount: number;
-	lastEarningDate: string;
+	github_login: string;
+	github_id: string;
+	monthly_amount: number;
+	last_earning_date: string;
 }
 
 export type GithubSponsor = {

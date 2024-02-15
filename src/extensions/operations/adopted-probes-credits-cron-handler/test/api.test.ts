@@ -59,8 +59,8 @@ describe('Adopted probes status cron handler', () => {
 		expect(createMany.args[0]).to.deep.equal([
 			[
 				{
-					githubId: '123456',
-					credits: 100,
+					github_id: '123456',
+					amount: 100,
 					comment: 'For the adopted probe (1.2.3.4)',
 				},
 			],

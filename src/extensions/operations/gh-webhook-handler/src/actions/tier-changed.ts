@@ -28,19 +28,19 @@ export const tierChangedAction = async ({ body, services, database, getSchema, e
 
 	if (tierDiff > 0) {
 		const sponsorId = await updateSponsor({
-			githubId: body.sponsorship.sponsor.id.toString(),
-			monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
+			github_id: body.sponsorship.sponsor.id.toString(),
+			monthly_amount: body.sponsorship.tier.monthly_price_in_dollars,
 		}, { services, database, getSchema });
 		const creditsId = await addCredits({
-			githubId: body.sponsorship.sponsor.id.toString(),
+			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: tierDiff,
 		}, { services, database, getSchema, env });
 		return `Sponsor with id: ${sponsorId} updated. Credits item with id: ${creditsId} created.`;
 	}
 
 	const sponsorId = await updateSponsor({
-		githubId: body.sponsorship.sponsor.id.toString(),
-		monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
+		github_id: body.sponsorship.sponsor.id.toString(),
+		monthly_amount: body.sponsorship.tier.monthly_price_in_dollars,
 	}, { services, database, getSchema });
 	return `Sponsor with id: ${sponsorId} updated.`;
 };

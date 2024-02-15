@@ -19,6 +19,7 @@
 		"@types/lodash": "^4.14.199",
 		"@typescript-eslint/eslint-plugin": "^6.7.2",
 		"cross-env": "^7.0.3",
+		"dotenv-cli": "^7.3.0",
 		"eslint": "^8.50.0",
 		"eslint-plugin-vue": "^9.17.0",
 		"husky": "^8.0.3"
@@ -26,13 +27,14 @@
 	"scripts": {
 		"lint": "eslint --cache .",
 		"lint:fix": "npm run lint -- --fix",
-		"init": "./init.sh",
-		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && npx --yes directus@latest database migrate:latest",
-		"schema:apply": "npx --yes directus@latest schema apply --yes snapshots/collections-schema.yml",
-		"schema:snapshot": "npx --yes directus@latest schema snapshot --yes snapshots/collections-schema.yml",
+		"init": "./scripts/init.sh",
+		"init:dev": "./scripts/init.sh --dev",
+		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && dotenv -- npx --yes directus@10.9.0 database migrate:latest",
+		"schema:apply": "npx --yes directus@10.9.0 schema apply --yes snapshots/collections-schema.yml",
+		"schema:snapshot": "npx --yes directus@10.9.0 schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'",
 		"build:in-sequence": "grep -E 'AS builder-[0-9]+' Dockerfile | awk -F 'AS ' '{print $2}' | xargs -r -P 1 -I STAGE docker build --target STAGE .",
-		"test": "./test.sh"
+		"test": "./scripts/test.sh"
 	},
 	"repository": {
 		"type": "git",

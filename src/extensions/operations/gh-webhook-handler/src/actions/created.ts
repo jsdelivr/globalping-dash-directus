@@ -18,7 +18,7 @@ export const createdAction = async ({ body, services, database, getSchema, env }
 
 	if (body.sponsorship.tier.is_one_time) {
 		const creditsId = await addCredits({
-			githubId: body.sponsorship.sponsor.id.toString(),
+			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: body.sponsorship.tier.monthly_price_in_dollars,
 		}, {
 			services,
@@ -30,13 +30,13 @@ export const createdAction = async ({ body, services, database, getSchema, env }
 	}
 
 	const sponsorId = await addSponsor({
-		githubLogin: body.sponsorship.sponsor.login,
-		githubId: body.sponsorship.sponsor.id.toString(),
-		monthlyAmount: body.sponsorship.tier.monthly_price_in_dollars,
-		lastEarningDate: new Date().toISOString(),
+		github_login: body.sponsorship.sponsor.login,
+		github_id: body.sponsorship.sponsor.id.toString(),
+		monthly_amount: body.sponsorship.tier.monthly_price_in_dollars,
+		last_earning_date: new Date().toISOString(),
 	}, { services, database, getSchema });
 	const creditsId = await addCredits({
-		githubId: body.sponsorship.sponsor.id.toString(),
+		github_id: body.sponsorship.sponsor.id.toString(),
 		amount: body.sponsorship.tier.monthly_price_in_dollars,
 	}, { services, database, getSchema, env });
 	return `Sponsor with id: ${sponsorId} created. Credits item with id: ${creditsId} created. Recurring sponsorship handled.`;

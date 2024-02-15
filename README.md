@@ -11,26 +11,18 @@
 
 - fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
 - if there are changes in `.env.production.example` copy them to the env vars of the container
-- `npm run migrate`
 - `npm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
+- `npm run migrate`
 - stop prev container, run new container
 
 ## Dev run
 
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
 - copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
-- `docker compose up`
-- `npm run init`
+- `docker compose up --build`
+- `npm run init:dev`
 
 ## Commands
-
-Generate the schema:
-
-`npx directus@latest schema snapshot --yes snapshots/collections-schema.yml`
-
-Run migration:
-
-`docker compose exec directus npx directus database migrate:latest`
 
 Create extension:
 
