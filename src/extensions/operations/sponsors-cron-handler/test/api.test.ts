@@ -6,7 +6,11 @@ import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
 	const data = {};
-	const database = {} as OperationContext['database'];
+	const database = {
+		transaction: async (f) => {
+			return f({});
+		},
+	} as OperationContext['database'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -15,18 +19,37 @@ describe('Sponsors cron handler', () => {
 		CREDITS_PER_DOLLAR: '10000',
 	};
 
-	const readByQuery = sinon.stub().resolves([{
-		id: 1,
-		github_login: 'monalisa',
-		github_id: '2',
-		monthly_amount: 10,
-		last_earning_date: '2023-08-15 08:19:00',
-	}]);
-	const createOne = sinon.stub().resolves(1);
-	const updateOne = sinon.stub().resolves(1);
-	const deleteOne = sinon.stub().resolves(1);
+	const sponsorsService = {
+		readByQuery: sinon.stub().resolves([{
+			id: 1,
+			github_login: 'monalisa',
+			github_id: '2',
+			monthly_amount: 10,
+			last_earning_date: '2023-08-15 08:19:00',
+		}]),
+		createOne: sinon.stub().resolves(1),
+		updateOne: sinon.stub().resolves(1),
+		deleteOne: sinon.stub().resolves(1),
+	};
+	const creditsAdditionsService = {
+		createOne: sinon.stub().resolves(1),
+	};
+	const usersService = {
+		updateByQuery: sinon.stub(),
+	};
 	const services = {
-		ItemsService: sinon.stub().returns({ createOne, readByQuery, updateOne, deleteOne }),
+		// ItemsService: sinon.stub().returns({ createOne, readByQuery, updateOne, deleteOne }),
+		ItemsService: sinon.stub().callsFake((collection) => {
+			switch (collection) {
+				case 'sponsors':
+					return sponsorsService;
+				case 'gp_credits_additions':
+					return creditsAdditionsService;
+				default:
+					throw new Error('Collection name wasn\'t provided');
+			}
+		}),
+		UsersService: sinon.stub().returns(usersService),
 	};
 
 	before(() => {
@@ -37,7 +60,7 @@ describe('Sponsors cron handler', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 
-		readByQuery.resolves([{
+		sponsorsService.readByQuery.resolves([{
 			id: 1,
 			github_login: 'monalisa',
 			github_id: '2',
@@ -81,30 +104,21 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(3);
 
-		expect(services.ItemsService.args[0]).deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
 
-		expect(updateOne.callCount).to.equal(1);
-		expect(updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
+		expect(sponsorsService.updateOne.callCount).to.equal(1);
+		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
 
-		expect(services.ItemsService.args[2]).to.deep.equal([ 'gp_credits_additions', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[2][0]).to.deep.equal('gp_credits_additions');
 
-		expect(createOne.callCount).to.equal(1);
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
-		expect(createOne.args[0]).to.deep.equal([{
+		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			amount: 100000,
 			github_id: '2',
 			comment: 'For $10 recurring sponsorship',
@@ -140,7 +154,7 @@ describe('Sponsors cron handler', () => {
 			},
 		});
 
-		readByQuery.resolves([{
+		sponsorsService.readByQuery.resolves([{
 			id: 1,
 			github_login: 'monalisa',
 			github_id: '2',
@@ -152,15 +166,12 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
-		expect(updateOne.callCount).to.equal(0);
-		expect(createOne.callCount).to.equal(0);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.updateOne.callCount).to.equal(0);
+		expect(sponsorsService.createOne.callCount).to.equal(0);
 		expect(result).to.deep.equal([]);
 	});
 
@@ -183,23 +194,26 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
 
-		expect(updateOne.callCount).to.equal(0);
-		expect(createOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(1);
-		expect(deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(sponsorsService.updateOne.callCount).to.equal(0);
+		expect(sponsorsService.createOne.callCount).to.equal(0);
+		expect(sponsorsService.deleteOne.callCount).to.equal(1);
+		expect(sponsorsService.deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(usersService.updateByQuery.callCount).to.equal(1);
+
+		expect(usersService.updateByQuery.args[0]).to.deep.equal([
+			{
+				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+			},
+			{ user_type: 'member' },
+		]);
+
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on github sponsors list. Sponsor deleted from directus.' ]);
 	});
 
@@ -234,23 +248,27 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
 
-		expect(updateOne.callCount).to.equal(0);
-		expect(createOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(1);
-		expect(deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(sponsorsService.updateOne.callCount).to.equal(0);
+		expect(sponsorsService.createOne.callCount).to.equal(0);
+		expect(sponsorsService.deleteOne.callCount).to.equal(1);
+		expect(sponsorsService.deleteOne.args[0]).to.deep.equal([ 1 ]);
+
+		expect(usersService.updateByQuery.callCount).to.equal(1);
+
+		expect(usersService.updateByQuery.args[0]).to.deep.equal([
+			{
+				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+			},
+			{ user_type: 'member' },
+		]);
+
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 is not active on github sponsors list. Sponsor deleted from directus.' ]);
 	});
 
@@ -285,23 +303,27 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
 
-		expect(updateOne.callCount).to.equal(0);
-		expect(createOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(1);
-		expect(deleteOne.args[0]).to.deep.equal([ 1 ]);
+		expect(sponsorsService.updateOne.callCount).to.equal(0);
+		expect(sponsorsService.createOne.callCount).to.equal(0);
+		expect(sponsorsService.deleteOne.callCount).to.equal(1);
+		expect(sponsorsService.deleteOne.args[0]).to.deep.equal([ 1 ]);
+
+		expect(usersService.updateByQuery.callCount).to.equal(1);
+
+		expect(usersService.updateByQuery.args[0]).to.deep.equal([
+			{
+				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+			},
+			{ user_type: 'member' },
+		]);
+
 		expect(result).to.deep.equal([ 'Sponsorship of user with github id: 2 is one-time. Sponsor deleted from directus.' ]);
 	});
 
@@ -336,40 +358,30 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(4);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
 
-		expect(services.ItemsService.args[2]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[2][0]).to.deep.equal('sponsors');
 
-		expect(updateOne.callCount).to.equal(2);
-		expect(updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
-		expect(updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
+		expect(sponsorsService.updateOne.callCount).to.equal(2);
+		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
+		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
 
-		expect(services.ItemsService.args[3]).to.deep.equal([ 'gp_credits_additions', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[3][0]).to.deep.equal('gp_credits_additions');
 
-		expect(createOne.callCount).to.equal(1);
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
-		expect(createOne.args[0]).to.deep.equal([{
+		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			amount: 150000,
 			github_id: '2',
 			comment: 'For $15 recurring sponsorship',
 		}]);
+
+		expect(usersService.updateByQuery.callCount).to.equal(0);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.' ]);
 	});
@@ -401,33 +413,36 @@ describe('Sponsors cron handler', () => {
 			},
 		});
 
-		readByQuery.resolves([]);
+		sponsorsService.readByQuery.resolves([]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
 
-		expect(createOne.callCount).to.equal(1);
+		expect(sponsorsService.createOne.callCount).to.equal(1);
 
-		expect(createOne.args[0]).to.deep.equal([{
+		expect(sponsorsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			github_login: 'monalisa',
 			last_earning_date: '2023-09-19T00:00:00.000Z',
 			monthly_amount: 10,
 		}]);
+
+		expect(usersService.updateByQuery.callCount).to.equal(1);
+
+		expect(usersService.updateByQuery.args[0]).to.deep.equal([
+			{
+				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+			},
+			{ user_type: 'sponsor' },
+		]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus.' ]);
 	});
@@ -459,21 +474,19 @@ describe('Sponsors cron handler', () => {
 			},
 		});
 
-		readByQuery.resolves([]);
+		sponsorsService.readByQuery.resolves([]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0]).to.deep.equal([ 'sponsors', {
-			schema: {},
-			knex: {},
-		}]);
+		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
 
-		expect(readByQuery.callCount).to.equal(1);
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
-		expect(createOne.callCount).to.equal(0);
+		expect(sponsorsService.readByQuery.callCount).to.equal(1);
+		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
+		expect(sponsorsService.createOne.callCount).to.equal(0);
 		expect(result).to.deep.equal([]);
+		expect(usersService.updateByQuery.callCount).to.equal(0);
 	});
 
 	it('should handle multiple sponsors and return results for each', async () => {
@@ -516,6 +529,16 @@ describe('Sponsors cron handler', () => {
 		});
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+
+		expect(usersService.updateByQuery.callCount).to.equal(1);
+
+		expect(usersService.updateByQuery.args[0]).to.deep.equal([
+			{
+				filter: { external_identifier: '3', user_type: { _neq: 'special' } },
+			},
+			{ user_type: 'sponsor' },
+		]);
 
 		expect(result).to.deep.equal([
 			'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.',

@@ -28,11 +28,11 @@ export const deleteUser = async (user: DirectusUser, { services, database, getSc
 export const deleteCredits = async (user: DirectusUser, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
-	const usersService = new ItemsService('gp_credits_additions', {
+	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
 
-	const result = await usersService.deleteByQuery({ filter: { github_id: user.external_identifier } }) as string[];
+	const result = await creditsAdditionsService.deleteByQuery({ filter: { github_id: user.external_identifier } }) as string[];
 	return result;
 };

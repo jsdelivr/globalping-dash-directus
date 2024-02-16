@@ -36,7 +36,7 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 
 	const { ItemsService } = services;
 
-	const creditsService = new ItemsService('gp_credits_additions', {
+	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -49,7 +49,7 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 	const users = await usersService.readMany(adoptedProbes.map(({ userId }) => userId)) as User[];
 	const usersMap = new Map(users.map(user => [ user.id, user ]));
 
-	const result = await creditsService.createMany(adoptedProbes.map(({ userId, ip, name }) => ({
+	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ userId, ip, name }) => ({
 		github_id: usersMap.get(userId)?.external_identifier,
 		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
 		comment: `For the adopted probe ${name ? name + ' ' : ''}(${ip})`,

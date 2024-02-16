@@ -1,8 +1,8 @@
 import { defineOperationApi } from '@directus/extensions-sdk';
-import { getGithubSponsors } from './repositories/github';
-import { getDirectusSponsors } from './repositories/directus';
-import { handleDirectusSponsor } from './actions/handle-directus-sponsor';
-import { handleGithubSponsor } from './actions/handle-github-sponsor';
+import { getGithubSponsors } from './repositories/github.js';
+import { getDirectusSponsors } from './repositories/directus.js';
+import { handleDirectusSponsor } from './actions/handle-directus-sponsor.js';
+import { handleGithubSponsor } from './actions/handle-github-sponsor.js';
 
 export default defineOperationApi({
 	id: 'sponsors-cron-handler',

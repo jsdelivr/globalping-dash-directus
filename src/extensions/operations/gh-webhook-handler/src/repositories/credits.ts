@@ -15,12 +15,12 @@ type Context = {
 export const addCredits = async ({ github_id, amount }: AddItemData, { services, database, getSchema, env }: Context) => {
 	const { ItemsService } = services;
 
-	const creditsService = new ItemsService('gp_credits_additions', {
+	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
 
-	const result = await creditsService.createOne({
+	const result = await creditsAdditionsService.createOne({
 		github_id,
 		amount: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
 		comment: `For ${amount}$ sponsorship`,

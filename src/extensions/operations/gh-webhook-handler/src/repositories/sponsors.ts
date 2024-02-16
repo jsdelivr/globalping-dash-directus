@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { OperationContext } from '@directus/types';
 
 type AddItemData = {
@@ -14,19 +15,36 @@ type Context = {
 };
 
 export const addSponsor = async ({ github_login, github_id, monthly_amount, last_earning_date }: AddItemData, { services, database, getSchema }: Context) => {
-	const { ItemsService } = services;
+	const { ItemsService, UsersService } = services;
 
-	const sponsorsService = new ItemsService('sponsors', {
-		schema: await getSchema({ database }),
-		knex: database,
+	const result = await database.transaction(async (trx) => {
+		const sponsorsService = new ItemsService('sponsors', {
+			schema: await getSchema({ database }),
+			knex: trx,
+		});
+
+		const usersService = new UsersService({
+			schema: await getSchema({ database }),
+			knex: trx,
+		});
+
+		await usersService.updateByQuery({ filter: {
+			external_identifier: github_id,
+			user_type: { _neq: 'special' },
+		} }, {
+			user_type: 'sponsor',
+		});
+
+		const result = await sponsorsService.createOne({
+			github_login,
+			github_id,
+			monthly_amount,
+			last_earning_date,
+		});
+
+		return result;
 	});
 
-	const result = await sponsorsService.createOne({
-		github_login,
-		github_id,
-		monthly_amount,
-		last_earning_date,
-	});
 	return result;
 };
 

@@ -8,6 +8,7 @@ type User = {
     first_name?: string;
     last_name?: string;
     last_page?: string;
+		user_type: string;
 		github_username?: string;
 		github_organizations: string[];
 }
@@ -40,6 +41,7 @@ export default defineHook(({ filter, action }, context) => {
 			await Promise.all([
 				fulfillOrganizations(userId, user, context),
 				assignCredits(userId, user, context),
+				fulfillUserType(userId, user, context),
 			]);
 		}
 	});
@@ -125,4 +127,20 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 			creditsService.createOne({ amount: sum, user_id: userId }),
 		]);
 	});
+};
+
+const fulfillUserType = async (userId: string, user: User, context: HookExtensionContext) => {
+	const { services, database, getSchema } = context;
+	const { ItemsService } = services;
+
+	const sponsorsService = new ItemsService('sponsors', {
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	const sponsors = await sponsorsService.readByQuery({ filter: { github_id: user.external_identifier } });
+
+	if (sponsors.length > 0) {
+		await updateUser(userId, { user_type: 'sponsor' }, context);
+	}
 };

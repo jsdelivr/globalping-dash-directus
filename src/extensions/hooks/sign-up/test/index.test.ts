@@ -17,19 +17,33 @@ describe('Sign-up hook', () => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
-	const itemsService = {
-		readOne: sinon.stub(),
+	const creditsService = {
+		readByQuery: sinon.stub().resolves([]),
+		createOne: sinon.stub(),
+	};
+	const creditsAdditionsService = {
 		readByQuery: sinon.stub().resolves([]),
 		updateByQuery: sinon.stub(),
-		createOne: sinon.stub(),
+	};
+	const sponsorsService = {
+		readByQuery: sinon.stub().resolves([]),
 	};
 	const usersService = {
 		updateOne: sinon.stub(),
 	};
 	const context = {
 		services: {
-			ItemsService: sinon.stub().callsFake(() => {
-				return itemsService;
+			ItemsService: sinon.stub().callsFake((collection) => {
+				switch (collection) {
+					case 'gp_credits':
+						return creditsService;
+					case 'gp_credits_additions':
+						return creditsAdditionsService;
+					case 'sponsors':
+						return sponsorsService;
+					default:
+						throw new Error('Collection name wasn\'t provided');
+				}
 			}),
 			UsersService: sinon.stub().callsFake(() => {
 				return usersService;
@@ -40,7 +54,7 @@ describe('Sign-up hook', () => {
 		},
 		database: {
 			transaction: async (f) => {
-				await f({});
+				return f({});
 			},
 		},
 		getSchema: () => Promise.resolve({}),
@@ -122,7 +136,7 @@ describe('Sign-up hook', () => {
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
-		itemsService.readByQuery.resolves([{
+		creditsAdditionsService.readByQuery.resolves([{
 			amount: 10,
 			github_id: 1834071,
 		}, {
@@ -143,11 +157,36 @@ describe('Sign-up hook', () => {
 
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { github_organizations: [ 'jsdelivr' ] }]);
 
-		expect(itemsService.updateByQuery.args[0]).to.deep.equal([
+		expect(creditsAdditionsService.updateByQuery.callCount).to.equal(1);
+
+		expect(creditsAdditionsService.updateByQuery.args[0]).to.deep.equal([
 			{ filter: { github_id: 1834071, consumed: false } },
 			{ consumed: true },
 		]);
 
-		expect(itemsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1' }]);
+		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1' }]);
+	});
+
+	it('filter should fulfill user type', async () => {
+		nock('https://api.github.com')
+			.get(`/user/1834071/orgs`)
+			.reply(200, [{ login: 'jsdelivr' }]);
+
+		sponsorsService.readByQuery.resolves([{
+			github_id: 1834071,
+		}]);
+
+		hook(hooks, context);
+
+		await callbacks.action['users.create']({ key: '1-1-1-1', payload: {
+			provider: 'github',
+			external_identifier: 1834071,
+			first_name: 'Dmitriy Akulov',
+			last_name: 'jimaek',
+			github_username: null,
+			github_organizations: null,
+		} });
+
+		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { user_type: 'sponsor' }]);
 	});
 });

@@ -25,7 +25,7 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
+		"test": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"dependencies": {
 		"@octokit/graphql": "^7.0.1",
