@@ -67,6 +67,8 @@ describe('adoption code endpoints', () => {
 			}).reply(200, {
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: false,
+				hardwareDevice: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -158,6 +160,8 @@ describe('adoption code endpoints', () => {
 			}).reply(200, {
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: true,
+				hardwareDevice: 'v1',
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -195,6 +199,8 @@ describe('adoption code endpoints', () => {
 				ip: '1.1.1.1',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: true,
+				hardwareDevice: 'v1',
 				status: 'ready',
 				city: 'Paris',
 				state: null,
@@ -219,6 +225,8 @@ describe('adoption code endpoints', () => {
 			}).reply(200, {
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: false,
+				hardwareDevice: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -256,6 +264,8 @@ describe('adoption code endpoints', () => {
 				ip: '1.1.1.1',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: false,
+				hardwareDevice: null,
 				status: 'ready',
 				city: 'Paris',
 				state: null,
@@ -280,6 +290,8 @@ describe('adoption code endpoints', () => {
 			}).reply(200, {
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: false,
+				hardwareDevice: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -321,6 +333,8 @@ describe('adoption code endpoints', () => {
 			}).reply(200, {
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: false,
+				hardwareDevice: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -363,6 +377,8 @@ describe('adoption code endpoints', () => {
 			}).reply(200, {
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
+				isHardware: false,
+				hardwareDevice: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',

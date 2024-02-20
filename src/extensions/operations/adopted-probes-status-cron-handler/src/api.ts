@@ -2,7 +2,7 @@ import { setTimeout } from 'node:timers/promises';
 import type { OperationContext } from '@directus/extensions';
 import { defineOperationApi } from '@directus/extensions-sdk';
 import _ from 'lodash';
-import { checkOnlineStatus } from './actions/check-online-status';
+import { checkOnlineStatus } from './actions/check-online-status.js';
 
 export default defineOperationApi({
 	id: 'adopted-probes-status-cron-handler',

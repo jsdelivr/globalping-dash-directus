@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import nock from 'nock';
 import type { OperationContext } from '@directus/extensions';
 import { checkOnlineStatus } from '../src/actions/check-online-status.js';
 
@@ -25,7 +24,6 @@ describe('Adopted probes status cron handler', () => {
 
 
 	before(() => {
-		nock.disableNetConnect();
 		sandbox = sinon.createSandbox({ useFakeTimers: true });
 	});
 
@@ -34,19 +32,13 @@ describe('Adopted probes status cron handler', () => {
 	});
 
 	after(() => {
-		nock.cleanAll();
 		sandbox.restore();
 	});
 
 	it('should increment "onlineTimesToday" field if probe is connected to gp', async () => {
-		nock('https://api.globalping.io').get('/v1/probes?systemkey=system').reply(200, [{
-			ipAddress: '1.2.3.4',
-			status: 'ready',
-		}]);
-
 		readByQuery.resolves([{
 			id: '1',
-			ip: '1.2.3.4',
+			status: 'ready',
 			onlineTimesToday: 0,
 		}]);
 
@@ -74,11 +66,9 @@ describe('Adopted probes status cron handler', () => {
 	});
 
 	it('should not call "updateBatch" if adopted probe is not connected to gp', async () => {
-		nock('https://api.globalping.io').get('/v1/probes?systemkey=system').reply(200, []);
-
 		readByQuery.resolves([{
 			id: '1',
-			ip: '1.2.3.4',
+			status: 'offline',
 			onlineTimesToday: 0,
 		}]);
 
@@ -98,39 +88,10 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([]);
 	});
 
-	it('should not call "updateBatch" if probe is connected to gp but not adopted', async () => {
-		nock('https://api.globalping.io').get('/v1/probes?systemkey=system').reply(200, [{
-			ipAddress: '1.2.3.4',
-			status: 'ready',
-		}]);
-
-		readByQuery.resolves([]);
-
-		const result = await checkOnlineStatus({ data, database, env, getSchema, services, logger, accountability });
-
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]).deep.equal([ 'gp_adopted_probes', {
-			schema: {},
-			knex: {},
-		}]);
-
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(updateBatch.callCount).to.equal(0);
-
-		expect(result).to.deep.equal([]);
-	});
-
-	it('should not increment "onlineTimesToday" field if probe status from gp is not "ready"', async () => {
-		nock('https://api.globalping.io').get('/v1/probes?systemkey=system').reply(200, [{
-			ipAddress: '1.2.3.4',
-			status: 'ping-test-failed',
-		}]);
-
+	it('should not increment "onlineTimesToday" field if probe status not "ready"', async () => {
 		readByQuery.resolves([{
 			id: '1',
-			ip: '1.2.3.4',
+			status: 'ping-test-failed',
 			onlineTimesToday: 0,
 		}]);
 
