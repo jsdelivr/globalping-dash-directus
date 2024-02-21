@@ -25,7 +25,7 @@ export const deleteUser = async (user: DirectusUser, { services, database, getSc
 	return result;
 };
 
-export const deleteCredits = async (user: DirectusUser, { services, database, getSchema }: OperationContext) => {
+export const deleteCreditsAdditions = async (user: DirectusUser, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {

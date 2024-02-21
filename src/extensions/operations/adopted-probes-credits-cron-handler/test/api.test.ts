@@ -61,6 +61,7 @@ describe('Adopted probes status cron handler', () => {
 				{
 					github_id: '123456',
 					amount: 100,
+					adopted_probe: '1',
 					comment: 'For the adopted probe (1.2.3.4)',
 				},
 			],

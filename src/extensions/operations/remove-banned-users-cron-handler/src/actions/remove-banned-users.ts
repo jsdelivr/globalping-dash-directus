@@ -1,7 +1,7 @@
 
 import Bluebird from 'bluebird';
 import type { OperationContext } from '@directus/extensions';
-import { getDirectusUsers, deleteUser, deleteCredits } from '../repositories/directus.js';
+import { getDirectusUsers, deleteUser, deleteCreditsAdditions } from '../repositories/directus.js';
 import { getGithubUser } from '../repositories/github.js';
 
 export const removeBannedUsers = async (context: OperationContext) => {
@@ -15,7 +15,7 @@ export const removeBannedUsers = async (context: OperationContext) => {
 
 		if (githubUser === null) {
 			const id = await deleteUser(user, context);
-			await deleteCredits(user, context);
+			await deleteCreditsAdditions(user, context);
 			return id;
 		}
 

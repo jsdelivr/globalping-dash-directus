@@ -49,9 +49,10 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 	const users = await usersService.readMany(adoptedProbes.map(({ userId }) => userId)) as User[];
 	const usersMap = new Map(users.map(user => [ user.id, user ]));
 
-	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ userId, ip, name }) => ({
+	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ id, userId, ip, name }) => ({
 		github_id: usersMap.get(userId)?.external_identifier,
 		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
+		adopted_probe: id,
 		comment: `For the adopted probe ${name ? name + ' ' : ''}(${ip})`,
 	}))) as number[];
 

@@ -1,5 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
-import { getAdoptedProbes, addCredits, resetOnlineTimes } from '../repositories/directus';
+import { getAdoptedProbes, addCredits, resetOnlineTimes } from '../repositories/directus.js';
 
 export const assignCredits = async (context: OperationContext) => {
 	const requiredOnlineTimes = context.env.ADOPTED_PROBES_REQUIRED_ONLINE_TIMES;

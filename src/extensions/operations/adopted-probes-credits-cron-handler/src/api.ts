@@ -1,6 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import { defineOperationApi } from '@directus/extensions-sdk';
-import { assignCredits } from './actions/assign-credits';
+import { assignCredits } from './actions/assign-credits.js';
 
 export default defineOperationApi({
 	id: 'adopted-probes-credits-cron-handler',
