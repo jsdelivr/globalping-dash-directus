@@ -16,7 +16,6 @@ type Request = ExpressRequest & {
 type SendCodeResponse = {
 	uuid: string;
 	version: string;
-	isHardware: boolean;
 	hardwareDevice: string | null;
 	status: string;
 	city: string;
@@ -87,7 +86,6 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				code,
 				uuid: response.data.uuid,
 				version: response.data.version,
-				isHardware: response.data.isHardware,
 				hardwareDevice: response.data.hardwareDevice || null,
 				status: response.data.status,
 				city: response.data.city,
@@ -149,7 +147,6 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				ip: probe.ip,
 				uuid: probe.uuid,
 				version: probe.version,
-				isHardware: probe.isHardware,
 				hardwareDevice: probe.hardwareDevice,
 				status: probe.status,
 				city: probe.city,
