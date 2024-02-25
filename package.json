@@ -9,7 +9,9 @@
 		"bluebird": "^3.7.2",
 		"config": "^3.3.9",
 		"config-mapper-env": "^2.0.0",
-		"lodash": "^4.17.21"
+		"knex": "^3.1.0",
+		"lodash": "^4.17.21",
+		"mysql": "^2.18.1"
 	},
 	"devDependencies": {
 		"@martin-kolarik/eslint-config": "^7.2.0",
@@ -30,6 +32,7 @@
 		"init": "./scripts/init.sh",
 		"init:dev": "./scripts/init.sh --dev",
 		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && dotenv -- npx --yes directus@10.9.0 database migrate:latest",
+		"seed": "NODE_ENV=development knex seed:run",
 		"schema:apply": "npx --yes directus@10.9.0 schema apply --yes snapshots/collections-schema.yml",
 		"schema:snapshot": "npx --yes directus@10.9.0 schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'",
