@@ -55,6 +55,8 @@ if [ "$is_dev_mode" = true ]; then
 	docker compose up -d directus
 
 	./scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
+
+	npm run seed
 else
 	confirm "Set that value to the container env vars: \nAUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id \nThen restart the container." # Restart is requred to apply new role id and because of https://github.com/directus/directus/issues/17117
 

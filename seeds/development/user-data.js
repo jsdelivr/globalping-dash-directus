@@ -2,15 +2,39 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
+
 export const seed = async (knex) => {
-	const user = await knex('directus_users')
-		.join('directus_roles', 'directus_users.role', 'directus_roles.id')
-		.where({ 'directus_roles.name': 'User' })
-		.select('directus_users.id', 'directus_users.external_identifier', 'directus_users.github_username')
-		.first();
+	const getUser = async () => {
+		return knex('directus_users')
+			.join('directus_roles', 'directus_users.role', 'directus_roles.id')
+			.where({ 'directus_roles.name': 'User' })
+			.select('directus_users.id', 'directus_users.external_identifier', 'directus_users.github_username')
+			.first();
+	};
+
+	let user = await getUser();
 
 	if (!user) {
-		throw new Error('Not found user with a "User" role. Sign up using github to create one.');
+		const userRole = await knex('directus_roles').where({ name: 'User' }).select('id').first();
+
+		await knex('directus_users').insert([{
+			id: 'b2193f5b-4a8b-4513-8e5a-1559478bebde',
+			first_name: 'Dmitriy',
+			last_name: 'Akulov',
+			email: 'user@example.com',
+			password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
+			role: userRole.id,
+			provider: 'default',
+			external_identifier: '1834071',
+			email_notifications: 1,
+			github_organizations: JSON.stringify([ 'MaxCDN', 'appfleetcloud', 'jsdelivr', 'nice-registry', 'polyfills' ]),
+			github_username: 'jimaek',
+			user_type: 'member',
+		}]);
+
+		console.log('Mock user created. email: user@example.com password: user');
+
+		user = await getUser();
 	}
 
 	await Promise.all([
@@ -124,8 +148,8 @@ export const seed = async (knex) => {
 		date_updated: null,
 		user_created: null,
 		user_updated: null,
-		github_id: '1834071',
-		github_login: 'jimaek',
+		github_id: '6192491',
+		github_login: 'MartinKolarik',
 		last_earning_date: '2024-02-22 11:48:00',
 		monthly_amount: 100,
 	}]);

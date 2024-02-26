@@ -18,9 +18,11 @@
 ## Dev run
 
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
+- copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID`
 - `docker compose up --build`
 - `npm run init:dev`
+- login as admin using `ADMIN_EMAIL` and `ADMIN_PASSWORD` vars.
+- login as user using email `user@example.com` and password `user`.
 
 ## Commands
 
