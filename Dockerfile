@@ -134,6 +134,14 @@ RUN npm ci
 COPY ./src/extensions/hooks/gp-tokens .
 RUN npm run build
 
+# Build hooks/gp-tokens
+FROM node:18-alpine AS builder-18
+WORKDIR /builder/src/extensions/hooks/directus-users
+ADD ./src/extensions/hooks/directus-users/package.json ./src/extensions/hooks/directus-users/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/hooks/directus-users .
+RUN npm run build
+
 FROM directus/directus:10.9.0
 
 COPY --from=builder-01 /builder/src/extensions/hooks/jsd-purge-tokens/dist/* /directus/extensions/hooks/jsd-purge-tokens/
@@ -154,3 +162,4 @@ COPY --from=builder-14 /builder/src/extensions/operations/adopted-probes-credits
 COPY --from=builder-15 /builder/src/extensions/interfaces/gp-tags/dist/* /directus/extensions/interfaces/gp-tags/
 COPY --from=builder-16 /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/operations/remove-banned-users-cron-handler/
 COPY --from=builder-17 /builder/src/extensions/hooks/gp-tokens/dist/* /directus/extensions/hooks/gp-tokens/
+COPY --from=builder-18 /builder/src/extensions/hooks/directus-users/dist/* /directus/extensions/hooks/directus-users/

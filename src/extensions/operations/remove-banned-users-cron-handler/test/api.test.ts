@@ -17,9 +17,8 @@ describe('Remove banned users CRON handler', () => {
 
 	const readByQuery = sinon.stub();
 	const deleteOne = sinon.stub().resolves(1);
-	const deleteByQuery = sinon.stub().resolves([ 2 ]);
 	const services = {
-		ItemsService: sinon.stub().returns({ readByQuery, deleteByQuery }),
+		ItemsService: sinon.stub().returns({ readByQuery }),
 		UsersService: sinon.stub().returns({ deleteOne }),
 	};
 
@@ -58,8 +57,6 @@ describe('Remove banned users CRON handler', () => {
 
 		expect(nock.isDone()).to.equal(true);
 		expect(deleteOne.args[0]).to.deep.equal([ 2 ]);
-		expect(services.ItemsService.args[1][0]).to.deep.equal('gp_credits_additions');
-		expect(deleteByQuery.args[0]).to.deep.equal([{ filter: { github_id: 2 } }]);
 		expect(result).to.equal('Removed users with ids: 2.');
 	});
 
@@ -87,7 +84,6 @@ describe('Remove banned users CRON handler', () => {
 
 		expect(nock.isDone()).to.equal(true);
 		expect(deleteOne.callCount).to.equal(0);
-		expect(deleteByQuery.callCount).to.equal(0);
 		expect(result).to.equal('No users removed.');
 	});
 
@@ -102,7 +98,6 @@ describe('Remove banned users CRON handler', () => {
 
 		expect(nock.isDone()).to.equal(true);
 		expect(deleteOne.callCount).to.equal(0);
-		expect(deleteByQuery.callCount).to.equal(0);
 		expect(result).to.equal('No users removed.');
 	});
 });

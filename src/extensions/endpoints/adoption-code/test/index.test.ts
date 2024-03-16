@@ -211,6 +211,58 @@ describe('adoption code endpoints', () => {
 			});
 		});
 
+		it('should accept valid verification code even if request to GP api failed', async () => {
+			endpoint(router, endpointContext);
+			let code = '';
+			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+				expect(body.ip).to.equal('1.1.1.1');
+				expect(body.code.length).to.equal(6);
+				code = body.code;
+				return true;
+			}).reply(504);
+
+			await request('/send-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			await request('/verify-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					code,
+				},
+			}, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(2);
+			expect(resSend.args[0]).to.deep.equal([ 'Request failed with status code 504' ]);
+			expect(resSend.args[1]).to.deep.equal([ 'Code successfully validated. Probe was assigned to you.' ]);
+			expect(createOne.callCount).to.equal(1);
+
+			expect(createOne.args[0][0]).to.deep.equal({
+				ip: '1.1.1.1',
+				uuid: null,
+				version: null,
+				hardwareDevice: null,
+				status: 'offline',
+				city: null,
+				state: null,
+				country: null,
+				latitude: null,
+				longitude: null,
+				asn: null,
+				network: null,
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				lastSyncDate: new Date(),
+			});
+		});
+
 		it('should accept valid verification code with spaces', async () => {
 			endpoint(router, endpointContext);
 			let code = '';

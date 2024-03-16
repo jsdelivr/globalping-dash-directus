@@ -367,7 +367,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: true
+      required: false
       sort: 20
       special: null
       translations: null
@@ -382,7 +382,7 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 0
-      is_nullable: false
+      is_nullable: true
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -450,7 +450,7 @@ fields:
         a message here: https://github.com/jsdelivr/globalping/issues/268
       options: null
       readonly: false
-      required: true
+      required: false
       sort: 8
       special: null
       translations: null
@@ -465,7 +465,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: false
+      is_nullable: true
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -699,7 +699,7 @@ fields:
       max_length: null
       numeric_precision: 3
       numeric_scale: 0
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -878,7 +878,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: true
+      required: false
       sort: 21
       special: null
       translations: null
@@ -893,7 +893,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: false
+      is_nullable: true
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -1114,7 +1114,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: true
+      required: false
       sort: 13
       special: null
       translations: null
@@ -1152,7 +1152,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: true
+      required: false
       sort: 14
       special: null
       translations: null
@@ -1167,7 +1167,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: false
+      is_nullable: true
       is_unique: false
       is_primary_key: false
       is_generated: false
