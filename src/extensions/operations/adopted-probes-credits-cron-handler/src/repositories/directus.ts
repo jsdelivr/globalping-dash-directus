@@ -53,7 +53,7 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 		github_id: usersMap.get(userId)?.external_identifier,
 		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
 		adopted_probe: id,
-		comment: `For the adopted probe ${name ? name + ' ' : ''}(${ip})`,
+		comment: `For the adopted probe ${name ? `"${name}" ` : ''}(${ip})`,
 	}))) as number[];
 
 	return result;

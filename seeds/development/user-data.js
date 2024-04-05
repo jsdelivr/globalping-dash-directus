@@ -174,7 +174,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'For the adopted probe adopted-probe-2 (213.136.174.80)',
+		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
 		consumed: 1,
 		date_created: '2024-02-22 11:53:00',
 		github_id: user.external_identifier,
