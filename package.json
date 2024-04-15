@@ -31,10 +31,10 @@
 		"lint:fix": "npm run lint -- --fix",
 		"init": "./scripts/init.sh",
 		"init:dev": "./scripts/init.sh --dev",
-		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && dotenv -- npx --yes directus@10.9.0 database migrate:latest",
+		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && dotenv -- npx --yes directus@10.9.3 database migrate:latest",
 		"seed": "NODE_ENV=development knex seed:run",
-		"schema:apply": "npx --yes directus@10.9.0 schema apply --yes snapshots/collections-schema.yml",
-		"schema:snapshot": "npx --yes directus@10.9.0 schema snapshot --yes snapshots/collections-schema.yml",
+		"schema:apply": "npx --yes directus@10.9.3 schema apply --yes snapshots/collections-schema.yml",
+		"schema:snapshot": "npx --yes directus@10.9.3 schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'",
 		"build:in-sequence": "grep -E 'AS builder-[0-9]+' Dockerfile | awk -F 'AS ' '{print $2}' | xargs -r -P 1 -I STAGE docker build --target STAGE .",
 		"test": "./scripts/test.sh"

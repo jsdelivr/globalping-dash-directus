@@ -1,5 +1,5 @@
 version: 1
-directus: 10.9.0
+directus: 10.9.3
 vendor: mysql
 collections:
   - collection: Globalping
@@ -67,7 +67,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 3
+      sort: 4
       sort_field: null
       translations:
         - language: en-US
@@ -93,7 +93,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 4
+      sort: 5
       sort_field: null
       translations:
         - language: en-US
@@ -119,7 +119,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 5
+      sort: 6
       sort_field: null
       translations:
         - language: en-US
@@ -128,6 +128,32 @@ collections:
       versioning: false
     schema:
       name: gp_credits_deductions
+  - collection: gp_location_overrides
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: gp_location_overrides
+      color: null
+      display_template: null
+      group: Globalping
+      hidden: false
+      icon: null
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 3
+      sort_field: null
+      translations:
+        - language: en-US
+          translation: Location Overrides
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: gp_location_overrides
   - collection: gp_tokens
     meta:
       accountability: all
@@ -368,7 +394,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 20
+      sort: 19
       special: null
       translations: null
       validation: null
@@ -451,7 +477,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 8
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -489,7 +515,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 9
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -684,7 +710,7 @@ fields:
         label: Is Custom City
       readonly: false
       required: false
-      sort: 22
+      sort: 21
       special:
         - cast-boolean
       translations: null
@@ -763,7 +789,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 18
+      sort: 17
       special: null
       translations: null
       validation: null
@@ -801,7 +827,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 19
+      sort: 18
       special: null
       translations: null
       validation: null
@@ -879,7 +905,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 21
+      sort: 20
       special: null
       translations: null
       validation: null
@@ -917,7 +943,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 23
+      sort: 22
       special: null
       translations: null
       validation: null
@@ -955,7 +981,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 7
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -993,7 +1019,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 17
+      sort: 16
       special: null
       translations: null
       validation: null
@@ -1191,7 +1217,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 16
+      sort: 15
       special: null
       translations: null
       validation: null
@@ -1800,6 +1826,432 @@ fields:
       has_auto_increment: false
       foreign_key_table: directus_users
       foreign_key_column: id
+  - collection: gp_location_overrides
+    field: id
+    type: integer
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 1
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: gp_location_overrides
+      data_type: int unsigned
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: true
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: user_created
+    type: string
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: user
+      display_options: null
+      field: user_created
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 2
+      special:
+        - user-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_created
+      table: gp_location_overrides
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_location_overrides
+    field: date_created
+    type: timestamp
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: gp_location_overrides
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: user_updated
+    type: string
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: user
+      display_options: null
+      field: user_updated
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
+      readonly: true
+      required: false
+      sort: 4
+      special:
+        - user-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: user_updated
+      table: gp_location_overrides
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_location_overrides
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 5
+      special:
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: gp_location_overrides
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: ip_range
+    type: string
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: ip_range
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 6
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: ip_range
+      table: gp_location_overrides
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: city
+    type: string
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: city
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 7
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: city
+      table: gp_location_overrides
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: state
+    type: string
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: state
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 9
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: state
+      table: gp_location_overrides
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: country
+    type: string
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: country
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 8
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: country
+      table: gp_location_overrides
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: latitude
+    type: float
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: latitude
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 10
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: latitude
+      table: gp_location_overrides
+      data_type: float
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_location_overrides
+    field: longitude
+    type: float
+    meta:
+      collection: gp_location_overrides
+      conditions: null
+      display: null
+      display_options: null
+      field: longitude
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 11
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: longitude
+      table: gp_location_overrides
+      data_type: float
+      default_value: null
+      max_length: null
+      numeric_precision: 10
+      numeric_scale: 5
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: gp_tokens
     field: date_created
     type: timestamp
@@ -3046,6 +3498,48 @@ relations:
       constraint_name: gp_credits_deductions_user_id_foreign
       on_update: RESTRICT
       on_delete: CASCADE
+  - collection: gp_location_overrides
+    field: user_created
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: gp_location_overrides
+      many_field: user_created
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_location_overrides
+      column: user_created
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: gp_location_overrides_user_created_foreign
+      on_update: RESTRICT
+      on_delete: RESTRICT
+  - collection: gp_location_overrides
+    field: user_updated
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: gp_location_overrides
+      many_field: user_updated
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_location_overrides
+      column: user_updated
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: gp_location_overrides_user_updated_foreign
+      on_update: RESTRICT
+      on_delete: RESTRICT
   - collection: gp_tokens
     field: user_created
     related_collection: directus_users
