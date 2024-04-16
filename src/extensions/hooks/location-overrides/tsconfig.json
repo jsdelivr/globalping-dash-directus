@@ -25,10 +25,10 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
 		"isolatedModules": true,
-		"rootDir": "./src",
 		"module": "ESNext"
 	},
 	"include": [
-		"./src/**/*.ts"
+		"./src/**/*.ts",
+		"../../lib/*.ts"
 	]
 }

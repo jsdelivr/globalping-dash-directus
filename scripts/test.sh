@@ -8,6 +8,9 @@ directories=$(find ./src -type d -name "node_modules" -prune -o -type f -name "p
 echo "Extensions directories:"
 echo "$directories"
 
+# /lib directory should be installed first
+directories="./src/extensions/lib $directories"
+
 for dir in $directories; do
 	(
 		echo "Directory: $dir"

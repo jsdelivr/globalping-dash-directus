@@ -1,0 +1,17 @@
+{
+	"name": "lib",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"test": "echo 'No tests for that folder'",
+		"build": "echo 'No build step for that folder'"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"any-ascii": "^0.3.2"
+	}
+}

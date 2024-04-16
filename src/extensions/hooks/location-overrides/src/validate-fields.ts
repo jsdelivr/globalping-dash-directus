@@ -3,7 +3,7 @@ import { createError } from '@directus/errors';
 import axios from 'axios';
 import ipaddr from 'ipaddr.js';
 import type { Fields } from './index.js';
-import { normalizeCityName } from './normalize-city.js';
+import { normalizeCityName } from '../../../lib/normalize-city.js';
 
 type City = {
 	lng: string;

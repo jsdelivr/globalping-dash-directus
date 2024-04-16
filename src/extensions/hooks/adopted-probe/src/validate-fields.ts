@@ -4,7 +4,7 @@ import axios from 'axios';
 import { createError } from '@directus/errors';
 import { Fields } from './index.js';
 import { City, geonamesCache, getKey } from './geonames-cache.js';
-import { normalizeCityName } from './normalize-city.js';
+import { normalizeCityName } from '../../../lib/normalize-city.js';
 import { EventContext } from '@directus/types';
 import { getProbes, getUser } from './repositories/directus.js';
 

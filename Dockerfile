@@ -64,6 +64,10 @@ RUN npm run build
 
 # Build hooks/adopted-probe
 FROM node:18-alpine AS builder-09
+WORKDIR /builder/src/extensions/lib
+ADD ./src/extensions/lib/package.json ./src/extensions/lib/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/lib .
 WORKDIR /builder/src/extensions/hooks/adopted-probe
 ADD ./src/extensions/hooks/adopted-probe/package.json ./src/extensions/hooks/adopted-probe/package-lock.json ./
 RUN npm ci
@@ -134,7 +138,7 @@ RUN npm ci
 COPY ./src/extensions/hooks/gp-tokens .
 RUN npm run build
 
-# Build hooks/gp-tokens
+# Build hooks/directus-users
 FROM node:18-alpine AS builder-18
 WORKDIR /builder/src/extensions/hooks/directus-users
 ADD ./src/extensions/hooks/directus-users/package.json ./src/extensions/hooks/directus-users/package-lock.json ./
@@ -142,8 +146,12 @@ RUN npm ci
 COPY ./src/extensions/hooks/directus-users .
 RUN npm run build
 
-# Build hooks/gp-tokens
+# Build hooks/location-verrides
 FROM node:18-alpine AS builder-19
+WORKDIR /builder/src/extensions/lib
+ADD ./src/extensions/lib/package.json ./src/extensions/lib/package-lock.json ./
+RUN npm ci
+COPY ./src/extensions/lib .
 WORKDIR /builder/src/extensions/hooks/location-overrides
 ADD ./src/extensions/hooks/location-overrides/package.json ./src/extensions/hooks/location-overrides/package-lock.json ./
 RUN npm ci
