@@ -11,7 +11,7 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@v5
         with:
-          name: jsdelivr/dashboard/dashboard-staging
+          name: jsdelivr/dashboard/globalping-dash-directus
           username: jsdelivr
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
