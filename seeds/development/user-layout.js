@@ -25,12 +25,6 @@ export const seed = async (knex) => {
 	},
 	{
 		user: user.id,
-		collection: 'jsd_purge_tokens',
-		layout_query: { tabular: { fields: [ 'id', 'user_created', 'name', 'value', 'expire', 'origins', 'date_last_used' ] } },
-		icon: 'bookmark',
-	},
-	{
-		user: user.id,
 		collection: 'gp_tokens',
 		layout_query: { tabular: { fields: [ 'id', 'user_created', 'name', 'value', 'expire', 'origins', 'date_last_used' ] } },
 		icon: 'bookmark',

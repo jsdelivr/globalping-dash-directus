@@ -16,7 +16,7 @@ services:
       interval: 3s
       timeout: 2s
       retries: 10
-  directus:
+  globalping-dash-directus:
     depends_on:
       mariadb:
         condition: service_healthy
