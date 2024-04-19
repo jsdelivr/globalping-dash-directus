@@ -1,4 +1,4 @@
-# dashboard
+# Globalping dashboard directus
 
 ## Prod first deploy
 

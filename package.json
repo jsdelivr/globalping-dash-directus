@@ -1,8 +1,8 @@
 {
-	"name": "dashboard",
+	"name": "globalping-dash-directus",
 	"version": "1.0.0",
 	"license": "OSL-3.0",
-	"description": "jsDelivr dashboard",
+	"description": "Globalping dashboard directus",
 	"private": true,
 	"type": "module",
 	"dependencies": {
@@ -41,10 +41,10 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git@github.com:jsdelivr/dashboard.git"
+		"url": "git@github.com:jsdelivr/globalping-dash-directus.git"
 	},
 	"bugs": {
-		"url": "https://github.com/jsdelivr/dashboard/issues"
+		"url": "https://github.com/jsdelivr/globalping-dash-directus/issues"
 	},
 	"engines": {
 		"node": "^18.15.0"
