@@ -1,0 +1,46 @@
+{
+	"name": "directus-extension-gh-webhook-handler",
+	"description": "This extension adds credits for one-time sponsorship and creates sponsors for recurring sponsorship",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-operation"
+	],
+	"type": "module",
+	"directus:extension": {
+		"type": "operation",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"source": {
+			"app": "src/app.ts",
+			"api": "src/api.ts"
+		},
+		"host": "^10.1.9"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions-sdk": "10.1.9",
+		"@types/chai": "^4.3.6",
+		"@types/mocha": "^10.0.1",
+		"@types/node": "^20.6.0",
+		"@types/sinon": "^10.0.16",
+		"chai": "^4.3.8",
+		"mocha": "^10.2.0",
+		"sinon": "^16.0.0",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.2.2",
+		"vue": "^3.3.4"
+	},
+	"dependencies": {
+		"lodash": "^4.17.21"
+	}
+}

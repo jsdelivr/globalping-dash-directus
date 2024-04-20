@@ -1,0 +1,29 @@
+version: '3'
+services:
+  mariadb:
+    image: mariadb:10.11.5
+    environment:
+      - MARIADB_DATABASE=directus
+      - MARIADB_USER=directus
+      - MARIADB_PASSWORD=password
+      - MARIADB_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "directus", "-ppassword"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+  globalping-dash-directus:
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.development
+    ports:
+      - "8055:8055"
