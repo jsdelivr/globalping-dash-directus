@@ -50,9 +50,9 @@ if [ "$is_dev_mode" = true ]; then
 
 	perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env.development
 
-	docker compose stop directus
+	docker compose stop globalping-dash-directus
 
-	docker compose up -d directus
+	docker compose up -d globalping-dash-directus
 
 	./scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
 

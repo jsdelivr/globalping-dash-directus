@@ -38,7 +38,6 @@ export const seed = async (knex) => {
 	}
 
 	await Promise.all([
-		knex('jsd_purge_tokens').delete(),
 		knex('gp_tokens').delete(),
 		knex('gp_adopted_probes').delete(),
 		knex('sponsors').delete(),
@@ -46,23 +45,6 @@ export const seed = async (knex) => {
 		knex('gp_credits_deductions').delete(),
 		knex('gp_credits').delete(),
 	]);
-
-	await knex('jsd_purge_tokens').insert([{
-		name: 'jsd-token-1',
-		value: 'W4jbiJLf7Lq96/Y8BDFa+rR1BLg+40OzRSEW861mzrk=', // token: 46YlMw6l2o0RvWmhuQECmbSps6Zi4kpz
-		user_created: user.id,
-		date_created: '2024-02-22 10:46:15',
-	}, {
-		name: 'jsd-token-2',
-		value: 'bnIf3K5QY1nNVhEXPlZci8cc8d3fXA8V6tAa2NdoVCA=', // token: 8yMyVzixoKKw3uMu19cNdZRgxT9qojhK
-		user_created: user.id,
-		user_updated: user.id,
-		date_created: '2024-02-22 10:49:06',
-		date_last_used: '2024-02-21',
-		date_updated: '2024-02-22 10:49:45',
-		expire: '2027-02-01',
-		origins: JSON.stringify([ 'https://www.jsdelivr.com', 'https://www.jsdelivr.com:10000' ]),
-	}]);
 
 	await knex('gp_tokens').insert([{
 		name: 'gp-token-1',

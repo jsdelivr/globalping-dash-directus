@@ -14,23 +14,6 @@ type Token = {
 };
 
 export default defineHook(({ filter }) => {
-	filter('jsd_purge_tokens.items.create', (payload) => {
-		const token = payload as Token;
-		const hashedToken = hashToken(token.value);
-		token.value = hashedToken;
-	});
-
-	filter('jsd_purge_tokens.items.update', (payload) => {
-		const token = payload as Partial<Token>;
-
-		if (token.value === undefined) {
-			return;
-		}
-
-		const hashedToken = hashToken(token.value);
-		token.value = hashedToken;
-	});
-
 	filter('gp_tokens.items.create', (payload) => {
 		const token = payload as Token;
 		const hashedToken = hashToken(token.value);
