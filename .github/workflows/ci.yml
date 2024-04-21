@@ -21,6 +21,7 @@ jobs:
           node-version: 18.x
       - name: Build and Test
         run: |
-          npm ci
-          npm test
-          npm run lint
+          pnpm install
+          pnpm -r build
+          pnpm -r test
+          pnpm lint

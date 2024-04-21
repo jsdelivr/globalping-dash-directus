@@ -5,14 +5,14 @@
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
 - copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
 - run the remote container
-- `npm run init`
+- `pnpm run init`
 
 ## Prod other deploys
 
 - fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
 - if there are changes in `.env.production.example` copy them to the env vars of the container
-- `npm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
-- `npm run migrate`
+- `pnpm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
+- `pnpm run migrate`
 - stop prev container, run new container
 
 ## Dev run
@@ -20,7 +20,8 @@
 - copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
 - copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID`
 - `docker compose up --build`
-- `npm run init:dev`
+- run `corepack enable`
+- `pnpm run init:dev`
 - login as admin using `ADMIN_EMAIL` and `ADMIN_PASSWORD` vars.
 - login as user using email `user@example.com` and password `user`.
 
@@ -34,7 +35,7 @@ Add tests to extension:
 ```bash
 # From the extension folder call:
 original_dir=$PWD
-npm i --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node
+pnpm add --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node
 jq 'del(.compilerOptions.rootDir) | .compilerOptions.module = "ESNext" | .include = ["./src/**/*.ts", "../../lib/*.ts"]' tsconfig.json > temp.json && mv temp.json tsconfig.json
 jq --tab '.scripts.test = "TS_NODE_TRANSPILE_ONLY=true mocha"' package.json > temp.json && mv temp.json package.json
 mkdir test
