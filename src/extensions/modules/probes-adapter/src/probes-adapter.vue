@@ -45,52 +45,52 @@
 </template>
 
 <script>
-import { useApi } from '@directus/extensions-sdk';
+	import { useApi } from '@directus/extensions-sdk';
 
-export default {
-	data () {
-		return {
-			ip: '',
-			code: '',
-			sendCodeResponse: '',
-			verifyCodeResponse: '',
-		};
-	},
-	setup () {
-		const api = useApi();
+	export default {
+		data () {
+			return {
+				ip: '',
+				code: '',
+				sendCodeResponse: '',
+				verifyCodeResponse: '',
+			};
+		},
+		setup () {
+			const api = useApi();
 
-		return {
-			api,
-		};
-	},
-	methods: {
-		async sendCode () {
-			try {
-				const response = await this.api.post('/adoption-code/send-code', { ip: this.ip });
-				this.sendCodeResponse = response.data;
-			} catch (error) {
-				this.sendCodeResponse = error.response.data;
-			}
+			return {
+				api,
+			};
 		},
+		methods: {
+			async sendCode () {
+				try {
+					const response = await this.api.post('/adoption-code/send-code', { ip: this.ip });
+					this.sendCodeResponse = response.data;
+				} catch (error) {
+					this.sendCodeResponse = error.response.data;
+				}
+			},
 
-		async verifyCode () {
-			try {
-				const response = await this.api.post('/adoption-code/verify-code', { code: this.code });
-				this.verifyCodeResponse = response.data;
-			} catch (error) {
-				this.verifyCodeResponse = error.response.data;
-			}
+			async verifyCode () {
+				try {
+					const response = await this.api.post('/adoption-code/verify-code', { code: this.code });
+					this.verifyCodeResponse = response.data;
+				} catch (error) {
+					this.verifyCodeResponse = error.response.data;
+				}
+			},
 		},
-	},
-	watch: {
-		ip () {
-			this.sendCodeResponse = '';
+		watch: {
+			ip () {
+				this.sendCodeResponse = '';
+			},
+			code () {
+				this.verifyCodeResponse = '';
+			},
 		},
-		code () {
-			this.verifyCodeResponse = '';
-		},
-	},
-};
+	};
 </script>
 
 <style lang="scss" scoped>
