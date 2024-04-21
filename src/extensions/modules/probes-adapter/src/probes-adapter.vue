@@ -2,7 +2,7 @@
 	<private-view title="Adopt Your Probes">
 		<template #title-outer:prepend>
 			<v-button class="header-icon" rounded icon exact disabled>
-				<v-icon name="router" />
+				<v-icon name="router"/>
 			</v-button>
 		</template>
 

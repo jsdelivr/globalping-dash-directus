@@ -116,7 +116,7 @@
 			/>
 		</div>
 		<button class="close-button" @click="() => deleteTag(index)">
-			<v-icon name="close" />
+			<v-icon name="close"/>
 		</button>
 	</div>
 	<v-button class="add-tag-button" secondary @click="addTag">Add Tag</v-button>
