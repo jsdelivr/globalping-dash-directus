@@ -54,7 +54,7 @@ if [ "$is_dev_mode" = true ]; then
 
 	docker compose up -d globalping-dash-directus
 
-	./scripts/wait-for.sh -t 60 http://localhost:8055/admin/login
+	./scripts/wait-for.sh -t 60 $DIRECTUS_URL/admin/login
 
 	npm run seed
 else

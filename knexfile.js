@@ -9,11 +9,11 @@ export default _.merge({}, ...[ 'development' ].map((environment) => {
 		[environment]: {
 			client: 'mysql',
 			connection: {
-				host: 'localhost',
-				user: 'directus',
-				password: 'password',
-				database: 'directus',
-				port: 3306,
+				host: process.env.DB_HOST || 'localhost',
+				user: process.env.DB_USER || 'directus',
+				password: process.env.DB_PASSWORD || 'password',
+				database: process.env.DB_DATABSE || 'directus',
+				port: process.env.DB_PORT || 13306,
 			},
 			pool: {
 				min: 0,
