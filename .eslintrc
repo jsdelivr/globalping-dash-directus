@@ -9,7 +9,7 @@
 		"**/shims.d.ts"
 	],
 	"rules": {
-		"node/no-extraneous-import": [
+		"n/no-missing-import": [
 			"error",
 			{
 				"allowModules": [
