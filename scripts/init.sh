@@ -39,9 +39,9 @@ token=$(get_token)
 
 perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
 
-pnpm run schema:apply
+npm run schema:apply
 
-pnpm run migrate
+npm run migrate
 
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
@@ -56,7 +56,7 @@ if [ "$is_dev_mode" = true ]; then
 
 	./scripts/wait-for.sh -t 60 $DIRECTUS_URL/admin/login
 
-	pnpm run seed
+	npm run seed
 else
 	confirm "Set that value to the container env vars: \nAUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id \nThen restart the container." # Restart is requred to apply new role id and because of https://github.com/directus/directus/issues/17117
 
