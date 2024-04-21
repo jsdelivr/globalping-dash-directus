@@ -18,27 +18,27 @@
 			<form @submit.prevent="sendCode">
 				<label for="ip" class="label">Enter the IP address:</label>
 				<v-input
-					type="text"
 					id="ip"
 					v-model="ip"
+					type="text"
 					class="input"
 					required
 				/>
 				<v-button type="submit">Send code to probe</v-button>
-				<v-notice class="notice" v-if="sendCodeResponse">{{ sendCodeResponse }}</v-notice>
+				<v-notice v-if="sendCodeResponse" class="notice">{{ sendCodeResponse }}</v-notice>
 			</form>
 
 			<form @submit.prevent="verifyCode">
 				<label for="code" class="label">Enter the adoption code:</label>
 				<v-input
-					type="text"
 					id="code"
 					v-model="code"
+					type="text"
 					class="input"
 					required
 				/>
 				<v-button type="submit">Verify the code</v-button>
-				<v-notice class="notice" v-if="verifyCodeResponse">{{ verifyCodeResponse }}</v-notice>
+				<v-notice v-if="verifyCodeResponse" class="notice">{{ verifyCodeResponse }}</v-notice>
 			</form>
 		</div>
 	</private-view>
@@ -48,6 +48,13 @@
 	import { useApi } from '@directus/extensions-sdk';
 
 	export default {
+		setup () {
+			const api = useApi();
+
+			return {
+				api,
+			};
+		},
 		data () {
 			return {
 				ip: '',
@@ -56,12 +63,13 @@
 				verifyCodeResponse: '',
 			};
 		},
-		setup () {
-			const api = useApi();
-
-			return {
-				api,
-			};
+		watch: {
+			ip () {
+				this.sendCodeResponse = '';
+			},
+			code () {
+				this.verifyCodeResponse = '';
+			},
 		},
 		methods: {
 			async sendCode () {
@@ -80,14 +88,6 @@
 				} catch (error) {
 					this.verifyCodeResponse = error.response.data;
 				}
-			},
-		},
-		watch: {
-			ip () {
-				this.sendCodeResponse = '';
-			},
-			code () {
-				this.verifyCodeResponse = '';
 			},
 		},
 	};

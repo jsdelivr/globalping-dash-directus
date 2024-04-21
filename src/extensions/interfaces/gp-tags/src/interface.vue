@@ -94,7 +94,7 @@
 </script>
 
 <template>
-	<div class="row" v-for="(item, index) in tags" :key="index">
+	<div v-for="(item, index) in tags" :key="index" class="row">
 		<p class="text">u-</p>
 		<div class="dropdown">
 			<v-select
@@ -109,10 +109,10 @@
 		<div class="input">
 			<v-input
 				:model-value="item.value"
-				@update:model-value="(newTag) => updateTag(index, newTag)"
 				:disabled="disabled"
 				:type="'text'"
 				:class="font"
+				@update:model-value="(newTag) => updateTag(index, newTag)"
 			/>
 		</div>
 		<button class="close-button" @click="() => deleteTag(index)">
@@ -120,7 +120,7 @@
 		</button>
 	</div>
 	<v-button class="add-tag-button" secondary @click="addTag">Add Tag</v-button>
-	<v-button secondary @click="syncGithubData" :loading="isFetching">Sync GitHub Data</v-button>
+	<v-button secondary :loading="isFetching" @click="syncGithubData">Sync GitHub Data</v-button>
 </template>
 
 <style lang="scss" scoped>
