@@ -36,6 +36,7 @@
 		"lint:fix": "pnpm lint --fix",
 		"init": "./scripts/init.sh",
 		"init:dev": "./scripts/init.sh --dev",
+		"docker:ls": "./scripts/docker-ls.sh",
 		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && dotenv -- npx directus@10.9.3 database migrate:latest",
 		"seed": "NODE_ENV=development knex seed:run",
 		"schema:apply": "npx directus@10.9.3 schema apply --yes snapshots/collections-schema.yml",

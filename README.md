@@ -60,7 +60,7 @@ frontend gp_fe
     default_backend gp_be
 
 backend gp_be
-    server server1 127.0.0.1:8055
+    server server1 127.0.0.1:18055
 EOF
 sudo systemctl stop haproxy
 sudo systemctl start haproxy
