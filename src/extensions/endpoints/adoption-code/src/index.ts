@@ -16,6 +16,7 @@ type Request = ExpressRequest & {
 type SendCodeResponse = {
 	uuid: string;
 	version: string;
+	nodeVersion: string;
 	hardwareDevice: string | null;
 	status: string;
 	city: string;
@@ -32,6 +33,7 @@ type AdoptedProbe = {
 	code: string;
 	uuid: string | null;
 	version: string | null;
+	nodeVersion: string | null;
 	hardwareDevice: string | null;
 	status: string;
 	city: string | null;
@@ -90,6 +92,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				code,
 				uuid: null,
 				version: null,
+				nodeVersion: null,
 				hardwareDevice: null,
 				status: 'offline',
 				city: null,
@@ -113,6 +116,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				code,
 				uuid: response.data.uuid,
 				version: response.data.version,
+				nodeVersion: response.data.nodeVersion,
 				hardwareDevice: response.data.hardwareDevice || null,
 				status: response.data.status,
 				city: response.data.city,
@@ -174,6 +178,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				ip: probe.ip,
 				uuid: probe.uuid,
 				version: probe.version,
+				nodeVersion: probe.nodeVersion,
 				hardwareDevice: probe.hardwareDevice,
 				status: probe.status,
 				city: probe.city,
