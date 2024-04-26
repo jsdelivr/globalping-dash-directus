@@ -3,10 +3,7 @@
 set -e
 
 # Find all directories with a package.json file in /src (excluding node_modules)
-directories=$(find src -type d -name "node_modules" -prune -o -type f -name "package.json" -exec dirname {} \;)
-
-# /lib directory should be installed first
-directories="src/extensions/lib $directories"
+directories=$(find src -type d -name "node_modules" -prune -o -type f -name "package.json" -exec dirname {} \; | sort)
 
 for dir in $directories; do
 	(
