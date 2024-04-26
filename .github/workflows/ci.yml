@@ -21,6 +21,8 @@ jobs:
           node-version: 18.x
       - name: Build and Test
         run: |
-          npm ci
-          npm test
-          npm run lint
+          corepack enable
+          pnpm install
+          pnpm -r build
+          pnpm -r test
+          pnpm lint

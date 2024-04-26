@@ -1,6 +1,6 @@
 {
 	"extends": [
-		"plugin:vue/vue3-strongly-recommended",
+		"plugin:vue/vue3-recommended",
 		"@martin-kolarik/eslint-config/typescript"
 	],
 	"ignorePatterns": [
@@ -9,7 +9,7 @@
 		"**/shims.d.ts"
 	],
 	"rules": {
-		"node/no-extraneous-import": [
+		"n/no-missing-import": [
 			"error",
 			{
 				"allowModules": [
@@ -19,9 +19,32 @@
 		],
 		"vue/html-indent": [
 			"error",
-			"tab"
+			"tab",
+			{
+				"baseIndent": 1
+			}
 		],
-		"vue/max-attributes-per-line": "off",
+		"vue/script-indent": [
+			"error",
+			"tab",
+			{
+				"baseIndent": 1
+			}
+		],
+		"vue/html-closing-bracket-spacing": [
+			"error",
+			{
+				"selfClosingTag": "never"
+			}
+		],
+		"vue/max-attributes-per-line": ["error", {
+			"singleline": {
+				"max": 5
+			},
+			"multiline": {
+				"max": 1
+			}
+		}],
 		"vue/multi-word-component-names": "off",
 		"vue/singleline-html-element-content-newline": "off"
 	},
@@ -58,6 +81,9 @@
 			],
 			"parserOptions": {
 				"parser": "@typescript-eslint/parser"
+			},
+			"rules": {
+				"indent": "off"
 			}
 		}
 	]

@@ -25,6 +25,7 @@
 		"@directus/extensions": "^0.1.1",
 		"@directus/extensions-sdk": "10.1.14",
 		"@types/chai": "^4.3.10",
+		"@types/express": "^4.17.17",
 		"@types/mocha": "^10.0.4",
 		"@types/node": "^20.9.0",
 		"@types/sinon": "^17.0.1",

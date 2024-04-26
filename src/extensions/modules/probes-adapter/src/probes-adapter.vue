@@ -2,7 +2,7 @@
 	<private-view title="Adopt Your Probes">
 		<template #title-outer:prepend>
 			<v-button class="header-icon" rounded icon exact disabled>
-				<v-icon name="router" />
+				<v-icon name="router"/>
 			</v-button>
 		</template>
 
@@ -18,79 +18,79 @@
 			<form @submit.prevent="sendCode">
 				<label for="ip" class="label">Enter the IP address:</label>
 				<v-input
-					type="text"
 					id="ip"
 					v-model="ip"
+					type="text"
 					class="input"
 					required
 				/>
 				<v-button type="submit">Send code to probe</v-button>
-				<v-notice class="notice" v-if="sendCodeResponse">{{ sendCodeResponse }}</v-notice>
+				<v-notice v-if="sendCodeResponse" class="notice">{{ sendCodeResponse }}</v-notice>
 			</form>
 
 			<form @submit.prevent="verifyCode">
 				<label for="code" class="label">Enter the adoption code:</label>
 				<v-input
-					type="text"
 					id="code"
 					v-model="code"
+					type="text"
 					class="input"
 					required
 				/>
 				<v-button type="submit">Verify the code</v-button>
-				<v-notice class="notice" v-if="verifyCodeResponse">{{ verifyCodeResponse }}</v-notice>
+				<v-notice v-if="verifyCodeResponse" class="notice">{{ verifyCodeResponse }}</v-notice>
 			</form>
 		</div>
 	</private-view>
 </template>
 
 <script>
-import { useApi } from '@directus/extensions-sdk';
+	import { useApi } from '@directus/extensions-sdk';
 
-export default {
-	data () {
-		return {
-			ip: '',
-			code: '',
-			sendCodeResponse: '',
-			verifyCodeResponse: '',
-		};
-	},
-	setup () {
-		const api = useApi();
+	export default {
+		setup () {
+			const api = useApi();
 
-		return {
-			api,
-		};
-	},
-	methods: {
-		async sendCode () {
-			try {
-				const response = await this.api.post('/adoption-code/send-code', { ip: this.ip });
-				this.sendCodeResponse = response.data;
-			} catch (error) {
-				this.sendCodeResponse = error.response.data;
-			}
+			return {
+				api,
+			};
 		},
+		data () {
+			return {
+				ip: '',
+				code: '',
+				sendCodeResponse: '',
+				verifyCodeResponse: '',
+			};
+		},
+		watch: {
+			ip () {
+				this.sendCodeResponse = '';
+			},
+			code () {
+				this.verifyCodeResponse = '';
+			},
+		},
+		methods: {
+			async sendCode () {
+				try {
+					const response = await this.api.post('/adoption-code/send-code', { ip: this.ip });
+					this.sendCodeResponse = response.data;
+				} catch (error) {
+					this.sendCodeResponse = error.response.data;
+				}
+			},
 
-		async verifyCode () {
-			try {
-				const response = await this.api.post('/adoption-code/verify-code', { code: this.code });
-				this.verifyCodeResponse = response.data;
-			} catch (error) {
-				this.verifyCodeResponse = error.response.data;
-			}
+			async verifyCode () {
+				try {
+					const response = await this.api.post('/adoption-code/verify-code', { code: this.code });
+					this.verifyCodeResponse = response.data;
+				} catch (error) {
+					this.verifyCodeResponse = error.response.data;
+				}
+			},
 		},
-	},
-	watch: {
-		ip () {
-			this.sendCodeResponse = '';
-		},
-		code () {
-			this.verifyCodeResponse = '';
-		},
-	},
-};
+	};
 </script>
 
 <style lang="scss" scoped>

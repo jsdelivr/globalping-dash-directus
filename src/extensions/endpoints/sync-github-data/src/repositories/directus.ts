@@ -1,5 +1,5 @@
-import { Request } from '../index';
-import { User } from '../actions/sync-github-data';
+import { Request } from '../index.js';
+import { User } from '../actions/sync-github-data.js';
 import { EndpointExtensionContext } from '@directus/extensions';
 
 export const getDirectusUser = async (userId: string, accountability: Request['accountability'], context: EndpointExtensionContext) => {

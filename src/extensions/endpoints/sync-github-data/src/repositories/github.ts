@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User } from '../actions/sync-github-data';
+import { User } from '../actions/sync-github-data.js';
 import { EndpointExtensionContext } from '@directus/extensions';
 
 type GithubUserResponse = {

@@ -37,69 +37,69 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { useApi } from '@directus/extensions-sdk';
+	import { computed, ref, watch } from 'vue';
+	import { useI18n } from 'vue-i18n';
+	import { useApi } from '@directus/extensions-sdk';
 
-interface Props {
-	value?: string | null;
-	disabled?: boolean;
-}
-
-const api = useApi();
-
-const props = withDefaults(defineProps<Props>(), { value: () => null!, disabled: false });
-
-const emit = defineEmits([ 'input' ]);
-
-const { t } = useI18n();
-
-const placeholder = computed(() => {
-	if (props.disabled && !props.value) { return null; }
-
-	return props.value ? t('interfaces.system-token.value_securely_saved') : t('interfaces.system-token.placeholder');
-});
-
-const localValue = ref<string | null>(null);
-const loading = ref(false);
-const isNewTokenGenerated = ref(false);
-const regexp = new RegExp('^[*]+$');
-
-watch(
-	() => props.value,
-	(newValue) => {
-		if (!newValue) {
-			localValue.value = null;
-			return;
-		}
-
-		if (newValue && regexp.test(newValue)) {
-			localValue.value = null;
-			isNewTokenGenerated.value = false;
-		}
-	},
-	{ immediate: true },
-);
-
-async function generateToken () {
-	loading.value = true;
-
-	try {
-		const response = await api.post('/token-generator');
-		emitValue(response.data.data);
-		isNewTokenGenerated.value = true;
-	} catch (err: any) {
-		console.error(err);
-		alert('Unexpected error occured, please contact the administrator');
-	} finally {
-		loading.value = false;
+	interface Props {
+		value?: string | null;
+		disabled?: boolean;
 	}
-}
 
-function emitValue (newValue: string | null) {
-	emit('input', newValue);
-	localValue.value = newValue;
-}
+	const api = useApi();
+
+	const props = withDefaults(defineProps<Props>(), { value: () => null!, disabled: false });
+
+	const emit = defineEmits([ 'input' ]);
+
+	const { t } = useI18n();
+
+	const placeholder = computed(() => {
+		if (props.disabled && !props.value) { return null; }
+
+		return props.value ? t('interfaces.system-token.value_securely_saved') : t('interfaces.system-token.placeholder');
+	});
+
+	const localValue = ref<string | null>(null);
+	const loading = ref(false);
+	const isNewTokenGenerated = ref(false);
+	const regexp = new RegExp('^[*]+$');
+
+	watch(
+		() => props.value,
+		(newValue) => {
+			if (!newValue) {
+				localValue.value = null;
+				return;
+			}
+
+			if (newValue && regexp.test(newValue)) {
+				localValue.value = null;
+				isNewTokenGenerated.value = false;
+			}
+		},
+		{ immediate: true },
+	);
+
+	async function generateToken () {
+		loading.value = true;
+
+		try {
+			const response = await api.post('/token-generator');
+			emitValue(response.data.data);
+			isNewTokenGenerated.value = true;
+		} catch (err: any) {
+			console.error(err);
+			alert('Unexpected error occured, please contact the administrator');
+		} finally {
+			loading.value = false;
+		}
+	}
+
+	function emitValue (newValue: string | null) {
+		emit('input', newValue);
+		localValue.value = newValue;
+	}
 </script>
 
 <style lang="scss" scoped>

@@ -1,36 +1,36 @@
 <script setup lang="ts">
-import { useApi } from '@directus/extensions-sdk';
+	import { useApi } from '@directus/extensions-sdk';
 
-const api = useApi();
+	const api = useApi();
 
-const props = withDefaults(
-	defineProps<{
-		value: string | number | null;
-		primaryKey: string;
-		type?: string;
-		disabled?: boolean;
-		font?: 'sans-serif' | 'serif' | 'monospace';
-	}>(),
-	{
-		type: 'text',
-		font: 'sans-serif',
-	},
-);
+	const props = withDefaults(
+		defineProps<{
+			value: string | number | null;
+			primaryKey: string;
+			type?: string;
+			disabled?: boolean;
+			font?: 'sans-serif' | 'serif' | 'monospace';
+		}>(),
+		{
+			type: 'text',
+			font: 'sans-serif',
+		},
+	);
 
-async function sync () {
-	try {
-		await api.post('/sync-github-data', {
-			userId: props.primaryKey,
-		});
+	async function sync () {
+		try {
+			await api.post('/sync-github-data', {
+				userId: props.primaryKey,
+			});
 
-		window.location.reload();
-	} catch (err: any) {
-		console.error(err);
-		alert(err.message || err.toString());
+			window.location.reload();
+		} catch (err: any) {
+			console.error(err);
+			alert(err.message || err.toString());
+		}
 	}
-}
 
-defineEmits([ 'input' ]);
+	defineEmits([ 'input' ]);
 </script>
 
 <template>
