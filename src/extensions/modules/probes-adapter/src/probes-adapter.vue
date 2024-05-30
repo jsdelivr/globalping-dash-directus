@@ -83,8 +83,8 @@
 
 			async verifyCode () {
 				try {
-					const response = await this.api.post('/adoption-code/verify-code', { code: this.code });
-					this.verifyCodeResponse = response.data;
+					await this.api.post('/adoption-code/verify-code', { code: this.code });
+					this.verifyCodeResponse = 'Code successfully validated. Probe was assigned to you.';
 				} catch (error) {
 					this.verifyCodeResponse = error.response.data;
 				}

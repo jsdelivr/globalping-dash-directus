@@ -2,11 +2,10 @@
 	"compilerOptions": {
 		"target": "ES2019",
 		"lib": [
-			"ES2021",
+			"ES2023",
 			"DOM"
 		],
 		"moduleResolution": "node",
-		"module": "ESNext",
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"esModuleInterop": true,

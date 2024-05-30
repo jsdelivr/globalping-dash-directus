@@ -2,22 +2,25 @@ import nock from 'nock';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Router } from 'express';
-import { EndpointExtensionContext } from '@directus/types';
+import type { EndpointExtensionContext } from '@directus/extensions';
 import endpoint from '../src/index.js';
 
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();
+	const readByQuery = sinon.stub().resolves([]);
 	const endpointContext = {
 		logger: {
 			error: console.error,
 		},
+		getSchema: () => {},
+		database: {},
 		env: {
 			GLOBALPING_URL: 'https://api.globalping.io/v1',
 			GP_SYSTEM_KEY: 'system',
 		},
 		services: {
 			ItemsService: sinon.stub().callsFake(() => {
-				return { createOne };
+				return { createOne, readByQuery };
 			}),
 		},
 	} as unknown as EndpointExtensionContext;
@@ -43,6 +46,7 @@ describe('adoption code endpoints', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		readByQuery.resolves([]);
 	});
 
 	after(() => {
@@ -134,7 +138,28 @@ describe('adoption code endpoints', () => {
 			expect(resStatus.callCount).to.equal(1);
 			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
 			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ '"body.ip" must be a valid ip address with a optional CIDR' ]);
+			expect(resSend.args[0]).to.deep.equal([ '"body.ip" must be a valid ip address with a forbidden CIDR' ]);
+		});
+
+		it('should reject with duplicate ip', async () => {
+			endpoint(router, endpointContext);
+			const req = {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					ip: '1.1.1.1',
+				},
+			};
+
+			readByQuery.resolves([{}]);
+
+			await request('/send-code', req, res);
+
+			expect(resStatus.callCount).to.equal(1);
+			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
+			expect(resSend.callCount).to.equal(1);
+			expect(resSend.args[0]).to.deep.equal([ 'Probe with that ip is already adopted' ]);
 		});
 	});
 
@@ -192,7 +217,26 @@ describe('adoption code endpoints', () => {
 			expect(nock.isDone()).to.equal(true);
 			expect(resSend.callCount).to.equal(2);
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ 'Code successfully validated. Probe was assigned to you.' ]);
+
+			expect(resSend.args[1]).to.deep.equal([
+				{
+					id: undefined,
+					ip: '1.1.1.1',
+					version: '0.26.0',
+					nodeVersion: '18.17.0',
+					hardwareDevice: 'v1',
+					status: 'ready',
+					city: 'Paris',
+					state: null,
+					country: 'FR',
+					latitude: 48.8534,
+					longitude: 2.3488,
+					asn: 12876,
+					network: 'SCALEWAY S.A.S.',
+					lastSyncDate: new Date(),
+				},
+			]);
+
 			expect(createOne.callCount).to.equal(1);
 
 			expect(createOne.args[0][0]).to.deep.equal({
@@ -245,7 +289,26 @@ describe('adoption code endpoints', () => {
 			expect(nock.isDone()).to.equal(true);
 			expect(resSend.callCount).to.equal(2);
 			expect(resSend.args[0]).to.deep.equal([ 'Request failed with status code 504' ]);
-			expect(resSend.args[1]).to.deep.equal([ 'Code successfully validated. Probe was assigned to you.' ]);
+
+			expect(resSend.args[1]).to.deep.equal([
+				{
+					id: undefined,
+					ip: '1.1.1.1',
+					version: null,
+					nodeVersion: null,
+					hardwareDevice: null,
+					status: 'offline',
+					city: null,
+					state: null,
+					country: null,
+					latitude: null,
+					longitude: null,
+					asn: null,
+					network: null,
+					lastSyncDate: new Date(),
+				},
+			]);
+
 			expect(createOne.callCount).to.equal(1);
 
 			expect(createOne.args[0][0]).to.deep.equal({
@@ -310,7 +373,26 @@ describe('adoption code endpoints', () => {
 			expect(nock.isDone()).to.equal(true);
 			expect(resSend.callCount).to.equal(2);
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ 'Code successfully validated. Probe was assigned to you.' ]);
+
+			expect(resSend.args[1]).to.deep.equal([
+				{
+					id: undefined,
+					ip: '1.1.1.1',
+					version: '0.26.0',
+					nodeVersion: '18.17.0',
+					hardwareDevice: null,
+					status: 'ready',
+					city: 'Paris',
+					state: null,
+					country: 'FR',
+					latitude: 48.8534,
+					longitude: 2.3488,
+					asn: 12876,
+					network: 'SCALEWAY S.A.S.',
+					lastSyncDate: new Date(),
+				},
+			]);
+
 			expect(createOne.callCount).to.equal(1);
 
 			expect(createOne.args[0][0]).to.deep.equal({

@@ -12,6 +12,7 @@ export async function up (knex) {
 						VALUES (found_user_id, NEW.amount)
 						ON DUPLICATE KEY UPDATE
 						gp_credits.amount = COALESCE(gp_credits.amount, 0) + NEW.amount;
+						SET NEW.consumed = TRUE;
 				ELSE
 						SET NEW.consumed = FALSE;
 				END IF;
