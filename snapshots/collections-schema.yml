@@ -1001,11 +1001,11 @@ fields:
       name: tags
       table: gp_adopted_probes
       data_type: longtext
-      default_value: null
+      default_value: []
       max_length: 4294967295
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
