@@ -12,7 +12,7 @@ export default _.merge({}, ...[ 'development' ].map((environment) => {
 				host: process.env.DB_HOST || 'localhost',
 				user: process.env.DB_USER || 'directus',
 				password: process.env.DB_PASSWORD || 'password',
-				database: process.env.DB_DATABSE || 'directus',
+				database: process.env.DB_DATABSE || 'dashboard-globalping',
 				port: process.env.DB_PORT || 13306,
 			},
 			pool: {
