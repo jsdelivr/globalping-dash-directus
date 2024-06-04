@@ -108,7 +108,7 @@ export const seed = async (knex) => {
 		onlineTimesToday: 0,
 		state: null,
 		status: 'ready',
-		tags: null,
+		tags: '[]',
 		userId: user.id,
 		uuid: 'b42c4319-6be3-46d4-8a01-d4558f0c070c',
 		version: '0.28.0',

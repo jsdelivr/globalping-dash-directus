@@ -84,7 +84,7 @@ export const validateCity = async (fields: Fields, keys: string[], accountabilit
 	const cities = response.data.geonames;
 
 	if (cities.length === 0) {
-		throw payloadError('No valid cities found. Please check "city" and "country" values. Validation algorithm can be checked here: https://www.geonames.org/advanced-search.html?featureClass=P');
+		throw payloadError('No valid cities found. Please check "city" value. City search algorithm can be checked here: https://www.geonames.org/advanced-search.html?featureClass=P');
 	}
 
 	const city = cities[0]!;
