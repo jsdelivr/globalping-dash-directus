@@ -1,5 +1,5 @@
 version: 1
-directus: 10.9.3
+directus: 10.11.0
 vendor: mysql
 collections:
   - collection: gp_adopted_probes
@@ -1198,6 +1198,84 @@ fields:
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: isIPv4Supported
+    type: boolean
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: isIPv4Supported
+      group: null
+      hidden: false
+      interface: boolean
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 24
+      special:
+        - cast-boolean
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: isIPv4Supported
+      table: gp_adopted_probes
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: 3
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: isIPv6Supported
+    type: boolean
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: isIPv6Supported
+      group: null
+      hidden: false
+      interface: boolean
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 25
+      special:
+        - cast-boolean
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: isIPv6Supported
+      table: gp_adopted_probes
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: 3
+      numeric_scale: 0
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
