@@ -29,7 +29,7 @@ RUN pnpm install
 COPY src src
 RUN pnpm -r build
 
-FROM directus/directus:10.11.2
+FROM directus/directus:10.11.0
 
 COPY --from=builder /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/hooks/sign-up/
 COPY --from=builder /builder/src/extensions/interfaces/token/dist/* /directus/extensions/interfaces/token/
