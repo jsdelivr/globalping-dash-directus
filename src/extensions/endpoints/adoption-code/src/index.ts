@@ -67,7 +67,7 @@ const sendCodeSchema = Joi.object<Request>({
 		user: Joi.string().required(),
 	}).required().unknown(true),
 	body: Joi.object({
-		ip: Joi.string().ip().required(),
+		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
 	}).required(),
 }).unknown(true);
 
@@ -135,7 +135,8 @@ export default defineEndpoint((router, { env, logger, services }) => {
 			if (isDirectusError(error)) {
 				res.status(error.status).send(error.message);
 			} else if (axios.isAxiosError(error)) {
-				res.status(400).send(error.message);
+				const message = error.response?.status === 422 ? 'No suitable probes found' : error.message;
+				res.status(400).send(message);
 			} else {
 				res.status(500).send('Internal Server Error');
 			}
