@@ -175,7 +175,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				schema: value.schema,
 			});
 
-			await itemsService.createOne({
+			const id = await itemsService.createOne({
 				ip: probe.ip,
 				uuid: probe.uuid,
 				version: probe.version,
@@ -195,7 +195,23 @@ export default defineEndpoint((router, { env, logger, services }) => {
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(userId);
-			res.send('Code successfully validated. Probe was assigned to you.');
+
+			res.send({
+				id,
+				ip: probe.ip,
+				version: probe.version,
+				nodeVersion: probe.nodeVersion,
+				hardwareDevice: probe.hardwareDevice,
+				status: probe.status,
+				city: probe.city,
+				state: probe.state,
+				country: probe.country,
+				latitude: probe.latitude,
+				longitude: probe.longitude,
+				asn: probe.asn,
+				network: probe.network,
+				lastSyncDate: new Date(),
+			});
 		} catch (error: unknown) {
 			logger.error(error);
 
