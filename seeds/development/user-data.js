@@ -137,19 +137,19 @@ export const seed = async (knex) => {
 	}]);
 
 	await knex('gp_credits_additions').insert([{
-		amount: 100000,
+		amount: 10000,
 		comment: 'For 50$ sponsorship',
 		consumed: 1,
-		date_created: '2024-02-22 11:46:22',
+		date_created: '2024-01-05 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
 		adopted_probe: null,
 	},
 	{
-		amount: 10000,
+		amount: 1000,
 		comment: 'For $5 recurring sponsorship',
 		consumed: 1,
-		date_created: '2024-02-22 11:51:00',
+		date_created: '2024-02-05 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
 		adopted_probe: null,
@@ -158,11 +158,59 @@ export const seed = async (knex) => {
 		amount: 150,
 		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
 		consumed: 1,
-		date_created: '2024-02-22 11:53:00',
+		date_created: '2024-03-05 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
 		adopted_probe: adoptedProbesIds[0],
+	},
+	{
+		amount: 150,
+		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		consumed: 1,
+		date_created: '2024-03-06 11:46:22',
+		github_id: user.external_identifier,
+		user_updated: null,
+		adopted_probe: adoptedProbesIds[0],
+	},
+	{
+		amount: 150,
+		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		consumed: 1,
+		date_created: '2024-03-07 11:46:22',
+		github_id: user.external_identifier,
+		user_updated: null,
+		adopted_probe: adoptedProbesIds[0],
+	},
+	{
+		amount: 150,
+		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		consumed: 1,
+		date_created: '2024-03-08 11:46:22',
+		github_id: user.external_identifier,
+		user_updated: null,
+		adopted_probe: adoptedProbesIds[0],
+	}, {
+		amount: 2000,
+		comment: 'For 10$ sponsorship',
+		consumed: 1,
+		date_created: '2024-04-05 11:46:22',
+		github_id: user.external_identifier,
+		user_updated: null,
+		adopted_probe: null,
+	},
+	{
+		amount: 3000,
+		comment: 'For $15 recurring sponsorship',
+		consumed: 1,
+		date_created: '2024-05-05 11:46:22',
+		github_id: user.external_identifier,
+		user_updated: null,
+		adopted_probe: null,
 	}]);
 
-	await knex('gp_credits').where({ user_id: user.id }).update({ amount: knex.raw('amount - ?', [ 110000 ]) });
+	await knex('gp_credits').where({ user_id: user.id }).update({ amount: knex.raw('amount - ?', [ 6000 ]) });
+
+	await knex('gp_credits_deductions').where({ user_id: user.id }).update({ date: '2024-04-01' });
+
+	await knex('gp_credits').where({ user_id: user.id }).update({ amount: knex.raw('amount - ?', [ 5000 ]) });
 };
