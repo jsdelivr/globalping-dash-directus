@@ -1,5 +1,6 @@
 import { promisify } from 'node:util';
 import { createHash, randomBytes } from 'node:crypto';
+import { base32 } from '@scure/base';
 import TTLCache from '@isaacs/ttlcache';
 import { createError } from '@directus/errors';
 
@@ -12,8 +13,8 @@ export const WrongTokenError = createError('INVALID_PAYLOAD_ERROR', 'Token value
 const tokens = new TTLCache<string, Buffer>({ ttl: 30 * 60 * 1000 });
 
 export const generateToken = async () => {
-	const bytes = await getRandomBytes(24);
-	const token = bytes.toString('base64');
+	const bytes = await getRandomBytes(20);
+	const token = base32.encode(bytes).toLowerCase();
 	tokens.set(token, bytes);
 	return token;
 };

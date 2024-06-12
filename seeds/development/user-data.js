@@ -48,7 +48,7 @@ export const seed = async (knex) => {
 
 	await knex('gp_tokens').insert([{
 		name: 'gp-token-1',
-		value: '0gW0wltTSo1g0WOVYxBrxGZM0ifmRH9TFiIG9GWOo8s=', // token: YmCn0sLiTmdjPmR/KQjyl9tdlpirtQKB
+		value: '/bSluuDrAPX9zIiZZ/hxEKARwOg+e//EdJgCFpmApbg=', // token: hf2fnprguymlgliirdk7qv23664c2xcr
 		date_created: '2024-02-22 10:55:21',
 		date_last_used: null,
 		date_updated: null,
@@ -58,7 +58,7 @@ export const seed = async (knex) => {
 		user_updated: null,
 	}, {
 		name: 'gp-token-2',
-		value: 'YjVt9t1OiYEa7rHFzAvxH0bLZtd5fYtdzBSvQSyeSiY=', // token: QVJFyYWiEDKx6nGIqo7iMd47mx3yYBEX
+		value: '8YZ2pZoGQxfOeEGvUUkagX1yizZckq3weL+IN0chvU0=', // token: vumzijbzihrskmc2hj34yw22batpibmt
 		date_created: '2024-02-22 10:57:21',
 		date_last_used: '2024-02-21',
 		date_updated: '2024-02-22 10:49:45',

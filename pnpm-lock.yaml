@@ -774,6 +774,9 @@ importers:
       '@isaacs/ttlcache':
         specifier: ^1.4.0
         version: 1.4.1
+      '@scure/base':
+        specifier: ^1.1.6
+        version: 1.1.6
     devDependencies:
       '@directus/extensions-sdk':
         specifier: 10.1.1
@@ -1849,6 +1852,9 @@ packages:
     peerDependenciesMeta:
       rollup:
         optional: true
+
+  '@scure/base@1.1.6':
+    resolution: {integrity: sha512-ok9AWwhcgYuGG3Zfhyqg+zwl+Wn5uE+dwC0NV/2qQkx4dABbb/bx96vWu8NSj+BNjjSjno+JRYRjle1jV08k3g==}
 
   '@sideway/address@4.1.5':
     resolution: {integrity: sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==}
@@ -6509,6 +6515,8 @@ snapshots:
       picomatch: 2.3.1
     optionalDependencies:
       rollup: 3.29.4
+
+  '@scure/base@1.1.6': {}
 
   '@sideway/address@4.1.5':
     dependencies:
