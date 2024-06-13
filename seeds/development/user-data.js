@@ -53,7 +53,7 @@ export const seed = async (knex) => {
 		date_last_used: null,
 		date_updated: null,
 		expire: null,
-		origins: null,
+		origins: JSON.stringify([]),
 		user_created: user.id,
 		user_updated: null,
 	}, {
