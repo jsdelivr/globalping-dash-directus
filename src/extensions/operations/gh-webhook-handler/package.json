@@ -1,5 +1,5 @@
 {
-	"name": "directus-extension-gh-webhook-handler",
+	"name": "gh-webhook-handler",
 	"description": "This extension adds credits for one-time sponsorship and creates sponsors for recurring sponsorship",
 	"icon": "extension",
 	"version": "1.0.0",

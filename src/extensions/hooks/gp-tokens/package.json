@@ -1,5 +1,5 @@
 {
-	"name": "directus-extension-gp-tokens",
+	"name": "gp-tokens",
 	"description": "This extension manages gp_tokens collection",
 	"icon": "extension",
 	"version": "1.0.0",

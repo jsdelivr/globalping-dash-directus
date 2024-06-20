@@ -1,5 +1,5 @@
 {
-	"name": "directus-extension-token",
+	"name": "token",
 	"description": "Secured token, that is shown to the user only once",
 	"icon": "extension",
 	"version": "1.0.0",
