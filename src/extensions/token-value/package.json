@@ -1,5 +1,5 @@
 {
-	"name": "directus-extension-token-value",
+	"name": "token-value",
 	"version": "1.0.0",
 	"type": "module",
 	"directus:extension": {

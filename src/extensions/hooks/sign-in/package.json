@@ -1,5 +1,5 @@
 {
-	"name": "directus-extension-sign-in",
+	"name": "sign-in",
 	"description": "Please enter a description for your extension",
 	"icon": "extension",
 	"version": "1.0.0",

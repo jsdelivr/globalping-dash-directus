@@ -1,5 +1,5 @@
 {
-	"name": "directus-extension-remove-banned-users-cron-handler",
+	"name": "remove-banned-users-cron-handler",
 	"description": "Handle banned users CRON job. Reads directus users, users not found on github are deleted.",
 	"icon": "extension",
 	"version": "1.0.0",

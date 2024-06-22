@@ -6,7 +6,7 @@
 	"keywords": [
 		"directus",
 		"directus-extension",
-		"directus-extension-hook"
+		"hook"
 	],
 	"type": "module",
 	"files": [
