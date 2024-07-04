@@ -17,6 +17,8 @@ type CreditsChange = {
 	adopted_probe?: number | null;
 };
 
+const a = 1;
+
 const creditsTimelineSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
