@@ -23,7 +23,7 @@ const creditsTimelineSchema = Joi.object<Request>({
 	}).required().unknown(true),
 	query: Joi.object({
 		offset: Joi.number().optional().default(0),
-		limit: Joi.number().optional().default(50),
+		limit: Joi.number().optional().max(100).default(10),
 	}).required(),
 }).unknown(true);
 
