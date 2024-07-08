@@ -94,6 +94,9 @@ importers:
         specifier: ^3.0.0
         version: 3.0.6
     devDependencies:
+      '@directus/extensions':
+        specifier: ^0.1.1
+        version: 0.1.1(vue@3.3.4)
       '@directus/extensions-sdk':
         specifier: 10.1.11
         version: 10.1.11(@types/node@20.12.7)(mysql@2.18.1)(sass@1.75.0)(terser@5.30.3)
@@ -4370,6 +4373,7 @@ packages:
 
   rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rollup-plugin-esbuild@5.0.0:

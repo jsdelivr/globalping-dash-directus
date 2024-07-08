@@ -5,8 +5,10 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { createError, isDirectusError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import Joi from 'joi';
+import { createAdoptedProbe, findAdoptedProbe } from './repositories/directus.js';
+import type { EndpointExtensionContext } from '@directus/extensions';
 
-type Request = ExpressRequest & {
+export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
 	},
@@ -28,7 +30,7 @@ type SendCodeResponse = {
 	network: string;
 }
 
-type AdoptedProbe = {
+export type AdoptedProbe = {
 	ip: string;
 	code: string;
 	uuid: string | null;
@@ -71,7 +73,8 @@ const sendCodeSchema = Joi.object<Request>({
 	}).required(),
 }).unknown(true);
 
-export default defineEndpoint((router, { env, logger, services }) => {
+export default defineEndpoint((router, context) => {
+	const { env, logger } = context;
 	router.post('/send-code', async (req, res) => {
 		try {
 			const { value, error } = sendCodeSchema.validate(req);
@@ -84,6 +87,12 @@ export default defineEndpoint((router, { env, logger, services }) => {
 			const ip = value.body.ip as string;
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
+
+			const adoptedProbes = await findAdoptedProbe(ip, context as unknown as EndpointExtensionContext);
+
+			if (adoptedProbes.length > 0) {
+				throw new (createError('INVALID_PAYLOAD_ERROR', 'Probe with that ip is already adopted', 400))();
+			}
 
 			const code = generateRandomCode();
 
@@ -171,27 +180,7 @@ export default defineEndpoint((router, { env, logger, services }) => {
 				throw new InvalidCodeError();
 			}
 
-			const itemsService = new services.ItemsService('gp_adopted_probes', {
-				schema: value.schema,
-			});
-
-			const id = await itemsService.createOne({
-				ip: probe.ip,
-				uuid: probe.uuid,
-				version: probe.version,
-				nodeVersion: probe.nodeVersion,
-				hardwareDevice: probe.hardwareDevice,
-				status: probe.status,
-				city: probe.city,
-				state: probe.state,
-				country: probe.country,
-				latitude: probe.latitude,
-				longitude: probe.longitude,
-				asn: probe.asn,
-				network: probe.network,
-				userId,
-				lastSyncDate: new Date(),
-			});
+			const id = await createAdoptedProbe(value, probe, context as unknown as EndpointExtensionContext);
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(userId);
@@ -215,7 +204,9 @@ export default defineEndpoint((router, { env, logger, services }) => {
 		} catch (error: unknown) {
 			logger.error(error);
 
-			if (isDirectusError(error)) {
+			if (isDirectusError<{ collection?: string; field?: string; } | undefined>(error) && error.code === 'RECORD_NOT_UNIQUE' && error.extensions?.field === 'adopted_probes_ip') {
+				res.status(error.status).send('Probe with that ip is already adopted');
+			} else if (isDirectusError(error)) {
 				res.status(error.status).send(error.message);
 			} else {
 				res.status(500).send('Internal Server Error');
