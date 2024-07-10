@@ -38,7 +38,7 @@
 		"init:dev": "./scripts/init.sh --dev",
 		"docker:ls:update": "node ./scripts/docker-ls.js",
 		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && dotenv -- npx directus@10.12.1 database migrate:latest",
-		"seed": "NODE_ENV=development knex seed:run",
+		"seed": "NODE_ENV=development dotenv -- knex seed:run",
 		"schema:apply": "npx directus@10.12.1 schema apply --yes snapshots/collections-schema.yml",
 		"schema:snapshot": "npx directus@10.12.1 schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'; rm -f .eslintcache",
