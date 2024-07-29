@@ -89,6 +89,76 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 		});
 
+		it('should accept full IPv6 ip, generate code and send it to globalping api', async () => {
+			endpoint(router, endpointContext);
+			const req = {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					ip: '2a04:4e42:0200:0000:0000:0000:0000:0485',
+				},
+			};
+			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+				expect(body.ip).to.equal('2a04:4e42:200::485');
+				expect(body.code.length).to.equal(6);
+				return true;
+			}).reply(200, {
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: null,
+				status: 'ready',
+				city: 'Paris',
+				country: 'FR',
+				latitude: 48.8534,
+				longitude: 2.3488,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+			});
+
+			await request('/send-code', req, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(1);
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+		});
+
+		it('should accept short IPv6 ip, generate code and send it to globalping api', async () => {
+			endpoint(router, endpointContext);
+			const req = {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					ip: '2a04:4e42:200::485',
+				},
+			};
+			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+				expect(body.ip).to.equal('2a04:4e42:200::485');
+				expect(body.code.length).to.equal(6);
+				return true;
+			}).reply(200, {
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: null,
+				status: 'ready',
+				city: 'Paris',
+				country: 'FR',
+				latitude: 48.8534,
+				longitude: 2.3488,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+			});
+
+			await request('/send-code', req, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(1);
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+		});
+
 		it('should reject non authorized requests', async () => {
 			endpoint(router, endpointContext);
 			const req = {
