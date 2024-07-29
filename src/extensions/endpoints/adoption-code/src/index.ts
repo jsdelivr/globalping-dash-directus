@@ -5,6 +5,7 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { createError, isDirectusError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import Joi from 'joi';
+import ipaddr from 'ipaddr.js';
 import { createAdoptedProbe, findAdoptedProbe } from './repositories/directus.js';
 import type { EndpointExtensionContext } from '@directus/extensions';
 
@@ -84,7 +85,13 @@ export default defineEndpoint((router, context) => {
 			}
 
 			const userId = value.accountability.user;
-			const ip = value.body.ip as string;
+			let ip: string;
+
+			try {
+				ip = ipaddr.parse(value.body.ip).toString();
+			} catch (err) {
+				throw new (createError('INVALID_PAYLOAD_ERROR', 'Probe ip format is wrong', 400))();
+			}
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
 
