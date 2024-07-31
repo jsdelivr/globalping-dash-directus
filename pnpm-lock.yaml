@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      bluebird:
-        specifier: ^3.7.2
-        version: 3.7.2
       config:
         specifier: ^3.3.11
         version: 3.3.11
@@ -42,6 +39,9 @@ importers:
       '@types/lodash':
         specifier: ^4.17.0
         version: 4.17.0
+      '@types/mocha':
+        specifier: ^10.0.7
+        version: 10.0.7
       '@typescript-eslint/eslint-plugin':
         specifier: ^7.7.0
         version: 7.7.0(@typescript-eslint/parser@6.7.2(eslint@8.57.0)(typescript@5.2.2))(eslint@8.57.0)(typescript@5.2.2)
@@ -2151,6 +2151,9 @@ packages:
 
   '@types/mocha@10.0.6':
     resolution: {integrity: sha512-dJvrYWxP/UcXm36Qn36fxhUKu8A/xMRXVT2cliFF1Z7UA9liG5Psj3ezNSZw+5puH2czDXRLcXQxf8JbJt0ejg==}
+
+  '@types/mocha@10.0.7':
+    resolution: {integrity: sha512-GN8yJ1mNTcFcah/wKEFIJckJx9iJLoMSzWcfRRuxz/Jk+U6KQNnml+etbtxFK8lPjzOw3zp4Ha/kjSst9fsHYw==}
 
   '@types/node@20.12.7':
     resolution: {integrity: sha512-wq0cICSkRLVaf3UGLMGItu/PtdY7oaXaI/RVU+xliKVOtRna3PRY57ZDfztpDL0n11vfymMUnXv8QwYCO7L1wg==}
@@ -6919,7 +6922,7 @@ snapshots:
   '@eslint/eslintrc@2.1.4':
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       espree: 9.6.1
       globals: 13.24.0
       ignore: 5.3.1
@@ -6941,7 +6944,7 @@ snapshots:
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -7353,6 +7356,8 @@ snapshots:
 
   '@types/mocha@10.0.6': {}
 
+  '@types/mocha@10.0.7': {}
+
   '@types/node@20.12.7':
     dependencies:
       undici-types: 5.26.5
@@ -7400,7 +7405,7 @@ snapshots:
       '@typescript-eslint/type-utils': 7.7.0(eslint@8.57.0)(typescript@5.2.2)
       '@typescript-eslint/utils': 7.7.0(eslint@8.57.0)(typescript@5.2.2)
       '@typescript-eslint/visitor-keys': 7.7.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.57.0
       graphemer: 1.4.0
       ignore: 5.3.1
@@ -7418,7 +7423,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.2
       '@typescript-eslint/typescript-estree': 6.7.2(typescript@5.2.2)
       '@typescript-eslint/visitor-keys': 6.7.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.57.0
     optionalDependencies:
       typescript: 5.2.2
@@ -7439,7 +7444,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/typescript-estree': 7.7.0(typescript@5.2.2)
       '@typescript-eslint/utils': 7.7.0(eslint@8.57.0)(typescript@5.2.2)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.57.0
       ts-api-utils: 1.3.0(typescript@5.2.2)
     optionalDependencies:
@@ -7455,7 +7460,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 6.7.2
       '@typescript-eslint/visitor-keys': 6.7.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.6.0
@@ -7469,7 +7474,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 7.7.0
       '@typescript-eslint/visitor-keys': 7.7.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.4
@@ -8515,6 +8520,10 @@ snapshots:
     dependencies:
       ms: 2.0.0
 
+  debug@4.3.4:
+    dependencies:
+      ms: 2.1.2
+
   debug@4.3.4(supports-color@8.1.1):
     dependencies:
       ms: 2.1.2
@@ -8795,7 +8804,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -9521,7 +9530,7 @@ snapshots:
     dependencies:
       colorette: 2.0.19
       commander: 10.0.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       escalade: 3.1.2
       esm: 3.2.25
       get-package-type: 0.1.0
@@ -10809,7 +10818,7 @@ snapshots:
 
   vue-eslint-parser@9.4.2(eslint@8.57.0):
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.57.0
       eslint-scope: 7.2.2
       eslint-visitor-keys: 3.4.3
