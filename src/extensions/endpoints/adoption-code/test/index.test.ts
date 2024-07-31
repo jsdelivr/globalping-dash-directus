@@ -2,8 +2,8 @@ import nock from 'nock';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Router } from 'express';
-import type { EndpointExtensionContext } from '@directus/extensions';
 import endpoint from '../src/index.js';
+import type { EndpointExtensionContext } from '@directus/extensions';
 
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();

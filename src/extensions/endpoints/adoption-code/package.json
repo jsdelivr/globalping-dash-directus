@@ -19,11 +19,12 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
+		"test": "NODE_ENV=dev mocha",
+		"test:dev": "NODE_ENV=dev TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
-		"@directus/extensions": "^0.1.1",
-		"@directus/extensions-sdk": "10.1.11",
+		"@directus/extensions": "^1.0.9",
+		"@directus/extensions-sdk": "11.0.9",
 		"@types/chai": "^4.3.6",
 		"@types/express": "^4.17.17",
 		"@types/mocha": "^10.0.2",
