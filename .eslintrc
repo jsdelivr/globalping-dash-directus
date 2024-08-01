@@ -51,6 +51,20 @@
 	"overrides": [
 		{
 			"files": [
+				"src/**/*.ts"
+			],
+			"excludedFiles": [
+				"src/extensions/lib/*"
+			],
+			"parserOptions": {
+				"project": true
+			},
+			"rules": {
+				"@typescript-eslint/consistent-type-imports": "error"
+			}
+		},
+		{
+			"files": [
 				"src/**/src/**/*.ts"
 			],
 			"extends": "@martin-kolarik/eslint-config/typescript-type-checking",

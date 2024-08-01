@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import nock from 'nock';
-import { OperationContext } from '@directus/extensions';
+import type { OperationContext } from '@directus/extensions';
 import operationApi from '../src/api.js';
 
 describe('Remove banned users CRON handler', () => {

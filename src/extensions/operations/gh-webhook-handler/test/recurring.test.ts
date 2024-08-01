@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { OperationContext } from '@directus/extensions';
+import type { OperationContext } from '@directus/extensions';
 import _ from 'lodash';
 import operationApi from '../src/api.js';
 import recurringSponsorshipCreated from './recurring-sponsorship-created.json' assert { type: 'json' };

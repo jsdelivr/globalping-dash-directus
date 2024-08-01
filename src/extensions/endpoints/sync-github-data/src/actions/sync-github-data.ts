@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { EndpointExtensionContext } from '@directus/extensions';
+import type { EndpointExtensionContext } from '@directus/extensions';
 import { createError } from '@directus/errors';
-import { Request } from '../index.js';
+import type { Request } from '../index.js';
 import { getDirectusUser, updateDirectusUser } from '../repositories/directus.js';
 import { getGithubOrgs, getGithubUsername } from '../repositories/github.js';
 

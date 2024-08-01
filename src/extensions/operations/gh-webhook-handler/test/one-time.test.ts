@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { OperationContext } from '@directus/extensions';
+import type { OperationContext } from '@directus/extensions';
 import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' assert { type: 'json' };
 

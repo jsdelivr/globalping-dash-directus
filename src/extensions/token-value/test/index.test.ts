@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { Router } from 'express';
+import type { Router } from 'express';
 import endpoint from '../src/token-generator/index.js';
 import hook from '../src/token-validator/index.js';
 import { WrongTokenError } from '../src/utils/token.js';

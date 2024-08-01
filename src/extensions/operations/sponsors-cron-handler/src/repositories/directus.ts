@@ -1,5 +1,5 @@
-import { OperationContext } from '@directus/extensions';
-import { DirectusSponsor, GithubSponsor } from '../types.js';
+import type { OperationContext } from '@directus/extensions';
+import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
 type Context = {
 	services: OperationContext['services'];
