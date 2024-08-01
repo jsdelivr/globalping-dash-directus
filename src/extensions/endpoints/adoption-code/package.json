@@ -42,7 +42,7 @@
 	"dependencies": {
 		"@directus/errors": "^0.3.3",
 		"@isaacs/ttlcache": "^1.4.1",
-		"axios": "^1.7.2",
+		"axios": "^1.7.3",
 		"ipaddr.js": "^2.2.0",
 		"joi": "^17.13.3",
 		"rate-limiter-flexible": "^5.0.3"

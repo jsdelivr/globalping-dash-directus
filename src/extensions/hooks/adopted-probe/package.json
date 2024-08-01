@@ -41,7 +41,7 @@
 		"@directus/errors": "^0.3.3",
 		"@isaacs/ttlcache": "^1.4.1",
 		"any-ascii": "^0.3.2",
-		"axios": "^1.7.2",
+		"axios": "^1.7.3",
 		"joi": "^17.13.3"
 	}
 }
