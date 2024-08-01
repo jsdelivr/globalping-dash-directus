@@ -5,14 +5,14 @@ import { HookExtensionContext } from '@directus/extensions';
 
 describe('token hooks', () => {
 	const callbacks = {
-		filter: {},
-		action: {},
+		filter: {} as Record<string, (payload: any, meta: any, context: any) => Promise<void>>,
+		action: {} as Record<string, (meta: any, context: any) => Promise<void>>,
 	};
 	const events = {
-		filter: (name, cb) => {
+		filter: (name: string, cb: (payload: any, meta: any, context: any) => Promise<void>) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name, cb) => {
+		action: (name: string, cb: (meta: any, context: any) => Promise<void>) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
@@ -51,7 +51,7 @@ describe('token hooks', () => {
 	it('should additionally delete user credits additions', async () => {
 		usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
 
-		await callbacks.filter['users.delete']([ '1-1-1-1-1' ], {}, { accountability: {} });
+		await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: {} });
 
 		expect(creditsAdditionsService.deleteByQuery.args[0]).to.deep.equal([{ filter: { github_id: { _in: [ '123' ] } } }]);
 	});
@@ -59,7 +59,7 @@ describe('token hooks', () => {
 	it('should do nothing if read query returned nothing', async () => {
 		usersService.readByQuery.resolves([]);
 
-		await callbacks.filter['users.delete']([ '1-1-1-1-1' ], {}, { accountability: {} });
+		await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: {} });
 
 		expect(creditsAdditionsService.deleteByQuery.callCount).to.deep.equal(0);
 	});
@@ -67,7 +67,7 @@ describe('token hooks', () => {
 	it('should throw if accountability was not provided', async () => {
 		usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
 
-		const err = await callbacks.filter['users.delete']([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
+		const err = await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
 
 		expect(err.message).to.equal('User is not authenticated');
 	});

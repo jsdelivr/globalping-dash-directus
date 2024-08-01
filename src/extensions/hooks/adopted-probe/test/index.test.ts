@@ -10,7 +10,7 @@ describe('adopted-probe hook', () => {
 		filter: {} as Record<string, (payload: any, meta: any, context: any) => Promise<void>>,
 		action: {} as Record<string, (meta: any, context: any) => Promise<void>>,
 	};
-	const hooks = {
+	const events = {
 		filter: (name: string, cb: (payload: any, meta: any, context: any) => Promise<void>) => {
 			callbacks.filter[name] = cb;
 		},
@@ -102,7 +102,7 @@ describe('adopted-probe hook', () => {
 				],
 			});
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: 'marsel' };
 		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
@@ -160,7 +160,7 @@ describe('adopted-probe hook', () => {
 				],
 			});
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: 'miami' };
 		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
@@ -191,7 +191,7 @@ describe('adopted-probe hook', () => {
 			isCustomCity: true,
 		}]);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: null };
 
 		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
@@ -219,7 +219,7 @@ describe('adopted-probe hook', () => {
 			isCustomCity: false,
 		}]);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jsdelivr', value: 'mytag2' }] };
 		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
@@ -242,7 +242,7 @@ describe('adopted-probe hook', () => {
 	it('should send valid error if probes not found', async () => {
 		adoptedProbes.readMany.resolves([]);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
@@ -260,7 +260,7 @@ describe('adopted-probe hook', () => {
 			isCustomCity: false,
 		}]);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
@@ -285,7 +285,7 @@ describe('adopted-probe hook', () => {
 			isCustomCity: false,
 		}]);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
@@ -309,7 +309,7 @@ describe('adopted-probe hook', () => {
 				geonames: [],
 			});
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { city: 'invalidcity' };
 		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
@@ -332,7 +332,7 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should send valid error if prefix is wrong', async () => {
-			hook(hooks, context);
+			hook(events, context);
 			const payload = { tags: [{ prefix: 'wrong_organization', value: 'a' }] };
 			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
@@ -340,7 +340,7 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should allow saving of prev values with outdated prefix', async () => {
-			hook(hooks, context);
+			hook(events, context);
 
 			adoptedProbes.readMany.resolves([{
 				userId: '1',
@@ -362,7 +362,7 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should not allow new values with outdated prefix', async () => {
-			hook(hooks, context);
+			hook(events, context);
 
 			adoptedProbes.readMany.resolves([{
 				userId: '1',
@@ -383,7 +383,7 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should send valid error if there are too many tags', async () => {
-			hook(hooks, context);
+			hook(events, context);
 			const payload = { tags: [
 				{ prefix: 'jimaek', value: 'a' },
 				{ prefix: 'jimaek', value: 'b' },
@@ -398,7 +398,7 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should send valid error if the tag is too big', async () => {
-			hook(hooks, context);
+			hook(events, context);
 			const payload = { tags: [{ prefix: 'jimaek', value: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }] };
 			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
@@ -407,7 +407,7 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should send valid error if the tag has invalid characters', async () => {
-			hook(hooks, context);
+			hook(events, context);
 			const payload = { tags: [{ prefix: 'jimaek', value: '@mytag' }] };
 			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
