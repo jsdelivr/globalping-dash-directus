@@ -51,7 +51,6 @@ export type AdoptedProbe = {
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Code is not valid', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
 
-
 const rateLimiter = new RateLimiterMemory({
 	points: 20,
 	duration: 30 * 60,

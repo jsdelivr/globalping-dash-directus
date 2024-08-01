@@ -28,17 +28,21 @@ describe('adoption code endpoints', () => {
 	const resStatus = sinon.stub().returns({ send: resSend });
 	const res = { status: resStatus, send: resSend };
 
-	const routes = {};
-	const request = (route, req, res) => {
+	const routes: Record<string, (request: object, response: typeof res) => void> = {};
+	const request = (route: string, request: object, response: typeof res) => {
 		const handler = routes[route];
 
 		if (!handler) {
 			throw new Error('Handler for the route is not defined');
 		}
 
-		return handler(req, res);
+		return handler(request, response);
 	};
-	const router = { post: (route, handler) => { routes[route] = handler; } } as Router;
+	const router = {
+		post: (route: string, handler: (request: object, response: typeof res) => void) => {
+			routes[route] = handler;
+		},
+	} as unknown as Router;
 
 	before(() => {
 		nock.disableNetConnect();
@@ -309,7 +313,7 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0][0]).to.deep.equal({
+			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
@@ -381,7 +385,7 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0][0]).to.deep.equal({
+			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
 				uuid: null,
 				version: null,
@@ -465,7 +469,7 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0][0]).to.deep.equal({
+			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
