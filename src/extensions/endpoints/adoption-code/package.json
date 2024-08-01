@@ -19,7 +19,7 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"test": "NODE_ENV=dev mocha",
+		"test": "tsc --noEmit && NODE_ENV=dev mocha",
 		"test:dev": "NODE_ENV=dev TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {

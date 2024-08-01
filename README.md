@@ -37,7 +37,8 @@ Add tests to extension:
 original_dir=$PWD
 pnpm add --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node
 jq 'del(.compilerOptions.rootDir) | .compilerOptions.module = "ESNext" | .include = ["./src/**/*.ts", "../../lib/*.ts"]' tsconfig.json > temp.json && mv temp.json tsconfig.json
-jq --tab '.scripts.test = "TS_NODE_TRANSPILE_ONLY=true mocha"' package.json > temp.json && mv temp.json package.json
+jq --tab '.scripts.test = "NODE_ENV=dev mocha"' package.json > temp.json && mv temp.json package.json
+jq --tab '.scripts."test:dev" = "NODE_ENV=dev TS_NODE_TRANSPILE_ONLY=true mocha"' package.json > temp.json && mv temp.json package.json
 mkdir test
 while [[ $PWD != */extensions ]]; do cd ..; done
 cp ./operations/gh-webhook-handler/.mocharc.json "$original_dir/"
