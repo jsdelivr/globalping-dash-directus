@@ -4,17 +4,18 @@ import hook from '../src/index.js';
 
 describe('token hooks', () => {
 	const callbacks = {
-		filter: {},
-		action: {},
+		filter: {} as Record<string, (payload: any) => void>,
+		action: {} as Record<string, (meta: any, context: any) => void>,
 	};
 	const events = {
-		filter: (name, cb) => {
+		filter: (name: string, cb: (payload: any) => void) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name, cb) => {
+		action: (name: string, cb: (meta: any, context: any) => void) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
+
 	hook(events);
 
 	beforeEach(() => {
@@ -28,7 +29,7 @@ describe('token hooks', () => {
 			expire: null,
 			origins: [ 'https://www.jsdelivr.com/' ],
 		};
-		callbacks.filter['gp_tokens.items.create'](payload);
+		callbacks.filter['gp_tokens.items.create']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'https://www.jsdelivr.com' ]);
 	});
@@ -40,7 +41,7 @@ describe('token hooks', () => {
 			expire: null,
 			origins: [ 'jsdelivr.com' ],
 		};
-		callbacks.filter['gp_tokens.items.create'](payload);
+		callbacks.filter['gp_tokens.items.create']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'https://jsdelivr.com' ]);
 	});
@@ -52,7 +53,7 @@ describe('token hooks', () => {
 			expire: null,
 			origins: [ 'alo://jsdelivr.com' ],
 		};
-		callbacks.filter['gp_tokens.items.create'](payload);
+		callbacks.filter['gp_tokens.items.create']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'alo://jsdelivr.com' ]);
 	});
@@ -68,9 +69,9 @@ describe('token hooks', () => {
 		let error: Error;
 
 		try {
-			callbacks.filter['gp_tokens.items.create'](payload);
+			callbacks.filter['gp_tokens.items.create']?.(payload);
 		} catch (err) {
-			error = err;
+			error = err as Error;
 		}
 
 		expect(error!.message).to.equal('Invalid URL: https://@#$@^%');
@@ -80,7 +81,7 @@ describe('token hooks', () => {
 		const payload = {
 			origins: [ 'jsdelivr.com' ],
 		};
-		callbacks.filter['gp_tokens.items.update'](payload);
+		callbacks.filter['gp_tokens.items.update']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'https://jsdelivr.com' ]);
 	});
