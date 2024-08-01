@@ -1,5 +1,5 @@
-import type { OperationContext } from '@directus/extensions';
 import { getAdoptedProbes, increaseOnlineTimes } from '../repositories/directus.js';
+import type { OperationContext } from '@directus/extensions';
 
 export const checkOnlineStatus = async (context: OperationContext) => {
 	const adoptedProbes = await getAdoptedProbes(context);

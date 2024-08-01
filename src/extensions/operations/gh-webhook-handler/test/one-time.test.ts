@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import type { OperationContext } from '@directus/extensions';
 import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' assert { type: 'json' };
+import type { OperationContext } from '@directus/extensions';
 
 describe('GitHub webhook one-time handler', () => {
 	const database = {} as OperationContext['database'];

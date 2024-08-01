@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import nock from 'nock';
 import { expect } from 'chai';
-import hook from '../src/index.js';
 import { isDirectusError } from '@directus/errors';
+import hook from '../src/index.js';
 
 type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
 

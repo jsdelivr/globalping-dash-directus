@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import type { Router } from 'express';
+import { ForbiddenError } from '@directus/errors';
 import endpoint from '../src/token-generator/index.js';
 import hook from '../src/token-validator/index.js';
 import { WrongTokenError } from '../src/utils/token.js';
-import { ForbiddenError } from '@directus/errors';
+import type { Router } from 'express';
 
 type FilterCallback = (payload: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;

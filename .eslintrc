@@ -3,6 +3,9 @@
 		"plugin:vue/vue3-recommended",
 		"@martin-kolarik/eslint-config/typescript"
 	],
+	"plugins": [
+		"import"
+	],
 	"ignorePatterns": [
 		"**/dist",
 		"/extensions",
@@ -60,7 +63,10 @@
 				"project": true
 			},
 			"rules": {
-				"@typescript-eslint/consistent-type-imports": "error"
+				"@typescript-eslint/consistent-type-imports": "error",
+				"import/order": ["error", {
+					"groups": ["builtin", "external", "parent", "sibling", "type"]
+				}]
 			}
 		},
 		{

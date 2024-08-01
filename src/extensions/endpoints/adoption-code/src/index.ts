@@ -1,4 +1,3 @@
-import type { Request as ExpressRequest } from 'express';
 import axios from 'axios';
 import TTLCache from '@isaacs/ttlcache';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
@@ -7,6 +6,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import Joi from 'joi';
 import ipaddr from 'ipaddr.js';
 import { createAdoptedProbe, findAdoptedProbe } from './repositories/directus.js';
+import type { Request as ExpressRequest } from 'express';
 import type { EndpointExtensionContext } from '@directus/extensions';
 
 export type Request = ExpressRequest & {

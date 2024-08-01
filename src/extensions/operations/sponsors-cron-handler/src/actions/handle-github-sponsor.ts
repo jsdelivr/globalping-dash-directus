@@ -1,7 +1,7 @@
 
+import { createDirectusSponsor } from '../repositories/directus.js';
 import type { OperationContext } from '@directus/extensions';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
-import { createDirectusSponsor } from '../repositories/directus.js';
 
 type HandleSponsorData = {
 	githubSponsor: GithubSponsor;

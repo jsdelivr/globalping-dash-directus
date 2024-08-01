@@ -1,6 +1,6 @@
-import type { OperationContext } from '@directus/extensions';
 import { graphql } from '@octokit/graphql';
 import nodeFetch from 'node-fetch';
+import type { OperationContext } from '@directus/extensions';
 import type { GithubSponsor } from '../types.js';
 
 type GithubResponse = {
