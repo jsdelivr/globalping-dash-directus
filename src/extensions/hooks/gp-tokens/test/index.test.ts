@@ -2,16 +2,19 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
 
+type FilterCallback = (payload: any) => void;
+type ActionCallback = (meta: any, context: any) => void
+
 describe('token hooks', () => {
 	const callbacks = {
-		filter: {} as Record<string, (payload: any) => void>,
-		action: {} as Record<string, (meta: any, context: any) => void>,
+		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, ActionCallback>,
 	};
 	const events = {
-		filter: (name: string, cb: (payload: any) => void) => {
+		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name: string, cb: (meta: any, context: any) => void) => {
+		action: (name: string, cb: ActionCallback) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;

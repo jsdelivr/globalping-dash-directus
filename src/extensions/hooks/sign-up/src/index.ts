@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { HookExtensionContext } from '@directus/types';
+import type { HookExtensionContext } from '@directus/extensions';
 import axios from 'axios';
 
 type User = {

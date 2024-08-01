@@ -38,6 +38,7 @@
 		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
+		"@directus/extensions": "^1.0.9",
 		"@directus/extensions-sdk": "11.0.9",
 		"@directus/types": "^11.2.0",
 		"@types/chai": "^4.3.17",

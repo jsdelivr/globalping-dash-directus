@@ -35,7 +35,7 @@ Add tests to extension:
 ```bash
 # From the extension folder call:
 original_dir=$PWD
-pnpm add --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node
+pnpm add --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node @directus/extensions @directus/types
 jq --tab 'del(.compilerOptions.rootDir) | .compilerOptions.module = "ESNext" | .include = ["./src/**/*.ts", "../../lib/*.ts", "./test/**/*.ts"]' tsconfig.json > temp.json && mv temp.json tsconfig.json
 jq --tab '.scripts.test = "tsc --noEmit && NODE_ENV=test mocha"' package.json > temp.json && mv temp.json package.json
 jq --tab '.scripts."test:dev" = "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"' package.json > temp.json && mv temp.json package.json

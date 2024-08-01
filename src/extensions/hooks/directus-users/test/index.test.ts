@@ -3,16 +3,19 @@ import * as sinon from 'sinon';
 import defineHook from '../src/index.js';
 import { HookExtensionContext } from '@directus/extensions';
 
+type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
+type ActionCallback = (meta: any, context: any) => Promise<void>;
+
 describe('token hooks', () => {
 	const callbacks = {
-		filter: {} as Record<string, (payload: any, meta: any, context: any) => Promise<void>>,
-		action: {} as Record<string, (meta: any, context: any) => Promise<void>>,
+		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, ActionCallback>,
 	};
 	const events = {
-		filter: (name: string, cb: (payload: any, meta: any, context: any) => Promise<void>) => {
+		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name: string, cb: (meta: any, context: any) => Promise<void>) => {
+		action: (name: string, cb: ActionCallback) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;

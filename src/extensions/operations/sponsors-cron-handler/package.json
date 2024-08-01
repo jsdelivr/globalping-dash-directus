@@ -33,6 +33,7 @@
 		"node-fetch": "^3.3.2"
 	},
 	"devDependencies": {
+		"@directus/extensions": "^1.0.9",
 		"@directus/extensions-sdk": "11.0.9",
 		"@directus/types": "^11.2.0",
 		"@types/chai": "^4.3.17",
