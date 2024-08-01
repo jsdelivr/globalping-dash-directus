@@ -15,7 +15,7 @@ describe('/token-generator', () => {
 		const next = sinon.stub();
 		const res = { send: resSend };
 
-		const routes: Record<string, (request: object, response: typeof res) => void> = {};
+		const routes: Record<string, (request: object, response: typeof res, next: () => void) => void> = {};
 		const request = (route: string, request: object, response: typeof res) => {
 			const handler = routes[route];
 
@@ -23,7 +23,7 @@ describe('/token-generator', () => {
 				throw new Error('Handler for the route is not defined');
 			}
 
-			return handler(request, response);
+			return handler(request, response, next);
 		};
 		const router = {
 			post: (route: string, handler: (request: object, response: typeof res) => void) => {
