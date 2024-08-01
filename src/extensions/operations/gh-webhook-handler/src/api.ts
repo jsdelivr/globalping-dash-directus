@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { defineOperationApi } from '@directus/extensions-sdk';
-import { OperationContext } from '@directus/types';
+import { OperationContext } from '@directus/extensions';
 import { createdAction } from './actions/created.js';
 import { tierChangedAction } from './actions/tier-changed.js';
 import { Data } from './types.js';

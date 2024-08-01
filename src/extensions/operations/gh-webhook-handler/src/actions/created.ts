@@ -1,4 +1,4 @@
-import { OperationContext } from '@directus/types';
+import { OperationContext } from '@directus/extensions';
 import { addCredits } from '../repositories/credits.js';
 import { addSponsor } from '../repositories/sponsors.js';
 import { Data } from '../types.js';

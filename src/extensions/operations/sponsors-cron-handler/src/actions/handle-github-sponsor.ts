@@ -1,5 +1,5 @@
 
-import { OperationContext } from '@directus/types';
+import { OperationContext } from '@directus/extensions';
 import { DirectusSponsor, GithubSponsor } from '../types.js';
 import { createDirectusSponsor } from '../repositories/directus.js';
 

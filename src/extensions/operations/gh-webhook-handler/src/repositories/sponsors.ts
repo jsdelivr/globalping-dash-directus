@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { OperationContext } from '@directus/types';
+import { OperationContext } from '@directus/extensions';
 
 type AddItemData = {
 	github_login: string;

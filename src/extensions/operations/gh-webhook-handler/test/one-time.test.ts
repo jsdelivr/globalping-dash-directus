@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { OperationContext } from '@directus/types';
+import { OperationContext } from '@directus/extensions';
 import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' assert { type: 'json' };
 
@@ -36,7 +36,7 @@ describe('GitHub webhook one-time handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('gp_credits_additions');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(createOne.callCount).to.equal(1);
 

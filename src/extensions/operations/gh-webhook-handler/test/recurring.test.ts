@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { OperationContext } from '@directus/types';
+import { OperationContext } from '@directus/extensions';
 import _ from 'lodash';
 import operationApi from '../src/api.js';
 import recurringSponsorshipCreated from './recurring-sponsorship-created.json' assert { type: 'json' };
@@ -8,7 +8,7 @@ import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-change
 
 describe('GitHub webhook recurring handler', () => {
 	const database = {
-		transaction: async (f) => {
+		transaction: async (f: any) => {
 			return f({});
 		},
 	} as unknown as OperationContext['database'];
@@ -65,9 +65,9 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0][0]).to.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.equal('sponsors');
 
-		expect(services.ItemsService.args[1][0]).to.equal('gp_credits_additions');
+		expect(services.ItemsService.args[1]?.[0]).to.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -112,9 +112,9 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0][0]).to.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.equal('sponsors');
 
-		expect(services.ItemsService.args[1][0]).to.equal('gp_credits_additions');
+		expect(services.ItemsService.args[1]?.[0]).to.equal('gp_credits_additions');
 
 		expect(sponsorsService.updateByQuery.callCount).to.equal(1);
 
@@ -156,7 +156,7 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0][0]).to.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.equal('sponsors');
 
 		expect(sponsorsService.updateByQuery.callCount).to.equal(1);
 
