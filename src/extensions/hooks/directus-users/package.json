@@ -25,6 +25,7 @@
 	"devDependencies": {
 		"@directus/extensions": "^1.0.9",
 		"@directus/extensions-sdk": "11.0.9",
+		"@directus/types": "^11.2.0",
 		"@types/chai": "^4.3.17",
 		"@types/mocha": "^10.0.7",
 		"@types/node": "^20.14.13",
@@ -34,8 +35,5 @@
 		"sinon": "^18.0.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.5.4"
-	},
-	"dependencies": {
-		"@directus/types": "^11.2.0"
 	}
 }

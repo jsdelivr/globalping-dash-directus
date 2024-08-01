@@ -24,6 +24,7 @@ const findDirectoriesWithPackageJson = (dir) => {
 };
 
 const directories = findDirectoriesWithPackageJson('src');
+console.log('directories', directories);
 const buildBlock = directories.map(dir => `COPY ${dir}/package.json ${dir}/`).join('\n');
 const runBlock = directories.map((dir) => {
 	const extensionName = dir.split('/').at(-1);
