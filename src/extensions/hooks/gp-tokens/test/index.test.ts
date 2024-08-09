@@ -2,19 +2,23 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
 
+type FilterCallback = (payload: any) => void;
+type ActionCallback = (meta: any, context: any) => void
+
 describe('token hooks', () => {
 	const callbacks = {
-		filter: {},
-		action: {},
+		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, ActionCallback>,
 	};
 	const events = {
-		filter: (name, cb) => {
+		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name, cb) => {
+		action: (name: string, cb: ActionCallback) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
+
 	hook(events);
 
 	beforeEach(() => {
@@ -28,7 +32,7 @@ describe('token hooks', () => {
 			expire: null,
 			origins: [ 'https://www.jsdelivr.com/' ],
 		};
-		callbacks.filter['gp_tokens.items.create'](payload);
+		callbacks.filter['gp_tokens.items.create']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'https://www.jsdelivr.com' ]);
 	});
@@ -40,7 +44,7 @@ describe('token hooks', () => {
 			expire: null,
 			origins: [ 'jsdelivr.com' ],
 		};
-		callbacks.filter['gp_tokens.items.create'](payload);
+		callbacks.filter['gp_tokens.items.create']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'https://jsdelivr.com' ]);
 	});
@@ -52,7 +56,7 @@ describe('token hooks', () => {
 			expire: null,
 			origins: [ 'alo://jsdelivr.com' ],
 		};
-		callbacks.filter['gp_tokens.items.create'](payload);
+		callbacks.filter['gp_tokens.items.create']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'alo://jsdelivr.com' ]);
 	});
@@ -68,9 +72,9 @@ describe('token hooks', () => {
 		let error: Error;
 
 		try {
-			callbacks.filter['gp_tokens.items.create'](payload);
+			callbacks.filter['gp_tokens.items.create']?.(payload);
 		} catch (err) {
-			error = err;
+			error = err as Error;
 		}
 
 		expect(error!.message).to.equal('Invalid URL: https://@#$@^%');
@@ -80,7 +84,7 @@ describe('token hooks', () => {
 		const payload = {
 			origins: [ 'jsdelivr.com' ],
 		};
-		callbacks.filter['gp_tokens.items.update'](payload);
+		callbacks.filter['gp_tokens.items.update']?.(payload);
 
 		expect(payload.origins).to.deep.equal([ 'https://jsdelivr.com' ]);
 	});

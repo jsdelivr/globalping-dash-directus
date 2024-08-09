@@ -1,18 +1,21 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import defineHook from '../src/index.js';
-import { HookExtensionContext } from '@directus/extensions';
+import type { HookExtensionContext } from '@directus/extensions';
+
+type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
+type ActionCallback = (meta: any, context: any) => Promise<void>;
 
 describe('token hooks', () => {
 	const callbacks = {
-		filter: {},
-		action: {},
+		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, ActionCallback>,
 	};
 	const events = {
-		filter: (name, cb) => {
+		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name, cb) => {
+		action: (name: string, cb: ActionCallback) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
@@ -51,7 +54,7 @@ describe('token hooks', () => {
 	it('should additionally delete user credits additions', async () => {
 		usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
 
-		await callbacks.filter['users.delete']([ '1-1-1-1-1' ], {}, { accountability: {} });
+		await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: {} });
 
 		expect(creditsAdditionsService.deleteByQuery.args[0]).to.deep.equal([{ filter: { github_id: { _in: [ '123' ] } } }]);
 	});
@@ -59,7 +62,7 @@ describe('token hooks', () => {
 	it('should do nothing if read query returned nothing', async () => {
 		usersService.readByQuery.resolves([]);
 
-		await callbacks.filter['users.delete']([ '1-1-1-1-1' ], {}, { accountability: {} });
+		await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: {} });
 
 		expect(creditsAdditionsService.deleteByQuery.callCount).to.deep.equal(0);
 	});
@@ -67,7 +70,7 @@ describe('token hooks', () => {
 	it('should throw if accountability was not provided', async () => {
 		usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
 
-		const err = await callbacks.filter['users.delete']([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
+		const err = await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
 
 		expect(err.message).to.equal('User is not authenticated');
 	});

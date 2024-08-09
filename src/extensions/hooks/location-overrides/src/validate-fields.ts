@@ -1,9 +1,9 @@
-import type { HookExtensionContext } from '@directus/extensions';
 import { createError } from '@directus/errors';
 import axios from 'axios';
 import ipaddr from 'ipaddr.js';
-import type { Fields } from './index.js';
 import { normalizeCityName } from '../../../lib/normalize-city.js';
+import type { Fields } from './index.js';
+import type { HookExtensionContext } from '@directus/extensions';
 
 type City = {
 	lng: string;

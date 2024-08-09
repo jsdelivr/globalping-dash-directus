@@ -4,19 +4,23 @@ import * as sinon from 'sinon';
 import nock from 'nock';
 import hook from '../src/index.js';
 
+type FilterCallback = (payload: any) => Promise<void>;
+type ActionCallback = (meta: any) => Promise<void>;
+
 describe('Sign-up hook', () => {
 	const callbacks = {
-		filter: {},
-		action: {},
+		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, ActionCallback>,
 	};
-	const hooks = {
-		filter: (name, cb) => {
+	const events = {
+		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
-		action: (name, cb) => {
+		action: (name: string, cb: ActionCallback) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
+
 	const creditsService = {
 		readByQuery: sinon.stub().resolves([]),
 		createOne: sinon.stub(),
@@ -53,7 +57,7 @@ describe('Sign-up hook', () => {
 			GITHUB_ACCESS_TOKEN: 'fakeToken',
 		},
 		database: {
-			transaction: async (f) => {
+			transaction: async (f: any) => {
 				return f({});
 			},
 		},
@@ -80,7 +84,7 @@ describe('Sign-up hook', () => {
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
-		hook(hooks, context);
+		hook(events, context);
 
 		const payload = {
 			provider: 'github',
@@ -91,7 +95,7 @@ describe('Sign-up hook', () => {
 			github_organizations: null,
 		};
 
-		await callbacks.filter['users.create'](payload);
+		await callbacks.filter['users.create']?.(payload);
 
 		expect(payload).to.deep.equal({
 			provider: 'github',
@@ -108,7 +112,7 @@ describe('Sign-up hook', () => {
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
-		hook(hooks, context);
+		hook(events, context);
 
 		const payload = {
 			provider: 'github',
@@ -119,7 +123,7 @@ describe('Sign-up hook', () => {
 			github_organizations: null,
 		};
 
-		await callbacks.filter['users.create'](payload);
+		await callbacks.filter['users.create']?.(payload);
 
 		expect(payload).to.deep.equal({
 			provider: 'github',
@@ -144,9 +148,9 @@ describe('Sign-up hook', () => {
 			github_id: 1834071,
 		}]);
 
-		hook(hooks, context);
+		hook(events, context);
 
-		await callbacks.action['users.create']({ key: '1-1-1-1', payload: {
+		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
 			provider: 'github',
 			external_identifier: 1834071,
 			first_name: 'Dmitriy Akulov',
@@ -176,9 +180,9 @@ describe('Sign-up hook', () => {
 			github_id: 1834071,
 		}]);
 
-		hook(hooks, context);
+		hook(events, context);
 
-		await callbacks.action['users.create']({ key: '1-1-1-1', payload: {
+		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
 			provider: 'github',
 			external_identifier: 1834071,
 			first_name: 'Dmitriy Akulov',
