@@ -1,9 +1,9 @@
 import crypto from 'node:crypto';
 import { defineOperationApi } from '@directus/extensions-sdk';
-import { OperationContext } from '@directus/types';
 import { createdAction } from './actions/created.js';
 import { tierChangedAction } from './actions/tier-changed.js';
-import { Data } from './types.js';
+import type { OperationContext } from '@directus/extensions';
+import type { Data } from './types.js';
 
 type ValidateGithubSignatureArgs = {
 	headers: Data['$trigger']['headers'],

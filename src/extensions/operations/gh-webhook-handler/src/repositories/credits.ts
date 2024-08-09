@@ -1,4 +1,4 @@
-import { OperationContext } from '@directus/types';
+import type { OperationContext } from '@directus/extensions';
 
 type AddItemData = {
 	github_id: string;

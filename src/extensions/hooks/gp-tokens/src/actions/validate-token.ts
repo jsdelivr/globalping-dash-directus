@@ -1,6 +1,6 @@
-import Joi, { ValidationError, type CustomHelpers } from 'joi';
+import Joi, { type ValidationError, type CustomHelpers } from 'joi';
 import { createError } from '@directus/errors';
-import { Token } from '../index.js';
+import type { Token } from '../index.js';
 
 function findProtocolSymbol (str: string) {
 	// Find '://', ':/', and ':' before the first '.'

@@ -4,12 +4,14 @@ import * as sinon from 'sinon';
 import nock from 'nock';
 import hook from '../src/index.js';
 
+type ActionCallback = (meta: any) => Promise<void>;
+
 describe('Sign-in hook', () => {
 	const callbacks = {
-		action: {},
+		action: {} as Record<string, ActionCallback>,
 	};
-	const actions = {
-		action: (name, cb) => {
+	const events = {
+		action: (name: string, cb: ActionCallback) => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
@@ -64,9 +66,9 @@ describe('Sign-in hook', () => {
 			.get(`/user/${githubId}/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
-		hook(actions, context);
+		hook(events, context);
 
-		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
+		await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 		expect(itemsService.readOne.callCount).to.equal(1);
 		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
@@ -90,9 +92,9 @@ describe('Sign-in hook', () => {
 			.get(`/user/${githubId}/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
-		hook(actions, context);
+		hook(events, context);
 
-		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
+		await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 		expect(itemsService.readOne.callCount).to.equal(1);
 		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
@@ -115,9 +117,9 @@ describe('Sign-in hook', () => {
 			.get(`/user/${githubId}/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
-		hook(actions, context);
+		hook(events, context);
 
-		await callbacks.action['auth.login']({ user: userId, provider: 'github' });
+		await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 		expect(itemsService.readOne.callCount).to.equal(1);
 		expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
@@ -131,9 +133,9 @@ describe('Sign-in hook', () => {
 
 		itemsService.readOne.resolves({ external_identifier: null });
 
-		hook(actions, context);
+		hook(events, context);
 
-		const error = await callbacks.action['auth.login']({ user: userId, provider: 'github' }).catch(err => err);
+		const error = await callbacks.action['auth.login']?.({ user: userId, provider: 'github' }).catch(err => err);
 		expect(error.message).to.equal('Not enough data to sync with GitHub');
 
 		expect(itemsService.readOne.callCount).to.equal(1);

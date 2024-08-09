@@ -1,15 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import nock from 'nock';
 import { expect } from 'chai';
-import hook from '../src/index.js';
 import { isDirectusError } from '@directus/errors';
+import hook from '../src/index.js';
+
+type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
 
 describe('gp_location_overrides hook', () => {
 	const callbacks = {
-		filter: {},
+		filter: {} as Record<string, FilterCallback>,
 	};
-	const hooks = {
-		filter: (name, cb) => {
+	const events = {
+		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
 	} as any;
@@ -57,9 +59,9 @@ describe('gp_location_overrides hook', () => {
 		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
 			.reply(200, geonamesResponse);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { ip_range: '1.1.1.1/32', city: 'marsel' };
-		await callbacks.filter['gp_location_overrides.items.create'](payload, { keys: [ '1' ] }, context);
+		await callbacks.filter['gp_location_overrides.items.create']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(payload).to.deep.equal({
 			ip_range: '1.1.1.1/32',
@@ -75,9 +77,9 @@ describe('gp_location_overrides hook', () => {
 		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
 			.reply(200, geonamesResponse);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { ip_range: '1.1.1.1/32', city: 'marsel' };
-		await callbacks.filter['gp_location_overrides.items.update'](payload, { keys: [ '1' ] }, context);
+		await callbacks.filter['gp_location_overrides.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(payload).to.deep.equal({
 			ip_range: '1.1.1.1/32',
@@ -90,9 +92,9 @@ describe('gp_location_overrides hook', () => {
 	});
 
 	it('should throw if city wasn\'t speified in the payload', async () => {
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { ip_range: '1.1.1.1/32', country: 'IT' };
-		const err = await callbacks.filter['gp_location_overrides.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_location_overrides.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 		expect(err.message).to.equal(`"city" value should be specified in payload.`);
 	});
 
@@ -103,9 +105,9 @@ describe('gp_location_overrides hook', () => {
 				geonames: [],
 			});
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { ip_range: '1.1.1.1/32', city: 'marsel' };
-		const err = await callbacks.filter['gp_location_overrides.items.update'](payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_location_overrides.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 		expect(isDirectusError(err)).to.equal(true);
 	});
 
@@ -113,9 +115,9 @@ describe('gp_location_overrides hook', () => {
 		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
 			.reply(200, geonamesResponse);
 
-		hook(hooks, context);
+		hook(events, context);
 		const payload = { ip_range: '1.1.1.300/32', city: 'marsel' };
-		const err = await callbacks.filter['gp_location_overrides.items.create'](payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_location_overrides.items.create']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 		expect(err.message).to.equal(`ipaddr: the address has neither IPv6 nor IPv4 CIDR format`);
 	});

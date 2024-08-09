@@ -22,27 +22,29 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"test": "TS_NODE_TRANSPILE_ONLY=true mocha"
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
-		"@directus/extensions": "^1.0.2",
-		"@directus/extensions-sdk": "11.0.2",
-		"@types/chai": "^4.3.14",
-		"@types/mocha": "^10.0.6",
-		"@types/node": "^20.12.5",
+		"@directus/extensions": "^1.0.9",
+		"@directus/extensions-sdk": "11.0.9",
+		"@directus/types": "^11.2.0",
+		"@types/chai": "^4.3.17",
+		"@types/mocha": "^10.0.7",
+		"@types/node": "^20.14.13",
 		"@types/sinon": "^17.0.3",
-		"chai": "^5.1.0",
-		"mocha": "^10.4.0",
+		"chai": "^5.1.1",
+		"mocha": "^10.7.0",
 		"nock": "^13.5.4",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.4.4"
+		"typescript": "^5.5.4"
 	},
 	"dependencies": {
-		"@directus/errors": "^0.2.4",
+		"@directus/errors": "^0.3.3",
 		"any-ascii": "^0.3.2",
-		"axios": "^1.6.8",
-		"ipaddr.js": "^2.1.0",
+		"axios": "^1.7.3",
+		"ipaddr.js": "^2.2.0",
 		"lodash": "^4.17.21"
 	}
 }
