@@ -1,5 +1,5 @@
 import type { HookExtensionContext } from '@directus/extensions';
-import { Accountability } from '@directus/types';
+import type { Accountability } from '@directus/types';
 
 type DirectusUser = {
 	id: string;

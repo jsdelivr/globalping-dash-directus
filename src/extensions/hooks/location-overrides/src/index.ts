@@ -1,7 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk';
 import { createError } from '@directus/errors';
-import { validateLocation, validateIpRange } from './validate-fields.js';
 import _ from 'lodash';
+import { validateLocation, validateIpRange } from './validate-fields.js';
 
 export type LocationOverride = {
 	ip_range: string;

@@ -1,10 +1,13 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { Router } from 'express';
+import { ForbiddenError } from '@directus/errors';
 import endpoint from '../src/token-generator/index.js';
 import hook from '../src/token-validator/index.js';
 import { WrongTokenError } from '../src/utils/token.js';
-import { ForbiddenError } from '@directus/errors';
+import type { Router } from 'express';
+
+type FilterCallback = (payload: any) => Promise<void>;
+type ActionCallback = (meta: any, context: any) => Promise<void>;
 
 describe('/token-generator', () => {
 	describe('gp_tokens.items.create hook', () => {
@@ -12,25 +15,34 @@ describe('/token-generator', () => {
 		const next = sinon.stub();
 		const res = { send: resSend };
 
-		const routes = {};
-		const request = (route, req, res) => {
+		const routes: Record<string, (request: object, response: typeof res, next: () => void) => void> = {};
+		const request = (route: string, request: object, response: typeof res) => {
 			const handler = routes[route];
 
 			if (!handler) {
 				throw new Error('Handler for the route is not defined');
 			}
 
-			return handler(req, res, next);
+			return handler(request, response, next);
 		};
-		const router = { post: (route, handler) => { routes[route] = handler; } } as Router;
+		const router = {
+			post: (route: string, handler: (request: object, response: typeof res) => void) => {
+				routes[route] = handler;
+			},
+		} as unknown as Router;
+
 		endpoint(router);
 
 		const callbacks = {
-			filter: {},
+			filter: {} as Record<string, FilterCallback>,
+			action: {} as Record<string, ActionCallback>,
 		};
 		const events = {
-			filter: (name, cb) => {
+			filter: (name: string, cb: FilterCallback) => {
 				callbacks.filter[name] = cb;
+			},
+			action: (name: string, cb: ActionCallback) => {
+				callbacks.action[name] = cb;
 			},
 		} as any;
 		hook(events);
@@ -47,14 +59,14 @@ describe('/token-generator', () => {
 			};
 
 			await request('/', req, res);
-			const token = resSend.args[0][0].data;
+			const token = resSend.args[0]?.[0].data;
 
 			const payload = {
 				id: 1,
 				name: 'my-token',
 				value: token,
 			};
-			callbacks.filter['gp_tokens.items.create'](payload);
+			callbacks.filter['gp_tokens.items.create']?.(payload);
 
 			expect(payload.value).to.not.equal(token);
 		});
@@ -67,14 +79,14 @@ describe('/token-generator', () => {
 			};
 
 			await request('/', req, res);
-			expect(next.args[0][0]).to.deep.equal(new ForbiddenError());
+			expect(next.args[0]?.[0]).to.deep.equal(new ForbiddenError());
 		});
 
 		it('should reject wrong token on create', async () => {
 			let error = null;
 
 			try {
-				callbacks.filter['gp_tokens.items.create']({
+				callbacks.filter['gp_tokens.items.create']?.({
 					id: 1,
 					name: 'my-token',
 					value: 'wrong-token',
@@ -87,7 +99,7 @@ describe('/token-generator', () => {
 		});
 
 		it('should accept no token in the payload on edit', async () => {
-			callbacks.filter['gp_tokens.items.update']({
+			callbacks.filter['gp_tokens.items.update']?.({
 				name: 'my-token-2',
 			});
 		});
@@ -100,12 +112,12 @@ describe('/token-generator', () => {
 			};
 
 			await request('/', req, res);
-			const token = resSend.args[0][0].data;
+			const token = resSend.args[0]?.[0].data;
 
 			const payload = {
 				value: token,
 			};
-			callbacks.filter['gp_tokens.items.update'](payload);
+			callbacks.filter['gp_tokens.items.update']?.(payload);
 
 			expect(payload.value).to.not.equal(token);
 		});
@@ -114,7 +126,7 @@ describe('/token-generator', () => {
 			let error = null;
 
 			try {
-				callbacks.filter['gp_tokens.items.update']({
+				callbacks.filter['gp_tokens.items.update']?.({
 					value: 'wrong-token',
 				});
 			} catch (err) {

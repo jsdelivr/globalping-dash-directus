@@ -1,7 +1,7 @@
-import { OperationContext } from '@directus/types';
 import { addCredits } from '../repositories/credits.js';
 import { updateSponsor } from '../repositories/sponsors.js';
-import { Data } from '../types.js';
+import type { OperationContext } from '@directus/extensions';
+import type { Data } from '../types.js';
 
 type TierChangedActionArgs = {
 	services: OperationContext['services'];
