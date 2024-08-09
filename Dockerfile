@@ -12,6 +12,7 @@ COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopte
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
 COPY src/extensions/hooks/gp-tokens/package.json src/extensions/hooks/gp-tokens/
 COPY src/extensions/hooks/location-overrides/package.json src/extensions/hooks/location-overrides/
+COPY src/extensions/hooks/notifications-format/package.json src/extensions/hooks/notifications-format/
 COPY src/extensions/hooks/sign-in/package.json src/extensions/hooks/sign-in/
 COPY src/extensions/hooks/sign-up/package.json src/extensions/hooks/sign-up/
 COPY src/extensions/interfaces/github-username/package.json src/extensions/interfaces/github-username/
@@ -49,6 +50,8 @@ COPY --from=builder /builder/src/extensions/hooks/gp-tokens/dist/* /directus/ext
 COPY --from=builder /builder/src/extensions/hooks/gp-tokens/package.json /directus/extensions/gp-tokens/
 COPY --from=builder /builder/src/extensions/hooks/location-overrides/dist/* /directus/extensions/location-overrides/dist/
 COPY --from=builder /builder/src/extensions/hooks/location-overrides/package.json /directus/extensions/location-overrides/
+COPY --from=builder /builder/src/extensions/hooks/notifications-format/dist/* /directus/extensions/notifications-format/dist/
+COPY --from=builder /builder/src/extensions/hooks/notifications-format/package.json /directus/extensions/notifications-format/
 COPY --from=builder /builder/src/extensions/hooks/sign-in/dist/* /directus/extensions/sign-in/dist/
 COPY --from=builder /builder/src/extensions/hooks/sign-in/package.json /directus/extensions/sign-in/
 COPY --from=builder /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/sign-up/dist/
