@@ -1,12 +1,16 @@
 import { defineHook } from '@directus/extensions-sdk';
+import markdownit from 'markdown-it';
+import sanitizeHtml from 'sanitize-html';
 import type { NextFunction, Request as ExpressRequest, Response } from 'express';
 import type { Notification } from '@directus/types';
 
 export type Request = ExpressRequest & {
-	accountability: {
+	accountability?: {
 		customParams?: Record<string, unknown>;
 	},
 };
+
+const md = markdownit();
 
 export default defineHook(({ init, action }) => {
 	init('middlewares.after', ({ app }) => {
@@ -24,10 +28,10 @@ export default defineHook(({ init, action }) => {
 	});
 
 	action('notifications.read', ({ payload }, { accountability }) => {
-		if ((accountability as Request['accountability']).customParams?.format) {
-			payload.forEach((notificaton: Notification) => {
-				if (notificaton.message) {
-					notificaton.message = `<div>${notificaton.message}</div>`;
+		if ((accountability as Request['accountability'])?.customParams?.format === 'html') {
+			payload.forEach((notification: Notification) => {
+				if (notification.message) {
+					notification.message = sanitizeHtml(md.render(notification.message));
 				}
 			});
 		}

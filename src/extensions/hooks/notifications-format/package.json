@@ -31,8 +31,10 @@
 		"@directus/types": "^11.2.0",
 		"@types/chai": "^4.3.17",
 		"@types/express": "^4.17.21",
+		"@types/markdown-it": "^14.1.2",
 		"@types/mocha": "^10.0.7",
 		"@types/node": "^22.1.0",
+		"@types/sanitize-html": "^2.11.0",
 		"@types/sinon": "^17.0.3",
 		"chai": "^5.1.1",
 		"express": "^4.19.2",
@@ -40,5 +42,9 @@
 		"sinon": "^18.0.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.5.4"
+	},
+	"dependencies": {
+		"markdown-it": "^14.1.0",
+		"sanitize-html": "^2.13.0"
 	}
 }
