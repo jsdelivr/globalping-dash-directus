@@ -31,6 +31,15 @@ export async function getUserPermissions (collectionName) {
 }
 
 export async function updatePermissions (readPermissions, fieldsToAdd, fieldsToRemove) {
+	if (!readPermissions) {
+		throw new Error(`Permissions object is empty.`);
+	}
+
+	if (!readPermissions.id) {
+		console.error(readPermissions);
+		throw new Error(`Permissions ID is missing. This may happen when there are multiple rows for the same permission type.`);
+	}
+
 	const URL = `${DIRECTUS_URL}/permissions/${readPermissions.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const filteredFields = readPermissions.fields.filter(field => !fieldsToRemove.includes(field));
 
