@@ -1,9 +1,9 @@
 import nock from 'nock';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { Router } from 'express';
-import type { EndpointExtensionContext } from '@directus/extensions';
 import endpoint from '../src/index.js';
+import type { Router } from 'express';
+import type { EndpointExtensionContext } from '@directus/extensions';
 
 describe('/sync-github-data endpoint', () => {
 	const updateOne = sinon.stub();
@@ -32,17 +32,21 @@ describe('/sync-github-data endpoint', () => {
 	const resStatus = sinon.stub().returns({ send: resSend });
 	const res = { status: resStatus, send: resSend };
 
-	const routes = {};
-	const request = (route, req, res) => {
+	const routes: Record<string, (request: object, response: typeof res) => void> = {};
+	const request = (route: string, request: object, response: typeof res) => {
 		const handler = routes[route];
 
 		if (!handler) {
 			throw new Error('Handler for the route is not defined');
 		}
 
-		return handler(req, res);
+		return handler(request, response);
 	};
-	const router = { post: (route, handler) => { routes[route] = handler; } } as Router;
+	const router = {
+		post: (route: string, handler: (request: object, response: typeof res) => void) => {
+			routes[route] = handler;
+		},
+	} as unknown as Router;
 
 	before(() => {
 		nock.disableNetConnect();
@@ -94,7 +98,7 @@ describe('/sync-github-data endpoint', () => {
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(1);
 
-		expect(updateOne.args[0][1]).to.deep.equal({
+		expect(updateOne.args[0]?.[1]).to.deep.equal({
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
 		});
@@ -138,7 +142,7 @@ describe('/sync-github-data endpoint', () => {
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(1);
 
-		expect(updateOne.args[0][1]).to.deep.equal({
+		expect(updateOne.args[0]?.[1]).to.deep.equal({
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
 		});

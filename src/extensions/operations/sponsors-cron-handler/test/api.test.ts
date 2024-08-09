@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import nock from 'nock';
-import { OperationContext } from '@directus/types';
 import operationApi from '../src/api.js';
+import type { OperationContext } from '@directus/extensions';
 
 describe('Sponsors cron handler', () => {
 	const data = {};
 	const database = {
-		transaction: async (f) => {
+		transaction: async (f: any) => {
 			return f({});
 		},
 	} as OperationContext['database'];
@@ -104,17 +104,17 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(3);
 
-		expect(services.ItemsService.args[0][0]).deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(1);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
 
-		expect(services.ItemsService.args[2][0]).to.deep.equal('gp_credits_additions');
+		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -166,7 +166,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
@@ -194,12 +194,12 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -248,12 +248,12 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -303,12 +303,12 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -358,20 +358,20 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(4);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
-		expect(services.ItemsService.args[2][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(2);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
 		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
 
-		expect(services.ItemsService.args[3][0]).to.deep.equal('gp_credits_additions');
+		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -419,12 +419,12 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(2);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.createOne.callCount).to.equal(1);
 
@@ -480,7 +480,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(services.ItemsService.callCount).to.equal(1);
 
-		expect(services.ItemsService.args[0][0]).to.deep.equal('sponsors');
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);

@@ -1,6 +1,6 @@
 import type { HookExtensionContext } from '@directus/extensions';
-import { EventContext } from '@directus/types';
-import { AdoptedProbe } from '../index.js';
+import type { EventContext } from '@directus/types';
+import type { AdoptedProbe } from '../index.js';
 
 type User = {
 	github_username: string | null;

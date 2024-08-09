@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import type { OperationContext } from '@directus/extensions';
 import { checkOnlineStatus } from '../src/actions/check-online-status.js';
+import type { OperationContext } from '@directus/extensions';
 
 describe('Adopted probes status cron handler', () => {
 	const database = {} as OperationContext['database'];

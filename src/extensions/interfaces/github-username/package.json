@@ -19,12 +19,16 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"test": "echo 'No tests for that extension'"
+		"test": "echo 'No tests for that extension'",
+		"test:dev": "echo 'No tests for that extension'"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "10.1.14",
-		"sass": "^1.69.5",
-		"typescript": "^5.2.2",
-		"vue": "^3.3.8"
+		"@directus/extensions": "^1.0.9",
+		"@directus/extensions-sdk": "11.0.9",
+		"@directus/types": "^11.2.0",
+		"@types/node": "^20.14.13",
+		"sass": "^1.77.8",
+		"typescript": "^5.5.4",
+		"vue": "^3.4.35"
 	}
 }

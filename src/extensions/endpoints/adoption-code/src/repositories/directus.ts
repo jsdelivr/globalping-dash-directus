@@ -1,4 +1,4 @@
-import { AdoptedProbe, Request } from '../index.js';
+import type { AdoptedProbe, Request } from '../index.js';
 import type { EndpointExtensionContext } from '@directus/extensions';
 
 export const createAdoptedProbe = async (value: Request, probe: AdoptedProbe, { services }: EndpointExtensionContext) => {
