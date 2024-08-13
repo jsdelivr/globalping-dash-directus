@@ -1,0 +1,50 @@
+{
+	"name": "notifications-format",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-hook"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "hook",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^1.0.9",
+		"@directus/extensions-sdk": "12.0.0",
+		"@directus/types": "^11.2.0",
+		"@types/chai": "^4.3.17",
+		"@types/express": "^4.17.21",
+		"@types/markdown-it": "^14.1.2",
+		"@types/mocha": "^10.0.7",
+		"@types/node": "^22.1.0",
+		"@types/sanitize-html": "^2.11.0",
+		"@types/sinon": "^17.0.3",
+		"chai": "^5.1.1",
+		"express": "^4.19.2",
+		"mocha": "^10.7.0",
+		"sinon": "^18.0.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.5.4"
+	},
+	"dependencies": {
+		"markdown-it": "^14.1.0",
+		"sanitize-html": "^2.13.0"
+	}
+}
