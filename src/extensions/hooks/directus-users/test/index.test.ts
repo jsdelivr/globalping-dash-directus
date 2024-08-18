@@ -1,7 +1,7 @@
+import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import defineHook from '../src/index.js';
-import type { HookExtensionContext } from '@directus/extensions';
 
 type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;

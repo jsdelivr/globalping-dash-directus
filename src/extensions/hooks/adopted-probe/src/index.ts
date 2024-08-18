@@ -1,7 +1,7 @@
-import { defineHook } from '@directus/extensions-sdk';
 import { createError } from '@directus/errors';
-import { validateCity, validateTags } from './validate-fields.js';
+import { defineHook } from '@directus/extensions-sdk';
 import { resetMetadata, updateMetadata } from './update-metadata.js';
+import { validateCity, validateTags } from './validate-fields.js';
 
 export type AdoptedProbe = {
 	city: string | null;

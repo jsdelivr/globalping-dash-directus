@@ -1,13 +1,13 @@
-import axios from 'axios';
-import TTLCache from '@isaacs/ttlcache';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { createError, isDirectusError } from '@directus/errors';
-import { defineEndpoint } from '@directus/extensions-sdk';
-import Joi from 'joi';
-import ipaddr from 'ipaddr.js';
-import { createAdoptedProbe, findAdoptedProbe } from './repositories/directus.js';
-import type { Request as ExpressRequest } from 'express';
 import type { EndpointExtensionContext } from '@directus/extensions';
+import { defineEndpoint } from '@directus/extensions-sdk';
+import TTLCache from '@isaacs/ttlcache';
+import axios from 'axios';
+import type { Request as ExpressRequest } from 'express';
+import ipaddr from 'ipaddr.js';
+import Joi from 'joi';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { createAdoptedProbe, findAdoptedProbe } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
 	accountability: {

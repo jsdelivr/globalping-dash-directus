@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import nock from 'nock';
 import { expect } from 'chai';
+import nock from 'nock';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
 import { payloadError } from '../src/validate-fields.js';

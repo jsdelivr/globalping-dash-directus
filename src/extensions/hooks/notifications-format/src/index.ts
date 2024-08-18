@@ -1,8 +1,8 @@
 import { defineHook } from '@directus/extensions-sdk';
+import type { Notification } from '@directus/types';
+import type { NextFunction, Request as ExpressRequest, Response } from 'express';
 import markdownit from 'markdown-it';
 import sanitizeHtml from 'sanitize-html';
-import type { NextFunction, Request as ExpressRequest, Response } from 'express';
-import type { Notification } from '@directus/types';
 
 export type Request = ExpressRequest & {
 	accountability?: {

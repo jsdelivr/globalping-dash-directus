@@ -1,6 +1,6 @@
 
-import { deleteDirectusSponsor, updateDirectusSponsor, addCredits } from '../repositories/directus.js';
 import type { OperationContext } from '@directus/extensions';
+import { deleteDirectusSponsor, updateDirectusSponsor, addCredits } from '../repositories/directus.js';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
 const is30DaysAgo = (dateString: string) => {

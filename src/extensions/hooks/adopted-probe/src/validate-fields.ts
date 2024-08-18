@@ -1,11 +1,11 @@
-import Joi from 'joi';
-import axios from 'axios';
 import { createError } from '@directus/errors';
+import type { HookExtensionContext } from '@directus/extensions';
+import type { EventContext } from '@directus/types';
+import axios from 'axios';
+import Joi from 'joi';
 import { normalizeCityName } from '../../../lib/normalize-city.js';
 import { type City, geonamesCache, getKey } from './geonames-cache.js';
 import { getProbes, getUser } from './repositories/directus.js';
-import type { EventContext } from '@directus/types';
-import type { HookExtensionContext } from '@directus/extensions';
 import type { Fields } from './index.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();

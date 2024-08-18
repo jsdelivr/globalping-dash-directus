@@ -1,5 +1,5 @@
-import { defineHook } from '@directus/extensions-sdk';
 import { createError } from '@directus/errors';
+import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
 import { validateLocation, validateIpRange } from './validate-fields.js';
 

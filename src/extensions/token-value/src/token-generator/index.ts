@@ -1,7 +1,7 @@
-import { defineEndpoint } from '@directus/extensions-sdk';
 import { ForbiddenError } from '@directus/errors';
-import { generateToken } from '../utils/token.js';
+import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request, Response } from 'express';
+import { generateToken } from '../utils/token.js';
 
 type DirectusRequest = Request & {
 	accountability?: {

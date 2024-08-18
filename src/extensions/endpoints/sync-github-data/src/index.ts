@@ -1,11 +1,11 @@
-import Joi from 'joi';
-import { defineEndpoint } from '@directus/extensions-sdk';
 import { createError, isDirectusError } from '@directus/errors';
+import type { EndpointExtensionContext } from '@directus/extensions';
+import { defineEndpoint } from '@directus/extensions-sdk';
 import axios from 'axios';
+import type { Request as ExpressRequest } from 'express';
+import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { syncGithubData } from './actions/sync-github-data.js';
-import type { Request as ExpressRequest } from 'express';
-import type { EndpointExtensionContext } from '@directus/extensions';
 
 export type Request = ExpressRequest & {
 	accountability: {

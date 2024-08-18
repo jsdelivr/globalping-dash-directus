@@ -1,6 +1,6 @@
+import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
-import type { HookExtensionContext } from '@directus/extensions';
 
 type User = {
     provider: string;

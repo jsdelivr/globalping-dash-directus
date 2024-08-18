@@ -1,8 +1,8 @@
 import crypto from 'node:crypto';
+import type { OperationContext } from '@directus/extensions';
 import { defineOperationApi } from '@directus/extensions-sdk';
 import { createdAction } from './actions/created.js';
 import { tierChangedAction } from './actions/tier-changed.js';
-import type { OperationContext } from '@directus/extensions';
 import type { Data } from './types.js';
 
 type ValidateGithubSignatureArgs = {

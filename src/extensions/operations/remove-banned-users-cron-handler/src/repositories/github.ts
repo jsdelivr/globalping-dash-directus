@@ -1,5 +1,5 @@
-import axios, { isAxiosError } from 'axios';
 import type { OperationContext } from '@directus/extensions';
+import axios, { isAxiosError } from 'axios';
 import type { DirectusUser, GithubUser } from '../types.js';
 
 export const getGithubUser = async (id: DirectusUser['external_identifier'], context: OperationContext) => {

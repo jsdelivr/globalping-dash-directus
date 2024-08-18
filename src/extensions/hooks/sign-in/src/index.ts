@@ -1,7 +1,7 @@
+import type { HookExtensionContext } from '@directus/extensions';
+import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
 import _ from 'lodash';
-import { defineHook } from '@directus/extensions-sdk';
-import type { HookExtensionContext } from '@directus/extensions';
 
 type GithubUserResponse = {
 	login: string;

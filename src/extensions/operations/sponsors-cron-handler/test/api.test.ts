@@ -1,8 +1,8 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
-import nock from 'nock';
-import operationApi from '../src/api.js';
 import type { OperationContext } from '@directus/extensions';
+import { expect } from 'chai';
+import nock from 'nock';
+import * as sinon from 'sinon';
+import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
 	const data = {};

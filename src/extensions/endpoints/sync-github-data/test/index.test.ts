@@ -1,9 +1,9 @@
-import nock from 'nock';
+import type { EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
+import type { Router } from 'express';
+import nock from 'nock';
 import * as sinon from 'sinon';
 import endpoint from '../src/index.js';
-import type { Router } from 'express';
-import type { EndpointExtensionContext } from '@directus/extensions';
 
 describe('/sync-github-data endpoint', () => {
 	const updateOne = sinon.stub();

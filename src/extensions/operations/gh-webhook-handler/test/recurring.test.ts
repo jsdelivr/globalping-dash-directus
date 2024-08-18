@@ -1,10 +1,10 @@
+import type { OperationContext } from '@directus/extensions';
 import { expect } from 'chai';
-import * as sinon from 'sinon';
 import _ from 'lodash';
+import * as sinon from 'sinon';
 import operationApi from '../src/api.js';
 import recurringSponsorshipCreated from './recurring-sponsorship-created.json' assert { type: 'json' };
 import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' assert { type: 'json' };
-import type { OperationContext } from '@directus/extensions';
 
 describe('GitHub webhook recurring handler', () => {
 	const database = {

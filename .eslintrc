@@ -65,7 +65,9 @@
 			"rules": {
 				"@typescript-eslint/consistent-type-imports": "error",
 				"import/order": ["error", {
-					"groups": ["builtin", "external", "parent", "sibling", "type"]
+					"alphabetize": {
+						"order": "asc"
+					}
 				}]
 			}
 		},

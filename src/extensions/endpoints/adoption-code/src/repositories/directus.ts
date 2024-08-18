@@ -1,5 +1,5 @@
-import type { AdoptedProbe, Request } from '../index.js';
 import type { EndpointExtensionContext } from '@directus/extensions';
+import type { AdoptedProbe, Request } from '../index.js';
 
 export const createAdoptedProbe = async (value: Request, probe: AdoptedProbe, { services }: EndpointExtensionContext) => {
 	const itemsService = new services.ItemsService('gp_adopted_probes', {

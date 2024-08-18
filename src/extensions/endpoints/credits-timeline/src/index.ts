@@ -1,8 +1,8 @@
-import { defineEndpoint } from '@directus/extensions-sdk';
 import { createError, isDirectusError } from '@directus/errors';
-import Joi from 'joi';
+import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
+import Joi from 'joi';
 
 type Request = ExpressRequest & {
 	accountability: EventContext['accountability'];

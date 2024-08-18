@@ -1,6 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { validateToken } from './actions/validate-token.js';
 import { validateQuery } from './actions/validate-items-query.js';
+import { validateToken } from './actions/validate-token.js';
 
 export type Token = {
 		id: number;

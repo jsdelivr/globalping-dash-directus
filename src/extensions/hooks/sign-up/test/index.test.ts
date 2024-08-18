@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect } from 'chai';
-import * as sinon from 'sinon';
 import nock from 'nock';
+import * as sinon from 'sinon';
 import hook from '../src/index.js';
 
 type FilterCallback = (payload: any) => Promise<void>;

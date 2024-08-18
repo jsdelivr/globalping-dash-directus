@@ -1,5 +1,5 @@
-import Joi, { type ValidationError, type CustomHelpers } from 'joi';
 import { createError } from '@directus/errors';
+import Joi, { type ValidationError, type CustomHelpers } from 'joi';
 import type { Token } from '../index.js';
 
 function findProtocolSymbol (str: string) {

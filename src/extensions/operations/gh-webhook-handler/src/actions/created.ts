@@ -1,6 +1,6 @@
+import type { OperationContext } from '@directus/extensions';
 import { addCredits } from '../repositories/credits.js';
 import { addSponsor } from '../repositories/sponsors.js';
-import type { OperationContext } from '@directus/extensions';
 import type { Data } from '../types.js';
 
 type CreatedActionArgs = {
