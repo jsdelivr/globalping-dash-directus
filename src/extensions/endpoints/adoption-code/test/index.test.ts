@@ -313,7 +313,9 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0]).to.deep.equal({
+			expect(createOne.args[0]?.[0].id).to.be.a('string');
+
+			expect(createOne.args[0]?.[0]).to.deep.include({
 				ip: '1.1.1.1',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
@@ -385,7 +387,9 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0]).to.deep.equal({
+			expect(createOne.args[0]?.[0].id).to.be.a('string');
+
+			expect(createOne.args[0]?.[0]).to.deep.include({
 				ip: '1.1.1.1',
 				uuid: null,
 				version: null,
@@ -469,7 +473,9 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0]).to.deep.equal({
+			expect(createOne.args[0]?.[0].id).to.be.a('string');
+
+			expect(createOne.args[0]?.[0]).to.deep.include({
 				ip: '1.1.1.1',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
@@ -68,7 +70,9 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	}]);
 
-	const adoptedProbesIds = await knex('gp_adopted_probes').insert([{
+	const probeId = randomUUID();
+	await knex('gp_adopted_probes').insert([{
+		id: probeId,
 		asn: 3302,
 		city: 'Naples',
 		country: 'IT',
@@ -92,6 +96,7 @@ export const seed = async (knex) => {
 		hardwareDevice: null,
 	},
 	{
+		id: randomUUID(),
 		asn: 61493,
 		city: 'Buenos Aires',
 		country: 'AR',
@@ -161,7 +166,7 @@ export const seed = async (knex) => {
 		date_created: '2024-03-05 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
-		adopted_probe: adoptedProbesIds[0],
+		adopted_probe: probeId,
 	},
 	{
 		amount: 150,
@@ -170,7 +175,7 @@ export const seed = async (knex) => {
 		date_created: '2024-03-06 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
-		adopted_probe: adoptedProbesIds[0],
+		adopted_probe: probeId,
 	},
 	{
 		amount: 150,
@@ -179,7 +184,7 @@ export const seed = async (knex) => {
 		date_created: '2024-03-07 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
-		adopted_probe: adoptedProbesIds[0],
+		adopted_probe: probeId,
 	},
 	{
 		amount: 150,
@@ -188,7 +193,7 @@ export const seed = async (knex) => {
 		date_created: '2024-03-08 11:46:22',
 		github_id: user.external_identifier,
 		user_updated: null,
-		adopted_probe: adoptedProbesIds[0],
+		adopted_probe: probeId,
 	}, {
 		amount: 2000,
 		comment: 'For 10$ sponsorship',

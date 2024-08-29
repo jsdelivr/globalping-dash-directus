@@ -547,7 +547,7 @@ fields:
       foreign_key_column: null
   - collection: gp_adopted_probes
     field: id
-    type: integer
+    type: uuid
     meta:
       collection: gp_adopted_probes
       conditions: null
@@ -562,7 +562,8 @@ fields:
       readonly: true
       required: false
       sort: 1
-      special: null
+      special:
+        - uuid
       translations: null
       validation: null
       validation_message: null
@@ -570,17 +571,17 @@ fields:
     schema:
       name: id
       table: gp_adopted_probes
-      data_type: int unsigned
+      data_type: char
       default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
       is_nullable: false
       is_unique: false
       is_primary_key: true
       is_generated: false
       generation_expression: null
-      has_auto_increment: true
+      has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_adopted_probes
@@ -1718,7 +1719,7 @@ fields:
       foreign_key_column: id
   - collection: gp_credits_additions
     field: adopted_probe
-    type: integer
+    type: uuid
     meta:
       collection: gp_credits_additions
       conditions: null
@@ -1737,6 +1738,7 @@ fields:
       sort: 7
       special:
         - m2o
+        - uuid
       translations: null
       validation: null
       validation_message: null
@@ -1744,11 +1746,11 @@ fields:
     schema:
       name: adopted_probe
       table: gp_credits_additions
-      data_type: int unsigned
+      data_type: char
       default_value: null
-      max_length: null
-      numeric_precision: 10
-      numeric_scale: 0
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
       is_nullable: true
       is_unique: false
       is_primary_key: false
