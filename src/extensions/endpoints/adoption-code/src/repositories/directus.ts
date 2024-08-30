@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import type { AdoptedProbe, Request } from '../index.js';
 
@@ -7,6 +8,7 @@ export const createAdoptedProbe = async (value: Request, probe: AdoptedProbe, { 
 	});
 
 	const id = await itemsService.createOne({
+		id: randomUUID(),
 		ip: probe.ip,
 		uuid: probe.uuid,
 		version: probe.version,
