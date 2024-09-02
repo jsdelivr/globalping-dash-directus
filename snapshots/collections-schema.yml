@@ -1626,33 +1626,34 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_apps
-    field: redirect_url
-    type: string
+    field: redirect_urls
+    type: json
     meta:
       collection: gp_apps
       conditions: null
       display: null
       display_options: null
-      field: redirect_url
+      field: redirect_urls
       group: null
       hidden: false
-      interface: input
+      interface: tags
       note: null
       options: null
       readonly: false
       required: true
       sort: 4
-      special: null
+      special:
+        - cast-json
       translations: null
       validation: null
       validation_message: null
       width: full
     schema:
-      name: redirect_url
+      name: redirect_urls
       table: gp_apps
-      data_type: varchar
+      data_type: longtext
       default_value: null
-      max_length: 255
+      max_length: 4294967295
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
