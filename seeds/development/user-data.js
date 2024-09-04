@@ -40,6 +40,7 @@ export const seed = async (knex) => {
 	}
 
 	await Promise.all([
+		knex('gp_apps').delete(),
 		knex('gp_tokens').delete(),
 		knex('gp_adopted_probes').delete(),
 		knex('sponsors').delete(),
@@ -47,6 +48,15 @@ export const seed = async (knex) => {
 		knex('gp_credits_deductions').delete(),
 		knex('gp_credits').delete(),
 	]);
+
+	await knex('gp_apps').insert({
+		id: randomUUID(),
+		user_created: user.id,
+		date_created: '2024-09-01 00:00:00',
+		name: 'Sample OAuth App',
+		grants: JSON.stringify([ 'authorization_code', 'refresh_token' ]),
+		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
+	});
 
 	await knex('gp_tokens').insert([{
 		name: 'gp-token-1',
