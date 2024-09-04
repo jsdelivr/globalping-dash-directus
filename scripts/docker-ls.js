@@ -1,5 +1,5 @@
 import { readdirSync, statSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { join } from 'path/posix';
 
 const findDirectoriesWithPackageJson = (dir) => {
 	const result = [];

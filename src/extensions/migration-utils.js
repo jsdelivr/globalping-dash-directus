@@ -24,10 +24,14 @@ export async function getUserPermissions (collectionName) {
 
 		return response.json();
 	});
+
 	const permissions = response.data;
 	const readPermissions = permissions.find(({ action }) => action === 'read');
+	const createPermissions = permissions.find(({ action }) => action === 'create');
+	const updatePermissions = permissions.find(({ action }) => action === 'update');
+	const deletePermissions = permissions.find(({ action }) => action === 'delete');
 
-	return { readPermissions };
+	return { readPermissions, createPermissions, updatePermissions, deletePermissions };
 }
 
 export async function updatePermissions (readPermissions, fieldsToAdd, fieldsToRemove) {
