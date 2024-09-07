@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
 export async function up (knex) {
-	const probe = await knex('gp_adopted_probes').select('id').first();
+	const columnsInfo = await knex('gp_adopted_probes').columnInfo();
 
-	if (probe && typeof probe.id === 'string') {
+	if (columnsInfo?.id?.type === 'char') {
 		console.log('Probe ids are already UUIDs');
 		return;
 	}
