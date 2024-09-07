@@ -89,7 +89,8 @@ export const seed = async (knex) => {
 		countryOfCustomCity: 'IT',
 		date_created: '2024-02-22 11:04:30',
 		date_updated: '2024-02-22 11:05:48',
-		ip: '213.136.174.80',
+		ip: '2a02:a319:80f3:8b80:344b:35ff:fee8:a8c',
+		altIps: JSON.stringify([ '213.136.174.80' ]),
 		isCustomCity: 1,
 		lastSyncDate: new Date(),
 		latitude: 40.85216,
@@ -179,7 +180,7 @@ export const seed = async (knex) => {
 
 	await knex('gp_credits_additions').insert([{
 		amount: 10000,
-		comment: 'For 50$ sponsorship',
+		comment: '$50 sponsorship',
 		consumed: 1,
 		date_created: '2024-01-05 11:46:22',
 		github_id: user.external_identifier,
@@ -188,7 +189,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 1000,
-		comment: 'For $5 recurring sponsorship',
+		comment: '$5 recurring sponsorship',
 		consumed: 1,
 		date_created: '2024-02-05 11:46:22',
 		github_id: user.external_identifier,
@@ -197,7 +198,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
 		consumed: 1,
 		date_created: '2024-03-05 11:46:22',
 		github_id: user.external_identifier,
@@ -206,7 +207,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
 		consumed: 1,
 		date_created: '2024-03-06 11:46:22',
 		github_id: user.external_identifier,
@@ -215,7 +216,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
 		consumed: 1,
 		date_created: '2024-03-07 11:46:22',
 		github_id: user.external_identifier,
@@ -224,7 +225,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'For the adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
 		consumed: 1,
 		date_created: '2024-03-08 11:46:22',
 		github_id: user.external_identifier,
@@ -232,7 +233,7 @@ export const seed = async (knex) => {
 		adopted_probe: probeId,
 	}, {
 		amount: 2000,
-		comment: 'For 10$ sponsorship',
+		comment: '$10 sponsorship',
 		consumed: 1,
 		date_created: '2024-04-05 11:46:22',
 		github_id: user.external_identifier,
@@ -241,7 +242,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 3000,
-		comment: 'For $15 recurring sponsorship',
+		comment: '$15 recurring sponsorship',
 		consumed: 1,
 		date_created: '2024-05-05 11:46:22',
 		github_id: user.external_identifier,
