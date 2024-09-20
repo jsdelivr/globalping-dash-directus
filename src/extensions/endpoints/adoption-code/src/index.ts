@@ -7,7 +7,7 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { createAdoptedProbe, findAdoptedProbe } from './repositories/directus.js';
+import { createAdoptedProbe, findAdoptedProbes } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
 	accountability: {
@@ -33,6 +33,7 @@ type SendCodeResponse = {
 
 export type AdoptedProbe = {
 	ip: string;
+	name: string | null;
 	code: string;
 	uuid: string | null;
 	version: string | null;
@@ -94,7 +95,7 @@ export default defineEndpoint((router, context) => {
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
 
-			const adoptedProbes = await findAdoptedProbe(ip, context as unknown as EndpointExtensionContext);
+			const adoptedProbes = await findAdoptedProbes({ ip }, context as unknown as EndpointExtensionContext);
 
 			if (adoptedProbes.length > 0) {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'Probe with that ip is already adopted', 400))();
@@ -102,8 +103,10 @@ export default defineEndpoint((router, context) => {
 
 			const code = generateRandomCode();
 
+			// Allowing user to adopt the probe with default values, even if there was no response from GP API.
 			probesToAdopt.set(userId, {
 				ip,
+				name: null,
 				code,
 				uuid: null,
 				version: null,
@@ -128,6 +131,7 @@ export default defineEndpoint((router, context) => {
 
 			probesToAdopt.set(userId, {
 				ip,
+				name: null,
 				code,
 				uuid: response.data.uuid,
 				version: response.data.version,
@@ -167,16 +171,16 @@ export default defineEndpoint((router, context) => {
 		}).required(),
 	}).unknown(true);
 
-	router.post('/verify-code', async (req, res) => {
+	router.post('/verify-code', async (request, res) => {
 		try {
-			const { value, error } = verifyCodeSchema.validate(req);
+			const { value: req, error } = verifyCodeSchema.validate(request);
 
 			if (error) {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 			}
 
-			const userId = value.accountability.user;
-			const userCode = value.body.code.replaceAll(' ', '');
+			const userId = req.accountability.user;
+			const userCode = req.body.code.replaceAll(' ', '');
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
 
@@ -186,13 +190,14 @@ export default defineEndpoint((router, context) => {
 				throw new InvalidCodeError();
 			}
 
-			const id = await createAdoptedProbe(value, probe, context as unknown as EndpointExtensionContext);
+			const [ id, name ] = await createAdoptedProbe(req, probe, context as unknown as EndpointExtensionContext);
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(userId);
 
 			res.send({
 				id,
+				name,
 				ip: probe.ip,
 				version: probe.version,
 				nodeVersion: probe.nodeVersion,
