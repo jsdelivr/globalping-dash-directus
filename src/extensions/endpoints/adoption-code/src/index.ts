@@ -33,6 +33,7 @@ type SendCodeResponse = {
 
 export type AdoptedProbe = {
 	ip: string;
+	name: string | null;
 	code: string;
 	uuid: string | null;
 	version: string | null;
@@ -105,6 +106,7 @@ export default defineEndpoint((router, context) => {
 			// Allowing user to adopt the probe with default values, even if further request to GP API fails.
 			probesToAdopt.set(userId, {
 				ip,
+				name: null,
 				code,
 				uuid: null,
 				version: null,
@@ -129,6 +131,7 @@ export default defineEndpoint((router, context) => {
 
 			probesToAdopt.set(userId, {
 				ip,
+				name: null,
 				code,
 				uuid: response.data.uuid,
 				version: response.data.version,
@@ -187,13 +190,14 @@ export default defineEndpoint((router, context) => {
 				throw new InvalidCodeError();
 			}
 
-			const id = await createAdoptedProbe(req, probe, context as unknown as EndpointExtensionContext);
+			const [ id, name ] = await createAdoptedProbe(req, probe, context as unknown as EndpointExtensionContext);
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(userId);
 
 			res.send({
 				id,
+				name,
 				ip: probe.ip,
 				version: probe.version,
 				nodeVersion: probe.nodeVersion,

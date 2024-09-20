@@ -6,7 +6,7 @@ import * as sinon from 'sinon';
 import endpoint from '../src/index.js';
 
 describe('adoption code endpoints', () => {
-	const createOne = sinon.stub();
+	const createOne = sinon.stub().resolves('generatedId');
 	const readByQuery = sinon.stub().resolves([]);
 	const endpointContext = {
 		logger: {
@@ -294,8 +294,9 @@ describe('adoption code endpoints', () => {
 
 			expect(resSend.args[1]).to.deep.equal([
 				{
-					id: undefined,
+					id: 'generatedId',
 					ip: '1.1.1.1',
+					name: 'probe-fr-paris-01',
 					version: '0.26.0',
 					nodeVersion: '18.17.0',
 					hardwareDevice: 'v1',
@@ -313,10 +314,9 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0].id).to.be.a('string');
-
-			expect(createOne.args[0]?.[0]).to.deep.include({
+			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
+				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
@@ -368,8 +368,9 @@ describe('adoption code endpoints', () => {
 
 			expect(resSend.args[1]).to.deep.equal([
 				{
-					id: undefined,
+					id: 'generatedId',
 					ip: '1.1.1.1',
+					name: null,
 					version: null,
 					nodeVersion: null,
 					hardwareDevice: null,
@@ -387,10 +388,9 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0].id).to.be.a('string');
-
-			expect(createOne.args[0]?.[0]).to.deep.include({
+			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
+				name: null,
 				uuid: null,
 				version: null,
 				nodeVersion: null,
@@ -454,8 +454,9 @@ describe('adoption code endpoints', () => {
 
 			expect(resSend.args[1]).to.deep.equal([
 				{
-					id: undefined,
+					id: 'generatedId',
 					ip: '1.1.1.1',
+					name: 'probe-fr-paris-01',
 					version: '0.26.0',
 					nodeVersion: '18.17.0',
 					hardwareDevice: null,
@@ -473,10 +474,9 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0].id).to.be.a('string');
-
-			expect(createOne.args[0]?.[0]).to.deep.include({
+			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
+				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
@@ -626,6 +626,57 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 			expect(resSend.args[1]).to.deep.equal([ 'Code is not valid' ]);
 			expect(createOne.callCount).to.equal(0);
+		});
+
+		it('should assign correct default name', async () => {
+			endpoint(router, endpointContext);
+			let code = '';
+
+			// First adoption
+			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+				code = body.code;
+				return true;
+			}).reply(200, {
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				status: 'ready',
+				city: 'Paris',
+				country: 'FR',
+				latitude: 48.8534,
+				longitude: 2.3488,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+			});
+
+			await request('/send-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			readByQuery.resolves([{ name: 'probe-fr-paris-01' }]);
+
+			await request('/verify-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					code,
+				},
+			}, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(2);
+			expect(createOne.callCount).to.equal(1);
+
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(resSend.args[1]?.[0].name).to.deep.equal('probe-fr-paris-02');
+			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
 		});
 	});
 });

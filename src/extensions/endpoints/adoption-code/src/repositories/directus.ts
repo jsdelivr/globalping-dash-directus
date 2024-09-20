@@ -28,7 +28,7 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		lastSyncDate: new Date(),
 	});
 
-	return id;
+	return [ id, name ];
 };
 
 export const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
