@@ -103,7 +103,7 @@ export default defineEndpoint((router, context) => {
 
 			const code = generateRandomCode();
 
-			// Allowing user to adopt the probe with default values, even if further request to GP API fails.
+			// Allowing user to adopt the probe with default values, even if there was no response from GP API.
 			probesToAdopt.set(userId, {
 				ip,
 				name: null,

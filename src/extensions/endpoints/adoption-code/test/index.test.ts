@@ -659,7 +659,7 @@ describe('adoption code endpoints', () => {
 				},
 			}, res);
 
-			readByQuery.resolves([{ name: 'probe-fr-paris-01' }]);
+			readByQuery.resolves([{}]);
 
 			await request('/verify-code', {
 				accountability: {

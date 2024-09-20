@@ -51,9 +51,8 @@ const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: E
 	if (namePrefix) {
 		const currentProbes = await findAdoptedProbes({
 			userId: req.accountability.user,
-			name: {
-				_starts_with: namePrefix,
-			},
+			country: probe.country,
+			city: probe.city,
 		}, context);
 		name = `${namePrefix}-${(currentProbes.length + 1).toString().padStart(2, '0')}`;
 	}
