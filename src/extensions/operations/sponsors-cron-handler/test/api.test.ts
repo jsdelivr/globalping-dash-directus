@@ -121,7 +121,7 @@ describe('Sponsors cron handler', () => {
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			amount: 100000,
 			github_id: '2',
-			comment: '$10 recurring sponsorship',
+			comment: 'Recurring $10 sponsorship.',
 		}]);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.' ]);
@@ -378,7 +378,7 @@ describe('Sponsors cron handler', () => {
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			amount: 150000,
 			github_id: '2',
-			comment: '$15 recurring sponsorship',
+			comment: 'Recurring $15 sponsorship.',
 		}]);
 
 		expect(usersService.updateByQuery.callCount).to.equal(0);

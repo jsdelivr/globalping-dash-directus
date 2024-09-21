@@ -23,7 +23,7 @@ export const addCredits = async ({ github_id, amount }: AddItemData, { services,
 	const result = await creditsAdditionsService.createOne({
 		github_id,
 		amount: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
-		comment: `$${amount} sponsorship`,
+		comment: `One-time $${amount} sponsorship.`,
 	});
 	return result;
 };
