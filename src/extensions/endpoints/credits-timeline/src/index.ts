@@ -40,7 +40,7 @@ export default defineEndpoint((router, context) => {
 
 			const query = value.query as unknown as {offset: number, limit: number};
 
-			const changes = await database.unionAll([
+			const changes = await database.with('rows', database.unionAll([
 				database('gp_credits_additions')
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
 					.where('directus_users.id', value.accountability!.user!)
@@ -60,7 +60,11 @@ export default defineEndpoint((router, context) => {
 						'amount',
 						database.raw('NULL as comment'),
 					),
-			]).orderBy('date_created', 'desc').limit(query.limit).offset(query.offset) as CreditsChange[];
+			]))
+				.select('*')
+				.from('rows')
+				.orderBy([{ column: 'date_created', order: 'desc' }, { column: 'type', order: 'desc' }])
+				.limit(query.limit).offset(query.offset) as CreditsChange[];
 
 			res.send({ changes });
 		} catch (error: unknown) {
