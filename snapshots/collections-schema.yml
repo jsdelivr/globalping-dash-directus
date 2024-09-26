@@ -346,7 +346,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 21
+      sort: 22
       special: null
       translations: null
       validation: null
@@ -389,7 +389,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 6
+      sort: 7
       special: null
       translations: null
       validation: null
@@ -429,7 +429,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 7
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -467,7 +467,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 8
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -624,7 +624,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 12
+      sort: 13
       special: null
       translations: null
       validation: null
@@ -663,7 +663,7 @@ fields:
         label: Is Custom City
       readonly: false
       required: false
-      sort: 23
+      sort: 24
       special:
         - cast-boolean
       translations: null
@@ -704,7 +704,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 11
+      sort: 12
       special: null
       translations: null
       validation: null
@@ -742,7 +742,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 19
+      sort: 20
       special: null
       translations: null
       validation: null
@@ -780,7 +780,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 20
+      sort: 21
       special: null
       translations: null
       validation: null
@@ -858,7 +858,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 22
+      sort: 23
       special: null
       translations: null
       validation: null
@@ -896,7 +896,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 24
+      sort: 25
       special: null
       translations: null
       validation: null
@@ -934,7 +934,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 9
+      sort: 10
       special: null
       translations: null
       validation: null
@@ -972,7 +972,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 18
+      sort: 19
       special: null
       translations: null
       validation: null
@@ -1055,7 +1055,7 @@ fields:
         enableCreate: false
       readonly: false
       required: true
-      sort: 10
+      sort: 11
       special:
         - m2o
       translations: null
@@ -1094,7 +1094,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 14
+      sort: 15
       special: null
       translations: null
       validation: null
@@ -1132,7 +1132,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 15
+      sort: 16
       special: null
       translations: null
       validation: null
@@ -1170,7 +1170,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 17
+      sort: 18
       special: null
       translations: null
       validation: null
@@ -1208,7 +1208,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 16
+      sort: 17
       special: null
       translations: null
       validation: null
@@ -1246,7 +1246,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 25
+      sort: 26
       special:
         - cast-boolean
       translations: null
@@ -1285,7 +1285,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 26
+      sort: 27
       special:
         - cast-boolean
       translations: null
@@ -1325,7 +1325,7 @@ fields:
         lineNumber: false
       readonly: false
       required: false
-      sort: 13
+      sort: 14
       special:
         - cast-json
       translations:
@@ -1336,6 +1336,45 @@ fields:
       width: full
     schema:
       name: altIps
+      table: gp_adopted_probes
+      data_type: longtext
+      default_value: []
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_adopted_probes
+    field: systemTags
+    type: json
+    meta:
+      collection: gp_adopted_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: systemTags
+      group: null
+      hidden: false
+      interface: tags
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 6
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: systemTags
       table: gp_adopted_probes
       data_type: longtext
       default_value: []
@@ -3290,7 +3329,7 @@ fields:
     schema:
       name: app_id
       table: gp_tokens
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null

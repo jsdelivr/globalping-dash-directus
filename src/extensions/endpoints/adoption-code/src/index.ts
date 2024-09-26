@@ -22,6 +22,7 @@ type SendCodeResponse = {
 	nodeVersion: string;
 	hardwareDevice: string | null;
 	status: string;
+	systemTags: string[];
 	city: string;
 	state?: string;
 	country: string;
@@ -40,6 +41,7 @@ export type AdoptedProbe = {
 	nodeVersion: string | null;
 	hardwareDevice: string | null;
 	status: string;
+	systemTags: string[];
 	city: string | null;
 	state: string | null;
 	country: string | null;
@@ -113,6 +115,7 @@ export default defineEndpoint((router, context) => {
 				nodeVersion: null,
 				hardwareDevice: null,
 				status: 'offline',
+				systemTags: [],
 				city: null,
 				state: null,
 				country: null,
@@ -138,6 +141,7 @@ export default defineEndpoint((router, context) => {
 				nodeVersion: response.data.nodeVersion,
 				hardwareDevice: response.data.hardwareDevice || null,
 				status: response.data.status,
+				systemTags: response.data.systemTags,
 				city: response.data.city,
 				state: response.data.state || null,
 				country: response.data.country,
@@ -203,6 +207,7 @@ export default defineEndpoint((router, context) => {
 				nodeVersion: probe.nodeVersion,
 				hardwareDevice: probe.hardwareDevice,
 				status: probe.status,
+				systemTags: probe.systemTags,
 				city: probe.city,
 				state: probe.state,
 				country: probe.country,
