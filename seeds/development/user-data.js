@@ -183,7 +183,7 @@ export const seed = async (knex) => {
 
 	await knex('gp_credits_additions').insert([{
 		amount: 10000,
-		comment: '$50 sponsorship',
+		comment: 'One-time $50 sponsorship.',
 		consumed: 1,
 		date_created: '2024-01-05 11:46:22',
 		github_id: user.external_identifier,
@@ -192,7 +192,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 1000,
-		comment: '$5 recurring sponsorship',
+		comment: 'Recurring $5 sponsorship.',
 		consumed: 1,
 		date_created: '2024-02-05 11:46:22',
 		github_id: user.external_identifier,
@@ -201,7 +201,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80).',
 		consumed: 1,
 		date_created: '2024-03-05 11:46:22',
 		github_id: user.external_identifier,
@@ -210,7 +210,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80).',
 		consumed: 1,
 		date_created: '2024-03-06 11:46:22',
 		github_id: user.external_identifier,
@@ -219,7 +219,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80).',
 		consumed: 1,
 		date_created: '2024-03-07 11:46:22',
 		github_id: user.external_identifier,
@@ -228,7 +228,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 150,
-		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80)',
+		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80).',
 		consumed: 1,
 		date_created: '2024-03-08 11:46:22',
 		github_id: user.external_identifier,
@@ -236,7 +236,7 @@ export const seed = async (knex) => {
 		adopted_probe: probeId,
 	}, {
 		amount: 2000,
-		comment: '$10 sponsorship',
+		comment: 'One-time $10 sponsorship.',
 		consumed: 1,
 		date_created: '2024-04-05 11:46:22',
 		github_id: user.external_identifier,
@@ -245,7 +245,7 @@ export const seed = async (knex) => {
 	},
 	{
 		amount: 3000,
-		comment: '$15 recurring sponsorship',
+		comment: 'Recurring $15 sponsorship.',
 		consumed: 1,
 		date_created: '2024-05-05 11:46:22',
 		github_id: user.external_identifier,
