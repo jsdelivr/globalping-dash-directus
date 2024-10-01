@@ -1,5 +1,67 @@
+<template>
+	<div class="interface-tags">
+		<v-input
+			v-if="allowCustom"
+			:model-value="localValue"
+			:placeholder="placeholder || t('interfaces.tags.add_tags')"
+			:disabled="disabled"
+			:dir="direction"
+			@keydown="onInput"
+			@update:model-value="updateValue"
+		>
+			<template #append>
+				<v-icon
+					v-if="!disabled"
+					v-tooltip="value ? t('interfaces.system-token.regenerate') : t('interfaces.system-token.generate')"
+					:name="value ? 'refresh' : 'add'"
+					class="regenerate-icon"
+					clickable
+					:disabled="disabled || loading"
+					@click="generateToken"
+				/>
+			</template>
+		</v-input>
+		<div v-if="presetVals.length > 0 || customVals.length > 0" class="tags">
+			<span v-if="presetVals.length > 0" class="presets tag-container">
+				<v-chip
+					v-for="preset in presetVals"
+					:key="preset"
+					:class="['tag', { inactive: !selectedVals.includes(preset) }]"
+					:disabled="disabled"
+					:dir="direction"
+					small
+					label
+					clickable
+					@click="toggleTag(preset)"
+				>
+					{{ preset }}
+				</v-chip>
+			</span>
+			<span v-if="customVals.length > 0 && allowCustom" class="custom tag-container">
+				<v-icon v-if="presetVals.length > 0" class="custom-tags-delimiter" name="chevron_right"/>
+				<v-chip
+					v-for="(val, i) in customVals"
+					:key="val"
+					:disabled="disabled"
+					:dir="direction"
+					class="tag"
+					small
+					label
+					clickable
+					@click="removeTag(val)"
+				>
+					{{ val }}
+					{{ getProperties(val, i) }}
+				</v-chip>
+			</span>
+		</div>
+	</div>
+</template>
+
 <script setup lang="ts">
 	import { computed, ref, watch } from 'vue';
+	import { useI18n } from 'vue-i18n';
+	import { useApi } from '@directus/extensions-sdk';
 
 	const props = withDefaults(
 		defineProps<{
@@ -23,11 +85,29 @@
 
 	const emit = defineEmits([ 'input' ]);
 
+	const api = useApi();
+
+	const { t } = useI18n();
+
+	function updateValue (newValue: string) {
+		localValue.value = newValue;
+	}
+
 	const presetVals = computed<string[]>(() => {
 		if (props.presets !== undefined) { return processArray(props.presets); }
 
 		return [];
 	});
+
+	const getProperties = (val: string, index: number) => {
+		const properties: string[] = [];
+
+		if (val.length === 44) { properties.push('hashed'); }
+
+		if (customVals.value.length - 1 === index) { properties.push('latest'); }
+
+		return properties.length ? `(${properties.join(', ')})` : '';
+	};
 
 	const selectedValsLocal = ref<string[]>(Array.isArray(props.value) ? processArray(props.value) : []);
 
@@ -41,6 +121,23 @@
 			if (newVal === null) { selectedValsLocal.value = []; }
 		},
 	);
+
+	const localValue = ref<string>('');
+	const loading = ref(false);
+
+	async function generateToken () {
+		loading.value = true;
+
+		try {
+			const response = await api.post('/bytes', { size: 'lg' });
+			localValue.value = response.data.data;
+		} catch (err: any) {
+			console.error(err);
+			alert('Unexpected error occured, please contact the administrator');
+		} finally {
+			loading.value = false;
+		}
+	}
 
 	const selectedVals = computed<string[]>(() => {
 		let vals = processArray(selectedValsLocal.value);
@@ -81,10 +178,10 @@
 	}
 
 	function onInput (event: KeyboardEvent) {
-		if (event.target && (event.key === 'Enter' || event.key === ',')) {
+		if (event.target && (event.key === 'Enter' || event.key === ',') && localValue.value) {
 			event.preventDefault();
-			addTag((event.target as HTMLInputElement).value);
-			(event.target as HTMLInputElement).value = '';
+			addTag(localValue.value);
+			localValue.value = '';
 		}
 	}
 
@@ -115,54 +212,6 @@
 		emit('input', selectedVals.value);
 	}
 </script>
-
-<template>
-	<div class="interface-tags">
-		<v-input
-			v-if="allowCustom"
-			:placeholder="placeholder"
-			:disabled="disabled"
-			:dir="direction"
-			@keydown="onInput"
-		>
-			<template v-if="iconLeft" #prepend><v-icon :name="iconLeft"/></template>
-			<template #append><v-icon :name="iconRight"/></template>
-		</v-input>
-		<div v-if="presetVals.length > 0 || customVals.length > 0" class="tags">
-			<span v-if="presetVals.length > 0" class="presets tag-container">
-				<v-chip
-					v-for="preset in presetVals"
-					:key="preset"
-					:class="['tag', { inactive: !selectedVals.includes(preset) }]"
-					:disabled="disabled"
-					:dir="direction"
-					small
-					label
-					clickable
-					@click="toggleTag(preset)"
-				>
-					{{ preset }}
-				</v-chip>
-			</span>
-			<span v-if="customVals.length > 0 && allowCustom" class="custom tag-container">
-				<v-icon v-if="presetVals.length > 0" class="custom-tags-delimiter" name="chevron_right"/>
-				<v-chip
-					v-for="val in customVals"
-					:key="val"
-					:disabled="disabled"
-					:dir="direction"
-					class="tag"
-					small
-					label
-					clickable
-					@click="removeTag(val)"
-				>
-					{{ val }}
-				</v-chip>
-			</span>
-		</div>
-	</div>
-</template>
 
 <style lang="scss" scoped>
 .tags {
