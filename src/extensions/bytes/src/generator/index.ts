@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request, Response } from 'express';
 import Joi, { type ValidationError } from 'joi';
-import { generateToken } from '../utils/token.js';
+import { generateBytes } from '../utils/bytes.js';
 
 type DirectusRequest = Request & {
 	accountability?: {
@@ -31,9 +31,9 @@ export default defineEndpoint((router) => {
 		}
 
 		const bytesAmount = req.body.size === 'lg' ? 30 : 20;
-		const token = await generateToken(bytesAmount);
+		const byteString = await generateBytes(bytesAmount);
 		res.send({
-			data: token,
+			data: byteString,
 		});
 	});
 });

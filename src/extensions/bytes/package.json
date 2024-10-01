@@ -22,7 +22,7 @@
 			}
 		]
 	},
-	"description": "This extension provides an endpoint to generate and validate tokens",
+	"description": "This extension provides an endpoint to generate and validate bytes",
 	"icon": "extension",
 	"keywords": [
 		"directus",

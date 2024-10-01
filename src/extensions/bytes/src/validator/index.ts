@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { hashToken } from '../utils/token.js';
+import { hashBytes } from '../utils/bytes.js';
 
 type Token = {
     id: number;
@@ -22,7 +22,7 @@ const isHashed = (str: string) => str.length === 44;
 export default defineHook(({ filter }) => {
 	filter('gp_tokens.items.create', (payload) => {
 		const token = payload as Token;
-		const hashedToken = hashToken(token.value);
+		const hashedToken = hashBytes(token.value);
 		token.value = hashedToken;
 	});
 
@@ -33,13 +33,18 @@ export default defineHook(({ filter }) => {
 			return;
 		}
 
-		const hashedToken = hashToken(token.value);
+		const hashedToken = hashBytes(token.value);
 		token.value = hashedToken;
 	});
 
 	filter('gp_apps.items.create', (payload) => {
 		const app = payload as App;
-		app.secrets = app.secrets.map(secret => isHashed(secret) ? secret : hashToken(secret));
+
+		if (app.secrets === undefined) {
+			return;
+		}
+
+		app.secrets = app.secrets.map(secret => isHashed(secret) ? secret : hashBytes(secret));
 	});
 
 	filter('gp_apps.items.update', (payload) => {
@@ -49,6 +54,6 @@ export default defineHook(({ filter }) => {
 			return;
 		}
 
-		app.secrets = app.secrets.map(secret => isHashed(secret) ? secret : hashToken(secret));
+		app.secrets = app.secrets.map(secret => isHashed(secret) ? secret : hashBytes(secret));
 	});
 });
