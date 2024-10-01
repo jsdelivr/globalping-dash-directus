@@ -1445,7 +1445,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
-      sort: 10
+      sort: 11
       special:
         - user-created
       translations: null
@@ -1485,7 +1485,7 @@ fields:
       options: null
       readonly: true
       required: false
-      sort: 11
+      sort: 12
       special:
         - date-created
       translations: null
@@ -1525,7 +1525,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
-      sort: 12
+      sort: 13
       special:
         - user-updated
       translations: null
@@ -1565,7 +1565,7 @@ fields:
       options: null
       readonly: true
       required: false
-      sort: 13
+      sort: 14
       special:
         - date-updated
       translations: null
@@ -1627,44 +1627,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_apps
-    field: secret
-    type: string
-    meta:
-      collection: gp_apps
-      conditions: null
-      display: null
-      display_options: null
-      field: secret
-      group: null
-      hidden: false
-      interface: input
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 5
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: secret
-      table: gp_apps
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: gp_apps
     field: redirect_urls
     type: json
     meta:
@@ -1680,7 +1642,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 6
+      sort: 7
       special:
         - cast-json
       translations: null
@@ -1719,7 +1681,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 7
+      sort: 8
       special:
         - cast-json
       translations: null
@@ -1758,7 +1720,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 8
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -1796,7 +1758,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 9
+      sort: 10
       special: null
       translations: null
       validation: null
@@ -1887,6 +1849,45 @@ fields:
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_apps
+    field: secrets
+    type: json
+    meta:
+      collection: gp_apps
+      conditions: null
+      display: null
+      display_options: null
+      field: secrets
+      group: null
+      hidden: false
+      interface: tags
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 6
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: secrets
+      table: gp_apps
+      data_type: longtext
+      default_value: []
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
