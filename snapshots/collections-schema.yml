@@ -1445,7 +1445,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
-      sort: 11
+      sort: 10
       special:
         - user-created
       translations: null
@@ -1485,7 +1485,7 @@ fields:
       options: null
       readonly: true
       required: false
-      sort: 12
+      sort: 11
       special:
         - date-created
       translations: null
@@ -1525,7 +1525,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
-      sort: 13
+      sort: 12
       special:
         - user-updated
       translations: null
@@ -1565,7 +1565,7 @@ fields:
       options: null
       readonly: true
       required: false
-      sort: 14
+      sort: 13
       special:
         - date-updated
       translations: null
@@ -1642,7 +1642,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 7
+      sort: 6
       special:
         - cast-json
       translations: null
@@ -1681,7 +1681,7 @@ fields:
       options: null
       readonly: false
       required: true
-      sort: 8
+      sort: 7
       special:
         - cast-json
       translations: null
@@ -1720,7 +1720,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 9
+      sort: 8
       special: null
       translations: null
       validation: null
@@ -1758,7 +1758,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 10
+      sort: 9
       special: null
       translations: null
       validation: null
@@ -1867,12 +1867,12 @@ fields:
       field: secrets
       group: null
       hidden: false
-      interface: tags
+      interface: secrets
       note: null
       options: null
       readonly: false
       required: false
-      sort: 6
+      sort: 5
       special:
         - cast-json
       translations: null
