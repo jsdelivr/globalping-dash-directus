@@ -85,7 +85,7 @@
 		loading.value = true;
 
 		try {
-			const response = await api.post('/generator');
+			const response = await api.post('/bytes');
 			emitValue(response.data.data);
 			isNewTokenGenerated.value = true;
 		} catch (err: any) {
