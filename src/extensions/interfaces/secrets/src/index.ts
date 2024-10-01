@@ -2,11 +2,11 @@ import { defineInterface } from '@directus/extensions-sdk';
 import InterfaceComponent from './interface.vue';
 
 export default defineInterface({
-	id: 'custom',
-	name: 'Custom',
+	id: 'secrets',
+	name: 'Secrets',
 	icon: 'box',
-	description: 'This is my custom interface!',
+	description: 'Array of generated secret values.',
 	component: InterfaceComponent,
 	options: null,
-	types: [ 'string' ],
+	types: [ 'json' ],
 });

@@ -5,6 +5,7 @@ COPY package.json pnpm-*.yaml ./
 
 # Update via `npm run docker:ls:update`
 # START: EXTENSIONS-BUILD-BLOCK
+COPY src/extensions/bytes/package.json src/extensions/bytes/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
@@ -17,6 +18,7 @@ COPY src/extensions/hooks/sign-in/package.json src/extensions/hooks/sign-in/
 COPY src/extensions/hooks/sign-up/package.json src/extensions/hooks/sign-up/
 COPY src/extensions/interfaces/github-username/package.json src/extensions/interfaces/github-username/
 COPY src/extensions/interfaces/gp-tags/package.json src/extensions/interfaces/gp-tags/
+COPY src/extensions/interfaces/secrets/package.json src/extensions/interfaces/secrets/
 COPY src/extensions/interfaces/token/package.json src/extensions/interfaces/token/
 COPY src/extensions/lib/package.json src/extensions/lib/
 COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/probes-adapter/
@@ -25,7 +27,6 @@ COPY src/extensions/operations/adopted-probes-status-cron-handler/package.json s
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
-COPY src/extensions/bytes/package.json src/extensions/bytes/
 # END: EXTENSIONS-BUILD-BLOCK
 
 RUN pnpm install
@@ -36,6 +37,8 @@ FROM directus/directus:10.12.1
 
 # Update via `npm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
+COPY --from=builder /builder/src/extensions/bytes/dist/* /directus/extensions/bytes/dist/
+COPY --from=builder /builder/src/extensions/bytes/package.json /directus/extensions/bytes/
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/dist/* /directus/extensions/adoption-code/dist/
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/package.json /directus/extensions/adoption-code/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/dist/* /directus/extensions/credits-timeline/dist/
@@ -60,6 +63,8 @@ COPY --from=builder /builder/src/extensions/interfaces/github-username/dist/* /d
 COPY --from=builder /builder/src/extensions/interfaces/github-username/package.json /directus/extensions/github-username/
 COPY --from=builder /builder/src/extensions/interfaces/gp-tags/dist/* /directus/extensions/gp-tags/dist/
 COPY --from=builder /builder/src/extensions/interfaces/gp-tags/package.json /directus/extensions/gp-tags/
+COPY --from=builder /builder/src/extensions/interfaces/secrets/dist/* /directus/extensions/secrets/dist/
+COPY --from=builder /builder/src/extensions/interfaces/secrets/package.json /directus/extensions/secrets/
 COPY --from=builder /builder/src/extensions/interfaces/token/dist/* /directus/extensions/token/dist/
 COPY --from=builder /builder/src/extensions/interfaces/token/package.json /directus/extensions/token/
 COPY --from=builder /builder/src/extensions/modules/probes-adapter/dist/* /directus/extensions/probes-adapter/dist/
@@ -74,6 +79,4 @@ COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/package.json /directus/extensions/remove-banned-users-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/dist/* /directus/extensions/sponsors-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/package.json /directus/extensions/sponsors-cron-handler/
-COPY --from=builder /builder/src/extensions/bytes/dist/* /directus/extensions/bytes/dist/
-COPY --from=builder /builder/src/extensions/bytes/package.json /directus/extensions/bytes/
 # END: EXTENSIONS-RUN-BLOCK
