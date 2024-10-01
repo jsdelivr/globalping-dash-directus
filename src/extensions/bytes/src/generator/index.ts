@@ -1,23 +1,37 @@
-import { ForbiddenError } from '@directus/errors';
+import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request, Response } from 'express';
+import Joi, { type ValidationError } from 'joi';
 import { generateToken } from '../utils/token.js';
 
 type DirectusRequest = Request & {
 	accountability?: {
 		user: string | null;
-	}
+	};
+	body: {
+		size?: 'md' | 'lg';
+	};
 }
+
+const bytesSchema = Joi.object<DirectusRequest>({
+	accountability: Joi.object({
+		user: Joi.string().required(),
+	}).required().unknown(true),
+	body: Joi.object({
+		size: Joi.string().valid('md', 'lg').default('md'),
+	}).default(),
+}).unknown(true);
 
 export default defineEndpoint((router) => {
 	router.post('/', async (request: Request, res: Response, next) => {
-		const req = request as DirectusRequest;
+		const { value: req, error } = bytesSchema.validate(request) as { value: DirectusRequest, error?: ValidationError };
 
-		if (!req.accountability?.user) {
-			return next(new ForbiddenError());
+		if (error) {
+			return next(new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))());
 		}
 
-		const token = await generateToken();
+		const bytesAmount = req.body.size === 'lg' ? 30 : 20;
+		const token = await generateToken(bytesAmount);
 		res.send({
 			data: token,
 		});

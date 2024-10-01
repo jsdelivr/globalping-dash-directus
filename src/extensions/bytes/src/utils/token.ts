@@ -12,8 +12,8 @@ export const WrongTokenError = createError('INVALID_PAYLOAD_ERROR', 'Token value
 
 const tokens = new TTLCache<string, Buffer>({ ttl: 30 * 60 * 1000 });
 
-export const generateToken = async () => {
-	const bytes = await getRandomBytes(20);
+export const generateToken = async (bytesAmount: number) => {
+	const bytes = await getRandomBytes(bytesAmount);
 	const token = base32.encode(bytes).toLowerCase();
 	tokens.set(token, bytes);
 	return token;

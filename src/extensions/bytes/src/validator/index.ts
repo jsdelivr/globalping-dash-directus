@@ -13,6 +13,12 @@ type Token = {
     user_updated?: string;
 };
 
+type App = {
+	secrets: string[]
+}
+
+const isHashed = (str: string) => str.length === 44;
+
 export default defineHook(({ filter }) => {
 	filter('gp_tokens.items.create', (payload) => {
 		const token = payload as Token;
@@ -29,5 +35,20 @@ export default defineHook(({ filter }) => {
 
 		const hashedToken = hashToken(token.value);
 		token.value = hashedToken;
+	});
+
+	filter('gp_apps.items.create', (payload) => {
+		const app = payload as App;
+		app.secrets = app.secrets.map(secret => isHashed(secret) ? secret : hashToken(secret));
+	});
+
+	filter('gp_apps.items.update', (payload) => {
+		const app = payload as Partial<App>;
+
+		if (app.secrets === undefined) {
+			return;
+		}
+
+		app.secrets = app.secrets.map(secret => isHashed(secret) ? secret : hashToken(secret));
 	});
 });

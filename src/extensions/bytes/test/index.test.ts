@@ -1,4 +1,3 @@
-import { ForbiddenError } from '@directus/errors';
 import { expect } from 'chai';
 import type { Router } from 'express';
 import * as sinon from 'sinon';
@@ -60,6 +59,31 @@ describe('/generator', () => {
 
 			await request('/', req, res);
 			const token = resSend.args[0]?.[0].data;
+			expect(token.length).to.equal(32);
+
+			const payload = {
+				id: 1,
+				name: 'my-token',
+				value: token,
+			};
+			callbacks.filter['gp_tokens.items.create']?.(payload);
+
+			expect(payload.value).to.not.equal(token);
+		});
+
+		it('should generate big amount of bytes', async () => {
+			const req = {
+				accountability: {
+					user: 'requester-id',
+				},
+				body: {
+					size: 'lg',
+				},
+			};
+
+			await request('/', req, res);
+			const token = resSend.args[0]?.[0].data;
+			expect(token.length).to.equal(48);
 
 			const payload = {
 				id: 1,
@@ -79,7 +103,7 @@ describe('/generator', () => {
 			};
 
 			await request('/', req, res);
-			expect(next.args[0]?.[0]).to.deep.equal(new ForbiddenError());
+			expect(next.args[0]?.[0].message).to.deep.equal('"accountability.user" is not allowed to be empty');
 		});
 
 		it('should reject wrong token on create', async () => {

@@ -34,7 +34,7 @@ const tokenSchema = Joi.object({
 }).unknown(true);
 
 export const validateToken = (token: Partial<Token>) => {
-	const { value, error } = tokenSchema.validate(token) as { value: Partial<Token>, error: ValidationError };
+	const { value, error } = tokenSchema.validate(token) as { value: Partial<Token>, error?: ValidationError };
 
 	if (error) {
 		throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
