@@ -7,4 +7,4 @@ packages:
   - 'src/extensions/lib'
   - 'src/extensions/modules/*'
   - 'src/extensions/operations/*'
-  - 'src/extensions/token-value'
+  - 'src/extensions/bytes'

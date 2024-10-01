@@ -2,14 +2,14 @@ import { ForbiddenError } from '@directus/errors';
 import { expect } from 'chai';
 import type { Router } from 'express';
 import * as sinon from 'sinon';
-import endpoint from '../src/token-generator/index.js';
-import hook from '../src/token-validator/index.js';
+import endpoint from '../src/generator/index.js';
 import { WrongTokenError } from '../src/utils/token.js';
+import hook from '../src/validator/index.js';
 
 type FilterCallback = (payload: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;
 
-describe('/token-generator', () => {
+describe('/generator', () => {
 	describe('gp_tokens.items.create hook', () => {
 		const resSend = sinon.stub();
 		const next = sinon.stub();

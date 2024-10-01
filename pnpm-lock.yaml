@@ -947,7 +947,7 @@ importers:
         specifier: ^3.4.35
         version: 3.4.35(typescript@5.5.4)
 
-  src/extensions/token-value:
+  src/extensions/bytes:
     dependencies:
       '@directus/errors':
         specifier: ^0.3.3

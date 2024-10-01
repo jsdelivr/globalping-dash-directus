@@ -25,7 +25,7 @@ COPY src/extensions/operations/adopted-probes-status-cron-handler/package.json s
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
-COPY src/extensions/token-value/package.json src/extensions/token-value/
+COPY src/extensions/bytes/package.json src/extensions/bytes/
 # END: EXTENSIONS-BUILD-BLOCK
 
 RUN pnpm install
@@ -74,6 +74,6 @@ COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/package.json /directus/extensions/remove-banned-users-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/dist/* /directus/extensions/sponsors-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/package.json /directus/extensions/sponsors-cron-handler/
-COPY --from=builder /builder/src/extensions/token-value/dist/* /directus/extensions/token-value/dist/
-COPY --from=builder /builder/src/extensions/token-value/package.json /directus/extensions/token-value/
+COPY --from=builder /builder/src/extensions/bytes/dist/* /directus/extensions/bytes/dist/
+COPY --from=builder /builder/src/extensions/bytes/package.json /directus/extensions/bytes/
 # END: EXTENSIONS-RUN-BLOCK

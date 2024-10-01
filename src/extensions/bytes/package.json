@@ -1,5 +1,5 @@
 {
-	"name": "token-value",
+	"name": "bytes",
 	"version": "1.0.0",
 	"type": "module",
 	"directus:extension": {
@@ -12,13 +12,13 @@
 		"entries": [
 			{
 				"type": "endpoint",
-				"name": "token-generator",
-				"source": "src/token-generator/index.ts"
+				"name": "generator",
+				"source": "src/generator/index.ts"
 			},
 			{
 				"type": "hook",
-				"name": "token-validator",
-				"source": "src/token-validator/index.ts"
+				"name": "validator",
+				"source": "src/validator/index.ts"
 			}
 		]
 	},
