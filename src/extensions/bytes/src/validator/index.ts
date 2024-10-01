@@ -20,6 +20,8 @@ type App = {
 const isHashed = (str: string) => str.length === 44;
 
 export default defineHook(({ filter }) => {
+	// GP_TOKENS
+
 	filter('gp_tokens.items.create', (payload) => {
 		const token = payload as Token;
 		const hashedToken = hashBytes(token.value);
@@ -36,6 +38,8 @@ export default defineHook(({ filter }) => {
 		const hashedToken = hashBytes(token.value);
 		token.value = hashedToken;
 	});
+
+	// GP_APPS
 
 	filter('gp_apps.items.create', (payload) => {
 		const app = payload as App;
