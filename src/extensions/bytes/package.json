@@ -1,5 +1,5 @@
 {
-	"name": "token-value",
+	"name": "bytes",
 	"version": "1.0.0",
 	"type": "module",
 	"directus:extension": {
@@ -12,17 +12,17 @@
 		"entries": [
 			{
 				"type": "endpoint",
-				"name": "token-generator",
-				"source": "src/token-generator/index.ts"
+				"name": "bytes",
+				"source": "src/generator/index.ts"
 			},
 			{
 				"type": "hook",
-				"name": "token-validator",
-				"source": "src/token-validator/index.ts"
+				"name": "validator",
+				"source": "src/validator/index.ts"
 			}
 		]
 	},
-	"description": "This extension provides an endpoint to generate and validate tokens",
+	"description": "This extension provides an endpoint to generate and validate bytes",
 	"icon": "extension",
 	"keywords": [
 		"directus",
@@ -56,6 +56,7 @@
 	"dependencies": {
 		"@directus/errors": "^0.3.3",
 		"@isaacs/ttlcache": "^1.4.1",
-		"@scure/base": "^1.1.7"
+		"@scure/base": "^1.1.7",
+		"joi": "^17.13.3"
 	}
 }
