@@ -80,6 +80,12 @@
 		{
 			iconRight: 'local_offer',
 			allowCustom: true,
+			placeholder: 'Generate new value using arrow button, then press Enter...',
+			whitespace: undefined,
+			capitalization: undefined,
+			iconLeft: undefined,
+			presets: undefined,
+			direction: undefined,
 		},
 	);
 
