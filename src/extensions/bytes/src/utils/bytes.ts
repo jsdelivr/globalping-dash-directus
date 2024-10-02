@@ -10,12 +10,12 @@ const ValueEmptyError = createError('INVALID_PAYLOAD_ERROR', 'Bytestring value i
 
 export const WrongValueError = createError('INVALID_PAYLOAD_ERROR', 'Bytestring value is wrong, please regenerate the value', 400);
 
-const tokens = new TTLCache<string, Buffer>({ ttl: 30 * 60 * 1000 });
+const bytesMap = new TTLCache<string, Buffer>({ ttl: 30 * 60 * 1000 });
 
 export const generateBytes = async (bytesAmount: number) => {
 	const bytes = await getRandomBytes(bytesAmount);
 	const byteString = base32.encode(bytes).toLowerCase();
-	tokens.set(byteString, bytes);
+	bytesMap.set(byteString, bytes);
 	return byteString;
 };
 
@@ -24,14 +24,17 @@ export const hashBytes = (byteString?: string) => {
 		throw new ValueEmptyError();
 	}
 
-	const bytes = tokens.get(byteString);
+	const bytes = bytesMap.get(byteString);
 
 	if (!bytes) {
 		throw new WrongValueError();
 	}
 
-	const hash = createHash('sha256').update(bytes).digest('base64');
-	tokens.delete(byteString);
-
-	return hash;
+	return createHash('sha256').update(bytes).digest('base64');
 };
+
+export const deleteBytes = (byteString: string) => {
+	bytesMap.delete(byteString);
+};
+
+export const isHashed = (str: string) => str.length === 44;

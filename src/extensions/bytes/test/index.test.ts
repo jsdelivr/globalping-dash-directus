@@ -160,6 +160,40 @@ describe('/generator', () => {
 			expect(payload.secrets).to.not.deep.equal([ token ]);
 		});
 
+		it('should reject if there is a wrong value in array, then work when it is removed', async () => {
+			const req = {
+				accountability: {
+					user: 'requester-id',
+				},
+				body: {
+					size: 'lg',
+				},
+			};
+
+			await request('/', req, res);
+			const token = resSend.args[0]?.[0].data;
+			expect(token.length).to.equal(48);
+
+			let error = null;
+
+			try {
+				callbacks.filter['gp_apps.items.create']?.({
+					secrets: [ token, 'wrong-value' ],
+				});
+			} catch (err) {
+				error = err;
+			}
+
+			expect(error).to.deep.equal(new WrongValueError());
+
+			const payload = {
+				secrets: [ token ],
+			};
+			callbacks.filter['gp_apps.items.create']?.(payload);
+
+			expect(payload.secrets).to.not.deep.equal([ token ]);
+		});
+
 		it('should work fine with empty array value', async () => {
 			const payload = {
 				secrets: [],
