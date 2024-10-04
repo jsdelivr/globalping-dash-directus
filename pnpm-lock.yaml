@@ -79,7 +79,7 @@ importers:
         specifier: ~5.2.2
         version: 5.2.2
 
-  src/extensions/bytes:
+  src/extensions/bytes-value:
     dependencies:
       '@directus/errors':
         specifier: ^0.3.3
