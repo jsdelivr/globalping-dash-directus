@@ -5,7 +5,7 @@ COPY package.json pnpm-*.yaml ./
 
 # Update via `npm run docker:ls:update`
 # START: EXTENSIONS-BUILD-BLOCK
-COPY src/extensions/bytes/package.json src/extensions/bytes/
+COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
@@ -37,8 +37,8 @@ FROM directus/directus:10.12.1
 
 # Update via `npm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
-COPY --from=builder /builder/src/extensions/bytes/dist/* /directus/extensions/bytes/dist/
-COPY --from=builder /builder/src/extensions/bytes/package.json /directus/extensions/bytes/
+COPY --from=builder /builder/src/extensions/bytes-value/dist/* /directus/extensions/bytes-value/dist/
+COPY --from=builder /builder/src/extensions/bytes-value/package.json /directus/extensions/bytes-value/
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/dist/* /directus/extensions/adoption-code/dist/
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/package.json /directus/extensions/adoption-code/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/dist/* /directus/extensions/credits-timeline/dist/
