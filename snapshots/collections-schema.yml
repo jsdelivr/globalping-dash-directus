@@ -19,7 +19,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 3
+      sort: 4
       sort_field: null
       translations:
         - language: en-US
@@ -52,6 +52,30 @@ collections:
       versioning: false
     schema:
       name: gp_apps
+  - collection: gp_apps_approvals
+    meta:
+      accountability: all
+      archive_app_filter: true
+      archive_field: null
+      archive_value: null
+      collapse: open
+      collection: gp_apps_approvals
+      color: null
+      display_template: null
+      group: null
+      hidden: false
+      icon: null
+      item_duplication_fields: null
+      note: null
+      preview_url: null
+      singleton: false
+      sort: 2
+      sort_field: null
+      translations: null
+      unarchive_value: null
+      versioning: false
+    schema:
+      name: gp_apps_approvals
   - collection: gp_credits
     meta:
       accountability: all
@@ -69,7 +93,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 5
+      sort: 6
       sort_field: null
       translations:
         - language: en-US
@@ -95,7 +119,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 6
+      sort: 7
       sort_field: null
       translations:
         - language: en-US
@@ -121,7 +145,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 7
+      sort: 8
       sort_field: null
       translations:
         - language: en-US
@@ -147,7 +171,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 4
+      sort: 5
       sort_field: null
       translations:
         - language: en-US
@@ -173,7 +197,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 2
+      sort: 3
       sort_field: null
       translations:
         - language: en-US
@@ -199,7 +223,7 @@ collections:
       note: null
       preview_url: null
       singleton: false
-      sort: 8
+      sort: 9
       sort_field: null
       translations: null
       unarchive_value: null
@@ -1882,6 +1906,246 @@ fields:
     schema:
       name: secrets
       table: gp_apps
+      data_type: longtext
+      default_value: []
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_apps_approvals
+    field: id
+    type: uuid
+    meta:
+      collection: gp_apps_approvals
+      conditions: null
+      display: null
+      display_options: null
+      field: id
+      group: null
+      hidden: true
+      interface: input
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 1
+      special:
+        - uuid
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: id
+      table: gp_apps_approvals
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: true
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_apps_approvals
+    field: date_created
+    type: timestamp
+    meta:
+      collection: gp_apps_approvals
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_created
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 2
+      special:
+        - date-created
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_created
+      table: gp_apps_approvals
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_apps_approvals
+    field: date_updated
+    type: timestamp
+    meta:
+      collection: gp_apps_approvals
+      conditions: null
+      display: datetime
+      display_options:
+        relative: true
+      field: date_updated
+      group: null
+      hidden: true
+      interface: datetime
+      note: null
+      options: null
+      readonly: true
+      required: false
+      sort: 3
+      special:
+        - date-updated
+      translations: null
+      validation: null
+      validation_message: null
+      width: half
+    schema:
+      name: date_updated
+      table: gp_apps_approvals
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_apps_approvals
+    field: user
+    type: string
+    meta:
+      collection: gp_apps_approvals
+      conditions: null
+      display: null
+      display_options: null
+      field: user
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        enableCreate: false
+        template: '{{github_username}}'
+      readonly: false
+      required: true
+      sort: 4
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: user
+      table: gp_apps_approvals
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_users
+      foreign_key_column: id
+  - collection: gp_apps_approvals
+    field: app
+    type: string
+    meta:
+      collection: gp_apps_approvals
+      conditions: null
+      display: null
+      display_options: null
+      field: app
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        enableCreate: false
+        template: '{{name}}'
+      readonly: false
+      required: true
+      sort: 5
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: app
+      table: gp_apps_approvals
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: gp_apps
+      foreign_key_column: id
+  - collection: gp_apps_approvals
+    field: scopes
+    type: json
+    meta:
+      collection: gp_apps_approvals
+      conditions: null
+      display: null
+      display_options: null
+      field: scopes
+      group: null
+      hidden: false
+      interface: tags
+      note: null
+      options: null
+      readonly: false
+      required: true
+      sort: 6
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: scopes
+      table: gp_apps_approvals
       data_type: longtext
       default_value: []
       max_length: 4294967295
@@ -3879,6 +4143,48 @@ relations:
       constraint_name: gp_apps_user_updated_foreign
       on_update: RESTRICT
       on_delete: RESTRICT
+  - collection: gp_apps_approvals
+    field: user
+    related_collection: directus_users
+    meta:
+      junction_field: null
+      many_collection: gp_apps_approvals
+      many_field: user
+      one_allowed_collections: null
+      one_collection: directus_users
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_apps_approvals
+      column: user
+      foreign_key_table: directus_users
+      foreign_key_column: id
+      constraint_name: gp_apps_approvals_user_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
+  - collection: gp_apps_approvals
+    field: app
+    related_collection: gp_apps
+    meta:
+      junction_field: null
+      many_collection: gp_apps_approvals
+      many_field: app
+      one_allowed_collections: null
+      one_collection: gp_apps
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_apps_approvals
+      column: app
+      foreign_key_table: gp_apps
+      foreign_key_column: id
+      constraint_name: gp_apps_approvals_app_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
   - collection: gp_credits
     field: user_id
     related_collection: directus_users
