@@ -8,6 +8,7 @@ COPY package.json pnpm-*.yaml ./
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
+COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
@@ -43,6 +44,8 @@ COPY --from=builder /builder/src/extensions/endpoints/adoption-code/dist/* /dire
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/package.json /directus/extensions/adoption-code/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/dist/* /directus/extensions/credits-timeline/dist/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/package.json /directus/extensions/credits-timeline/
+COPY --from=builder /builder/src/extensions/endpoints/redirect/dist/* /directus/extensions/redirect/dist/
+COPY --from=builder /builder/src/extensions/endpoints/redirect/package.json /directus/extensions/redirect/
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/dist/* /directus/extensions/sync-github-data/dist/
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/package.json /directus/extensions/sync-github-data/
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus/extensions/adopted-probe/dist/
