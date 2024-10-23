@@ -35,6 +35,9 @@ describe('Sign-up hook', () => {
 	const usersService = {
 		updateOne: sinon.stub(),
 	};
+	const notificationsService = {
+		createOne: sinon.stub(),
+	};
 	const context = {
 		services: {
 			ItemsService: sinon.stub().callsFake((collection) => {
@@ -51,6 +54,9 @@ describe('Sign-up hook', () => {
 			}),
 			UsersService: sinon.stub().callsFake(() => {
 				return usersService;
+			}),
+			NotificationsService: sinon.stub().callsFake(() => {
+				return notificationsService;
 			}),
 		},
 		env: {
@@ -135,7 +141,7 @@ describe('Sign-up hook', () => {
 		});
 	});
 
-	it('filter should fulfill organizations, credits', async () => {
+	it('action should fulfill organizations, credits', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
@@ -171,7 +177,7 @@ describe('Sign-up hook', () => {
 		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1' }]);
 	});
 
-	it('filter should fulfill user type', async () => {
+	it('action should fulfill user type', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
@@ -192,5 +198,32 @@ describe('Sign-up hook', () => {
 		} });
 
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { user_type: 'sponsor' }]);
+	});
+
+	it('action send welcome notification', async () => {
+		nock('https://api.github.com')
+			.get(`/user/1834071/orgs`)
+			.reply(200, [{ login: 'jsdelivr' }]);
+
+		sponsorsService.readByQuery.resolves([{
+			github_id: 1834071,
+		}]);
+
+		hook(events, context);
+
+		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
+			provider: 'github',
+			external_identifier: 1834071,
+			first_name: 'Dmitriy Akulov',
+			last_name: 'jimaek',
+			github_username: null,
+			github_organizations: null,
+		} });
+
+		expect(notificationsService.createOne.args[0]).to.deep.equal([{
+			recipient: '1-1-1-1',
+			subject: 'Welcome to Globalping 🎉',
+			message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
+		}]);
 	});
 });

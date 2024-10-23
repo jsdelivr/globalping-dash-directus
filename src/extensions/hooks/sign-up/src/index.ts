@@ -37,13 +37,12 @@ export default defineHook(({ filter, action }, context) => {
 		const userId = payload.key;
 		const user = payload.payload as User;
 
-		if (user.provider === 'github') {
-			await Promise.all([
-				fulfillOrganizations(userId, user, context),
-				assignCredits(userId, user, context),
-				fulfillUserType(userId, user, context),
-			]);
-		}
+		await Promise.all([
+			user.provider === 'github' && fulfillOrganizations(userId, user, context),
+			user.provider === 'github' && assignCredits(userId, user, context),
+			user.provider === 'github' && fulfillUserType(userId, user, context),
+			sendWelcomeNotification(userId, user, context),
+		]);
 	});
 });
 
@@ -143,4 +142,20 @@ const fulfillUserType = async (userId: string, user: User, context: HookExtensio
 	if (sponsors.length > 0) {
 		await updateUser(userId, { user_type: 'sponsor' }, context);
 	}
+};
+
+const sendWelcomeNotification = async (userId: string, _user: User, context: HookExtensionContext) => {
+	const { services, database, getSchema } = context;
+	const { NotificationsService } = services;
+
+	const notificationsService = new NotificationsService({
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	await notificationsService.createOne({
+		recipient: userId,
+		subject: 'Welcome to Globalping 🎉',
+		message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
+	});
 };
