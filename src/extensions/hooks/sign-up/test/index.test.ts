@@ -223,7 +223,7 @@ describe('Sign-up hook', () => {
 		expect(notificationsService.createOne.args[0]).to.deep.equal([{
 			recipient: '1-1-1-1',
 			subject: 'Welcome to Globalping 🎉',
-			message: 'As a registered user, you have 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
+			message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
 		}]);
 	});
 });
