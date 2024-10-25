@@ -34,7 +34,7 @@ RUN pnpm install
 COPY src src
 RUN pnpm -r build
 
-FROM directus/directus:10.12.1
+FROM directus/directus:11.1.1
 
 # Update via `npm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
