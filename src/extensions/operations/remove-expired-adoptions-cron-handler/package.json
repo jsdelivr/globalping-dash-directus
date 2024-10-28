@@ -1,0 +1,41 @@
+{
+	"name": "remove-expired-adoptions-cron-handler",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-operation"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "operation",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"source": {
+			"app": "src/app.ts",
+			"api": "src/api.ts"
+		},
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^1.0.9",
+		"@directus/extensions-sdk": "12.1.0",
+		"@directus/types": "^11.2.0",
+		"@types/node": "^22.8.0",
+		"bluebird": "^3.7.2",
+		"typescript": "^5.6.3",
+		"vue": "^3.5.12"
+	}
+}

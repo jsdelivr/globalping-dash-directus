@@ -1,7 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 
 export type AdoptedProbe = {
-	id: number;
+	id: string;
 	status: string;
 	onlineTimesToday: number;
 }

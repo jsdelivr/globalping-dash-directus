@@ -27,6 +27,7 @@ COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json 
 COPY src/extensions/operations/adopted-probes-status-cron-handler/package.json src/extensions/operations/adopted-probes-status-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
+COPY src/extensions/operations/remove-expired-adoptions-cron-handler/package.json src/extensions/operations/remove-expired-adoptions-cron-handler/
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
 # END: EXTENSIONS-BUILD-BLOCK
 
@@ -80,6 +81,8 @@ COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/dist/*
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/package.json /directus/extensions/gh-webhook-handler/
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/remove-banned-users-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/package.json /directus/extensions/remove-banned-users-cron-handler/
+COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-cron-handler/dist/* /directus/extensions/remove-expired-adoptions-cron-handler/dist/
+COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-cron-handler/package.json /directus/extensions/remove-expired-adoptions-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/dist/* /directus/extensions/sponsors-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/package.json /directus/extensions/sponsors-cron-handler/
 # END: EXTENSIONS-RUN-BLOCK
