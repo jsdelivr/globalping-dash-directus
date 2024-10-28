@@ -3,11 +3,11 @@ import type { OperationContext } from '@directus/extensions';
 import { getOfflineProbes, getExistingNotifications, notifyProbes, deleteProbes } from '../repositories/directus.js';
 import type { AdoptedProbe } from '../types.js';
 
-const NOTIFY_AFTER_DAYS = 2;
-const REMOVE_AFTER_DAYS = 30;
+export const NOTIFY_AFTER_DAYS = 2;
+export const REMOVE_AFTER_DAYS = 30;
 
 
-export const removeExpiredProbes = async (context: OperationContext) => {
+export const removeExpiredProbes = async (context: OperationContext): Promise<{ notifiedIds: string[], removedIds: string[] }> => {
 	const offlineAdoptedProbes = await getOfflineProbes(context);
 	const probesToNotify = [];
 	const probesToDelete = [];
@@ -45,5 +45,5 @@ const isExpired = (date: Date, numberOfDays: number) => {
 	const timeDifference = currentDate.getTime() - date.getTime();
 	const daysDifference = timeDifference / (24 * 3600 * 1000);
 
-	return daysDifference > numberOfDays;
+	return daysDifference >= numberOfDays;
 };
