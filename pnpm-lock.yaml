@@ -1009,9 +1009,33 @@ importers:
       '@directus/types':
         specifier: ^11.2.0
         version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.12(typescript@5.6.3))
+      '@types/chai':
+        specifier: ^4.3.17
+        version: 4.3.17
+      '@types/mocha':
+        specifier: ^10.0.7
+        version: 10.0.7
       '@types/node':
         specifier: ^22.8.0
         version: 22.8.0
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
+      chai:
+        specifier: ^5.1.1
+        version: 5.1.1
+      mocha:
+        specifier: ^10.7.0
+        version: 10.7.0
+      relative-day-utc:
+        specifier: ^1.3.0
+        version: 1.3.0
+      sinon:
+        specifier: ^18.0.0
+        version: 18.0.0
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.8.0)(typescript@5.6.3)
       typescript:
         specifier: ^5.6.3
         version: 5.6.3
@@ -4019,6 +4043,9 @@ packages:
   regexp.prototype.flags@1.5.2:
     resolution: {integrity: sha512-NcDiDkTLuPR+++OCKB0nWafEmhg/Da8aUPLPMQbK+bxKKCm1/S5he+AqYa4PlMCVBalb4/yxIRub6qkEx5yJbw==}
     engines: {node: '>= 0.4'}
+
+  relative-day-utc@1.3.0:
+    resolution: {integrity: sha512-EyxLsTrfTBiS5n4mWbHKuxelu7uRIynBhAICEj2BuXwMFKndHPLTBYp/X4KY9yVlPo80fzBg6Anlbjk9JRI7kg==}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -8820,6 +8847,8 @@ snapshots:
       es-errors: 1.3.0
       set-function-name: 2.0.2
 
+  relative-day-utc@1.3.0: {}
+
   require-directory@2.1.1: {}
 
   requireindex@1.2.0: {}
@@ -9183,6 +9212,24 @@ snapshots:
       diff: 4.0.2
       make-error: 1.3.6
       typescript: 5.5.4
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+
+  ts-node@10.9.2(@types/node@22.8.0)(typescript@5.6.3):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.11
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 22.8.0
+      acorn: 8.12.1
+      acorn-walk: 8.3.3
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.6.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 

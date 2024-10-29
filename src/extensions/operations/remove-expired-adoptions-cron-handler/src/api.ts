@@ -7,6 +7,6 @@ export default defineOperationApi({
 	handler: async (_operationData, context) => {
 		const { removedIds, notifiedIds } = await removeExpiredProbes(context as OperationContext);
 
-		return `Removed probes with ids: ${removedIds.toString() || '[]'}. Notified probes with ids:  ${notifiedIds.toString() || '[]'}.`;
+		return `Removed probes with ids: ${removedIds.toString() || '[]'}. Notified probes with ids: ${notifiedIds.toString() || '[]'}.`;
 	},
 });

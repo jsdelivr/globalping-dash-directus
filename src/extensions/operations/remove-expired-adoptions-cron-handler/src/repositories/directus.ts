@@ -4,6 +4,8 @@ import Bluebird from 'bluebird';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
+const NOTIFICATION_SUBJECT = 'Your probe went offline';
+
 export const getOfflineProbes = async ({ services, database, getSchema }: OperationContext): Promise<AdoptedProbe[]> => {
 	const { ItemsService } = services;
 
@@ -17,6 +19,8 @@ export const getOfflineProbes = async ({ services, database, getSchema }: Operat
 			status: 'offline',
 		},
 	});
+
+	console.log(rows);
 
 	return rows.map(row => ({
 		...row,
@@ -38,7 +42,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 
 	const result = await notificationsService.readByQuery({
 		filter: {
-			subject: 'Your probe went offline',
+			subject: NOTIFICATION_SUBJECT,
 			collection: 'gp_adopted_probes',
 			item: {
 				_in: probes.map(probe => probe.id),
@@ -46,6 +50,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 			timestamp: { _gte: '$NOW(-30 day)' },
 		},
 	});
+	console.log(result);
 	return result;
 };
 
@@ -67,7 +72,7 @@ export const notifyProbes = async (probes: AdoptedProbe[], { services, database,
 
 		await notificationsService.createOne({
 			recipient: probe.userId,
-			subject: 'Your probe went offline',
+			subject: NOTIFICATION_SUBJECT,
 			message: `Your ${probe.name ? `probe [**${probe.name}**]` : '[probe]'}(${env.DASHBOARD_URL}/probes/${probe.id}) with IP address **${probe.ip}** has been offline for more than 24 hours. If it does not come back online before **${dateOfExpiration.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}** it will be removed from your account.`,
 			item: probe.id,
 			collection: 'gp_adopted_probes',
