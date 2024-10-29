@@ -6,9 +6,6 @@ import operationApi from '../src/api.js';
 describe('Remove expired adoptions CRON handler', () => {
 	const database = {};
 	const getSchema = () => Promise.resolve({});
-	const env = {
-		DASHBOARD_URL: 'http://localhost:13010',
-	};
 
 	const itemsReadByQuery = sinon.stub();
 	const notificationsReadByQuery = sinon.stub();
@@ -18,7 +15,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		ItemsService: sinon.stub().returns({ readByQuery: itemsReadByQuery, deleteByQuery }),
 		NotificationsService: sinon.stub().returns({ createOne, readByQuery: notificationsReadByQuery }),
 	};
-	const context = { database, env, getSchema, services } as any;
+	const context = { database, getSchema, services } as any;
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
@@ -37,25 +34,42 @@ describe('Remove expired adoptions CRON handler', () => {
 			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
+		}, {
+			id: 'probeId2',
+			ip: '1.1.1.1',
+			name: 'probe-gb-london-01',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
 		}]);
 
 		itemsReadByQuery.onSecondCall().resolves([]);
 
 		const result = await operationApi.handler({}, context);
 
-		expect(createOne.callCount).to.equal(1);
+		expect(createOne.callCount).to.equal(2);
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
 				recipient: 'userId1',
 				subject: 'Your probe went offline',
-				message: 'Your [probe](http://localhost:13010/probes/probeId1) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23** it will be removed from your account.',
+				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 				item: 'probeId1',
 				collection: 'gp_adopted_probes',
 			},
 		]);
 
-		expect(result).to.deep.equal('Removed probes with ids: []. Notified probes with ids: probeId1.');
+		expect(createOne.args[1]).to.deep.equal([
+			{
+				recipient: 'userId1',
+				subject: 'Your probe went offline',
+				message: 'Your probe [**probe-gb-london-01**](/probes/probeId2) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
+				item: 'probeId2',
+				collection: 'gp_adopted_probes',
+			},
+		]);
+
+		expect(result).to.deep.equal('Removed probes with ids: []. Notified probes with ids: probeId1,probeId2.');
 	});
 
 	it('should not notify user if probe is offline for <2 days', async () => {
@@ -123,7 +137,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			{
 				recipient: 'userId1',
 				subject: 'Your probe went offline',
-				message: 'Your [probe](http://localhost:13010/probes/probeId1) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23** it will be removed from your account.',
+				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 				item: 'probeId1',
 				collection: 'gp_adopted_probes',
 			},
