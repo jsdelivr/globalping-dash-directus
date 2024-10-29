@@ -1,7 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 
 type AdoptedProbe = {
-	id: number;
+	id: string;
 	name: string | null;
 	ip: string;
 	onlineTimesToday: number;
