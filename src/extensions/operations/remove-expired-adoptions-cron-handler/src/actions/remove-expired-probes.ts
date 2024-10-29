@@ -32,8 +32,7 @@ const excludeAlreadyNotifiedProbes = async (probes: AdoptedProbe[], context: Ope
 	const notifiedProbeIds = existingNotifications
 		.filter((notification) => {
 			const probe = probesMap.get(notification.item as string);
-			const alreadyNotified = probe && new Date(notification.timestamp) > probe?.lastSyncDate;
-			console.log(alreadyNotified);
+			const alreadyNotified = probe && new Date(notification.timestamp) > probe.lastSyncDate;
 			return alreadyNotified;
 		})
 		.map(notification => notification.item);

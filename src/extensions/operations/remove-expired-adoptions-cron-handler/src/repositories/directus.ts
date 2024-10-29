@@ -20,8 +20,6 @@ export const getOfflineProbes = async ({ services, database, getSchema }: Operat
 		},
 	});
 
-	console.log(rows);
-
 	return rows.map(row => ({
 		...row,
 		lastSyncDate: new Date(row.lastSyncDate),
@@ -47,10 +45,9 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 			item: {
 				_in: probes.map(probe => probe.id),
 			},
-			timestamp: { _gte: '$NOW(-30 day)' },
+			timestamp: { _gte: `$NOW(-${REMOVE_AFTER_DAYS} day)` },
 		},
 	});
-	console.log(result);
 	return result;
 };
 
