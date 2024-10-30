@@ -1,9 +1,9 @@
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
-const USER_ROLE_NAME = 'User';
+const USER_POLICY_NAME = 'User';
 
-async function getUserRoleId () {
-	const URL = `${DIRECTUS_URL}/roles?filter[name][_eq]=${USER_ROLE_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
+async function getUserPolicyId () {
+	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
@@ -14,7 +14,7 @@ async function getUserRoleId () {
 	return response.data[0].id;
 }
 
-async function createPermissions (roleId) {
+async function createPermissions (policyId) {
 	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
@@ -22,7 +22,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'credits',
 				action: 'read',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					_and: [
 						{
@@ -55,8 +55,8 @@ async function createPermissions (roleId) {
 }
 
 export async function up () {
-	const roleId = await getUserRoleId();
-	await createPermissions(roleId);
+	const policyId = await getUserPolicyId();
+	await createPermissions(policyId);
 	console.log(`Read credits permissions added`);
 }
 
