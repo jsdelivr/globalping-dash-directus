@@ -9,7 +9,9 @@
 	"ignorePatterns": [
 		"**/dist",
 		"/extensions",
-		"**/shims.d.ts"
+		"**/shims.d.ts",
+		"test/e2e/user.json",
+		"test/e2e/auth.json"
 	],
 	"rules": {
 		"n/no-missing-import": [

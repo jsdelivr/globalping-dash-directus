@@ -11,3 +11,5 @@ config/local*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/test/e2e/user.json
+/test/e2e/auth.json

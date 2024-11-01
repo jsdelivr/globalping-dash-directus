@@ -46,6 +46,12 @@ cp ./operations/gh-webhook-handler/wallaby.js "$original_dir/"
 cd "$original_dir"
 ```
 
+E2E generate inside test:
+`await page.pause()` + `npx playwright test test/e2e/tokens.spec.ts --headed`
+
+E2E generate from scratch:
+npx playwright codegen --load-storage=test/e2e/auth.json --save-storage=test/e2e/auth.json localhost:18055
+
 ## Prepare dev host
 
 ```bash
