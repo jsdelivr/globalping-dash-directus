@@ -7,3 +7,7 @@ config/local*
 .env*
 !.env*.example
 .vscode/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

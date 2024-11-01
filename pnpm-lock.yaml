@@ -27,6 +27,9 @@ importers:
       '@martin-kolarik/eslint-config':
         specifier: ^7.3.2
         version: 7.3.2(eslint-plugin-chai-expect@3.1.0(eslint@8.57.0))(eslint-plugin-jsonc@2.16.0(eslint@8.57.0))(eslint-plugin-n@16.6.2(eslint@8.57.0))(eslint-plugin-prefer-let@3.0.1)(eslint-plugin-promise@6.6.0(eslint@8.57.0))(eslint@8.57.0)
+      '@playwright/test':
+        specifier: ^1.48.2
+        version: 1.48.2
       '@types/bluebird':
         specifier: ^3.5.42
         version: 3.5.42
@@ -42,6 +45,9 @@ importers:
       '@types/mocha':
         specifier: ^10.0.7
         version: 10.0.7
+      '@types/node':
+        specifier: ^22.8.6
+        version: 22.8.6
       '@typescript-eslint/eslint-plugin':
         specifier: ^7.18.0
         version: 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.2.2))(eslint@8.57.0)(typescript@5.2.2)
@@ -734,7 +740,7 @@ importers:
     devDependencies:
       '@directus/extensions-sdk':
         specifier: 12.0.2
-        version: 12.0.2(@types/node@22.8.0)(@unhead/vue@1.9.16(vue@3.5.10(typescript@5.6.2)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(sass@1.77.8)(terser@5.31.3)(typescript@5.6.2)
+        version: 12.0.2(@types/node@22.8.6)(@unhead/vue@1.9.16(vue@3.5.10(typescript@5.6.2)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(sass@1.77.8)(terser@5.31.3)(typescript@5.6.2)
       sass:
         specifier: ^1.77.8
         version: 1.77.8
@@ -1746,6 +1752,11 @@ packages:
   '@octokit/types@13.5.0':
     resolution: {integrity: sha512-HdqWTf5Z3qwDVlzCrP8UJquMwunpDiMPt5er+QjGzL4hqr/vBVY/MauQgS1xWxCDT1oMx1EULyqxncdCY/NVSQ==}
 
+  '@playwright/test@1.48.2':
+    resolution: {integrity: sha512-54w1xCWfXuax7dz4W2M9uw0gDyh+ti/0K/MxcCUxChFh37kkdxPdfZDw5QBbuPUJHr1CiHJ1hXgSs+GgeQc5Zw==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@rollup/plugin-commonjs@25.0.8':
     resolution: {integrity: sha512-ZEZWTK5n6Qde0to4vS9Mr5x/0UZoqCxPVR9KRUjU4kA2sO7GEUn1fop0DAwpO6z0Nw/kJON9bDmSxdWxO/TT1A==}
     engines: {node: '>=14.0.0'}
@@ -1934,6 +1945,9 @@ packages:
 
   '@types/node@22.8.0':
     resolution: {integrity: sha512-84rafSBHC/z1i1E3p0cJwKA+CfYDNSXX9WSZBRopjIzLET8oNt6ht2tei4C7izwDeEiLLfdeSVBv1egOH916hg==}
+
+  '@types/node@22.8.6':
+    resolution: {integrity: sha512-tosuJYKrIqjQIlVCM4PEGxOmyg3FCPa/fViuJChnGeEIhjA46oy8FMVoF9su1/v8PNs2a8Q0iFNyOx0uOF91nw==}
 
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
@@ -3006,6 +3020,11 @@ packages:
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -3769,6 +3788,16 @@ packages:
         optional: true
       typescript:
         optional: true
+
+  playwright-core@1.48.2:
+    resolution: {integrity: sha512-sjjw+qrLFlriJo64du+EK0kJgZzoQPsabGF4lBvsid+3CNIZIYLgnMj9V6JY5VhM2Peh20DJWIVpVljLLnlawA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.48.2:
+    resolution: {integrity: sha512-NjYvYgp4BPmiwfe31j4gHLa3J7bD2WiBz8Lk2RoSsmX38SVIARZ18VYjxLjAcDsAhA+F4iSEXTSGgjua0rrlgQ==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==}
@@ -4998,7 +5027,7 @@ snapshots:
       - typescript
       - vue-router
 
-  '@directus/extensions-sdk@12.0.2(@types/node@22.8.0)(@unhead/vue@1.9.16(vue@3.5.10(typescript@5.6.2)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(sass@1.77.8)(terser@5.31.3)(typescript@5.6.2)':
+  '@directus/extensions-sdk@12.0.2(@types/node@22.8.6)(@unhead/vue@1.9.16(vue@3.5.10(typescript@5.6.2)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(sass@1.77.8)(terser@5.31.3)(typescript@5.6.2)':
     dependencies:
       '@directus/composables': 11.1.0(vue@3.4.27(typescript@5.6.2))
       '@directus/constants': 12.0.0
@@ -5012,7 +5041,7 @@ snapshots:
       '@rollup/plugin-replace': 5.0.7(rollup@3.29.4)
       '@rollup/plugin-terser': 0.4.4(rollup@3.29.4)
       '@rollup/plugin-virtual': 3.0.2(rollup@3.29.4)
-      '@vitejs/plugin-vue': 4.6.2(vite@4.5.2(@types/node@22.8.0)(sass@1.77.8)(terser@5.31.3))(vue@3.4.27(typescript@5.6.2))
+      '@vitejs/plugin-vue': 4.6.2(vite@4.5.2(@types/node@22.8.6)(sass@1.77.8)(terser@5.31.3))(vue@3.4.27(typescript@5.6.2))
       chalk: 5.3.0
       commander: 10.0.1
       esbuild: 0.17.19
@@ -5023,7 +5052,7 @@ snapshots:
       rollup: 3.29.4
       rollup-plugin-esbuild: 5.0.0(esbuild@0.17.19)(rollup@3.29.4)
       rollup-plugin-styles: 4.0.0(rollup@3.29.4)
-      vite: 4.5.2(@types/node@22.8.0)(sass@1.77.8)(terser@5.31.3)
+      vite: 4.5.2(@types/node@22.8.6)(sass@1.77.8)(terser@5.31.3)
       vue: 3.4.27(typescript@5.6.2)
     transitivePeerDependencies:
       - '@types/node'
@@ -6102,6 +6131,10 @@ snapshots:
     dependencies:
       '@octokit/openapi-types': 22.2.0
 
+  '@playwright/test@1.48.2':
+    dependencies:
+      playwright: 1.48.2
+
   '@rollup/plugin-commonjs@25.0.8(rollup@3.29.4)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@3.29.4)
@@ -6213,7 +6246,7 @@ snapshots:
   '@types/body-parser@1.19.5':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 22.8.0
+      '@types/node': 22.8.6
 
   '@types/chai@4.3.17': {}
 
@@ -6221,7 +6254,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 22.8.0
+      '@types/node': 22.8.6
 
   '@types/cssnano@5.1.0(postcss@8.4.47)':
     dependencies:
@@ -6238,7 +6271,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.5':
     dependencies:
-      '@types/node': 22.8.0
+      '@types/node': 22.8.6
       '@types/qs': 6.9.15
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.4
@@ -6285,6 +6318,10 @@ snapshots:
     dependencies:
       undici-types: 6.19.8
 
+  '@types/node@22.8.6':
+    dependencies:
+      undici-types: 6.19.8
+
   '@types/parse-json@4.0.2': {}
 
   '@types/qs@6.9.15': {}
@@ -6300,12 +6337,12 @@ snapshots:
   '@types/send@0.17.4':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 22.8.0
+      '@types/node': 22.8.6
 
   '@types/serve-static@1.15.7':
     dependencies:
       '@types/http-errors': 2.0.4
-      '@types/node': 22.8.0
+      '@types/node': 22.8.6
       '@types/send': 0.17.4
 
   '@types/sinon@17.0.3':
@@ -6474,15 +6511,15 @@ snapshots:
       vite: 4.5.2(@types/node@22.1.0)(sass@1.77.8)(terser@5.31.3)
       vue: 3.4.27(typescript@5.5.4)
 
-  '@vitejs/plugin-vue@4.6.2(vite@4.5.2(@types/node@22.8.0)(sass@1.77.8)(terser@5.31.3))(vue@3.4.27(typescript@5.6.2))':
-    dependencies:
-      vite: 4.5.2(@types/node@22.8.0)(sass@1.77.8)(terser@5.31.3)
-      vue: 3.4.27(typescript@5.6.2)
-
   '@vitejs/plugin-vue@4.6.2(vite@4.5.2(@types/node@22.8.0)(sass@1.77.8)(terser@5.31.3))(vue@3.4.27(typescript@5.6.3))':
     dependencies:
       vite: 4.5.2(@types/node@22.8.0)(sass@1.77.8)(terser@5.31.3)
       vue: 3.4.27(typescript@5.6.3)
+
+  '@vitejs/plugin-vue@4.6.2(vite@4.5.2(@types/node@22.8.6)(sass@1.77.8)(terser@5.31.3))(vue@3.4.27(typescript@5.6.2))':
+    dependencies:
+      vite: 4.5.2(@types/node@22.8.6)(sass@1.77.8)(terser@5.31.3)
+      vue: 3.4.27(typescript@5.6.2)
 
   '@vue/compiler-core@3.4.27':
     dependencies:
@@ -7785,6 +7822,9 @@ snapshots:
 
   fs.realpath@1.0.0: {}
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -8580,6 +8620,14 @@ snapshots:
       vue-demi: 0.14.10(vue@3.5.12(typescript@5.6.3))
     optionalDependencies:
       typescript: 5.6.3
+
+  playwright-core@1.48.2: {}
+
+  playwright@1.48.2:
+    dependencies:
+      playwright-core: 1.48.2
+    optionalDependencies:
+      fsevents: 2.3.2
 
   possible-typed-array-names@1.0.0: {}
 
@@ -9377,6 +9425,17 @@ snapshots:
       rollup: 3.29.4
     optionalDependencies:
       '@types/node': 22.8.0
+      fsevents: 2.3.3
+      sass: 1.77.8
+      terser: 5.31.3
+
+  vite@4.5.2(@types/node@22.8.6)(sass@1.77.8)(terser@5.31.3):
+    dependencies:
+      esbuild: 0.18.20
+      postcss: 8.4.47
+      rollup: 3.29.4
+    optionalDependencies:
+      '@types/node': 22.8.6
       fsevents: 2.3.3
       sass: 1.77.8
       terser: 5.31.3
