@@ -12,10 +12,9 @@ test('Generate new token', async ({ page }) => {
 	await page.getByLabel('Generate token').click();
 
 	// Validate new token value is shown
-	await expect(page.locator('[data-pc-section="rowexpansioncell"] code').first()).not.toBeEmpty();
-
+	await expect(page.locator('#e2e_token-value code').first()).not.toBeEmpty();
 	await page.getByRole('cell').getByLabel('Close').click();
-	await expect(page.locator('[data-pc-section="rowexpansioncell"] code')).toHaveCount(0);
+	await expect(page.locator('#e2e_token-value code')).toHaveCount(0);
 
 	// Validate new token data is in table
 	await expect(page.locator('tbody tr').first()).toContainText('e2e-test-token-1');
