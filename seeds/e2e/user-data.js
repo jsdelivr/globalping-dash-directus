@@ -66,28 +66,6 @@ export const seed = async (knex) => {
 		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
 	}]);
 
-	await knex('gp_tokens').insert([{
-		name: 'gp-token-1',
-		value: '/bSluuDrAPX9zIiZZ/hxEKARwOg+e//EdJgCFpmApbg=', // token: hf2fnprguymlgliirdk7qv23664c2xcr
-		date_created: '2024-02-22 10:55:21',
-		date_last_used: null,
-		date_updated: null,
-		expire: null,
-		origins: '[]',
-		user_created: user.id,
-		user_updated: null,
-	}, {
-		name: 'gp-token-2',
-		value: '8YZ2pZoGQxfOeEGvUUkagX1yizZckq3weL+IN0chvU0=', // token: vumzijbzihrskmc2hj34yw22batpibmt
-		date_created: '2024-02-22 10:57:21',
-		date_last_used: '2024-02-21',
-		date_updated: '2024-02-22 10:49:45',
-		expire: '2027-02-01',
-		origins: JSON.stringify([ 'https://www.jsdelivr.com', 'https://www.jsdelivr.com:10000' ]),
-		user_created: user.id,
-		user_updated: user.id,
-	}]);
-
 	const probeId = randomUUID();
 	await knex('gp_adopted_probes').insert([{
 		id: probeId,
