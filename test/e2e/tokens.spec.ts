@@ -22,7 +22,7 @@ const addToken = async () => {
 };
 
 test('View token', async ({ page }) => {
-	await page.goto('http://localhost:13010/tokens');
+	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Validate token data is in table
@@ -31,7 +31,7 @@ test('View token', async ({ page }) => {
 });
 
 test('Generate new token', async ({ page }) => {
-	await page.goto('http://localhost:13010/tokens');
+	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Generating a token
@@ -52,7 +52,7 @@ test('Generate new token', async ({ page }) => {
 });
 
 test('Regenerate token', async ({ page }) => {
-	await page.goto('http://localhost:13010/tokens');
+	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Regenerate token
@@ -67,7 +67,7 @@ test('Regenerate token', async ({ page }) => {
 });
 
 test('Delete token', async ({ page }) => {
-	await page.goto('http://localhost:13010/tokens');
+	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Delete token
