@@ -1,10 +1,20 @@
+import { execa, execaNode } from 'execa';
 import { test as setup } from '@playwright/test';
 import { client as sql } from './utils/client.ts';
 
-setup('docker', async () => {
+setup('docker compose start', async () => {
+	await Promise.all([ (async () => {
+		await execa`docker compose start`;
+		await execa`./scripts/wait-for.sh -t 10 http://localhost:18055/admin/login`;
+	})(), (async () => {
+		console.log(1);
+		await execaNode({ env: { PORT: '13010' } })`test/e2e/globalping-dash/.output/server/index.mjs`;
+		console.log(2);
+		await execa`./scripts/wait-for.sh -t 10 http://localhost:13010`;
+	})() ]);
 });
 
-setup('db', async () => {
+setup('init db', async () => {
 	await sql.seed.run();
 });
 

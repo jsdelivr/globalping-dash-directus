@@ -35,6 +35,8 @@ do
     fi
 done
 
+./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
+
 token=$(get_token)
 
 perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
@@ -54,7 +56,7 @@ if [ "$is_dev_mode" = true ]; then
 
 	docker compose up -d globalping-dash-directus
 
-	./scripts/wait-for.sh -t 60 $DIRECTUS_URL/admin/login
+	./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
 
 	npm run seed
 else
@@ -62,7 +64,7 @@ else
 
 	confirm "Login using github. Re-login as admin and give github user admin rights. Then set that value to the container env vars: \nAUTH_DISABLE_DEFAULT=true \nThen restart the container."
 
-	confirm "Login using github. Generate a static access token for your user and save it the local .env file as ADMIN_ACCESS_TOKEN"
+	confirm "Login using github. Generate a static access token for your user and save it to the local .env file as ADMIN_ACCESS_TOKEN"
 fi
 
 echo "Finished"

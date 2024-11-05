@@ -31,6 +31,7 @@ export default defineConfig({
 	projects: [
 		// Setup project
 		{ name: 'setup', testMatch: /.*\.setup\.ts/ },
+		{ name: 'teardown', testMatch: /.*\.teardown\.ts/ },
 
 		{
 			name: 'chromium',
@@ -39,6 +40,7 @@ export default defineConfig({
 				storageState: 'test/e2e/user.json',
 			},
 			dependencies: [ 'setup' ],
+			teardown: 'teardown',
 		},
 
 		// {

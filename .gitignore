@@ -13,3 +13,4 @@ config/local*
 /playwright/.cache/
 /test/e2e/user.json
 /test/e2e/auth.json
+/test/e2e/globalping-dash/

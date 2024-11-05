@@ -7,8 +7,7 @@ export const client: Knex = knex(knexfile[env] || {});
 
 export const getUser = async () => {
 	return client('directus_users')
-		.join('directus_roles', 'directus_users.role', 'directus_roles.id')
-		.where({ 'directus_roles.name': 'User' })
+		.where({ email: 'user@example.com' })
 		.select('directus_users.id', 'directus_users.external_identifier', 'directus_users.github_username')
 		.first();
 };

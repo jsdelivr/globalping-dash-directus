@@ -11,7 +11,9 @@
 		"/extensions",
 		"**/shims.d.ts",
 		"test/e2e/user.json",
-		"test/e2e/auth.json"
+		"test/e2e/auth.json",
+		"test/e2e/globalping-dash",
+		"test-results"
 	],
 	"rules": {
 		"n/no-missing-import": [
