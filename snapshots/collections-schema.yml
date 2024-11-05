@@ -2552,7 +2552,7 @@ fields:
       foreign_key_column: id
   - collection: gp_credits_additions
     field: adopted_probe
-    type: uuid
+    type: string
     meta:
       collection: gp_credits_additions
       conditions: null
@@ -2571,7 +2571,6 @@ fields:
       sort: 7
       special:
         - m2o
-        - uuid
       translations: null
       validation: null
       validation_message: null
