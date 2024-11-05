@@ -1,4 +1,5 @@
-import { execa, execaNode } from 'execa';
+import pm2 from 'pm2';
+import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
 import { client as sql } from './utils/client.ts';
 
@@ -7,9 +8,14 @@ setup('docker compose start', async () => {
 		await execa`docker compose start`;
 		await execa`./scripts/wait-for.sh -t 10 http://localhost:18055/admin/login`;
 	})(), (async () => {
-		console.log(1);
-		await execaNode({ env: { PORT: '13010' } })`test/e2e/globalping-dash/.output/server/index.mjs`;
-		console.log(2);
+		await new Promise<void>((resolve, reject) => pm2.start({
+			name: 'dashboard',
+			script: 'test/e2e/globalping-dash/.output/server/index.mjs',
+			env: {
+				PORT: '13010',
+			},
+		}, (err) => { err ? reject(err) : resolve(); }));
+
 		await execa`./scripts/wait-for.sh -t 10 http://localhost:13010`;
 	})() ]);
 });

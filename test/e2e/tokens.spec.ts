@@ -3,7 +3,6 @@ import { getUser, client as sql } from './utils/client.ts';
 
 test.beforeEach(async () => {
 	await sql('gp_tokens').delete();
-	await addToken();
 });
 
 const addToken = async () => {
@@ -22,6 +21,7 @@ const addToken = async () => {
 };
 
 test('View token', async ({ page }) => {
+	await addToken();
 	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
@@ -52,6 +52,7 @@ test('Generate new token', async ({ page }) => {
 });
 
 test('Regenerate token', async ({ page }) => {
+	await addToken();
 	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
@@ -67,6 +68,7 @@ test('Regenerate token', async ({ page }) => {
 });
 
 test('Delete token', async ({ page }) => {
+	await addToken();
 	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
