@@ -50,7 +50,7 @@
 		"build:in-sequence": "grep -E 'AS builder-[0-9]+' Dockerfile | awk -F 'AS ' '{print $2}' | xargs -r -P 1 -I STAGE docker build --target STAGE .",
 		"test:e2e": "npm run test:e2e:build:directus && npm run test:e2e:build:dash && npm run test:e2e:run",
 		"test:e2e:build:directus": "docker compose up --build -d && npm run init:dev && docker compose stop",
-		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash && git add . && git reset --hard && git pull --force && npm install && SERVER_URL=http://localhost:13010 DIRECTUS_URL=http://localhost:18055 pnpm build; cd ../../../;",
+		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash; pnpm install --ignore-workspace && SERVER_URL=http://localhost:13010 DIRECTUS_URL=http://localhost:18055 pnpm build; cd ../../../;",
 		"test:e2e:run": "pnpm exec playwright test"
 	},
 	"repository": {
