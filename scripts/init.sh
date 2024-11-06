@@ -48,7 +48,10 @@ npm run migrate
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
 if [ "$is_dev_mode" = true ]; then
-	echo "user_role_id=$user_role_id"
+	if [[ "$DIRECTUS_URL" != *"localhost"* || "$DB_HOST" != "localhost" ]]; then
+    	echo "Either DIRECTUS_URL or DB_HOST is not 'localhost'."
+        exit 1
+	fi
 
 	perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env.development
 
