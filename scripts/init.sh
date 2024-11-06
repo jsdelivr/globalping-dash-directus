@@ -68,7 +68,7 @@ if [ "$is_dev_mode" = true ]; then
 
 	docker compose --project-name "$project_name" stop directus
 
-	docker compose --project-name "$project_name" start directus
+	docker compose --project-name "$project_name" up -d directus
 
 	./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
 
