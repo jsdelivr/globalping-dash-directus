@@ -26,13 +26,24 @@ function get_token {
 }
 
 is_dev_mode=false
+project_name=dash-directus
 
-for arg in "$@"
-do
-    if [ "$arg" = "--dev" ]; then
-        is_dev_mode=true
-        break
-    fi
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -p|--project-name)
+      project_name="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --dev)
+      is_dev_mode=true
+      shift # past argument
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+  esac
 done
 
 ./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
@@ -55,9 +66,9 @@ if [ "$is_dev_mode" = true ]; then
 
 	perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env.development
 
-	docker compose stop globalping-dash-directus
+	docker compose --project-name "$project_name" stop directus
 
-	docker compose up -d globalping-dash-directus
+	docker compose --project-name "$project_name" start directus
 
 	./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
 

@@ -49,7 +49,7 @@
 		"prepare": "husky install || echo 'Failed to install husky'; rm -f .eslintcache",
 		"build:in-sequence": "grep -E 'AS builder-[0-9]+' Dockerfile | awk -F 'AS ' '{print $2}' | xargs -r -P 1 -I STAGE docker build --target STAGE .",
 		"test:e2e": "npm run test:e2e:build:directus && npm run test:e2e:build:dash && npm run test:e2e:run",
-		"test:e2e:build:directus": "docker compose up --build -d && npm run init:dev && docker compose stop",
+		"test:e2e:build:directus": "docker compose -p e2e-dash-directus up --build -d && ./scripts/init.sh --dev -p e2e-dash-directus && docker compose -p e2e-dash-directus stop",
 		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash; pnpm install --ignore-workspace && SERVER_URL=http://localhost:13010 DIRECTUS_URL=http://localhost:18055 pnpm build; cd ../../../;",
 		"test:e2e:run": "pnpm exec playwright test"
 	},

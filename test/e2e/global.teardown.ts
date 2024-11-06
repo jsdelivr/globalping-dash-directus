@@ -1,8 +1,18 @@
 import pm2 from 'pm2';
 import { execa } from 'execa';
 import { test as teardown } from '@playwright/test';
+import { promisify } from 'util';
 
-teardown('docker compose stop', async () => {
-	await execa`docker compose stop`;
-	await new Promise<void>((resolve, reject) => pm2.delete('dashboard', err => err ? reject(err) : resolve()));
+const del = promisify(pm2.delete.bind(pm2));
+const list = promisify(pm2.list.bind(pm2));
+
+teardown('stop services', async () => {
+	await execa`docker compose -p e2e-dash-directus stop`;
+
+	const services = await list();
+
+	if (services.find(service => service.name === 'e2e-dash')) {
+		console.log('Removing FE service...');
+		await del('e2e-dash');
+	}
 });

@@ -4,11 +4,14 @@ import { test as setup } from '@playwright/test';
 import { client as sql } from './utils/client.ts';
 import { promisify } from 'util';
 
+const start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
+
 const waitFor = (url: string) => execa`./scripts/wait-for.sh -t 10 ${url}`;
 
 const getIsRunning = async (url: string) => {
 	try {
 		await execa`./scripts/wait-for.sh -t 2 ${url}`;
+		console.log(`Service at ${url} is already running.`);
 		return true;
 	} catch (err) {
 		if (err.stderr === 'Operation timed out') {
@@ -21,15 +24,13 @@ const getIsRunning = async (url: string) => {
 	}
 };
 
-const start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
-
-setup('docker compose start', async () => {
+setup('start services', async () => {
 	await Promise.all([ (async () => {
 		const isDirectusRunning = await getIsRunning('http://localhost:18055');
 
 		if (isDirectusRunning) { return; }
 
-		await execa`docker compose start`;
+		await execa`docker compose -p e2e-dash-directus start`;
 		await waitFor('http://localhost:18055');
 	})(), (async () => {
 		const isDashRunning = await getIsRunning('http://localhost:13010');
@@ -37,7 +38,7 @@ setup('docker compose start', async () => {
 		if (isDashRunning) { return; }
 
 		await start({
-			name: 'dashboard',
+			name: 'e2e-dash',
 			script: 'test/e2e/globalping-dash/.output/server/index.mjs',
 			env: {
 				PORT: '13010',

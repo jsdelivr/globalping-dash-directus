@@ -1,3 +1,4 @@
+name: dash-directus
 version: '3'
 services:
   mariadb:
@@ -16,7 +17,7 @@ services:
       interval: 3s
       timeout: 2s
       retries: 10
-  globalping-dash-directus:
+  directus:
     depends_on:
       mariadb:
         condition: service_healthy
