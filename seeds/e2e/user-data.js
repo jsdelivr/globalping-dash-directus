@@ -8,8 +8,7 @@ import { randomUUID } from 'node:crypto';
 export const seed = async (knex) => {
 	const getUser = async () => {
 		return knex('directus_users')
-			.join('directus_roles', 'directus_users.role', 'directus_roles.id')
-			.where({ 'directus_roles.name': 'User' })
+			.where({ email: 'e2e@example.com' })
 			.select('directus_users.id', 'directus_users.external_identifier', 'directus_users.github_username')
 			.first();
 	};
@@ -20,21 +19,21 @@ export const seed = async (knex) => {
 		const userRole = await knex('directus_roles').where({ name: 'User' }).select('id').first();
 
 		await knex('directus_users').insert([{
-			id: 'b2193f5b-4a8b-4513-8e5a-1559478bebde',
-			first_name: 'Dmitriy',
-			last_name: 'Akulov',
-			email: 'user@example.com',
+			id: '940d4737-394d-428f-b9d5-d98bf1f2a066',
+			first_name: 'John',
+			last_name: 'Doe',
+			email: 'e2e@example.com',
 			password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
 			role: userRole.id,
 			provider: 'default',
-			external_identifier: '1834071',
+			external_identifier: '1111111',
 			email_notifications: 1,
-			github_organizations: JSON.stringify([ 'MaxCDN', 'appfleetcloud', 'jsdelivr', 'nice-registry', 'polyfills' ]),
-			github_username: 'jimaek',
+			github_organizations: JSON.stringify([ 'Scrubs' ]),
+			github_username: 'johndoe',
 			user_type: 'member',
 		}]);
 
-		console.log('Mock user created. email: user@example.com password: user');
+		console.log('Mock user created. email: e2e@example.com password: user');
 
 		user = await getUser();
 	}

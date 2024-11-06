@@ -57,7 +57,7 @@ setup('authenticate', async ({ request }) => {
 	const authFile = 'test/e2e/user.json';
 	await request.post('http://localhost:18055/auth/login', {
 		data: {
-			email: 'user@example.com',
+			email: 'e2e@example.com',
 			password: 'user',
 			mode: 'session',
 		},
