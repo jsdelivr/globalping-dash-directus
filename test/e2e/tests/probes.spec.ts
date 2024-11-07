@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '@playwright/test';
-import { getUser, client as sql } from './utils/client.ts';
+import { getUser, client as sql } from '../utils/client.ts';
 
 const addData = async () => {
 	const user = await getUser();
