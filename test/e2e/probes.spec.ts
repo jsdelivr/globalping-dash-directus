@@ -57,8 +57,6 @@ const addData = async () => {
 		version: '0.28.0',
 		hardwareDevice: null,
 	}]);
-
-	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
 };
 
 test.beforeEach(async () => {
@@ -74,4 +72,12 @@ test('Probes page', async ({ page }) => {
 
 test('Probe adoption', async ({ page }) => {
 	await page.goto('/probes');
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await page.getByLabel('Next step').click();
+	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
+	await page.getByLabel('Send adoption code').click();
+	await page.locator('input:nth-child(3)').fill('111111');
+	await page.getByLabel('Verify the code').click();
+	await page.getByLabel('Finish').click();
+	await expect(page.getByText('probe-it-naples-01').first()).toBeVisible();
 });
