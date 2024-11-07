@@ -61,15 +61,6 @@ const addCredits = async () => {
 		user_updated: null,
 		adopted_probe: null,
 	},
-	{
-		amount: 1000,
-		comment: 'Recurring $5 sponsorship.',
-		consumed: 1,
-		date_created: relativeDayUtc(-20),
-		github_id: user.external_identifier,
-		user_updated: null,
-		adopted_probe: null,
-	},
 	...[ -20, -50, -80, -110, -140, -170, -200 ].map(daysAgo => ({
 		amount: 1000,
 		comment: 'Recurring $5 sponsorship.',
@@ -96,10 +87,10 @@ test.beforeEach(async () => {
 	await addCredits();
 });
 
-test('Credits page shows credits stats', async ({ page }) => {
+test('Credits page', async ({ page }) => {
 	await page.goto('/credits');
-	await expect(page.locator('#e2e_total-credits')).toHaveText('11,300');
-	await expect(page.locator('#e2e_generated-credits')).toHaveText('12,300');
+	await expect(page.locator('#e2e_total-credits')).toHaveText('10,300');
+	await expect(page.locator('#e2e_generated-credits')).toHaveText('11,300');
 	await expect(page.locator('#e2e_spent-credits')).toHaveText('7,000');
 	await expect(page.locator('#e2e_estimated-credits')).toHaveText('150');
 });

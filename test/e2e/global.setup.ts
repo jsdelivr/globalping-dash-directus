@@ -24,7 +24,7 @@ const getIsRunning = async (url: string) => {
 	}
 };
 
-setup('start services', async () => {
+setup('Start services', async () => {
 	await Promise.all([ (async () => {
 		const isDirectusRunning = await getIsRunning('http://localhost:18055');
 
@@ -49,11 +49,11 @@ setup('start services', async () => {
 	})() ]);
 });
 
-setup('init db', async () => {
+setup('Init db', async () => {
 	await sql.seed.run();
 });
 
-setup('authenticate', async ({ request }) => {
+setup('Authenticate', async ({ request }) => {
 	const authFile = 'test/e2e/user.json';
 	await request.post('http://localhost:18055/auth/login', {
 		data: {

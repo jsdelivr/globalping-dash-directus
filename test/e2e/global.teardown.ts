@@ -6,7 +6,7 @@ import { promisify } from 'util';
 const del = promisify(pm2.delete.bind(pm2));
 const list = promisify(pm2.list.bind(pm2));
 
-teardown('stop services', async () => {
+teardown('Stop services', async () => {
 	await execa`docker compose -p e2e-dash-directus stop`;
 
 	const services = await list();

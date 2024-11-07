@@ -20,7 +20,7 @@ const addToken = async () => {
 	});
 };
 
-test('View token', async ({ page }) => {
+test('Tokens page', async ({ page }) => {
 	await addToken();
 	await page.goto('/tokens');
 	await expect(page.getByRole('heading')).toHaveText('Tokens');
@@ -32,7 +32,6 @@ test('View token', async ({ page }) => {
 
 test('Generate new token', async ({ page }) => {
 	await page.goto('/tokens');
-	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Generating a token
 	await page.getByLabel('Generate new token').click();
@@ -54,7 +53,6 @@ test('Generate new token', async ({ page }) => {
 test('Regenerate token', async ({ page }) => {
 	await addToken();
 	await page.goto('/tokens');
-	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Regenerate token
 	await page.getByLabel('Options').click();
@@ -70,7 +68,6 @@ test('Regenerate token', async ({ page }) => {
 test('Delete token', async ({ page }) => {
 	await addToken();
 	await page.goto('/tokens');
-	await expect(page.getByRole('heading')).toHaveText('Tokens');
 
 	// Delete token
 	await page.getByLabel('Options').click();
