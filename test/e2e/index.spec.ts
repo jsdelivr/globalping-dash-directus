@@ -93,7 +93,7 @@ test.beforeEach(async () => {
 test('Index page', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByLabel('Profile')).toHaveText('johndoe');
-	await expect(page.getByRole('heading')).toHaveText('Overview');
+	await expect(page.locator('h1')).toHaveText('Overview');
 	await expect(page.locator('#e2e_probes-count')).toHaveText('2');
 	await expect(page.locator('#e2e_online-probes-count')).toHaveText('1');
 	await expect(page.locator('#e2e_offline-probes-count')).toHaveText('1');

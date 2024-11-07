@@ -23,7 +23,7 @@ const addToken = async () => {
 test('Tokens page', async ({ page }) => {
 	await addToken();
 	await page.goto('/tokens');
-	await expect(page.getByRole('heading')).toHaveText('Tokens');
+	await expect(page.locator('h1')).toHaveText('Tokens');
 
 	// Validate token data is in table
 	await expect(page.locator('tbody tr').first()).toContainText('e2e-test-existing-token');
