@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getUser, client as sql } from '../utils/client.ts';
+import { getUser, client as sql } from '../client.ts';
 
 test.beforeEach(async () => {
 	await sql('gp_tokens').delete();

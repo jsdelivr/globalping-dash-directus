@@ -1,7 +1,7 @@
 import pm2, { StartOptions } from 'pm2';
 import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
-import { client as sql } from './utils/client.ts';
+import { client as sql } from './client.ts';
 import { promisify } from 'util';
 
 const start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;

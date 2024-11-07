@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import relativeDayUtc from 'relative-day-utc';
 import { test, expect } from '@playwright/test';
-import { getUser, client as sql } from '../utils/client.ts';
+import { getUser, client as sql } from '../client.ts';
 
 const addCredits = async () => {
 	const user = await getUser();

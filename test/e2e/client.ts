@@ -1,5 +1,5 @@
 import knex, { Knex } from 'knex';
-import knexfile from '../../../knexfile.js';
+import knexfile from '../../knexfile.js';
 
 const env = process.env['NODE_ENV'] || 'e2e';
 
