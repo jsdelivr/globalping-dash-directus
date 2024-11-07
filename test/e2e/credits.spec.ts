@@ -15,13 +15,13 @@ const addCredits = async () => {
 		countryOfCustomCity: null,
 		date_created: '2024-02-22 11:02:12',
 		date_updated: null,
-		ip: '2001:1000:130f:2000:3000:09c0:876a:130c',
-		altIps: JSON.stringify([ '131.255.7.26', '2001:1000:130f:2000:3000:09c0:876a:130d' ]),
+		ip: '1.1.1.1',
+		altIps: JSON.stringify([]),
 		isCustomCity: 0,
 		lastSyncDate: new Date(),
 		latitude: 50.0736,
 		longitude: 14.4185,
-		name: null,
+		name: 'e2e-credits-adopted-probe',
 		network: 'Vodafone Czech Republic a.s.',
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
 		onlineTimesToday: 20,
@@ -36,7 +36,7 @@ const addCredits = async () => {
 
 	await sql('gp_credits_additions').insert([{
 		amount: 150,
-		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80).',
+		comment: 'Adopted probe "e2e-credits-adopted-probe" (1.1.1.1).',
 		consumed: 1,
 		date_created: relativeDayUtc(-1),
 		github_id: user.external_identifier,
@@ -45,7 +45,7 @@ const addCredits = async () => {
 	},
 	{
 		amount: 150,
-		comment: 'Adopted probe "adopted-probe-2" (213.136.174.80).',
+		comment: 'Adopted probe "e2e-credits-adopted-probe" (1.1.1.1).',
 		consumed: 1,
 		date_created: relativeDayUtc(-2),
 		github_id: user.external_identifier,
@@ -97,7 +97,6 @@ test.beforeEach(async () => {
 });
 
 test('Credits page shows credits stats', async ({ page }) => {
-	await addCredits();
 	await page.goto('/credits');
 	await expect(page.locator('#e2e_total-credits')).toHaveText('11,300');
 	await expect(page.locator('#e2e_generated-credits')).toHaveText('12,300');

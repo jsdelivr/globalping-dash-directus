@@ -32,10 +32,8 @@ export const seed = async (knex) => {
 	}
 
 	await Promise.all([
-		knex('gp_apps').delete(),
 		knex('gp_tokens').delete(),
 		knex('gp_adopted_probes').delete(),
-		knex('sponsors').delete(),
 		knex('gp_credits_additions').delete(),
 		knex('gp_credits_deductions').delete(),
 		knex('gp_credits').delete(),
