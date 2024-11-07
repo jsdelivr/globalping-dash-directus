@@ -7,7 +7,7 @@ const del = promisify(pm2.delete.bind(pm2));
 const list = promisify(pm2.list.bind(pm2));
 
 teardown('Stop services', async () => {
-	await execa`docker compose -p e2e-dash-directus stop`;
+	await execa`docker compose -f docker-compose.e2e.yml stop`;
 
 	const services = await list();
 

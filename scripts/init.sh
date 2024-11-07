@@ -26,12 +26,12 @@ function get_token {
 }
 
 is_dev_mode=false
-project_name=dash-directus
+compose_file=docker-compose.yml
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -p|--project-name)
-      project_name="$2"
+    -f|--file)
+      compose_file="$2"
       shift # past argument
       shift # past value
       ;;
@@ -66,9 +66,9 @@ if [ "$is_dev_mode" = true ]; then
 
 	perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env.development
 
-	docker compose --project-name "$project_name" stop directus
+	docker compose --file "$compose_file" stop directus
 
-	docker compose --project-name "$project_name" up -d directus
+	docker compose --file "$compose_file" up -d directus
 
 	./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
 

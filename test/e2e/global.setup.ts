@@ -30,7 +30,7 @@ setup('Start services', async () => {
 
 		if (isDirectusRunning) { return; }
 
-		await execa`docker compose -p e2e-dash-directus start`;
+		await execa`docker compose -f docker-compose.e2e.yml start`;
 		await waitFor('http://localhost:18055');
 	})(), (async () => {
 		const isDashRunning = await getIsRunning('http://localhost:13010');
