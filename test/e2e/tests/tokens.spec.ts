@@ -41,9 +41,9 @@ test('Generate new token', async ({ page }) => {
 	await page.getByLabel('Generate token').click();
 
 	// Validate new token value is shown
-	await expect(page.locator('#e2e_token-value code').first()).not.toBeEmpty();
+	await expect(page.getByTestId('token-value').locator('code').first()).not.toBeEmpty();
 	await page.getByRole('cell').getByLabel('Close').click();
-	await expect(page.locator('#e2e_token-value code')).toHaveCount(0);
+	await expect(page.getByTestId('token-value').locator('code')).toHaveCount(0);
 
 	// Validate new token data is in table
 	await expect(page.locator('tbody tr').first()).toContainText('e2e-test-new-token');
@@ -60,9 +60,9 @@ test('Regenerate token', async ({ page }) => {
 	await page.getByLabel('Regenerate', { exact: true }).click();
 
 	// Validate new token value is shown
-	await expect(page.locator('#e2e_token-value code').first()).not.toBeEmpty();
+	await expect(page.getByTestId('token-value').locator('code').first()).not.toBeEmpty();
 	await page.getByRole('cell').getByLabel('Close').click();
-	await expect(page.locator('#e2e_token-value code')).toHaveCount(0);
+	await expect(page.getByTestId('token-value').locator('code')).toHaveCount(0);
 });
 
 test('Delete token', async ({ page }) => {

@@ -89,10 +89,10 @@ test.beforeEach(async () => {
 
 test('Credits page', async ({ page }) => {
 	await page.goto('/credits');
-	await expect(page.locator('#e2e_total-credits')).toHaveText('10,300');
-	await expect(page.locator('#e2e_generated-credits')).toHaveText('11,300');
-	await expect(page.locator('#e2e_spent-credits')).toHaveText('7,000');
-	await expect(page.locator('#e2e_estimated-credits')).toHaveText('150');
+	await expect(page.getByTestId('total-credits')).toHaveText('10,300');
+	await expect(page.getByTestId('generated-credits')).toHaveText('11,300');
+	await expect(page.getByTestId('spent-credits')).toHaveText('7,000');
+	await expect(page.getByTestId('estimated-credits')).toHaveText('150');
 });
 
 test('Second credits page is accessible', async ({ page }) => {

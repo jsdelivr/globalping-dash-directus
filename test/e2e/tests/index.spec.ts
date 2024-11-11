@@ -94,10 +94,10 @@ test('Index page', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByLabel('Profile')).toHaveText('johndoe');
 	await expect(page.locator('h1')).toHaveText('Overview');
-	await expect(page.locator('#e2e_probes-count')).toHaveText('2');
-	await expect(page.locator('#e2e_online-probes-count')).toHaveText('1');
-	await expect(page.locator('#e2e_offline-probes-count')).toHaveText('1');
-	await expect(page.locator('#e2e_total-credits')).toHaveText('2,150');
-	await expect(page.locator('#e2e_credits-from-probes')).toHaveText('+300');
-	await expect(page.locator('#e2e_credits-from-sponsorship')).toHaveText('+1,000');
+	await expect(page.getByTestId('probes-count')).toHaveText('2');
+	await expect(page.getByTestId('online-probes-count')).toHaveText('1');
+	await expect(page.getByTestId('offline-probes-count')).toHaveText('1');
+	await expect(page.getByTestId('total-credits')).toHaveText('2,150');
+	await expect(page.getByTestId('credits-from-probes')).toHaveText('+300');
+	await expect(page.getByTestId('credits-from-sponsorship')).toHaveText('+1,000');
 });
