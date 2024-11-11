@@ -23,6 +23,7 @@
 		"@types/node": "^22.8.6",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"cross-env": "^7.0.3",
+		"dotenv": "^16.4.5",
 		"dotenv-cli": "^7.4.2",
 		"eslint": "^8.57.0",
 		"eslint-plugin-chai-expect": "^3.1.0",

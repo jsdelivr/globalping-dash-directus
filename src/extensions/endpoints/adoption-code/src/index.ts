@@ -136,13 +136,13 @@ export default defineEndpoint((router, context) => {
 					hardwareDevice: null,
 					status: 'offline',
 					systemTags: [],
-					city: 'Naples',
+					city: 'Ouagadougou',
 					state: null,
-					country: 'IT',
-					latitude: 40.85216,
-					longitude: 14.26811,
+					country: 'BF',
+					latitude: 12.36566,
+					longitude: -1.53388,
 					asn: 3302,
-					network: 'IRIDEOS S.P.A.',
+					network: 'e2e network provider',
 				});
 
 				res.send('Code was sent to the probe.');

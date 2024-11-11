@@ -79,5 +79,5 @@ test('Probe adoption', async ({ page }) => {
 	await page.locator('input:nth-child(3)').fill('111111');
 	await page.getByLabel('Verify the code').click();
 	await page.getByLabel('Finish').click();
-	await expect(page.getByText('probe-it-naples-01').first()).toBeVisible();
+	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
 });

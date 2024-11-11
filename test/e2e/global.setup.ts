@@ -1,8 +1,21 @@
 import pm2, { StartOptions } from 'pm2';
 import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
-import { client as sql } from './client.ts';
+// import dotenv from 'dotenv';
 import { promisify } from 'util';
+import { client as sql } from './client.ts';
+
+// dotenv.config({ path: '.env.development.example' });
+
+// const DIRECTUS_URL = process.env.PUBLIC_URL;
+// const DASH_URL = process.env.DASH_URL;
+
+const DIRECTUS_URL = 'http://localhost:18055';
+const DASH_URL = 'http://localhost:13010';
+
+if (!DIRECTUS_URL || !DASH_URL) {
+	throw new Error('DIRECTUS_URL or DASH_URL env var is not specified');
+}
 
 const start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
@@ -25,15 +38,17 @@ const getIsRunning = async (url: string) => {
 };
 
 setup('Start services', async () => {
+	setup.setTimeout(20000);
+
 	await Promise.all([ (async () => {
-		const isDirectusRunning = await getIsRunning('http://localhost:18055');
+		const isDirectusRunning = await getIsRunning(DIRECTUS_URL);
 
 		if (isDirectusRunning) { return; }
 
 		await execa`docker compose -f docker-compose.e2e.yml start`;
-		await waitFor('http://localhost:18055');
+		await waitFor(DIRECTUS_URL);
 	})(), (async () => {
-		const isDashRunning = await getIsRunning('http://localhost:13010');
+		const isDashRunning = await getIsRunning(DASH_URL);
 
 		if (isDashRunning) { return; }
 
@@ -45,7 +60,7 @@ setup('Start services', async () => {
 			},
 		});
 
-		await waitFor('http://localhost:13010');
+		await waitFor(DASH_URL);
 	})() ]);
 });
 
@@ -69,7 +84,7 @@ setup('Init db', async () => {
 
 setup('Authenticate', async ({ request }) => {
 	const authFile = 'test/e2e/user.json';
-	await request.post('http://localhost:18055/auth/login', {
+	await request.post(`${DIRECTUS_URL}/auth/login`, {
 		data: {
 			email: 'e2e@example.com',
 			password: 'user',

@@ -54,6 +54,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
       dotenv-cli:
         specifier: ^7.4.2
         version: 7.4.2
