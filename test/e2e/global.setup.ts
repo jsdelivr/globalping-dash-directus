@@ -1,21 +1,11 @@
 import pm2, { StartOptions } from 'pm2';
 import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
-// import dotenv from 'dotenv';
 import { promisify } from 'util';
 import { client as sql } from './client.ts';
 
-// dotenv.config({ path: '.env.development.example' });
-
-// const DIRECTUS_URL = process.env.PUBLIC_URL;
-// const DASH_URL = process.env.DASH_URL;
-
 const DIRECTUS_URL = 'http://localhost:18055';
 const DASH_URL = 'http://localhost:13010';
-
-if (!DIRECTUS_URL || !DASH_URL) {
-	throw new Error('DIRECTUS_URL or DASH_URL env var is not specified');
-}
 
 const start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
