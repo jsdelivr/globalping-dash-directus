@@ -2,7 +2,7 @@ import pm2, { StartOptions } from 'pm2';
 import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
 import { promisify } from 'util';
-import { client as sql } from './client.ts';
+import { user, client as sql } from './client.ts';
 
 const DIRECTUS_URL = 'http://localhost:18055';
 const DASH_URL = 'http://localhost:13010';
@@ -55,21 +55,12 @@ setup('Start services', async () => {
 });
 
 setup('Init db', async () => {
+	sql('directus_users').where({ id: user.id }).delete();
 	const userRole = await sql('directus_roles').where({ name: 'User' }).select('id').first();
-	await sql('directus_users').upsert([{
-		id: '940d4737-394d-428f-b9d5-d98bf1f2a066',
-		first_name: 'John',
-		last_name: 'Doe',
-		email: 'e2e@example.com',
-		password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
+	await sql('directus_users').upsert({
+		...user,
 		role: userRole.id,
-		provider: 'default',
-		external_identifier: '1111111',
-		email_notifications: 1,
-		github_organizations: JSON.stringify([ 'Scrubs' ]),
-		github_username: 'johndoe',
-		user_type: 'sponsor',
-	}]);
+	});
 });
 
 setup('Authenticate', async ({ request }) => {

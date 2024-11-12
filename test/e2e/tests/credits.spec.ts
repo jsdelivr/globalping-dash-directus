@@ -1,11 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import relativeDayUtc from 'relative-day-utc';
 import { test, expect } from '@playwright/test';
-import { getUser, client as sql } from '../client.ts';
+import { clearUserData, user, client as sql } from '../client.ts';
 
 const addCredits = async () => {
-	const user = await getUser();
-
 	const probeId = randomUUID();
 	await sql('gp_adopted_probes').insert([{
 		id: probeId,
@@ -29,7 +27,7 @@ const addCredits = async () => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
-		uuid: 'b42c4319-6be3-46d4-8a01-d4558f0c070d',
+		uuid: '55449b8a-bc30-432d-a2c6-15a9d8a04a4d',
 		version: '0.28.0',
 		hardwareDevice: null,
 	}]);
@@ -80,10 +78,7 @@ const addCredits = async () => {
 };
 
 test.beforeEach(async () => {
-	await sql('gp_adopted_probes').delete();
-	await sql('gp_credits_additions').delete();
-	await sql('gp_credits').delete();
-	await sql('gp_credits_deductions').delete();
+	await clearUserData();
 	await addCredits();
 });
 

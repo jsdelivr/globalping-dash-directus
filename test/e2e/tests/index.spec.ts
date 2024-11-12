@@ -1,11 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import relativeDayUtc from 'relative-day-utc';
 import { test, expect } from '@playwright/test';
-import { getUser, client as sql } from '../client.ts';
+import { clearUserData, user, client as sql } from '../client.ts';
 
 const addData = async () => {
-	const user = await getUser();
-
 	const probeId = randomUUID();
 	await sql('gp_adopted_probes').insert([{
 		id: probeId,
@@ -15,8 +13,8 @@ const addData = async () => {
 		countryOfCustomCity: 'IT',
 		date_created: '2024-02-22 11:04:30',
 		date_updated: '2024-02-22 11:05:48',
-		ip: '2a02:a319:80f3:8b80:344b:35ff:fee8:a8c',
-		altIps: JSON.stringify([ '213.136.174.80' ]),
+		ip: '2a02:a319:80f3:8b80:6cc8:9d82:b5e:9f00',
+		altIps: JSON.stringify([ '89.64.80.78' ]),
 		isCustomCity: 1,
 		lastSyncDate: new Date(),
 		latitude: 40.85216,
@@ -29,7 +27,7 @@ const addData = async () => {
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
 		userId: user.id,
-		uuid: '681023cb-6aec-45a1-adde-e705c4043549',
+		uuid: '1a56565d-893d-432a-b33b-b7fe6576b3b1',
 		version: '0.28.0',
 		hardwareDevice: null,
 	}, {
@@ -54,14 +52,14 @@ const addData = async () => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
-		uuid: 'b42c4319-6be3-46d4-8a01-d4558f0c070d',
+		uuid: '55449b8a-bc30-432d-a2c6-15a9d8a04a4d',
 		version: '0.28.0',
 		hardwareDevice: null,
 	}]);
 
 	await sql('gp_credits_additions').insert([{
 		amount: 150,
-		comment: 'Adopted probe "e2e-credits-adopted-probe" (2a02:a319:80f3:8b80:344b:35ff:fee8:a8c).',
+		comment: 'Adopted probe "e2e-credits-adopted-probe" (2a02:a319:80f3:8b80:6cc8:9d82:b5e:9f00).',
 		consumed: 1,
 		date_created: relativeDayUtc(-1),
 		github_id: user.external_identifier,
@@ -83,10 +81,7 @@ const addData = async () => {
 };
 
 test.beforeEach(async () => {
-	await sql('gp_adopted_probes').delete();
-	await sql('gp_credits_additions').delete();
-	await sql('gp_credits').delete();
-	await sql('gp_credits_deductions').delete();
+	await clearUserData();
 	await addData();
 });
 

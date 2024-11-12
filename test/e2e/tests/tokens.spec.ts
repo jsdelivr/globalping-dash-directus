@@ -1,15 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { getUser, client as sql } from '../client.ts';
+import { clearUserData, user, client as sql } from '../client.ts';
 
 test.beforeEach(async () => {
-	await sql('gp_tokens').delete();
+	await clearUserData();
 });
 
 const addToken = async () => {
-	const user = await getUser();
 	await sql('gp_tokens').insert({
 		name: 'e2e-test-existing-token',
-		value: '/bSluuDrAPX9zIiZZ/hxEKARwOg+e//EdJgCFpmApbg=', // token: hf2fnprguymlgliirdk7qv23664c2xcr
+		value: 't0Zc+4LVE24kAnO2c9VoXAAHBTttKnMI0i+DlRvCBvE=', // token: budcybmixu4yoj7m6q2wpn5qudafgobl
 		date_created: '2024-02-22 10:55:21',
 		date_last_used: null,
 		date_updated: null,
