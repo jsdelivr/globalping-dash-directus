@@ -6,6 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
 	testDir: './test/e2e',
 	forbidOnly: !!process.env.CI,
+	// workers: process.env.CI ? 1 : undefined,
 	workers: 1,
 	use: {
 		baseURL: 'http://localhost:13010',
@@ -26,7 +27,6 @@ export default defineConfig({
 			name: 'chromium',
 			use: {
 				...devices['Desktop Chrome'],
-				storageState: 'test/e2e/user.json',
 			},
 			dependencies: [ 'setup' ],
 			teardown: 'teardown',

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import relativeDayUtc from 'relative-day-utc';
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures.ts';
 import { clearUserData, user, client as sql } from '../client.ts';
 
 const addCredits = async () => {

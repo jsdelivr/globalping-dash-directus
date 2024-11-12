@@ -62,16 +62,3 @@ setup('Init db', async () => {
 		role: userRole.id,
 	});
 });
-
-setup('Authenticate', async ({ request }) => {
-	const authFile = 'test/e2e/user.json';
-	await request.post(`${DIRECTUS_URL}/auth/login`, {
-		data: {
-			email: 'e2e@example.com',
-			password: 'user',
-			mode: 'session',
-		},
-	});
-
-	await request.storageState({ path: authFile });
-});
