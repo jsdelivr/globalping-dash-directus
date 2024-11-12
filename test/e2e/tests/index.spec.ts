@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import relativeDayUtc from 'relative-day-utc';
 import { test, expect } from '../fixtures.ts';
-import { clearUserData, client as sql } from '../client.ts';
+import { User, client as sql } from '../client.ts';
 
-const addData = async () => {
+const addData = async (user: User) => {
 	const probeId = randomUUID();
 	await sql('gp_adopted_probes').insert([{
 		id: probeId,
@@ -80,9 +80,8 @@ const addData = async () => {
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
 };
 
-test.beforeEach(async () => {
-	await clearUserData();
-	await addData();
+test.beforeEach(async ({ user }) => {
+	await addData(user);
 });
 
 test('Index page', async ({ page }) => {

@@ -2,6 +2,21 @@ import knex, { Knex } from 'knex';
 import { randomUUID } from 'crypto';
 import knexfile from '../../knexfile.js';
 
+export type User = {
+	id: string;
+	external_identifier: string;
+	email: string;
+	role: string;
+	first_name: string;
+	last_name: string;
+	password: string;
+	provider: string;
+	email_notifications: number;
+	github_organizations: string;
+	github_username: string;
+	user_type: string;
+};
+
 const env = process.env['NODE_ENV'] || 'development';
 
 export const client: Knex = knex(knexfile[env] || {});
@@ -17,7 +32,7 @@ const commonUserFields = {
 	user_type: 'sponsor',
 };
 
-export const generateUser = async () => {
+export const generateUser = async (): Promise<User> => {
 	const userId = randomUUID();
 	const userRole = await client('directus_roles').where({ name: 'User' }).select('id').first();
 
@@ -25,18 +40,18 @@ export const generateUser = async () => {
 		...commonUserFields,
 		id: userId,
 		external_identifier: randomNumbers(),
-		email: `${userId}@example.com`,
+		email: `${userId.split('-')[0]}@example.com`,
 		role: userRole.id,
 	};
 };
 
-export const clearUserData = async (userId: string, externalIdentifier: string) => {
-	await client('gp_credits_additions').where({ github_id: externalIdentifier }).delete();
-	await client('gp_credits').where({ user_id: userId }).delete();
-	await client('gp_credits_deductions').where({ user_id: userId }).delete();
-	await client('gp_adopted_probes').where({ userId }).delete();
-	await client('gp_tokens').where({ user_created: userId }).delete();
-	await client('directus_users').where({ id: userId }).delete();
+export const clearUserData = async (user: User) => {
+	await client('gp_credits_additions').where({ github_id: user.external_identifier }).delete();
+	await client('gp_credits').where({ user_id: user.id }).delete();
+	await client('gp_credits_deductions').where({ user_id: user.id }).delete();
+	await client('gp_adopted_probes').where({ userId: user.id }).delete();
+	await client('gp_tokens').where({ user_created: user.id }).delete();
+	await client('directus_users').where({ id: user.id }).delete();
 };
 
 const randomNumbers = () => {

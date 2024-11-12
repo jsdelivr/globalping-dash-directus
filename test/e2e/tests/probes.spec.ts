@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
-import { clearUserData, client as sql } from '../client.ts';
+import { User, client as sql } from '../client.ts';
 
-const addData = async () => {
+const addData = async (user: User) => {
 	const probeId = randomUUID();
 	await sql('gp_adopted_probes').insert([{
 		id: probeId,
@@ -57,12 +57,8 @@ const addData = async () => {
 	}]);
 };
 
-test.beforeEach(async () => {
-	await clearUserData();
-});
-
-test('Probes page', async ({ page }) => {
-	await addData();
+test('Probes page', async ({ page, user }) => {
+	await addData(user);
 	await page.goto('/probes');
 	await expect(page.locator('h1')).toHaveText('Probes');
 	await expect(page.locator('tr')).toHaveCount(3);

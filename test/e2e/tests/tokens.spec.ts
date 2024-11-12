@@ -1,11 +1,7 @@
 import { test, expect } from '../fixtures.ts';
-import { clearUserData, client as sql } from '../client.ts';
+import { User, client as sql } from '../client.ts';
 
-test.beforeEach(async () => {
-	await clearUserData();
-});
-
-const addToken = async () => {
+const addToken = async (user: User) => {
 	await sql('gp_tokens').insert({
 		name: 'e2e-test-existing-token',
 		value: 't0Zc+4LVE24kAnO2c9VoXAAHBTttKnMI0i+DlRvCBvE=', // token: budcybmixu4yoj7m6q2wpn5qudafgobl
@@ -19,8 +15,8 @@ const addToken = async () => {
 	});
 };
 
-test('Tokens page', async ({ page }) => {
-	await addToken();
+test('Tokens page', async ({ page, user }) => {
+	await addToken(user);
 	await page.goto('/tokens');
 	await expect(page.locator('h1')).toHaveText('Tokens');
 
@@ -49,8 +45,8 @@ test('Generate new token', async ({ page }) => {
 	await expect(page.locator('tbody tr').first()).toContainText('https://www.jsdelivr.com');
 });
 
-test('Regenerate token', async ({ page }) => {
-	await addToken();
+test('Regenerate token', async ({ page, user }) => {
+	await addToken(user);
 	await page.goto('/tokens');
 
 	// Regenerate token
@@ -64,8 +60,8 @@ test('Regenerate token', async ({ page }) => {
 	await expect(page.getByTestId('token-value').locator('code')).toHaveCount(0);
 });
 
-test('Delete token', async ({ page }) => {
-	await addToken();
+test('Delete token', async ({ page, user }) => {
+	await addToken(user);
 	await page.goto('/tokens');
 
 	// Delete token
