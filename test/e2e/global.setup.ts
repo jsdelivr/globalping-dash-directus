@@ -2,7 +2,6 @@ import pm2, { StartOptions } from 'pm2';
 import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
 import { promisify } from 'util';
-import { user, client as sql } from './client.ts';
 
 const DIRECTUS_URL = 'http://localhost:18055';
 const DASH_URL = 'http://localhost:13010';
@@ -52,13 +51,4 @@ setup('Start services', async () => {
 
 		await waitFor(DASH_URL);
 	})() ]);
-});
-
-setup('Init db', async () => {
-	sql('directus_users').where({ id: user.id }).delete();
-	const userRole = await sql('directus_roles').where({ name: 'User' }).select('id').first();
-	await sql('directus_users').upsert({
-		...user,
-		role: userRole.id,
-	});
 });

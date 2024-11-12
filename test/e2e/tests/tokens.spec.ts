@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures.ts';
-import { clearUserData, user, client as sql } from '../client.ts';
+import { clearUserData, client as sql } from '../client.ts';
 
 test.beforeEach(async () => {
 	await clearUserData();

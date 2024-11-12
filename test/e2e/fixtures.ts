@@ -1,30 +1,23 @@
 import { test as baseTest, request } from '@playwright/test';
-import { user, client as sql } from './client.ts';
+import { client as sql, clearUserData, generateUser } from './client.ts';
+import path from 'path';
+import fs from 'fs/promises';
 
 const DIRECTUS_URL = 'http://localhost:18055';
-let i = 0;
 
 export * from '@playwright/test';
 export const test = baseTest.extend({
 	storageState: async ({}, use) => {
-		// const fileName = path.resolve(test.info().project.outputDir, `.auth/${id}.json`);
-		const fileName = 'test/e2e/user.json';
+		const user = await generateUser();
 
-		console.log('i:', ++i);
+		await sql('directus_users').insert(user);
 
-		// Important: make sure we authenticate in a clean environment by unsetting storage state.
+		// Make sure we authenticate in a clean environment by unsetting storage state.
 		const context = await request.newContext({ storageState: undefined });
-
-		sql('directus_users').where({ id: user.id }).delete();
-		const userRole = await sql('directus_roles').where({ name: 'User' }).select('id').first();
-		await sql('directus_users').upsert({
-			...user,
-			role: userRole.id,
-		});
-
+		// Log in the user.
 		const loginResponse = await context.post(`${DIRECTUS_URL}/auth/login`, {
 			data: {
-				email: 'e2e@example.com',
+				email: user.email,
 				password: 'user',
 				mode: 'session',
 			},
@@ -34,7 +27,15 @@ export const test = baseTest.extend({
 			throw new Error(`${loginResponse.status()} ${loginResponse.statusText()}`);
 		}
 
+		const fileName = path.resolve(test.info().project.outputDir, `.auth/${user.id}.json`);
+		// Apply and save auth in file.
 		await context.storageState({ path: fileName });
+
+		// Run the test.
 		await use(fileName);
+
+		// Clear the data after the test.
+		await clearUserData(user.id, user.external_identifier);
+		await fs.unlink(fileName);
 	},
 });
