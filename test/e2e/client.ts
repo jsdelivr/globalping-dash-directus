@@ -1,4 +1,5 @@
 import knex, { Knex } from 'knex';
+import { randomBytes } from 'node:crypto';
 import { randomUUID } from 'crypto';
 import knexfile from '../../knexfile.js';
 
@@ -39,7 +40,7 @@ export const generateUser = async (): Promise<User> => {
 	return {
 		...commonUserFields,
 		id: userId,
-		external_identifier: randomNumbers(),
+		external_identifier: randomExternalId(),
 		email: `${userId.split('-')[0]}@example.com`,
 		role: userRole.id,
 	};
@@ -54,8 +55,16 @@ export const clearUserData = async (user: User) => {
 	await client('directus_users').where({ id: user.id }).delete();
 };
 
-const randomNumbers = () => {
+const randomExternalId = () => {
 	const randomNumber = Math.floor(Math.random() * 10000000);
 	const randomCode = randomNumber.toString().padStart(7, '0');
 	return randomCode;
+};
+
+export const randomToken = () => {
+	return randomBytes(20).toString('base64');
+};
+
+export const randomIP = () => {
+	return Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join('.');
 };

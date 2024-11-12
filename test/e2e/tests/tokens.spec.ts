@@ -1,10 +1,10 @@
 import { test, expect } from '../fixtures.ts';
-import { User, client as sql } from '../client.ts';
+import { User, randomToken, client as sql } from '../client.ts';
 
 const addToken = async (user: User) => {
 	await sql('gp_tokens').insert({
 		name: 'e2e-test-existing-token',
-		value: 't0Zc+4LVE24kAnO2c9VoXAAHBTttKnMI0i+DlRvCBvE=', // token: budcybmixu4yoj7m6q2wpn5qudafgobl
+		value: randomToken(),
 		date_created: '2024-02-22 10:55:21',
 		date_last_used: null,
 		date_updated: null,

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
-import { User, client as sql } from '../client.ts';
+import { User, randomIP, client as sql } from '../client.ts';
 
 const addData = async (user: User) => {
 	const probeId = randomUUID();
@@ -12,7 +12,7 @@ const addData = async (user: User) => {
 		countryOfCustomCity: null,
 		date_created: '2024-02-22 11:02:12',
 		date_updated: null,
-		ip: '1.1.1.1',
+		ip: randomIP(),
 		altIps: JSON.stringify([]),
 		isCustomCity: 0,
 		lastSyncDate: new Date(),
@@ -26,7 +26,7 @@ const addData = async (user: User) => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
-		uuid: '55449b8a-bc30-432d-a2c6-15a9d8a04a4d',
+		uuid: randomUUID(),
 		version: '0.28.0',
 		hardwareDevice: null,
 	}, {
@@ -37,7 +37,7 @@ const addData = async (user: User) => {
 		countryOfCustomCity: 'IT',
 		date_created: '2024-02-22 11:04:30',
 		date_updated: '2024-02-22 11:05:48',
-		ip: '2a02:a319:80f3:8b80:6cc8:9d82:b5e:9f00',
+		ip: randomIP(),
 		altIps: JSON.stringify([ '89.64.80.78' ]),
 		isCustomCity: 1,
 		lastSyncDate: new Date(),
@@ -51,7 +51,7 @@ const addData = async (user: User) => {
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
 		userId: user.id,
-		uuid: '1a56565d-893d-432a-b33b-b7fe6576b3b1',
+		uuid: randomUUID(),
 		version: '0.28.0',
 		hardwareDevice: null,
 	}]);

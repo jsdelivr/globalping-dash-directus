@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import relativeDayUtc from 'relative-day-utc';
 import { test, expect } from '../fixtures.ts';
-import { User, client as sql } from '../client.ts';
+import { User, randomIP, client as sql } from '../client.ts';
 
 const addCredits = async (user: User) => {
 	const probeId = randomUUID();
+	const probeIP = randomIP();
 	await sql('gp_adopted_probes').insert([{
 		id: probeId,
 		asn: 16019,
@@ -13,7 +14,7 @@ const addCredits = async (user: User) => {
 		countryOfCustomCity: null,
 		date_created: '2024-02-22 11:02:12',
 		date_updated: null,
-		ip: '1.1.1.1',
+		ip: probeIP,
 		altIps: JSON.stringify([]),
 		isCustomCity: 0,
 		lastSyncDate: new Date(),
@@ -27,14 +28,14 @@ const addCredits = async (user: User) => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
-		uuid: '55449b8a-bc30-432d-a2c6-15a9d8a04a4d',
+		uuid: randomUUID(),
 		version: '0.28.0',
 		hardwareDevice: null,
 	}]);
 
 	await sql('gp_credits_additions').insert([{
 		amount: 150,
-		comment: 'Adopted probe "e2e-credits-adopted-probe" (1.1.1.1).',
+		comment: `Adopted probe "e2e-credits-adopted-probe" (${probeIP}).`,
 		consumed: 1,
 		date_created: relativeDayUtc(-1),
 		github_id: user.external_identifier,
@@ -43,7 +44,7 @@ const addCredits = async (user: User) => {
 	},
 	{
 		amount: 150,
-		comment: 'Adopted probe "e2e-credits-adopted-probe" (1.1.1.1).',
+		comment: `Adopted probe "e2e-credits-adopted-probe" (${probeIP}).`,
 		consumed: 1,
 		date_created: relativeDayUtc(-2),
 		github_id: user.external_identifier,
