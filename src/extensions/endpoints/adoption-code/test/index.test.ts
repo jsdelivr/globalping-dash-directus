@@ -239,7 +239,7 @@ describe('adoption code endpoints', () => {
 			expect(resStatus.callCount).to.equal(1);
 			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
 			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'Probe with that ip is already adopted' ]);
+			expect(resSend.args[0]).to.deep.equal([ 'The probe with this IP address is already adopted' ]);
 		});
 	});
 
@@ -638,7 +638,7 @@ describe('adoption code endpoints', () => {
 			expect(nock.isDone()).to.equal(true);
 			expect(resSend.callCount).to.equal(2);
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ 'Code is not valid' ]);
+			expect(resSend.args[1]).to.deep.equal([ 'Invalid code' ]);
 			expect(createOne.callCount).to.equal(0);
 		});
 

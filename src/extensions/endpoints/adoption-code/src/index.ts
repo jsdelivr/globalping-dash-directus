@@ -51,7 +51,7 @@ export type AdoptedProbe = {
 	network: string | null;
 }
 
-const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Code is not valid', 400);
+const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
 
 const rateLimiter = new RateLimiterMemory({
@@ -92,7 +92,7 @@ export default defineEndpoint((router, context) => {
 			try {
 				ip = ipaddr.parse(value.body.ip).toString();
 			} catch (err) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', 'Probe ip format is wrong', 400))();
+				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe IP address format is wrong', 400))();
 			}
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
@@ -100,7 +100,7 @@ export default defineEndpoint((router, context) => {
 			const adoptedProbes = await findAdoptedProbesByIp(ip, context as unknown as EndpointExtensionContext);
 
 			if (adoptedProbes.length > 0) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', 'Probe with that ip is already adopted', 400))();
+				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe with this IP address is already adopted', 400))();
 			}
 
 			const code = generateRandomCode();
