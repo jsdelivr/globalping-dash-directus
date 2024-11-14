@@ -1,13 +1,13 @@
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
-const USER_ROLE_NAME = 'User';
+const USER_POLICY_NAME = 'User';
 
 const COLLECTION_NAME = 'directus_users';
 const FIELDS_TO_REMOVE = [];
 const FIELDS_TO_ADD = [ 'first_name', 'last_name', 'email' ];
 
-async function getUserRoleId () {
-	const URL = `${DIRECTUS_URL}/roles?filter[name][_eq]=${USER_ROLE_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
+async function getUserPolicyId () {
+	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
@@ -18,8 +18,8 @@ async function getUserRoleId () {
 	return response.data[0].id;
 }
 
-async function getUserPermissions (roleId) {
-	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${COLLECTION_NAME}&filter[role][_eq]=${roleId}&access_token=${ADMIN_ACCESS_TOKEN}`;
+async function getUserPermissions (policyId) {
+	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${COLLECTION_NAME}&filter[policy][_eq]=${policyId}&access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
@@ -60,13 +60,13 @@ async function patchUpdatePermissions (updatePermissions) {
 	return response.data;
 }
 
-async function postDeletePermission (roleId) {
+async function postDeletePermission (policyId) {
 	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
 
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
-			role: roleId,
+			policy: policyId,
 			collection: 'directus_users',
 			action: 'delete',
 			permissions: {
@@ -93,10 +93,10 @@ async function postDeletePermission (roleId) {
 }
 
 export async function up () {
-	const roleId = await getUserRoleId();
-	const { updatePermissions } = await getUserPermissions(roleId);
+	const policyId = await getUserPolicyId();
+	const { updatePermissions } = await getUserPermissions(policyId);
 	await patchUpdatePermissions(updatePermissions);
-	await postDeletePermission(roleId);
+	await postDeletePermission(policyId);
 	console.log('User permissions patched to edit "first_name", "last_name", "email" and delete account.');
 }
 

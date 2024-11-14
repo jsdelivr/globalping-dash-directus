@@ -8,9 +8,27 @@ async function createRole () {
 		body: JSON.stringify({
 			name: 'User',
 			icon: 'sentiment_satisfied',
-			description: null,
-			ip_access: null,
-			enforce_tfa: false,
+		}),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	}).then((response) => {
+		if (!response.ok) {
+			throw new Error(`Fetch request failed. Status: ${response.status}`);
+		}
+
+		return response.json();
+	});
+	return response.data;
+}
+
+async function createPolicy () {
+	const URL = `${DIRECTUS_URL}/policies?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const response = await fetch(URL, {
+		method: 'POST',
+		body: JSON.stringify({
+			name: 'User',
+			icon: 'sentiment_calm',
 			admin_access: false,
 			app_access: true,
 		}),
@@ -27,7 +45,36 @@ async function createRole () {
 	return response.data;
 }
 
-async function createPermissions (roleId) {
+async function assignPolicyToRole (role, policy) {
+	const URL = `${DIRECTUS_URL}/roles/${role.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const response = await fetch(URL, {
+		method: 'PATCH',
+		body: JSON.stringify({
+			policies: {
+				create: [{
+					role: role.id,
+					policy: {
+						id: policy.id,
+					},
+				}],
+				update: [],
+				delete: [],
+			},
+		}),
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	}).then((response) => {
+		if (!response.ok) {
+			throw new Error(`Fetch request failed. Status: ${response.status}`);
+		}
+
+		return response.json();
+	});
+	return response.data;
+}
+
+async function createPermissions (policyId) {
 	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
 		method: 'POST',
@@ -35,7 +82,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'tokens',
 				action: 'create',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					user_created: {
 						_eq: '$CURRENT_USER',
@@ -46,7 +93,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'tokens',
 				action: 'read',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					user_created: {
 						_eq: '$CURRENT_USER',
@@ -57,7 +104,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'tokens',
 				action: 'update',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					user_created: {
 						_eq: '$CURRENT_USER',
@@ -68,7 +115,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'tokens',
 				action: 'delete',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					user_created: {
 						_eq: '$CURRENT_USER',
@@ -79,7 +126,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'directus_users',
 				action: 'read',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					id: {
 						_eq: '$CURRENT_USER',
@@ -90,7 +137,7 @@ async function createPermissions (roleId) {
 			{
 				collection: 'directus_users',
 				action: 'update',
-				role: roleId,
+				policy: policyId,
 				permissions: {
 					id: {
 						_eq: '$CURRENT_USER',
@@ -114,7 +161,9 @@ async function createPermissions (roleId) {
 
 export async function up () {
 	const role = await createRole();
-	await createPermissions(role.id);
+	const policy = await createPolicy();
+	await assignPolicyToRole(role, policy);
+	await createPermissions(policy.id);
 	console.log(`User role ${role.id} created`);
 }
 
