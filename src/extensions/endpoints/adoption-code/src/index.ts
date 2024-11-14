@@ -7,7 +7,7 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { createAdoptedProbe, findAdoptedProbes } from './repositories/directus.js';
+import { createAdoptedProbe, findAdoptedProbesByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
 	accountability: {
@@ -97,7 +97,7 @@ export default defineEndpoint((router, context) => {
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
 
-			const adoptedProbes = await findAdoptedProbes({ ip }, context as unknown as EndpointExtensionContext);
+			const adoptedProbes = await findAdoptedProbesByIp(ip, context as unknown as EndpointExtensionContext);
 
 			if (adoptedProbes.length > 0) {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'Probe with that ip is already adopted', 400))();

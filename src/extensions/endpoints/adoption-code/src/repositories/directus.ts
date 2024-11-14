@@ -60,3 +60,11 @@ const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: E
 
 	return name;
 };
+
+export const findAdoptedProbesByIp = async (ip: string, { database }: EndpointExtensionContext) => {
+	const probes = await database('gp_adopted_probes')
+		.whereRaw('JSON_CONTAINS(altIps, ?)', [ `"${ip}"` ])
+		.orWhere('ip', ip);
+
+	return probes;
+};

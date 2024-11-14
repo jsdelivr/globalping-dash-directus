@@ -8,12 +8,17 @@ import endpoint from '../src/index.js';
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub().resolves('generatedId');
 	const readByQuery = sinon.stub().resolves([]);
+	const orWhere = sinon.stub().resolves([]);
 	const endpointContext = {
 		logger: {
 			error: console.error,
 		},
 		getSchema: () => {},
-		database: {},
+		database: () => ({
+			whereRaw: () => ({
+				orWhere,
+			}),
+		}),
 		env: {
 			GLOBALPING_URL: 'https://api.globalping.io/v1',
 			GP_SYSTEM_KEY: 'system',
@@ -51,6 +56,7 @@ describe('adoption code endpoints', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 		readByQuery.resolves([]);
+		orWhere.resolves([]);
 	});
 
 	after(() => {
@@ -226,7 +232,7 @@ describe('adoption code endpoints', () => {
 				},
 			};
 
-			readByQuery.resolves([{}]);
+			orWhere.resolves([{}]);
 
 			await request('/send-code', req, res);
 
