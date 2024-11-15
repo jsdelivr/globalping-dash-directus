@@ -10,10 +10,6 @@ export default defineConfig({
 	use: {
 		baseURL: 'http://localhost:13010',
 	},
-	timeout: 4000,
-	expect: {
-		timeout: 2000,
-	},
 
 	/* Configure projects for major browsers */
 	projects: [

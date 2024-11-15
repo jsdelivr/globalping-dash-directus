@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_ENV: test
+      NODE_ENV: development
 
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
           pnpm install
       - name: Install Playwright Browsers
         run: |
-          npx playwright install --with-deps
+          pnpm exec playwright install --with-deps
       - name: Build docker compose
         run: |
           cp .env.development.example .env.development

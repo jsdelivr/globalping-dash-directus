@@ -46,7 +46,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
+echo "Waiting for: $DIRECTUS_URL/admin/login";
+
+./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
+
+echo "Done.";
 
 token=$(get_token)
 
@@ -59,18 +63,13 @@ npm run migrate
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
 if [ "$is_dev_mode" = true ]; then
-	if [[ "$DIRECTUS_URL" != *"localhost"* || "$DB_HOST" != "localhost" ]]; then
-    	echo "Either DIRECTUS_URL or DB_HOST is not 'localhost'."
-        exit 1
-	fi
-
 	perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env.development
 
 	docker compose --file "$compose_file" stop directus
 
 	docker compose --file "$compose_file" up -d directus
 
-	./scripts/wait-for.sh -t 10 $DIRECTUS_URL/admin/login
+	./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
 
 	npm run seed
 else

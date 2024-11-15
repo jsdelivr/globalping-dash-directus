@@ -91,7 +91,7 @@ test('Credits page', async ({ page }) => {
 });
 
 test('Second credits page is accessible', async ({ page }) => {
-	await page.goto('http://localhost:13010/credits');
+	await page.goto('/credits');
 	await page.getByLabel('Page 2').click();
 	await expect(page.getByText('Recurring $5 sponsorship.').first()).toBeVisible();
 });
