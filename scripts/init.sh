@@ -25,26 +25,20 @@ function get_token {
   echo "$token"
 }
 
-is_dev_mode=false
-compose_file=docker-compose.yml
+if [[ ("$DIRECTUS_URL" != *"localhost"* && "$DIRECTUS_URL" != *"127.0.0.1"*) || ("$DB_HOST" != "localhost" && "$DB_HOST" != "127.0.0.1") ]]; then
+	echo "Either DIRECTUS_URL or DB_HOST is not 'localhost' or '127.0.0.1'."
+	exit 1
+fi
 
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -f|--file)
-      compose_file="$2"
-      shift # past argument
-      shift # past value
-      ;;
-    --dev)
-      is_dev_mode=true
-      shift # past argument
-      ;;
-    -*|--*)
-      echo "Unknown option $1"
-      exit 1
-      ;;
-  esac
-done
+if [ "$1" = "development" ]; then
+  compose_file="docker-compose.yml"
+elif [ "$1" = "e2e" ]; then
+  compose_file="docker-compose.e2e.yml"
+else
+  echo "Error: Invalid argument. Usage: $0 {development|e2e}"
+  exit 1
+fi
+echo "Compose file set to $compose_file"
 
 echo "Waiting for: $DIRECTUS_URL/admin/login";
 
@@ -56,28 +50,20 @@ token=$(get_token)
 
 perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
 
-npm run schema:apply
+pnpm run schema:apply
 
-npm run migrate
+pnpm run migrate
 
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
-if [ "$is_dev_mode" = true ]; then
-	perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" .env.development
+perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" ".env.$1"
 
-	docker compose --file "$compose_file" stop directus
+docker compose --file "$compose_file" stop directus
 
-	docker compose --file "$compose_file" up -d directus
+docker compose --file "$compose_file" up -d directus
 
-	./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
+./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
 
-	npm run seed
-else
-	confirm "Set that value to the container env vars: \nAUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id \nThen restart the container." # Restart is requred to apply new role id and because of https://github.com/directus/directus/issues/17117
-
-	confirm "Login using github. Re-login as admin and give github user admin rights. Then set that value to the container env vars: \nAUTH_DISABLE_DEFAULT=true \nThen restart the container."
-
-	confirm "Login using github. Generate a static access token for your user and save it to the local .env file as ADMIN_ACCESS_TOKEN"
-fi
+pnpm run seed
 
 echo "Finished"

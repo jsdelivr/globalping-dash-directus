@@ -3,8 +3,6 @@ import { client as sql, clearUserData, generateUser, User } from './client.ts';
 import path from 'path';
 import fs from 'fs/promises';
 
-const DIRECTUS_URL = 'http://localhost:18055';
-
 export * from '@playwright/test';
 export const test = baseTest.extend<{ user: User }>({
 	user: async ({}, use) => {
@@ -17,7 +15,7 @@ export const test = baseTest.extend<{ user: User }>({
 		// Make sure we authenticate in a clean environment by unsetting storage state.
 		const context = await request.newContext({ storageState: undefined });
 		// Log in the user.
-		const loginResponse = await context.post(`${DIRECTUS_URL}/auth/login`, {
+		const loginResponse = await context.post(`${process.env.DIRECTUS_URL}/auth/login`, {
 			data: {
 				email: user.email,
 				password: 'user',

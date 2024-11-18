@@ -3,8 +3,8 @@ import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
 import { promisify } from 'util';
 
-const DIRECTUS_URL = 'http://localhost:18055';
-const DASH_URL = 'http://localhost:13010';
+const DIRECTUS_URL = process.env.DIRECTUS_URL!;
+const DASH_URL = process.env.SERVER_URL!;
 
 const pm2start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 

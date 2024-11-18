@@ -2,10 +2,15 @@
 
 ## Prod first deploy
 
-- copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`
-- run the remote container
-- `pnpm run init`
+- copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
+- copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
+- run the remote container.
+- `pnpm run schema:apply`
+- `pnpm run migrate`
+- get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
+- restart the container
+- login using github. Re-login as admin and give github user admin rights. Then set that value to the container env vars: \nAUTH_DISABLE_DEFAULT=true \nThen restart the container
+- Login using github. Generate a static access token for your user and save it to the local .env file as ADMIN_ACCESS_TOKEN
 
 ## Prod other deploys
 

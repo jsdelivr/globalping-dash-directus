@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -8,7 +11,7 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	workers: 1,
 	use: {
-		baseURL: 'http://localhost:13010',
+		baseURL: process.env.SERVER_URL,
 	},
 
 	/* Configure projects for major browsers */

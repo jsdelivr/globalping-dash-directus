@@ -18,9 +18,7 @@ export type User = {
 	user_type: string;
 };
 
-const env = process.env['NODE_ENV'] || 'development';
-
-export const client: Knex = knex(knexfile[env] || {});
+export const client: Knex = knex(knexfile['e2e']);
 
 const commonUserFields = {
 	first_name: 'John',

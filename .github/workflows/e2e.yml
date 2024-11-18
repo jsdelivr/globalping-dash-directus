@@ -28,7 +28,7 @@ jobs:
           pnpm exec playwright install --with-deps
       - name: Build docker compose
         run: |
-          cp .env.development.example .env.development
+          cp .env.e2e.example .env.e2e
           cp .env.example .env
           pnpm run test:e2e:build:directus
       - name: Build dashboard repo

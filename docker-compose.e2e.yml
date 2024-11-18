@@ -25,8 +25,6 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env.development
-    environment:
-      - ENABLE_E2E_MOCKS=true
+      - .env.e2e
     ports:
       - "18055:8055"

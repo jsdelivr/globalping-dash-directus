@@ -41,8 +41,8 @@
 	"scripts": {
 		"lint": "eslint --cache .",
 		"lint:fix": "pnpm lint --fix",
-		"init": "./scripts/init.sh",
-		"init:dev": "./scripts/init.sh --dev",
+		"init:dev": "./scripts/init.sh development",
+		"init:e2e": "./scripts/init.sh e2e",
 		"docker:ls:update": "node ./scripts/docker-ls.js",
 		"migrate": "rm -rf ./extensions/migrations/* && mkdir -p ./extensions/migrations/ && cp -rp ./src/extensions/migrations/* ./extensions/migrations/ && cp -p ./src/extensions/migration-utils.js ./extensions/ && dotenv -- pnpm dlx directus@11.1.1 database migrate:latest",
 		"seed": "NODE_ENV=development dotenv -- knex seed:run",
@@ -50,8 +50,8 @@
 		"schema:snapshot": "pnpm dlx directus@11.1.1 schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'; rm -f .eslintcache",
 		"test:e2e": "npm run test:e2e:build:directus && npm run test:e2e:build:dash && npm run test:e2e:run",
-		"test:e2e:build:directus": "docker compose -f docker-compose.e2e.yml up --build -d && ./scripts/init.sh --dev -f docker-compose.e2e.yml && docker compose -f docker-compose.e2e.yml stop",
-		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash && git add . && git reset --hard && git pull --force && pnpm install --ignore-workspace && SERVER_URL=http://localhost:13010 DIRECTUS_URL=http://localhost:18055 pnpm build && cd ../../../;",
+		"test:e2e:build:directus": "docker compose -f docker-compose.e2e.yml up --build -d && pnpm run init:e2e && docker compose -f docker-compose.e2e.yml stop",
+		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash && git add . && git reset --hard && git pull --force && pnpm install --ignore-workspace && dotenv -e ../../../.env -- pnpm build && cd ../../../;",
 		"test:e2e:run": "pnpm exec playwright test",
 		"test:e2e:generate": "pnpm exec playwright test test/e2e/tests/generate.spec.ts --headed"
 	},
