@@ -25,7 +25,7 @@ jobs:
           pnpm install
       - name: Install Playwright Browsers
         run: |
-          pnpm exec playwright install --with-deps
+          pnpm exec playwright install --with-deps chromium
       - name: Build docker compose
         run: |
           cp .env.e2e.example .env.e2e

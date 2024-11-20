@@ -9,8 +9,8 @@
 - `pnpm run migrate`
 - get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
 - restart the container
-- login using github. Re-login as admin and give github user admin rights. Then set that value to the container env vars: \nAUTH_DISABLE_DEFAULT=true \nThen restart the container
-- Login using github. Generate a static access token for your user and save it to the local .env file as ADMIN_ACCESS_TOKEN
+- login using github. Re-login as admin and give github user admin rights. Then set that value `AUTH_DISABLE_DEFAULT=true`. Then restart the container
+- Login using github. Generate a static access token for your user and save it to the local .env file as `ADMIN_ACCESS_TOKEN`
 
 ## Prod other deploys
 
@@ -50,12 +50,6 @@ cp ./operations/gh-webhook-handler/.mocharc.json "$original_dir/"
 cp ./operations/gh-webhook-handler/wallaby.js "$original_dir/"
 cd "$original_dir"
 ```
-
-E2E generate inside test:
-`await page.pause()` + `npx playwright test test/e2e/tokens.spec.ts --headed`
-
-E2E generate from scratch:
-npx playwright codegen --load-storage=test/e2e/auth.json --save-storage=test/e2e/auth.json localhost:18055
 
 ## Prepare dev host
 

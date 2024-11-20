@@ -4,7 +4,7 @@ import { test as setup } from '@playwright/test';
 import { promisify } from 'util';
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL!;
-const DASH_URL = process.env.SERVER_URL!;
+const DASHBOARD_URL = process.env.SERVER_URL!;
 
 const pm2start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
@@ -38,7 +38,7 @@ const startDirectus = async () => {
 };
 
 const startDashboard = async () => {
-	const isDashRunning = await getIsRunning(DASH_URL);
+	const isDashRunning = await getIsRunning(DASHBOARD_URL);
 
 	if (isDashRunning) { return; }
 
@@ -50,7 +50,7 @@ const startDashboard = async () => {
 		},
 	});
 
-	await waitFor(DASH_URL);
+	await waitFor(DASHBOARD_URL);
 	console.log('Dashboard started.');
 };
 
