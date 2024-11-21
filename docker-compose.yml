@@ -1,4 +1,4 @@
-name: dash-directus
+name: e2e-globalping-dash-directus
 version: '3'
 services:
   mariadb:

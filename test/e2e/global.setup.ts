@@ -6,7 +6,7 @@ import { promisify } from 'util';
 const DIRECTUS_URL = process.env.DIRECTUS_URL!;
 const DASHBOARD_URL = process.env.SERVER_URL!;
 
-const pm2start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
+const pm2Start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
 const waitFor = (url: string, timeout = 30) => execa({ stdout: 'inherit' })`./scripts/wait-for.sh -t ${timeout} ${url}`;
 
@@ -41,7 +41,7 @@ const startDashboard = async () => {
 
 	if (isDashRunning) { return; }
 
-	await pm2start({
+	await pm2Start({
 		name: 'e2e-dash',
 		script: 'test/e2e/globalping-dash/.output/server/index.mjs',
 		env: {

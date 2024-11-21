@@ -28,10 +28,10 @@ export const test = baseTest.extend<{ user: User }>({
 		}
 
 		const fileName = path.resolve(test.info().project.outputDir, `.auth/${user.id}.json`);
-		// Save auth in file.
+		// Save auth in a file.
 		await context.storageState({ path: fileName });
 
-		// Run the test with the auth in the file.
+		// Run the test with the auth file.
 		await use(fileName);
 
 		// Clear the data after the test.
