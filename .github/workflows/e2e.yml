@@ -10,6 +10,7 @@ jobs:
   build:
     name: Run e2e tests
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,13 +20,15 @@ jobs:
         run: |
           corepack enable
           pnpm install
-      - name: Install Playwright Browsers
+      - name: Install Playwright browsers
         run: |
           pnpm exec playwright install --with-deps chromium
-      - name: Build docker compose
+      - name: Generate env files
         run: |
           cp .env.e2e.example .env.e2e
           cp .env.example .env
+      - name: Build docker compose
+        run: |
           pnpm run test:e2e:build:directus
       - name: Build dashboard repo
         run: |
