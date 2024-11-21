@@ -13,7 +13,7 @@ export default defineConfig({
 		baseURL: process.env.SERVER_URL,
 	},
 	forbidOnly: !!process.env.CI,
-	reporter: process.env.CI ? 'list' : 'line',
+	reporter: 'list',
 	projects: [
 		{ name: 'setup', testMatch: /.*\.setup\.ts/ },
 
