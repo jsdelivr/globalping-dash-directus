@@ -8,11 +8,11 @@ const DASHBOARD_URL = process.env.SERVER_URL!;
 
 const pm2start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
-const waitFor = (url: string) => execa`./scripts/wait-for.sh -t 30 ${url}`;
+const waitFor = (url: string, timeout = 30) => execa({ stdout: 'inherit' })`./scripts/wait-for.sh -t ${timeout} ${url}`;
 
 const getIsRunning = async (url: string) => {
 	try {
-		await execa`./scripts/wait-for.sh -t 2 ${url}`;
+		await waitFor(url, 2);
 		console.log(`Service at ${url} is already running.`);
 		return true;
 	} catch (err) {
@@ -31,8 +31,7 @@ const startDirectus = async () => {
 
 	if (isDirectusRunning) { return; }
 
-	await execa`docker compose -f docker-compose.e2e.yml start`;
-	console.log(1);
+	await execa({ stdout: 'inherit' })`docker compose -f docker-compose.e2e.yml start`;
 	await waitFor(DIRECTUS_URL);
 	console.log('Directus started.');
 };

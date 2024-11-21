@@ -189,4 +189,6 @@ case "$PROTOCOL" in
   ;;
 esac
 
+echo "Waiting for: $HOST"
+
 wait_for "$@"

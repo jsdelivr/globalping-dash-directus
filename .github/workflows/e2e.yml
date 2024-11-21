@@ -10,10 +10,6 @@ jobs:
   build:
     name: Run e2e tests
     runs-on: ubuntu-latest
-
-    env:
-      NODE_ENV: development
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

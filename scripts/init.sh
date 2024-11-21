@@ -38,13 +38,9 @@ else
   echo "Error: Invalid argument. Usage: $0 {development|e2e}"
   exit 1
 fi
-echo "Compose file set to $compose_file"
-
-echo "Waiting for: $DIRECTUS_URL/admin/login";
+echo "Compose file $compose_file is used."
 
 ./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
-
-echo "Done.";
 
 token=$(get_token)
 
