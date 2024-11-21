@@ -12,8 +12,8 @@ export default defineConfig({
 	use: {
 		baseURL: process.env.SERVER_URL,
 	},
-
-	/* Configure projects for major browsers */
+	forbidOnly: !!process.env.CI,
+	reporter: process.env.CI ? 'list' : 'line',
 	projects: [
 		{ name: 'setup', testMatch: /.*\.setup\.ts/ },
 
