@@ -10,7 +10,7 @@ export default defineConfig({
 	testDir: './test/e2e',
 	workers: 1,
 	use: {
-		baseURL: process.env.SERVER_URL,
+		baseURL: process.env.DASH_URL,
 	},
 	forbidOnly: !!process.env.CI,
 	reporter: 'list',
