@@ -86,6 +86,7 @@ test.beforeEach(async ({ user }) => {
 
 test('Credits page', async ({ page }) => {
 	await page.goto('/credits');
+	await expect(page.locator('h1')).toHaveText('Credits');
 	await expect(page.getByTestId('total-credits')).toHaveText('10,300');
 	await expect(page.getByTestId('generated-credits')).toHaveText('11,300');
 	await expect(page.getByTestId('spent-credits')).toHaveText('7,000');
