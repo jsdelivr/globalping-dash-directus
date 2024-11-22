@@ -51,7 +51,7 @@
 		"prepare": "husky install || echo 'Failed to install husky'; rm -f .eslintcache",
 		"test:e2e": "npm run test:e2e:build:directus && npm run test:e2e:build:dash && npm run test:e2e:run",
 		"test:e2e:build:directus": "docker compose -f docker-compose.e2e.yml up --build -d && pnpm run init:e2e && docker compose -f docker-compose.e2e.yml stop",
-		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash && git add . && git reset --hard && git pull --force && pnpm install --ignore-workspace && dotenv -e ../../../.env -- pnpm build; cd ../../../;",
+		"test:e2e:build:dash": "git clone -b e2e https://github.com/jsdelivr/globalping-dash.git test/e2e/globalping-dash; cd test/e2e/globalping-dash && git reset --hard origin/e2e && git pull --force && pnpm install --ignore-workspace && dotenv -e ../../../.env -- pnpm build; cd ../../../;",
 		"test:e2e:run": "pnpm exec playwright test --grep-invert='.*generate-test\\.spec\\.ts'",
 		"test:e2e:generate": "pnpm exec playwright test test/e2e/generate-test.spec.ts --headed"
 	},

@@ -69,7 +69,7 @@ const addData = async (user: User) => {
 		user_updated: null,
 		adopted_probe: probeId,
 	},
-	...[ -20, -50, -80 ].map(daysAgo => ({
+	...[ -2, -32, -62 ].map(daysAgo => ({
 		amount: 1000,
 		comment: 'Recurring $5 sponsorship.',
 		consumed: 1,
@@ -83,11 +83,8 @@ const addData = async (user: User) => {
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
 };
 
-test.beforeEach(async ({ user }) => {
+test('Index page', async ({ page, user }) => {
 	await addData(user);
-});
-
-test('Index page', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.locator('h1')).toHaveText('Overview');
 	await expect(page.getByLabel('Profile')).toHaveText('johndoe');
@@ -96,5 +93,22 @@ test('Index page', async ({ page }) => {
 	await expect(page.getByTestId('offline-probes-count')).toHaveText('1');
 	await expect(page.getByTestId('total-credits')).toHaveText('2,150');
 	await expect(page.getByTestId('credits-from-probes')).toHaveText('+300');
+	await expect(page.getByTestId('credits-from-sponsorship')).toHaveText('+1,000');
+});
+
+test('Show recurring sponsorships up to 35 days ago', async ({ page, user }) => {
+	await sql('gp_credits_additions').insert([
+		...[ -32 ].map(daysAgo => ({
+			amount: 1000,
+			comment: 'Recurring $5 sponsorship.',
+			consumed: 1,
+			date_created: relativeDayUtc(daysAgo),
+			github_id: user.external_identifier,
+			user_updated: null,
+			adopted_probe: null,
+		})),
+	]);
+
+	await page.goto('/');
 	await expect(page.getByTestId('credits-from-sponsorship')).toHaveText('+1,000');
 });

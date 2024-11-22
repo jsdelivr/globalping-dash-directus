@@ -72,7 +72,7 @@ test('Probe adoption', async ({ page }) => {
 	await page.getByLabel('Next step').click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.locator('input:nth-child(3)').fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
 	await page.getByLabel('Verify the code').click();
 	await page.getByLabel('Finish').click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
