@@ -1,5 +1,7 @@
 import { test, expect } from '../fixtures.ts';
-import { User, randomToken, client as sql } from '../client.ts';
+import { client as sql } from '../client.ts';
+import { User } from '../types.ts';
+import { randomToken } from '../utils.ts';
 
 const addToken = async (user: User) => {
 	await sql('gp_tokens').insert({

@@ -1,7 +1,9 @@
 import { test as baseTest, request } from '@playwright/test';
-import { client as sql, clearUserData, generateUser, User } from './client.ts';
 import path from 'path';
 import fs from 'fs/promises';
+import { client as sql } from './client.ts';
+import { clearUserData, generateUser } from './utils.ts';
+import { User } from './types.ts';
 
 export * from '@playwright/test';
 export const test = baseTest.extend<{ user: User }>({

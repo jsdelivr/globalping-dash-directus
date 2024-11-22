@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
-import { User, randomIP, client as sql } from '../client.ts';
+import { client as sql } from '../client.ts';
+import { User } from '../types.ts';
+import { randomIP } from '../utils.ts';
 
 const addData = async (user: User) => {
 	const probeId = randomUUID();
