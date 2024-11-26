@@ -3,15 +3,15 @@ import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
 
 type User = {
-    provider: string;
-    external_identifier: string;
-		email?: string | undefined;
-    first_name?: string;
-    last_name?: string;
-    last_page?: string;
-		user_type: string;
-		github_username?: string;
-		github_organizations: string[];
+	provider: string;
+	external_identifier: string;
+	email?: string | undefined;
+	first_name?: string;
+	last_name?: string;
+	last_page?: string;
+	user_type: string;
+	github_username?: string;
+	github_organizations: string[];
 }
 
 type GithubOrgsResponse = {
