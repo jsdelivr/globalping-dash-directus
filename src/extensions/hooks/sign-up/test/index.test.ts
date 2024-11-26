@@ -85,6 +85,31 @@ describe('Sign-up hook', () => {
 		nock.cleanAll();
 	});
 
+	it(`filter should remove 'email' field if it is falsy`, async () => {
+		hook(events, context);
+
+		const payload = {
+			auth_data: undefined,
+			email: undefined,
+			external_identifier: '1834071',
+			first_name: 'Dmitriy Akulov',
+			last_name: 'jimaek',
+			provider: 'github',
+			role: 'role-uuid',
+		};
+
+		await callbacks.filter['auth.create']?.(payload);
+
+		expect(payload).to.deep.equal({
+			auth_data: undefined,
+			external_identifier: '1834071',
+			first_name: 'Dmitriy Akulov',
+			last_name: 'jimaek',
+			provider: 'github',
+			role: 'role-uuid',
+		});
+	});
+
 	it('filter should fulfill first_name, last_name, github_username', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)

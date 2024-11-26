@@ -3,14 +3,15 @@ import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
 
 type User = {
-    provider: string;
-    external_identifier: string;
-    first_name?: string;
-    last_name?: string;
-    last_page?: string;
-		user_type: string;
-		github_username?: string;
-		github_organizations: string[];
+	provider: string;
+	external_identifier: string;
+	email?: string | undefined;
+	first_name?: string;
+	last_name?: string;
+	last_page?: string;
+	user_type: string;
+	github_username?: string;
+	github_organizations: string[];
 }
 
 type GithubOrgsResponse = {
@@ -24,6 +25,17 @@ type CreditsAdditions = {
 };
 
 export default defineHook(({ filter, action }, context) => {
+	// For users without emails, Directus sets `email` to `undefined`, instead of removing that field.
+	// That throws on validation here: https://github.com/directus/directus/blob/2991169f82ad5d0c461e82e7fdcb268ef737896c/api/src/services/users.ts#L164-L165
+	// Issue should be fixed by Directus, but as a temp solution we are removing that field manually.
+	filter('auth.create', async (payload) => {
+		const user = payload as User;
+
+		if (!user.email) {
+			delete user.email;
+		}
+	});
+
 	filter('users.create', async (payload) => {
 		const user = payload as User;
 
