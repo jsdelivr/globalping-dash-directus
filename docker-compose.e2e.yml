@@ -1,4 +1,4 @@
-name: globalping-dash-directus
+name: e2e-globalping-dash-directus
 version: '3'
 services:
   mariadb:
@@ -25,6 +25,6 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env.development
+      - .env.e2e
     ports:
       - "18055:8055"

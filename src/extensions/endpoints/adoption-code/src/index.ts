@@ -125,6 +125,30 @@ export default defineEndpoint((router, context) => {
 				network: null,
 			});
 
+			if (env.ENABLE_E2E_MOCKS === true) {
+				probesToAdopt.set(userId, {
+					ip,
+					name: null,
+					code: '111111',
+					uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
+					version: '0.28.0',
+					nodeVersion: null,
+					hardwareDevice: null,
+					status: 'offline',
+					systemTags: [],
+					city: 'Ouagadougou',
+					state: null,
+					country: 'BF',
+					latitude: 12.36566,
+					longitude: -1.53388,
+					asn: 3302,
+					network: 'e2e network provider',
+				});
+
+				res.send('Code was sent to the probe.');
+				return;
+			}
+
 			const response = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
 				ip,
 				code,

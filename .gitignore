@@ -7,3 +7,8 @@ config/local*
 .env*
 !.env*.example
 .vscode/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/test/e2e/globalping-dash/

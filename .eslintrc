@@ -9,7 +9,9 @@
 	"ignorePatterns": [
 		"**/dist",
 		"/extensions",
-		"**/shims.d.ts"
+		"**/shims.d.ts",
+		"test/e2e/globalping-dash",
+		"test-results"
 	],
 	"rules": {
 		"n/no-missing-import": [
