@@ -68,8 +68,8 @@ describe('gp_location_overrides hook', () => {
 			city: 'Marseille',
 			state: null,
 			country: 'FR',
-			latitude: '43.29695',
-			longitude: '5.38107',
+			latitude: 43.3,
+			longitude: 5.38,
 		});
 	});
 
@@ -86,8 +86,8 @@ describe('gp_location_overrides hook', () => {
 			city: 'Marseille',
 			state: null,
 			country: 'FR',
-			latitude: '43.29695',
-			longitude: '5.38107',
+			latitude: 43.3,
+			longitude: 5.38,
 		});
 	});
 

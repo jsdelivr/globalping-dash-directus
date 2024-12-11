@@ -55,8 +55,8 @@ export const validateLocation = async (fields: Fields, context: HookExtensionCon
 	fields.city = normalizeCityName(city.toponymName);
 	fields.state = city.countryCode === 'US' ? city.adminCode1 : null;
 	fields.country = city.countryCode;
-	fields.latitude = city.lat;
-	fields.longitude = city.lng;
+	fields.latitude = Math.round(Number(city.lat) * 100) / 100;
+	fields.longitude = Math.round(Number(city.lng) * 100) / 100;
 };
 
 export const validateIpRange = (ipRange: string) => {

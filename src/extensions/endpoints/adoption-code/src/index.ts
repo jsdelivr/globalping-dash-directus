@@ -139,8 +139,8 @@ export default defineEndpoint((router, context) => {
 					city: 'Ouagadougou',
 					state: null,
 					country: 'BF',
-					latitude: 12.36566,
-					longitude: -1.53388,
+					latitude: 12.37,
+					longitude: -1.53,
 					asn: 3302,
 					network: 'e2e network provider',
 				});
