@@ -217,7 +217,7 @@ describe('adopted-probe hook', () => {
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
-			longitude: '2.3488',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}]);
@@ -258,7 +258,7 @@ describe('adopted-probe hook', () => {
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
-			longitude: '2.3488',
+			longitude: '2.35',
 			country: null,
 			isCustomCity: false,
 		}]);
@@ -277,13 +277,13 @@ describe('adopted-probe hook', () => {
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
-			longitude: '2.3488',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}, {
 			city: 'London',
 			latitude: '51.51',
-			longitude: '-0.12574',
+			longitude: '-0.13',
 			country: 'GB',
 			isCustomCity: false,
 		}]);
@@ -301,7 +301,7 @@ describe('adopted-probe hook', () => {
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
-			longitude: '2.3488',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}]);
@@ -328,7 +328,7 @@ describe('adopted-probe hook', () => {
 				city: 'Paris',
 				state: null,
 				latitude: '48.85',
-				longitude: '2.3488',
+				longitude: '2.35',
 				country: 'FR',
 				isCustomCity: false,
 			}]);
@@ -351,7 +351,7 @@ describe('adopted-probe hook', () => {
 				city: 'Paris',
 				state: null,
 				latitude: '48.85',
-				longitude: '2.3488',
+				longitude: '2.35',
 				country: 'FR',
 				isCustomCity: false,
 			}]);
@@ -373,7 +373,7 @@ describe('adopted-probe hook', () => {
 				city: 'Paris',
 				state: null,
 				latitude: '48.85',
-				longitude: '2.3488',
+				longitude: '2.35',
 				country: 'FR',
 				isCustomCity: false,
 			}]);
