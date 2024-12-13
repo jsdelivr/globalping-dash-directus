@@ -72,8 +72,8 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85341',
-			longitude: '2.3488',
+			latitude: '48.85',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}]);
@@ -120,7 +120,7 @@ describe('adopted-probe hook', () => {
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ latitude: '43.29695', longitude: '5.38107', isCustomCity: true, countryOfCustomCity: 'FR', state: null },
+			{ latitude: 43.3, longitude: 5.38, isCustomCity: true, countryOfCustomCity: 'FR', state: null },
 			{ emitEvents: false },
 		]);
 	});
@@ -130,8 +130,8 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Detroit',
 			state: 'MI',
-			latitude: '42.33143',
-			longitude: '-83.04575',
+			latitude: '42.33',
+			longitude: '-83.05',
 			country: 'US',
 			isCustomCity: false,
 		}]);
@@ -178,7 +178,7 @@ describe('adopted-probe hook', () => {
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ latitude: '25.77427', longitude: '-80.19366', isCustomCity: true, countryOfCustomCity: 'US', state: 'FL' },
+			{ latitude: 25.77, longitude: -80.19, isCustomCity: true, countryOfCustomCity: 'US', state: 'FL' },
 			{ emitEvents: false },
 		]);
 	});
@@ -188,8 +188,8 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85341',
-			longitude: '2.3488',
+			latitude: '48.85',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: true,
 		}]);
@@ -216,8 +216,8 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85341',
-			longitude: '2.3488',
+			latitude: '48.85',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}]);
@@ -257,8 +257,8 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85341',
-			longitude: '2.3488',
+			latitude: '48.85',
+			longitude: '2.35',
 			country: null,
 			isCustomCity: false,
 		}]);
@@ -276,14 +276,14 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85341',
-			longitude: '2.3488',
+			latitude: '48.85',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}, {
 			city: 'London',
-			latitude: '51.50853',
-			longitude: '-0.12574',
+			latitude: '51.51',
+			longitude: '-0.13',
 			country: 'GB',
 			isCustomCity: false,
 		}]);
@@ -300,8 +300,8 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85341',
-			longitude: '2.3488',
+			latitude: '48.85',
+			longitude: '2.35',
 			country: 'FR',
 			isCustomCity: false,
 		}]);
@@ -327,8 +327,8 @@ describe('adopted-probe hook', () => {
 				userId: '1',
 				city: 'Paris',
 				state: null,
-				latitude: '48.85341',
-				longitude: '2.3488',
+				latitude: '48.85',
+				longitude: '2.35',
 				country: 'FR',
 				isCustomCity: false,
 			}]);
@@ -350,8 +350,8 @@ describe('adopted-probe hook', () => {
 				tags: [{ prefix: 'oldprefix', value: 'a' }],
 				city: 'Paris',
 				state: null,
-				latitude: '48.85341',
-				longitude: '2.3488',
+				latitude: '48.85',
+				longitude: '2.35',
 				country: 'FR',
 				isCustomCity: false,
 			}]);
@@ -372,8 +372,8 @@ describe('adopted-probe hook', () => {
 				tags: [{ prefix: 'oldprefix', value: 'a' }],
 				city: 'Paris',
 				state: null,
-				latitude: '48.85341',
-				longitude: '2.3488',
+				latitude: '48.85',
+				longitude: '2.35',
 				country: 'FR',
 				isCustomCity: false,
 			}]);

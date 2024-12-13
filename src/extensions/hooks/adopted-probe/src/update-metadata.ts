@@ -39,8 +39,8 @@ export const updateMetadata = async (_fields: Fields, keys: string[], { services
 
 	await adoptedProbesService.updateMany(keys, {
 		countryOfCustomCity: city.countryCode,
-		latitude: city.lat,
-		longitude: city.lng,
+		latitude: Math.round(Number(city.lat) * 100) / 100,
+		longitude: Math.round(Number(city.lng) * 100) / 100,
 		state,
 		isCustomCity: true,
 	}, {

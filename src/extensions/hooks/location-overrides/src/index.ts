@@ -8,8 +8,8 @@ export type LocationOverride = {
 	city: string;
 	state: string | null;
 	country: string | null;
-	latitude: string | null;
-	longitude: string | null;
+	latitude: number | null;
+	longitude: number | null;
 };
 
 export type Fields = Partial<LocationOverride>;
