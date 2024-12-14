@@ -135,6 +135,7 @@ describe('Sign-up hook', () => {
 			last_name: 'Akulov',
 			github_username: 'jimaek',
 			github_organizations: null,
+			email_notifications: false,
 		});
 	});
 
@@ -163,6 +164,7 @@ describe('Sign-up hook', () => {
 			last_name: undefined,
 			github_username: 'jimaek',
 			github_organizations: null,
+			email_notifications: false,
 		});
 	});
 

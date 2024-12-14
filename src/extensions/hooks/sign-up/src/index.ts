@@ -12,6 +12,7 @@ type User = {
 	user_type: string;
 	github_username?: string;
 	github_organizations: string[];
+	email_notifications: boolean;
 }
 
 type GithubOrgsResponse = {
@@ -43,6 +44,8 @@ export default defineHook(({ filter, action }, context) => {
 			fulfillUsername(user);
 			fulfillFirstNameAndLastName(user);
 		}
+
+		user.email_notifications = false;
 	});
 
 	action('users.create', async (payload) => {
