@@ -19,11 +19,40 @@ type User = {
 	github_organizations: string[];
 }
 
-export default defineHook(({ action }, context) => {
+type AuthPayload = {
+	id: string;
+	role: string;
+	app_access: boolean;
+	admin_access: boolean;
+	github_username?: string;
+	session: string;
+};
+
+export default defineHook(({ action, filter }, context) => {
 	action('auth.login', async (payload) => {
 		const userId = payload.user;
 		const provider = payload.provider;
 		await syncGithubData(userId, provider, context);
+	});
+
+	filter('auth.jwt', async (payload: AuthPayload, meta) => {
+		const userId = meta.user;
+		const { services, database, getSchema } = context;
+		const { ItemsService } = services;
+
+		const itemsService = new ItemsService('directus_users', {
+			schema: await getSchema({ database }),
+			knex: database,
+		});
+
+		const user = await itemsService.readOne(userId) as User | undefined;
+
+		if (!user || !user.github_username) {
+			return payload;
+		}
+
+		payload.github_username = user.github_username;
+		return payload;
 	});
 });
 
