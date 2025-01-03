@@ -5,6 +5,7 @@ import { promisify } from 'util';
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL!;
 const DASH_URL = process.env.DASH_URL!;
+const DASH_INDEX_FILE_PATH = process.env.DASH_INDEX_FILE_PATH!;
 
 const pm2Start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
@@ -43,7 +44,7 @@ const startDashboard = async () => {
 
 	await pm2Start({
 		name: 'e2e-dash',
-		script: 'test/e2e/globalping-dash/.output/server/index.mjs',
+		script: DASH_INDEX_FILE_PATH,
 		env: {
 			PORT: '13010',
 		},

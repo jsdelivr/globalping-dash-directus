@@ -3,7 +3,7 @@ RUN corepack enable
 WORKDIR /builder
 COPY package.json pnpm-*.yaml ./
 
-# Update via `npm run docker:ls:update`
+# Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-BUILD-BLOCK
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
@@ -37,7 +37,7 @@ RUN pnpm -r build
 
 FROM directus/directus:11.1.1
 
-# Update via `npm run docker:ls:update`
+# Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
 COPY --from=builder /builder/src/extensions/bytes-value/dist/* /directus/extensions/bytes-value/dist/
 COPY --from=builder /builder/src/extensions/bytes-value/package.json /directus/extensions/bytes-value/
