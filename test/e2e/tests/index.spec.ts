@@ -86,7 +86,7 @@ const addData = async (user: User) => {
 test('Index page', async ({ page, user }) => {
 	await addData(user);
 	await page.goto('/');
-	await expect(page.locator('h1')).toHaveText('Update');
+	await expect(page.locator('h1')).toHaveText('Overview');
 	await expect(page.getByLabel('Profile')).toHaveText('johndoe');
 	await expect(page.getByTestId('probes-count')).toHaveText('2');
 	await expect(page.getByTestId('online-probes-count')).toHaveText('1');
