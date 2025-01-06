@@ -49,24 +49,29 @@ export const seed = async (knex) => {
 		knex('gp_credits').delete(),
 	]);
 
+	const cliAppId = randomUUID();
+	const slackAppId = randomUUID();
 	await knex('gp_apps').insert([{
-		id: randomUUID(),
+		id: cliAppId,
 		user_created: user.id,
 		date_created: '2024-09-01 00:00:00',
-		name: 'Sample OAuth App',
+		name: 'Globalping CLI',
 		grants: JSON.stringify([ 'authorization_code', 'refresh_token' ]),
 		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
 	}, {
-		id: randomUUID(),
+		id: slackAppId,
 		user_created: user.id,
 		date_created: '2024-09-01 00:00:00',
-		name: 'Client Credentials App',
+		name: 'Globalping Slack App',
+		owner_name: 'Slack',
+		owner_url: 'https://slack.com/',
 		secrets: JSON.stringify([ 'xhQKGe2+hSCGgAnYYNF6uBNMFJ1YvcpaRzVs+JSpaWw=' ]), // secret: lyrhib7f2dtuh6fzojvupfhh4olkxofd4kibutw6z5guihvz
 		grants: JSON.stringify([ 'globalping_client_credentials', 'refresh_token' ]),
 		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
 	}]);
 
 	await knex('gp_tokens').insert([{
+		id: 1,
 		name: 'gp-token-1',
 		value: '/bSluuDrAPX9zIiZZ/hxEKARwOg+e//EdJgCFpmApbg=', // token: hf2fnprguymlgliirdk7qv23664c2xcr
 		date_created: '2024-02-22 10:55:21',
@@ -77,6 +82,7 @@ export const seed = async (knex) => {
 		user_created: user.id,
 		user_updated: null,
 	}, {
+		id: 2,
 		name: 'gp-token-2',
 		value: '8YZ2pZoGQxfOeEGvUUkagX1yizZckq3weL+IN0chvU0=', // token: vumzijbzihrskmc2hj34yw22batpibmt
 		date_created: '2024-02-22 10:57:21',
@@ -86,7 +92,72 @@ export const seed = async (knex) => {
 		origins: JSON.stringify([ 'https://www.jsdelivr.com', 'https://www.jsdelivr.com:10000' ]),
 		user_created: user.id,
 		user_updated: user.id,
-	}]);
+	},
+	{
+		id: 3,
+		date_created: '2025-01-03 16:13:45',
+		date_last_used: null,
+		date_updated: null,
+		expire: '2025-07-02',
+		name: 'For Globalping CLI',
+		origins: '[]',
+		user_created: user.id,
+		user_updated: null,
+		value: 'mDyYJ7cYn0/txr8fQtqaCxW1MN3bbjBc8y+bz5M4+Cg=', // token: w7nkybaxtfnajebtagdcrxsbqr42kjre
+		app_id: cliAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'refresh_token',
+		parent: null,
+	},
+	{
+		id: 4,
+		date_created: '2025-01-03 16:13:45',
+		date_last_used: '2025-01-05',
+		date_updated: null,
+		expire: '2025-02-02',
+		name: 'For Globalping CLI',
+		origins: '[]',
+		user_created: user.id,
+		user_updated: null,
+		value: 't3lHNCiCf17iGssMzftULAGHr8jmttRORB7EeUonYn8=', // token: irhkax22pl5qd6qm6iiegikyndel4hh6
+		app_id: cliAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'access_token',
+		parent: 3,
+	},
+	{
+		id: 5,
+		date_created: '2025-01-06 12:34:36',
+		date_last_used: null,
+		date_updated: null,
+		expire: '2026-01-01',
+		name: 'For Globalping Slack App',
+		origins: '[]',
+		user_created: user.id,
+		user_updated: null,
+		value: 'XfP0hC+L1TNOOTIP0U6LX7GWSUDuL/oEqTr+Dm+Z7gg=', // token: cd4j7g2m37e74wxivpuuj2xdt2acl6j6
+		app_id: slackAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'refresh_token',
+		parent: null,
+	},
+	{
+		id: 6,
+		date_created: '2025-01-06 12:34:36',
+		date_last_used: '2025-01-06',
+		date_updated: null,
+		expire: '2025-02-05',
+		name: 'For Globalping Slack App',
+		origins: '[]',
+		user_created: user.id,
+		user_updated: null,
+		value: 'jR3Jx0KCKRc6IhuavjG7MqzslEFBDvTEb76hOMvVEx8=', // token: 3f2qkqbct7skzarkpihsrnak2brdasxk
+		app_id: slackAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'access_token',
+		parent: 5,
+	},
+	]);
 
 	const probeId = randomUUID();
 	await knex('gp_adopted_probes').insert([{
