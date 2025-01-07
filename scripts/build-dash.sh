@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+CURRENT_BRANCH=${CURRENT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 
 # Remove the directory if it exists
 if [ -d "test/e2e/globalping-dash" ]; then
