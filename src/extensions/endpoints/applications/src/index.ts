@@ -4,9 +4,10 @@ import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import _ from 'lodash';
+import { validateUrl } from './utils.js';
 
 type Request = ExpressRequest & {
-	accountability: EventContext['accountability'];
+	accountability: NonNullable<EventContext['accountability']>;
 };
 
 type AppToken = {
@@ -18,10 +19,19 @@ type AppToken = {
 	owner_url: string;
 };
 
-const getApplications = Joi.object<Request>({
+const getApplicationsSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
 	}).required().unknown(true),
+}).unknown(true);
+
+const revokeApplicationSchema = Joi.object<Request>({
+	accountability: Joi.object({
+		user: Joi.string().required(),
+	}).required().unknown(true),
+	body: Joi.object({
+		id: Joi.string().required(),
+	}).required(),
 }).unknown(true);
 
 export default defineEndpoint((router, context) => {
@@ -29,7 +39,7 @@ export default defineEndpoint((router, context) => {
 
 	router.get('/', async (req, res) => {
 		try {
-			const { value, error } = getApplications.validate(req, { convert: true });
+			const { value, error } = getApplicationsSchema.validate(req, { convert: true });
 
 			if (error) {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
@@ -37,7 +47,7 @@ export default defineEndpoint((router, context) => {
 
 			const appTokens = await database('gp_tokens')
 				.leftJoin('gp_apps', 'gp_tokens.app_id', 'gp_apps.id')
-				.where({ 'gp_tokens.user_created': value.accountability!.user! })
+				.where({ 'gp_tokens.user_created': value.accountability.user })
 				.whereNot({ 'gp_tokens.app_id': null })
 				.select(
 					'gp_tokens.id as id',
@@ -50,15 +60,56 @@ export default defineEndpoint((router, context) => {
 				.orderBy('gp_tokens.date_last_used', 'desc')
 				.limit(100) as AppToken[];
 
-			const applications = _.uniqBy(appTokens, 'app_id').map(token => ({
-				id: token.app_id,
-				name: token.app_name,
-				date_last_used: token.date_last_used,
-				owner_name: token.owner_name,
-				owner_url: token.owner_url,
-			}));
+			const applications = _.uniqBy(appTokens, 'app_id').map((token) => {
+				const app = {
+					id: token.app_id,
+					name: token.app_name,
+					date_last_used: token.date_last_used,
+					owner_name: token.owner_name || 'Globalping',
+					owner_url: validateUrl(token.owner_url),
+				};
+
+				if (!app.owner_url && app.owner_name === 'Globalping') {
+					app.owner_url = 'https://globalping.io/';
+				}
+
+				return app;
+			});
 
 			res.send({ applications });
+		} catch (error: unknown) {
+			logger.error(error);
+
+			if (isDirectusError(error)) {
+				res.status(error.status).send(error.message);
+			} else {
+				res.status(500).send('Internal Server Error');
+			}
+		}
+	});
+
+	router.post('/revoke', async (request, res) => {
+		try {
+			const { value: req, error } = revokeApplicationSchema.validate(request);
+
+			if (error) {
+				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
+			}
+
+			await Promise.all([
+				database('gp_tokens')
+					.where({
+						app_id: req.body.id,
+						user_created: req.accountability.user,
+					}).del(),
+				database('gp_apps_approvals')
+					.where({
+						app: req.body.id,
+						user: req.accountability.user,
+					}).del(),
+			]);
+
+			res.send('Application access revoked.');
 		} catch (error: unknown) {
 			logger.error(error);
 

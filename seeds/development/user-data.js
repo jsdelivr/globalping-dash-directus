@@ -49,25 +49,33 @@ export const seed = async (knex) => {
 		knex('gp_credits').delete(),
 	]);
 
-	const cliAppId = randomUUID();
-	const slackAppId = randomUUID();
+	const authCodeAppId = randomUUID();
+	const clientCredentialsAppId = randomUUID();
 	await knex('gp_apps').insert([{
-		id: cliAppId,
+		id: authCodeAppId,
 		user_created: user.id,
 		date_created: '2024-09-01 00:00:00',
-		name: 'Globalping CLI',
+		name: 'Auth Code App',
+		secrets: JSON.stringify([ 'QicY5X3BLipbyojWkfzyd0vRYth/C/2GsCYw6VRfLgI=' ]), // secret: ic3sba25i27s6gic3ksb376krrmtsjbxk2uzn7v5fk6gmiqj
 		grants: JSON.stringify([ 'authorization_code', 'refresh_token' ]),
 		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
 	}, {
-		id: slackAppId,
+		id: clientCredentialsAppId,
 		user_created: user.id,
 		date_created: '2024-09-01 00:00:00',
-		name: 'Globalping Slack App',
-		owner_name: 'Slack',
-		owner_url: 'https://slack.com/',
+		name: 'Client Credentials App',
+		owner_name: 'jsDelivr',
+		owner_url: 'https://www.jsdelivr.com/',
 		secrets: JSON.stringify([ 'xhQKGe2+hSCGgAnYYNF6uBNMFJ1YvcpaRzVs+JSpaWw=' ]), // secret: lyrhib7f2dtuh6fzojvupfhh4olkxofd4kibutw6z5guihvz
 		grants: JSON.stringify([ 'globalping_client_credentials', 'refresh_token' ]),
 		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
+	}]);
+
+	await knex('gp_apps_approvals').insert([{
+		id: randomUUID(),
+		user: user.id,
+		app: authCodeAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
 	}]);
 
 	await knex('gp_tokens').insert([{
@@ -99,12 +107,12 @@ export const seed = async (knex) => {
 		date_last_used: null,
 		date_updated: null,
 		expire: '2025-07-02',
-		name: 'For Globalping CLI',
+		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
 		user_updated: null,
 		value: 'mDyYJ7cYn0/txr8fQtqaCxW1MN3bbjBc8y+bz5M4+Cg=', // token: w7nkybaxtfnajebtagdcrxsbqr42kjre
-		app_id: cliAppId,
+		app_id: authCodeAppId,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'refresh_token',
 		parent: null,
@@ -115,12 +123,12 @@ export const seed = async (knex) => {
 		date_last_used: '2025-01-05',
 		date_updated: null,
 		expire: '2025-02-02',
-		name: 'For Globalping CLI',
+		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
 		user_updated: null,
 		value: 't3lHNCiCf17iGssMzftULAGHr8jmttRORB7EeUonYn8=', // token: irhkax22pl5qd6qm6iiegikyndel4hh6
-		app_id: cliAppId,
+		app_id: authCodeAppId,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'access_token',
 		parent: 3,
@@ -131,12 +139,12 @@ export const seed = async (knex) => {
 		date_last_used: null,
 		date_updated: null,
 		expire: '2026-01-01',
-		name: 'For Globalping Slack App',
+		name: 'For Client Credentials App',
 		origins: '[]',
 		user_created: user.id,
 		user_updated: null,
 		value: 'XfP0hC+L1TNOOTIP0U6LX7GWSUDuL/oEqTr+Dm+Z7gg=', // token: cd4j7g2m37e74wxivpuuj2xdt2acl6j6
-		app_id: slackAppId,
+		app_id: clientCredentialsAppId,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'refresh_token',
 		parent: null,
@@ -147,12 +155,12 @@ export const seed = async (knex) => {
 		date_last_used: '2025-01-06',
 		date_updated: null,
 		expire: '2025-02-05',
-		name: 'For Globalping Slack App',
+		name: 'For Client Credentials App',
 		origins: '[]',
 		user_created: user.id,
 		user_updated: null,
 		value: 'jR3Jx0KCKRc6IhuavjG7MqzslEFBDvTEb76hOMvVEx8=', // token: 3f2qkqbct7skzarkpihsrnak2brdasxk
-		app_id: slackAppId,
+		app_id: clientCredentialsAppId,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'access_token',
 		parent: 5,
