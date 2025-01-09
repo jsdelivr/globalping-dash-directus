@@ -5,9 +5,9 @@ CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # Checkout and sync the branch if the directory exists, otherwise clone the repository
 if [ -d "test/e2e/globalping-dash" ]; then
   cd test/e2e/globalping-dash
-	git add .
+  git add .
   git reset --hard @{u}
-	git fetch
+  git fetch
   git checkout $CURRENT_BRANCH || git checkout master
   git reset --hard @{u}
 else
