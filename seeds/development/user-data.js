@@ -132,7 +132,40 @@ export const seed = async (knex) => {
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'access_token',
 		parent: 3,
-	}]);
+	},
+	{
+		id: 5,
+		date_created: '2025-01-06 12:34:36',
+		date_last_used: null,
+		date_updated: null,
+		expire: '2026-01-01',
+		name: 'For Client Credentials App',
+		origins: '[]',
+		user_created: user.id,
+		user_updated: null,
+		value: 'XfP0hC+L1TNOOTIP0U6LX7GWSUDuL/oEqTr+Dm+Z7gg=', // token: cd4j7g2m37e74wxivpuuj2xdt2acl6j6
+		app_id: clientCredentialsAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'refresh_token',
+		parent: null,
+	},
+	{
+		id: 6,
+		date_created: '2025-01-06 12:34:36',
+		date_last_used: '2025-01-06',
+		date_updated: null,
+		expire: '2025-02-05',
+		name: 'For Client Credentials App',
+		origins: '[]',
+		user_created: user.id,
+		user_updated: null,
+		value: 'jR3Jx0KCKRc6IhuavjG7MqzslEFBDvTEb76hOMvVEx8=', // token: 3f2qkqbct7skzarkpihsrnak2brdasxk
+		app_id: clientCredentialsAppId,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'access_token',
+		parent: 5,
+	},
+	]);
 
 	const probeId = randomUUID();
 	await knex('gp_adopted_probes').insert([{
