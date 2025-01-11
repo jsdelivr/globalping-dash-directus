@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+CURRENT_BRANCH=${CURRENT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 
 # Checkout and sync the branch if the directory exists, otherwise clone the repository
 if [ -d "test/e2e/globalping-dash" ]; then
