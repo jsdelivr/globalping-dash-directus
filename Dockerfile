@@ -7,6 +7,7 @@ COPY package.json pnpm-*.yaml ./
 # START: EXTENSIONS-BUILD-BLOCK
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
+COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints/applications/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
 COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
@@ -43,6 +44,8 @@ COPY --from=builder /builder/src/extensions/bytes-value/dist/* /directus/extensi
 COPY --from=builder /builder/src/extensions/bytes-value/package.json /directus/extensions/bytes-value/
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/dist/* /directus/extensions/adoption-code/dist/
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/package.json /directus/extensions/adoption-code/
+COPY --from=builder /builder/src/extensions/endpoints/applications/dist/* /directus/extensions/applications/dist/
+COPY --from=builder /builder/src/extensions/endpoints/applications/package.json /directus/extensions/applications/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/dist/* /directus/extensions/credits-timeline/dist/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/package.json /directus/extensions/credits-timeline/
 COPY --from=builder /builder/src/extensions/endpoints/redirect/dist/* /directus/extensions/redirect/dist/

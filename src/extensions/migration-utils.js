@@ -36,7 +36,7 @@ export async function getUserPermissions (collectionName) {
 	return { readPermissions, createPermissions, updatePermissions, deletePermissions };
 }
 
-export async function updatePermissions (permissionsObj, fieldsToAdd, fieldsToRemove) {
+export async function updatePermissions (permissionsObj, fieldsToAdd = [], fieldsToRemove = []) {
 	if (!permissionsObj) {
 		throw new Error(`Permissions object is empty.`);
 	}
