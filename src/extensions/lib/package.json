@@ -11,5 +11,8 @@
 	"keywords": [],
 	"dependencies": {
 		"any-ascii": "^0.3.2"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^2.0.6"
 	}
 }

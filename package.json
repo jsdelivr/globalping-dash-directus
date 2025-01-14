@@ -39,7 +39,7 @@
 		"typescript": "~5.2.2"
 	},
 	"scripts": {
-		"lint": "eslint --cache .",
+		"lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint --cache .",
 		"lint:fix": "pnpm lint --fix",
 		"init:dev": "./scripts/init.sh development",
 		"init:e2e": "./scripts/init.sh e2e",

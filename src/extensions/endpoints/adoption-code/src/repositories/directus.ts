@@ -9,13 +9,14 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 
 	const name = await getDefaultProbeName(req, probe, context);
 
-	const id = await itemsService.createOne({
+	const id: string = await itemsService.createOne({
 		ip: probe.ip,
 		name,
 		uuid: probe.uuid,
 		version: probe.version,
 		nodeVersion: probe.nodeVersion,
 		hardwareDevice: probe.hardwareDevice,
+		hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
 		status: probe.status,
 		city: probe.city,
 		systemTags: probe.systemTags,
@@ -29,7 +30,7 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		lastSyncDate: new Date(),
 	});
 
-	return [ id, name ];
+	return [ id, name ] as const;
 };
 
 export const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {

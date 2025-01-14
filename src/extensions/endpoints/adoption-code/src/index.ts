@@ -7,6 +7,7 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { createAdoptedProbe, findAdoptedProbesByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
@@ -21,6 +22,7 @@ type SendCodeResponse = {
 	version: string;
 	nodeVersion: string;
 	hardwareDevice: string | null;
+	hardwareDeviceFirmware: string | null;
 	status: string;
 	systemTags: string[];
 	city: string;
@@ -40,6 +42,7 @@ export type AdoptedProbe = {
 	version: string | null;
 	nodeVersion: string | null;
 	hardwareDevice: string | null;
+	hardwareDeviceFirmware: string | null;
 	status: string;
 	systemTags: string[];
 	city: string | null;
@@ -49,7 +52,7 @@ export type AdoptedProbe = {
 	longitude: number | null;
 	asn: number | null;
 	network: string | null;
-}
+};
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
@@ -114,6 +117,7 @@ export default defineEndpoint((router, context) => {
 				version: null,
 				nodeVersion: null,
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'offline',
 				systemTags: [],
 				city: null,
@@ -134,6 +138,7 @@ export default defineEndpoint((router, context) => {
 					version: '0.28.0',
 					nodeVersion: null,
 					hardwareDevice: null,
+					hardwareDeviceFirmware: null,
 					status: 'offline',
 					systemTags: [],
 					city: 'Ouagadougou',
@@ -149,7 +154,7 @@ export default defineEndpoint((router, context) => {
 				return;
 			}
 
-			const response = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
+			const { data } = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
 				ip,
 				code,
 			}, {
@@ -160,19 +165,20 @@ export default defineEndpoint((router, context) => {
 				ip,
 				name: null,
 				code,
-				uuid: response.data.uuid,
-				version: response.data.version,
-				nodeVersion: response.data.nodeVersion,
-				hardwareDevice: response.data.hardwareDevice || null,
-				status: response.data.status,
-				systemTags: response.data.systemTags,
-				city: response.data.city,
-				state: response.data.state || null,
-				country: response.data.country,
-				latitude: response.data.latitude,
-				longitude: response.data.longitude,
-				asn: response.data.asn,
-				network: response.data.network,
+				uuid: data.uuid,
+				version: data.version,
+				nodeVersion: data.nodeVersion,
+				hardwareDevice: data.hardwareDevice || null,
+				hardwareDeviceFirmware: data.hardwareDeviceFirmware || null,
+				status: data.status,
+				systemTags: data.systemTags,
+				city: data.city,
+				state: data.state || null,
+				country: data.country,
+				latitude: data.latitude,
+				longitude: data.longitude,
+				asn: data.asn,
+				network: data.network,
 			});
 
 			res.send('Code was sent to the probe.');
@@ -218,10 +224,18 @@ export default defineEndpoint((router, context) => {
 				throw new InvalidCodeError();
 			}
 
-			const [ id, name ] = await createAdoptedProbe(req, probe, context as unknown as EndpointExtensionContext);
+			const [ id, name ] = await createAdoptedProbe(req, probe, context);
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(userId);
+
+			await checkFirmwareVersions({
+				id,
+				ip: probe.ip,
+				name,
+				hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
+				nodeVersion: probe.nodeVersion || null,
+			}, userId, context);
 
 			res.send({
 				id,
@@ -230,6 +244,7 @@ export default defineEndpoint((router, context) => {
 				version: probe.version,
 				nodeVersion: probe.nodeVersion,
 				hardwareDevice: probe.hardwareDevice,
+				hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
 				status: probe.status,
 				systemTags: probe.systemTags,
 				city: probe.city,
