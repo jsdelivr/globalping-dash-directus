@@ -1,34 +1,50 @@
 # Globalping dashboard directus
 
+## Contributing
+
+You can run the project by following these steps:
+
+1. Copy `.env.example` to `.env`
+2. Copy `.env.development.example` to the `.env.development`
+3. Register a [new OAuth app](https://github.com/settings/applications/new) on GitHub with values:
+
+    Application name: Globalping dash directus local
+
+    Homepage URL: http://localhost:18055
+
+    Authorization callback URL: http://localhost:18055
+
+    Enable Device Flow: disabled
+5. Generate a new client secret for the app.
+4. Add app id and generated secret to `AUTH_GITHUB_CLIENT_ID` and `AUTH_GITHUB_CLIENT_SECRET` in `.env.development`
+5. `pnpm i`
+6. `docker compose up --build -d`
+7. `corepack enable`
+8. `pnpm init:dev`
+9. Go to http://localhost:18055 and log in:
+    - Using your GitHub account
+    - As admin using email `admin@example.com` and password `password`
+    - Or as user using email `user@example.com` and password `user`
+
 ## Prod first deploy
 
-- copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
-- copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
-- run the remote container.
-- `pnpm run schema:apply`
-- `pnpm run migrate`
-- get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
-- restart the container
-- login using github. Re-login as admin and give github user admin rights. Then set that value `AUTH_DISABLE_DEFAULT=true`. Then restart the container
-- Login using github. Generate a static access token for your user and save it to the local .env file as `ADMIN_ACCESS_TOKEN`
+1. copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
+2. copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
+3. run the remote container.
+4. `pnpm run schema:apply`
+5. `pnpm run migrate`
+6. get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
+7. restart the container
+8. login using github. Re-login as admin and give github user admin rights. Then set that value `AUTH_DISABLE_DEFAULT=true`. Then restart the container
+9. Login using github. Generate a static access token for your user and save it to the local .env file as `ADMIN_ACCESS_TOKEN`
 
 ## Prod other deploys
 
-- fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
-- if there are changes in `.env.production.example` copy them to the env vars of the container
-- `pnpm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
-- `pnpm run migrate`
-- stop prev container, run new container
-
-## Dev run
-
-- copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`
-- copy `.env.development.example` to the `.env.development` and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID`
-- `docker compose up --build`
-- run `corepack enable`
-- `pnpm run init:dev`
-- login as admin using `ADMIN_EMAIL` and `ADMIN_PASSWORD` vars.
-- login as user using email `user@example.com` and password `user`.
+1. fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
+2. if there are changes in `.env.production.example` copy them to the env vars of the container
+3. `pnpm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
+4. `pnpm run migrate`
+5. stop prev container, run new container
 
 ## Commands
 
