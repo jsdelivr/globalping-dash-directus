@@ -1,7 +1,7 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import type { AdoptedProbe, Request } from '../index.js';
 
-export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
+export const createAdoptedProbe = async (req: Request, probe: Partial<AdoptedProbe>, context: EndpointExtensionContext) => {
 	const { services } = context;
 	const itemsService = new services.ItemsService('gp_adopted_probes', {
 		schema: req.schema,
@@ -10,21 +10,8 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 	const name = await getDefaultProbeName(req, probe, context);
 
 	const id = await itemsService.createOne({
-		ip: probe.ip,
+		...probe,
 		name,
-		uuid: probe.uuid,
-		version: probe.version,
-		nodeVersion: probe.nodeVersion,
-		hardwareDevice: probe.hardwareDevice,
-		status: probe.status,
-		city: probe.city,
-		systemTags: probe.systemTags,
-		state: probe.state,
-		country: probe.country,
-		latitude: probe.latitude,
-		longitude: probe.longitude,
-		asn: probe.asn,
-		network: probe.network,
 		userId: req.accountability.user,
 		lastSyncDate: new Date(),
 	});
@@ -45,7 +32,7 @@ export const findAdoptedProbes = async (filter: Record<string, unknown>, { servi
 	return probes;
 };
 
-const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
+const getDefaultProbeName = async (req: Request, probe: Partial<AdoptedProbe>, context: EndpointExtensionContext) => {
 	let name = null;
 	const namePrefix = probe.country && probe.city ? `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}` : null;
 

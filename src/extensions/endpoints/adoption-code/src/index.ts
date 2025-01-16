@@ -16,22 +16,6 @@ export type Request = ExpressRequest & {
 	schema: object,
 };
 
-type SendCodeResponse = {
-	uuid: string;
-	version: string;
-	nodeVersion: string;
-	hardwareDevice: string | null;
-	status: string;
-	systemTags: string[];
-	city: string;
-	state?: string;
-	country: string;
-	latitude: number;
-	longitude: number;
-	asn: number;
-	network: string;
-}
-
 export type AdoptedProbe = {
 	ip: string;
 	name: string | null;
@@ -40,6 +24,7 @@ export type AdoptedProbe = {
 	version: string | null;
 	nodeVersion: string | null;
 	hardwareDevice: string | null;
+	hardwareDeviceFirmware: string | null;
 	status: string;
 	systemTags: string[];
 	city: string | null;
@@ -49,7 +34,7 @@ export type AdoptedProbe = {
 	longitude: number | null;
 	asn: number | null;
 	network: string | null;
-}
+};
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
@@ -59,7 +44,7 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 30 * 60,
 });
 
-const probesToAdopt = new TTLCache<string, AdoptedProbe>({ ttl: 30 * 60 * 1000 });
+const probesToAdopt = new TTLCache<string, Partial<AdoptedProbe>>({ ttl: 30 * 60 * 1000 });
 
 const generateRandomCode = () => {
 	const randomNumber = Math.floor(Math.random() * 1000000);
@@ -108,21 +93,9 @@ export default defineEndpoint((router, context) => {
 			// Allowing user to adopt the probe with default values, even if there was no response from GP API.
 			probesToAdopt.set(userId, {
 				ip,
-				name: null,
 				code,
-				uuid: null,
-				version: null,
-				nodeVersion: null,
-				hardwareDevice: null,
 				status: 'offline',
 				systemTags: [],
-				city: null,
-				state: null,
-				country: null,
-				latitude: null,
-				longitude: null,
-				asn: null,
-				network: null,
 			});
 
 			if (env.ENABLE_E2E_MOCKS === true) {
@@ -132,8 +105,6 @@ export default defineEndpoint((router, context) => {
 					code: '111111',
 					uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
 					version: '0.28.0',
-					nodeVersion: null,
-					hardwareDevice: null,
 					status: 'offline',
 					systemTags: [],
 					city: 'Ouagadougou',
@@ -149,7 +120,7 @@ export default defineEndpoint((router, context) => {
 				return;
 			}
 
-			const response = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
+			const response = await axios.post<Partial<AdoptedProbe>>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
 				ip,
 				code,
 			}, {
@@ -157,22 +128,10 @@ export default defineEndpoint((router, context) => {
 			});
 
 			probesToAdopt.set(userId, {
+				...response.data,
 				ip,
 				name: null,
 				code,
-				uuid: response.data.uuid,
-				version: response.data.version,
-				nodeVersion: response.data.nodeVersion,
-				hardwareDevice: response.data.hardwareDevice || null,
-				status: response.data.status,
-				systemTags: response.data.systemTags,
-				city: response.data.city,
-				state: response.data.state || null,
-				country: response.data.country,
-				latitude: response.data.latitude,
-				longitude: response.data.longitude,
-				asn: response.data.asn,
-				network: response.data.network,
 			});
 
 			res.send('Code was sent to the probe.');
@@ -224,21 +183,9 @@ export default defineEndpoint((router, context) => {
 			await rateLimiter.delete(userId);
 
 			res.send({
+				...probe,
 				id,
 				name,
-				ip: probe.ip,
-				version: probe.version,
-				nodeVersion: probe.nodeVersion,
-				hardwareDevice: probe.hardwareDevice,
-				status: probe.status,
-				systemTags: probe.systemTags,
-				city: probe.city,
-				state: probe.state,
-				country: probe.country,
-				latitude: probe.latitude,
-				longitude: probe.longitude,
-				asn: probe.asn,
-				network: probe.network,
 				lastSyncDate: new Date(),
 			});
 		} catch (error: unknown) {
