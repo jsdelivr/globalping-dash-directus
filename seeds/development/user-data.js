@@ -28,7 +28,7 @@ export const seed = async (knex) => {
 			role: userRole.id,
 			provider: 'default',
 			external_identifier: '1834071',
-			email_notifications: 1,
+			email_notifications: 0,
 			github_organizations: JSON.stringify([ 'MaxCDN', 'appfleetcloud', 'jsdelivr', 'nice-registry', 'polyfills' ]),
 			github_username: 'jimaek',
 			user_type: 'member',

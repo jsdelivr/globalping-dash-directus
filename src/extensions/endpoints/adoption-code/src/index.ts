@@ -7,6 +7,7 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { checkFirmwareVersions } from '../../../lib/check-firmware-versions.js';
 import { createAdoptedProbe, findAdoptedProbesByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
@@ -177,10 +178,18 @@ export default defineEndpoint((router, context) => {
 				throw new InvalidCodeError();
 			}
 
-			const [ id, name ] = await createAdoptedProbe(req, probe, context as unknown as EndpointExtensionContext);
+			const [ id, name ] = await createAdoptedProbe(req, probe, context);
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(userId);
+
+			await checkFirmwareVersions({
+				id,
+				ip: probe.ip!,
+				name,
+				hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
+				nodeVersion: probe.nodeVersion || null,
+			}, userId, context);
 
 			res.send({
 				...probe,

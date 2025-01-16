@@ -9,14 +9,14 @@ export const createAdoptedProbe = async (req: Request, probe: Partial<AdoptedPro
 
 	const name = await getDefaultProbeName(req, probe, context);
 
-	const id = await itemsService.createOne({
+	const id: string = await itemsService.createOne({
 		...probe,
 		name,
 		userId: req.accountability.user,
 		lastSyncDate: new Date(),
 	});
 
-	return [ id, name ];
+	return [ id, name ] as const;
 };
 
 export const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
