@@ -8,7 +8,7 @@ type ProbeInfo = {
 	nodeVersion: string | null;
 }
 
-const NOTIFICATION_SUBJECT = 'Probe firmware outdated';
+const NOTIFICATION_SUBJECT = 'Outdated probe firmware';
 
 export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext) => {
 	const firmwareOutdated = isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
