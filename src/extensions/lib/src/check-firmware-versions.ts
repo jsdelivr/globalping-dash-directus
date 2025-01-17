@@ -15,8 +15,11 @@ export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, co
 	const nodeOutdated = isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
 
 	if (firmwareOutdated || nodeOutdated) {
-		await sendNotification(probe, userId, context);
+		const id = await sendNotification(probe, userId, context);
+		return id;
 	}
+
+	return null;
 };
 
 const isOutdated = (probeValue: string | null, metadataValue: string) => {
