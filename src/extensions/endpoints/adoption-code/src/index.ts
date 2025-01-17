@@ -7,7 +7,7 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { checkFirmwareVersions } from '../../../lib/check-firmware-versions.js';
+import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { createAdoptedProbe, findAdoptedProbesByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {

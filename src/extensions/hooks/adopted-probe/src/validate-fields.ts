@@ -3,7 +3,7 @@ import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import axios from 'axios';
 import Joi from 'joi';
-import { normalizeCityName } from '../../../lib/normalize-city.js';
+import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { type City, geonamesCache, getKey } from './geonames-cache.js';
 import { getProbes, getUser } from './repositories/directus.js';
 import type { Fields } from './index.js';
