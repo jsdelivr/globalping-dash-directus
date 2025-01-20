@@ -59,7 +59,7 @@
 				"src/**/*.ts"
 			],
 			"excludedFiles": [
-				"src/extensions/lib/*"
+				"src/extensions/lib/src/*.ts"
 			],
 			"parserOptions": {
 				"project": true
@@ -76,6 +76,9 @@
 		{
 			"files": [
 				"src/**/src/**/*.ts"
+			],
+			"excludedFiles": [
+				"src/extensions/lib/src/*.ts"
 			],
 			"extends": "@martin-kolarik/eslint-config/typescript-type-checking",
 			"parserOptions": {

@@ -1,0 +1,52 @@
+{
+	"name": "check-outdated-firmware-cron-handler",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-operation"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "operation",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"source": {
+			"app": "src/app.ts",
+			"api": "src/api.ts"
+		},
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^3.0.0",
+		"@directus/extensions-sdk": "13.0.0",
+		"@directus/types": "^11.2.0",
+		"@types/chai": "^4.3.17",
+		"@types/mocha": "^10.0.7",
+		"@types/node": "^22.10.7",
+		"@types/sinon": "^17.0.3",
+		"chai": "^5.1.1",
+		"mocha": "^10.7.0",
+		"sinon": "^18.0.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.7.3",
+		"vue": "^3.5.13"
+	},
+	"dependencies": {
+		"bluebird": "^3.7.2"
+	}
+}

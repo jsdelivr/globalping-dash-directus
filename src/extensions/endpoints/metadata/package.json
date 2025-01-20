@@ -1,0 +1,37 @@
+{
+	"name": "metadata",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-endpoint"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "endpoint",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link"
+	},
+	"devDependencies": {
+		"@directus/errors": "^0.3.3",
+		"@directus/extensions-sdk": "12.1.4",
+		"@directus/types": "^11.2.0",
+		"@types/node": "^22.10.6",
+		"typescript": "^5.7.3"
+	},
+	"dependencies": {
+		"express": "^4.19.2",
+		"joi": "^17.13.3"
+	}
+}

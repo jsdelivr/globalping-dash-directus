@@ -8,7 +8,7 @@ const commonUserFields = {
 	last_name: 'Doe',
 	password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
 	provider: 'default',
-	email_notifications: 1,
+	email_notifications: 0,
 	github_organizations: JSON.stringify([ 'Scrubs' ]),
 	github_username: 'johndoe',
 	user_type: 'sponsor',

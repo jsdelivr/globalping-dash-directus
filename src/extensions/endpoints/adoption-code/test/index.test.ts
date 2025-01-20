@@ -9,6 +9,7 @@ describe('adoption code endpoints', () => {
 	const createOne = sinon.stub().resolves('generatedId');
 	const readByQuery = sinon.stub().resolves([]);
 	const orWhere = sinon.stub().resolves([]);
+	const notificationCreateOne = sinon.stub();
 	const endpointContext = {
 		logger: {
 			error: console.error,
@@ -26,6 +27,9 @@ describe('adoption code endpoints', () => {
 		services: {
 			ItemsService: sinon.stub().callsFake(() => {
 				return { createOne, readByQuery };
+			}),
+			NotificationsService: sinon.stub().callsFake(() => {
+				return { createOne: notificationCreateOne };
 			}),
 		},
 	} as unknown as EndpointExtensionContext;
@@ -83,6 +87,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -118,6 +123,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -153,6 +159,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -267,6 +274,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
 				status: 'ready',
 				systemTags: [ 'datacenter-network' ],
 				city: 'Paris',
@@ -307,6 +315,7 @@ describe('adoption code endpoints', () => {
 					version: '0.26.0',
 					nodeVersion: '18.17.0',
 					hardwareDevice: 'v1',
+					hardwareDeviceFirmware: 'v2.0',
 					status: 'ready',
 					systemTags: [ 'datacenter-network' ],
 					city: 'Paris',
@@ -329,6 +338,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
 				status: 'ready',
 				systemTags: [ 'datacenter-network' ],
 				city: 'Paris',
@@ -383,6 +393,7 @@ describe('adoption code endpoints', () => {
 					version: null,
 					nodeVersion: null,
 					hardwareDevice: null,
+					hardwareDeviceFirmware: null,
 					status: 'offline',
 					systemTags: [],
 					city: null,
@@ -405,6 +416,7 @@ describe('adoption code endpoints', () => {
 				version: null,
 				nodeVersion: null,
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'offline',
 				systemTags: [],
 				city: null,
@@ -432,6 +444,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				systemTags: [],
 				city: 'Paris',
@@ -472,6 +485,7 @@ describe('adoption code endpoints', () => {
 					version: '0.26.0',
 					nodeVersion: '18.17.0',
 					hardwareDevice: null,
+					hardwareDeviceFirmware: null,
 					status: 'ready',
 					systemTags: [],
 					city: 'Paris',
@@ -494,6 +508,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				systemTags: [],
 				city: 'Paris',
@@ -521,6 +536,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -564,6 +580,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -608,6 +625,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -646,7 +664,6 @@ describe('adoption code endpoints', () => {
 			endpoint(router, endpointContext);
 			let code = '';
 
-			// First adoption
 			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
 				code = body.code;
 				return true;
@@ -655,6 +672,7 @@ describe('adoption code endpoints', () => {
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
 				status: 'ready',
 				city: 'Paris',
 				country: 'FR',
@@ -691,6 +709,63 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 			expect(resSend.args[1]?.[0].name).to.deep.equal('probe-fr-paris-02');
 			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
+		});
+
+		it('should send notification if firmware is outdated', async () => {
+			endpoint(router, { ...endpointContext, env: { ...endpointContext.env, TARGET_HW_DEVICE_FIRMWARE: 'v2.0' } });
+			let code = '';
+
+			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+				code = body.code;
+				return true;
+			}).reply(200, {
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v1.9',
+				status: 'ready',
+				city: 'Paris',
+				country: 'FR',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+			});
+
+			await request('/send-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			readByQuery.resolves([{}]);
+
+			await request('/verify-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
+				body: {
+					code,
+				},
+			}, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(2);
+			expect(createOne.callCount).to.equal(1);
+
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(resSend.args[1]?.[0].name).to.deep.equal('probe-fr-paris-02');
+			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
+
+			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
+				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				item: 'generatedId',
+				collection: 'gp_adopted_probes',
+			});
 		});
 	});
 });
