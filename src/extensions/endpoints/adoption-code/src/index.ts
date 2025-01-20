@@ -164,7 +164,8 @@ export default defineEndpoint((router, context) => {
 			probesToAdopt.set(userId, {
 				ip,
 				name: null,
-				code,				uuid: data.uuid,
+				code,
+				uuid: data.uuid,
 				version: data.version,
 				nodeVersion: data.nodeVersion,
 				hardwareDevice: data.hardwareDevice || null,

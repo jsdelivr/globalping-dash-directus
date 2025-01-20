@@ -6,7 +6,7 @@ import { getAlreadyNotifiedProbes, getProbesToCheck } from '../repositories/dire
 export const checkOutdatedFirmware = async (context: OperationContext): Promise<string[]> => {
 	const { alreadyNotifiedIdsFirmware, alreadyNotifiedIdsNode } = await getAlreadyNotifiedProbes(context);
 	const result: string[] = [];
-	let offsetId = '';
+	let offsetId: string | undefined = '';
 
 	do {
 		const probes = await getProbesToCheck(offsetId, context);
@@ -22,7 +22,7 @@ export const checkOutdatedFirmware = async (context: OperationContext): Promise<
 		}, { concurrency: 4 });
 
 		result.push(...ids.filter((id): id is string => !!id));
-		offsetId = probes.at(-1)?.id || '';
+		offsetId = probes.at(-1)?.id;
 	} while (offsetId);
 
 	return result;
