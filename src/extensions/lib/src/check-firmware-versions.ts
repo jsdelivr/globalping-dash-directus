@@ -8,14 +8,16 @@ type ProbeInfo = {
 	nodeVersion: string | null;
 }
 
-const NOTIFICATION_SUBJECT = 'Outdated probe firmware';
+export const getFirmwareSubject = (version: string) => `Outdated probe firmware, should be ${version}`;
+export const getNodeVersionSubject = (version: string) => `Outdated probe node.js version, should be ${version}`;
 
-export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext) => {
-	const firmwareOutdated = isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
-	const nodeOutdated = isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
+export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext, { checkFirmware = true, checkNode = true } = {}) => {
+	const firmwareOutdated = checkFirmware && isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
+	const nodeOutdated = checkNode && isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
 
 	if (firmwareOutdated || nodeOutdated) {
-		const id = await sendNotification(probe, userId, context);
+		const subject = firmwareOutdated ? getFirmwareSubject(context.env.TARGET_HW_DEVICE_FIRMWARE) : getNodeVersionSubject(context.env.TARGET_NODE_VERSION);
+		const id = await sendNotification(probe, userId, subject, context);
 		return id;
 	}
 
@@ -47,7 +49,7 @@ const compareSemver = (a: string, b: string) => {
 	return 0;
 };
 
-export const sendNotification = async (probe: ProbeInfo, userId: string, { services, getSchema, database }: ApiExtensionContext) => {
+export const sendNotification = async (probe: ProbeInfo, userId: string, subject: string, { services, getSchema, database }: ApiExtensionContext) => {
 	const { NotificationsService } = services;
 
 	const notificationsService = new NotificationsService({
@@ -57,7 +59,7 @@ export const sendNotification = async (probe: ProbeInfo, userId: string, { servi
 
 	await notificationsService.createOne({
 		recipient: userId,
-		subject: NOTIFICATION_SUBJECT,
+		subject,
 		message: `Your ${probe.name ? `probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} has outdated firmware and we couldn't update it automatically. Please update it manually using the guide from [GitHub](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware).`,
 		item: probe.id,
 		collection: 'gp_adopted_probes',
