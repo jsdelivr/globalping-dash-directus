@@ -1,11 +1,11 @@
-import { getUserPermissions, updatePermissions } from '../migration-utils.js';
+import { getUserPermissions, editPermissions } from '../migration-utils.js';
 
 const COLLECTION_NAME = 'gp_tokens';
 
 export async function up (knex) {
 	const permissions = await getUserPermissions(COLLECTION_NAME);
 
-	await updatePermissions({
+	await editPermissions({
 		...permissions.createPermissions,
 		permissions: {
 			_and: [
@@ -15,7 +15,7 @@ export async function up (knex) {
 		},
 	}, [], []);
 
-	await updatePermissions({
+	await editPermissions({
 		...permissions.readPermissions,
 		permissions: {
 			_and: [
@@ -25,7 +25,7 @@ export async function up (knex) {
 		},
 	}, [], []);
 
-	await updatePermissions({
+	await editPermissions({
 		...permissions.updatePermissions,
 		permissions: {
 			_and: [
@@ -35,7 +35,7 @@ export async function up (knex) {
 		},
 	}, [], []);
 
-	await updatePermissions({
+	await editPermissions({
 		...permissions.deletePermissions,
 		permissions: {
 			_and: [
