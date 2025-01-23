@@ -60,7 +60,7 @@ export const sendNotification = async (probe: ProbeInfo, userId: string, subject
 	await notificationsService.createOne({
 		recipient: userId,
 		subject,
-		message: `Your ${probe.name ? `probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} has outdated firmware and we couldn't update it automatically. Please update it manually using the guide from [GitHub](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware).`,
+		message: `Your ${probe.name ? `probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 		item: probe.id,
 		collection: 'gp_adopted_probes',
 	});
