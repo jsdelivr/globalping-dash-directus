@@ -1,5 +1,4 @@
 import type { OperationContext } from '@directus/extensions';
-import { getFirmwareSubject, getNodeVersionSubject } from '../../../../lib/src/check-firmware-versions.js';
 
 export type AdoptedProbe = {
 	id: string;
@@ -18,19 +17,25 @@ export const getAlreadyNotifiedProbes = async ({ env, services, database, getSch
 		knex: database,
 	});
 
-	const notifications: { item: string, subject: string }[] = await notificationsService.readByQuery({
-		fields: [ 'item', 'subject' ],
+	const firmwareNotifications: { item: string }[] = await notificationsService.readByQuery({
+		fields: [ 'item' ],
 		filter: {
-			subject: {
-				_in: [ getFirmwareSubject(env.TARGET_HW_DEVICE_FIRMWARE), getNodeVersionSubject(env.TARGET_NODE_VERSION) ],
-			},
-			collection: 'gp_adopted_probes',
+			type: 'outdated_firmware',
+			secondary_type: env.TARGET_HW_DEVICE_FIRMWARE,
+		},
+	});
+
+	const nodeNotifications: { item: string }[] = await notificationsService.readByQuery({
+		fields: [ 'item' ],
+		filter: {
+			type: 'outdated_node',
+			secondary_type: env.TARGET_NODE_VERSION,
 		},
 	});
 
 	return {
-		alreadyNotifiedIdsFirmware: new Set(notifications.filter(({ subject }) => subject === getFirmwareSubject(env.TARGET_HW_DEVICE_FIRMWARE)).map(({ item }) => item)),
-		alreadyNotifiedIdsNode: new Set(notifications.filter(({ subject }) => subject === getNodeVersionSubject(env.TARGET_NODE_VERSION)).map(({ item }) => item)),
+		alreadyNotifiedIdsFirmware: new Set(firmwareNotifications.map(({ item }) => item)),
+		alreadyNotifiedIdsNode: new Set(nodeNotifications.map(({ item }) => item)),
 	};
 };
 
