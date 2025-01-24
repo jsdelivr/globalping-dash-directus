@@ -1,4 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
+import { OUTDATED_FIRMWARE_NOTIFICATION_TYPE, OUTDATED_NODE_NOTIFICATION_TYPE } from '../../../../lib/src/check-firmware-versions.js';
 
 export type AdoptedProbe = {
 	id: string;
@@ -20,7 +21,7 @@ export const getAlreadyNotifiedProbes = async ({ env, services, database, getSch
 	const firmwareNotifications: { item: string }[] = await notificationsService.readByQuery({
 		fields: [ 'item' ],
 		filter: {
-			type: 'outdated_firmware',
+			type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 			secondary_type: env.TARGET_HW_DEVICE_FIRMWARE,
 		},
 	});
@@ -28,7 +29,7 @@ export const getAlreadyNotifiedProbes = async ({ env, services, database, getSch
 	const nodeNotifications: { item: string }[] = await notificationsService.readByQuery({
 		fields: [ 'item' ],
 		filter: {
-			type: 'outdated_node',
+			type: OUTDATED_NODE_NOTIFICATION_TYPE,
 			secondary_type: env.TARGET_NODE_VERSION,
 		},
 	});

@@ -8,12 +8,15 @@ type ProbeInfo = {
 	nodeVersion: string | null;
 }
 
+export const OUTDATED_FIRMWARE_NOTIFICATION_TYPE = 'outdated_firmware';
+export const OUTDATED_NODE_NOTIFICATION_TYPE = 'outdated_node';
+
 export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext, { checkFirmware = true, checkNode = true } = {}) => {
 	const firmwareOutdated = checkFirmware && isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
 	const nodeOutdated = checkNode && isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
 
 	if (firmwareOutdated || nodeOutdated) {
-		const type = firmwareOutdated ? 'outdated_firmware' : 'outdated_node';
+		const type = firmwareOutdated ? OUTDATED_FIRMWARE_NOTIFICATION_TYPE : OUTDATED_NODE_NOTIFICATION_TYPE;
 		const requiredVersion = firmwareOutdated ? context.env.TARGET_HW_DEVICE_FIRMWARE : context.env.TARGET_NODE_VERSION;
 		const id = await sendNotification(probe, userId, type, requiredVersion, context);
 		return id;
