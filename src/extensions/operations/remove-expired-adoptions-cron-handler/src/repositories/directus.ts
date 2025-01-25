@@ -40,7 +40,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 
 	const result = await notificationsService.readByQuery({
 		filter: {
-			subject: OFFLINE_PROBE_NOTIFICATIION_TYPE,
+			type: OFFLINE_PROBE_NOTIFICATIION_TYPE,
 			collection: 'gp_adopted_probes',
 			item: {
 				_in: probes.map(probe => probe.id),
@@ -48,6 +48,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 			timestamp: { _gte: `$NOW(-${REMOVE_AFTER_DAYS} day)` },
 		},
 	});
+
 	return result;
 };
 
