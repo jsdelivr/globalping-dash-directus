@@ -50,11 +50,14 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
-		expect(createOne.args[0]?.[0]).to.deep.include({
+		expect(createOne.args[0]?.[0]).to.deep.equal({
 			recipient: 'user-id',
-			subject: 'Outdated probe firmware, should be v2.0',
 			item: 'probe-id',
 			collection: 'gp_adopted_probes',
+			type: 'outdated_firmware',
+			secondary_type: 'v2.0_v20.13.0',
+			subject: 'Your probe is running an outdated firmware',
+			message: 'Your [probe with IP address **undefined**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 		});
 	});
 
@@ -70,11 +73,14 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
-		expect(createOne.args[0]?.[0]).to.deep.include({
+		expect(createOne.args[0]?.[0]).to.deep.equal({
 			recipient: 'user-id',
-			subject: 'Outdated probe node.js version, should be v20.13.0',
 			item: 'probe-id',
 			collection: 'gp_adopted_probes',
+			type: 'outdated_firmware',
+			secondary_type: 'v2.0_v20.13.0',
+			subject: 'Your probe is running an outdated firmware',
+			message: 'Your [probe with IP address **undefined**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 		});
 	});
 

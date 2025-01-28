@@ -1,5 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
-import { getFirmwareSubject, getNodeVersionSubject } from '../../../../lib/src/check-firmware-versions.js';
+import { OUTDATED_FIRMWARE_NOTIFICATION_TYPE } from '../../../../lib/src/check-firmware-versions.js';
 
 export type AdoptedProbe = {
 	id: string;
@@ -18,20 +18,15 @@ export const getAlreadyNotifiedProbes = async ({ env, services, database, getSch
 		knex: database,
 	});
 
-	const notifications: { item: string, subject: string }[] = await notificationsService.readByQuery({
-		fields: [ 'item', 'subject' ],
+	const existingNotifications: { item: string }[] = await notificationsService.readByQuery({
+		fields: [ 'item' ],
 		filter: {
-			subject: {
-				_in: [ getFirmwareSubject(env.TARGET_HW_DEVICE_FIRMWARE), getNodeVersionSubject(env.TARGET_NODE_VERSION) ],
-			},
-			collection: 'gp_adopted_probes',
+			type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
+			secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		},
 	});
 
-	return {
-		alreadyNotifiedIdsFirmware: new Set(notifications.filter(({ subject }) => subject === getFirmwareSubject(env.TARGET_HW_DEVICE_FIRMWARE)).map(({ item }) => item)),
-		alreadyNotifiedIdsNode: new Set(notifications.filter(({ subject }) => subject === getNodeVersionSubject(env.TARGET_NODE_VERSION)).map(({ item }) => item)),
-	};
+	return new Set(existingNotifications.map(({ item }) => item));
 };
 
 
@@ -43,6 +38,7 @@ export const getProbesToCheck = async (offsetId: string, { env, database }: Oper
 				(nodeVersion != ? AND nodeVersion IS NOT NULL)
 				OR (hardwareDeviceFirmware != ? AND hardwareDeviceFirmware IS NOT NULL)
 			)
+			AND status != 'offline'
 			AND id > ?
 		`, [ env.TARGET_NODE_VERSION, env.TARGET_HW_DEVICE_FIRMWARE, offsetId ])
 		.orderBy('id')

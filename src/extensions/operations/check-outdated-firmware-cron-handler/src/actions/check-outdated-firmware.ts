@@ -4,7 +4,7 @@ import { checkFirmwareVersions } from '../../../../lib/src/check-firmware-versio
 import { getAlreadyNotifiedProbes, getProbesToCheck } from '../repositories/directus.js';
 
 export const checkOutdatedFirmware = async (context: OperationContext): Promise<string[]> => {
-	const { alreadyNotifiedIdsFirmware, alreadyNotifiedIdsNode } = await getAlreadyNotifiedProbes(context);
+	const alreadyNotifiedIds = await getAlreadyNotifiedProbes(context);
 	const result: string[] = [];
 	let offsetId: string | undefined = '';
 
@@ -15,10 +15,11 @@ export const checkOutdatedFirmware = async (context: OperationContext): Promise<
 				return null;
 			}
 
-			return checkFirmwareVersions(probe, probe.userId, context, {
-				checkFirmware: !alreadyNotifiedIdsFirmware.has(probe.id),
-				checkNode: !alreadyNotifiedIdsNode.has(probe.id),
-			});
+			if (alreadyNotifiedIds.has(probe.id)) {
+				return null;
+			}
+
+			return checkFirmwareVersions(probe, probe.userId, context);
 		}, { concurrency: 4 });
 
 		result.push(...ids.filter((id): id is string => !!id));

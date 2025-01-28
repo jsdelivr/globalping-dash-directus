@@ -52,20 +52,22 @@ describe('Remove expired adoptions CRON handler', () => {
 		expect(createOne.args[0]).to.deep.equal([
 			{
 				recipient: 'userId1',
-				subject: 'Your probe went offline',
-				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 				item: 'probeId1',
 				collection: 'gp_adopted_probes',
+				type: 'offline_probe',
+				subject: 'Your probe went offline',
+				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 			},
 		]);
 
 		expect(createOne.args[1]).to.deep.equal([
 			{
 				recipient: 'userId1',
-				subject: 'Your probe went offline',
-				message: 'Your probe [**probe-gb-london-01**](/probes/probeId2) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 				item: 'probeId2',
 				collection: 'gp_adopted_probes',
+				type: 'offline_probe',
+				subject: 'Your probe went offline',
+				message: 'Your probe [**probe-gb-london-01**](/probes/probeId2) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 			},
 		]);
 
@@ -136,10 +138,11 @@ describe('Remove expired adoptions CRON handler', () => {
 		expect(createOne.args[0]).to.deep.equal([
 			{
 				recipient: 'userId1',
-				subject: 'Your probe went offline',
-				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 				item: 'probeId1',
 				collection: 'gp_adopted_probes',
+				type: 'offline_probe',
+				subject: 'Your probe went offline',
+				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 			},
 		]);
 
