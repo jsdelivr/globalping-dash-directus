@@ -4,6 +4,7 @@ type ProbeInfo = {
 	id: string;
 	ip: string;
 	name: string | null;
+	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	nodeVersion: string | null;
 }
@@ -11,6 +12,10 @@ type ProbeInfo = {
 export const OUTDATED_FIRMWARE_NOTIFICATION_TYPE = 'outdated_firmware';
 
 export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext) => {
+	if (!probe.hardwareDevice) {
+		return null;
+	}
+
 	const firmwareOutdated = isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
 	const nodeOutdated = isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
 

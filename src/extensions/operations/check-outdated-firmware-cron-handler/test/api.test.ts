@@ -42,6 +42,7 @@ describe('Adopted probes status cron handler', () => {
 		sql.limit.onFirstCall().resolves([{
 			id: 'probe-id',
 			userId: 'user-id',
+			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
 			nodeVersion: 'v20.13.0',
 		}]);
@@ -65,6 +66,7 @@ describe('Adopted probes status cron handler', () => {
 		sql.limit.onFirstCall().resolves([{
 			id: 'probe-id',
 			userId: 'user-id',
+			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v2.0',
 			nodeVersion: 'v20.12.0',
 		}]);
@@ -88,6 +90,7 @@ describe('Adopted probes status cron handler', () => {
 		sql.limit.onFirstCall().resolves([{
 			id: 'probe-id',
 			userId: 'user-id',
+			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v2.0',
 			nodeVersion: 'v20.13.0',
 		}]);
@@ -106,6 +109,7 @@ describe('Adopted probes status cron handler', () => {
 		sql.limit.onFirstCall().resolves([{
 			id: 'probe-id',
 			userId: 'user-id',
+			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
 			nodeVersion: 'v20.13.0',
 		}]);

@@ -6,6 +6,7 @@ export type AdoptedProbe = {
 	ip: string;
 	userId: string | null;
 	name: string | null;
+	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	nodeVersion: string | null;
 }

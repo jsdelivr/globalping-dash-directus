@@ -233,6 +233,7 @@ export default defineEndpoint((router, context) => {
 				id,
 				ip: probe.ip,
 				name,
+				hardwareDevice: probe.hardwareDevice || null,
 				hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
 				nodeVersion: probe.nodeVersion || null,
 			}, userId, context);
