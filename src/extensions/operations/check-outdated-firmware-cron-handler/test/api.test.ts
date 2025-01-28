@@ -55,7 +55,7 @@ describe('Adopted probes status cron handler', () => {
 			item: 'probe-id',
 			collection: 'gp_adopted_probes',
 			type: 'outdated_firmware',
-			secondary_type: 'v2.0',
+			secondary_type: 'v2.0_v20.13.0',
 			subject: 'Your probe is running an outdated firmware',
 			message: 'Your [probe with IP address **undefined**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 		});
@@ -77,8 +77,8 @@ describe('Adopted probes status cron handler', () => {
 			recipient: 'user-id',
 			item: 'probe-id',
 			collection: 'gp_adopted_probes',
-			type: 'outdated_node',
-			secondary_type: 'v20.13.0',
+			type: 'outdated_firmware',
+			secondary_type: 'v2.0_v20.13.0',
 			subject: 'Your probe is running an outdated firmware',
 			message: 'Your [probe with IP address **undefined**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 		});

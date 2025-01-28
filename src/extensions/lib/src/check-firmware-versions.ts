@@ -9,16 +9,13 @@ type ProbeInfo = {
 }
 
 export const OUTDATED_FIRMWARE_NOTIFICATION_TYPE = 'outdated_firmware';
-export const OUTDATED_NODE_NOTIFICATION_TYPE = 'outdated_node';
 
-export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext, { checkFirmware = true, checkNode = true } = {}) => {
-	const firmwareOutdated = checkFirmware && isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
-	const nodeOutdated = checkNode && isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
+export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, context: ApiExtensionContext) => {
+	const firmwareOutdated = isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
+	const nodeOutdated = isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
 
 	if (firmwareOutdated || nodeOutdated) {
-		const type = firmwareOutdated ? OUTDATED_FIRMWARE_NOTIFICATION_TYPE : OUTDATED_NODE_NOTIFICATION_TYPE;
-		const requiredVersion = firmwareOutdated ? context.env.TARGET_HW_DEVICE_FIRMWARE : context.env.TARGET_NODE_VERSION;
-		const id = await sendNotification(probe, userId, type, requiredVersion, context);
+		const id = await sendNotification(probe, userId, context);
 		return id;
 	}
 
@@ -50,7 +47,7 @@ const compareSemver = (a: string, b: string) => {
 	return 0;
 };
 
-const sendNotification = async (probe: ProbeInfo, userId: string, type: string, requiredVersion: string, { services, getSchema, database }: ApiExtensionContext) => {
+const sendNotification = async (probe: ProbeInfo, userId: string, { services, getSchema, database, env }: ApiExtensionContext) => {
 	const { NotificationsService } = services;
 
 	const notificationsService = new NotificationsService({
@@ -62,8 +59,8 @@ const sendNotification = async (probe: ProbeInfo, userId: string, type: string, 
 		recipient: userId,
 		item: probe.id,
 		collection: 'gp_adopted_probes',
-		type,
-		secondary_type: requiredVersion,
+		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
+		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Your probe is running an outdated firmware',
 		message: `Your ${probe.name ? `probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 	});
