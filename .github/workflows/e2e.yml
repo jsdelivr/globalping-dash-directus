@@ -18,6 +18,9 @@ jobs:
           node-version: 20.x
       - name: Install dependencies
         run: |
+          : # Temp corepack fix: https://github.com/nodejs/corepack/issues/612
+          corepack install -g pnpm@9.15.2
+
           corepack enable
           pnpm install
       - name: Install Playwright browsers
