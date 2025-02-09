@@ -1,4 +1,8 @@
 FROM node:20-alpine AS builder
+
+# Temp corepack fix: https://github.com/nodejs/corepack/issues/612
+RUN corepack install -g pnpm@9.15.2
+
 RUN corepack enable
 WORKDIR /builder
 COPY package.json pnpm-*.yaml ./
