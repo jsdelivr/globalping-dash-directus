@@ -41,7 +41,7 @@ describe('adopted-probe hook', () => {
 			ItemsService: sinon.stub().callsFake((collection) => {
 				if (collection === 'directus_users') {
 					return users;
-				} else if (collection === 'gp_adopted_probes') {
+				} else if (collection === 'gp_probes') {
 					return adoptedProbes;
 				}
 
@@ -107,14 +107,14 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { city: 'marsel' };
-		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.readMany.callCount).to.equal(1);
 		expect(adoptedProbes.readMany.args[0]).to.deep.equal([ [ '1' ] ]);
 		expect(nock.isDone()).to.equal(true);
 		expect(payload.city).to.equal('Marseille');
 
-		await callbacks.action['gp_adopted_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.updateMany.callCount).to.equal(1);
 
@@ -165,14 +165,14 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { city: 'miami' };
-		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.readMany.callCount).to.equal(1);
 		expect(adoptedProbes.readMany.args[0]).to.deep.equal([ [ '1' ] ]);
 		expect(nock.isDone()).to.equal(true);
 		expect(payload.city).to.equal('Miami');
 
-		await callbacks.action['gp_adopted_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.updateMany.callCount).to.equal(1);
 
@@ -197,8 +197,8 @@ describe('adopted-probe hook', () => {
 		hook(events, context);
 		const payload = { city: null };
 
-		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
-		await callbacks.action['gp_adopted_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.updateMany.callCount).to.equal(1);
 
@@ -224,7 +224,7 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jsdelivr', value: 'mytag2' }] };
-		await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.readMany.callCount).to.equal(1);
 		expect(nock.isDone()).to.equal(true);
@@ -237,7 +237,7 @@ describe('adopted-probe hook', () => {
 			],
 		});
 
-		await callbacks.action['gp_adopted_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.updateMany.callCount).to.equal(0);
 	});
@@ -247,7 +247,7 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { city: 'marsel' };
-		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 		expect(err).to.deep.equal(payloadError('Adopted probes not found.'));
 	});
@@ -265,7 +265,7 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { city: 'marsel' };
-		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 		expect(err.status).to.equal(400);
 		expect(adoptedProbes.updateMany.callCount).to.equal(0);
@@ -290,7 +290,7 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { city: 'marsel' };
-		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 		expect(err.status).to.equal(400);
 	});
@@ -314,7 +314,7 @@ describe('adopted-probe hook', () => {
 
 		hook(events, context);
 		const payload = { city: 'invalidcity' };
-		const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 		expect(nock.isDone()).to.equal(true);
 		expect(err.status).to.equal(400);
@@ -337,7 +337,7 @@ describe('adopted-probe hook', () => {
 		it('should send valid error if prefix is wrong', async () => {
 			hook(events, context);
 			const payload = { tags: [{ prefix: 'wrong_organization', value: 'a' }] };
-			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 			expect(err.message).to.equal('"[0].prefix" must be one of [jimaek, jsdelivr]');
 		});
@@ -358,7 +358,7 @@ describe('adopted-probe hook', () => {
 
 			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }] };
 
-			await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 
 			expect(payload).to.deep.equal({ tags: [{ prefix: 'oldprefix', value: 'a' }] });
@@ -380,7 +380,7 @@ describe('adopted-probe hook', () => {
 
 			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }, { prefix: 'oldprefix', value: 'b' }] };
 
-			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 			expect(err.message).to.equal('"[0].prefix" must be one of [jimaek, jsdelivr]');
 		});
@@ -395,7 +395,7 @@ describe('adopted-probe hook', () => {
 				{ prefix: 'jimaek', value: 'e' },
 				{ prefix: 'jimaek', value: 'f' },
 			] };
-			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 			expect(err.message).to.equal('"value" must contain less than or equal to 5 items');
 		});
@@ -403,7 +403,7 @@ describe('adopted-probe hook', () => {
 		it('should send valid error if the tag is too big', async () => {
 			hook(events, context);
 			const payload = { tags: [{ prefix: 'jimaek', value: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }] };
-			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 			expect(err.message).to.equal('"[0].value" length must be less than or equal to 32 characters long');
 			expect(adoptedProbes.updateMany.callCount).to.equal(0);
@@ -412,7 +412,7 @@ describe('adopted-probe hook', () => {
 		it('should send valid error if the tag has invalid characters', async () => {
 			hook(events, context);
 			const payload = { tags: [{ prefix: 'jimaek', value: '@mytag' }] };
-			const err = await callbacks.filter['gp_adopted_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 			expect(err.message).to.equal('"[0].value" with value "@mytag" fails to match the required pattern: /^[a-zA-Z0-9-]+$/');
 		});
