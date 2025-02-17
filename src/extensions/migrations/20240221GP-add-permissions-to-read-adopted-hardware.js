@@ -2,7 +2,7 @@ const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 const USER_POLICY_NAME = 'User';
 
-const COLLECTION_NAME = 'gp_adopted_probes';
+const COLLECTION_NAME = 'gp_probes';
 const FIELDS_TO_REMOVE = [];
 const FIELDS_TO_ADD = [ 'hardwareDevice' ];
 
