@@ -764,7 +764,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				item: 'generatedId',
-				collection: 'gp_adopted_probes',
+				collection: 'gp_probes',
 			});
 		});
 	});

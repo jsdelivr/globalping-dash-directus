@@ -5,7 +5,7 @@ import type { Fields } from './index.js';
 export const resetMetadata = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
-	const adoptedProbesService = new ItemsService('gp_adopted_probes', {
+	const adoptedProbesService = new ItemsService('gp_probes', {
 		database,
 		schema: await getSchema(),
 	});
@@ -24,7 +24,7 @@ export const resetMetadata = async (_fields: Fields, keys: string[], { services,
 export const updateMetadata = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
-	const adoptedProbesService = new ItemsService('gp_adopted_probes', {
+	const adoptedProbesService = new ItemsService('gp_probes', {
 		database,
 		schema: await getSchema(),
 	});

@@ -10,7 +10,7 @@ type User = {
 export const getProbes = async (keys: string[], { services, database, getSchema }: HookExtensionContext, accountability: EventContext['accountability'] = null) => {
 	const { ItemsService } = services;
 
-	const adoptedProbesService = new ItemsService('gp_adopted_probes', {
+	const adoptedProbesService = new ItemsService('gp_probes', {
 		database,
 		schema: await getSchema(),
 		accountability,
