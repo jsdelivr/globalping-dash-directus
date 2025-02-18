@@ -54,12 +54,12 @@ user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -
 
 perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" ".env.$1"
 
+pnpm run seed
+
 docker compose --file "$compose_file" stop directus
 
 docker compose --file "$compose_file" up -d directus
 
 ./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
-
-pnpm run seed
 
 echo "Finished"

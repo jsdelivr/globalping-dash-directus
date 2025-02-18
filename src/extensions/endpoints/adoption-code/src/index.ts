@@ -8,7 +8,7 @@ import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
-import { createAdoptedProbe, findAdoptedProbesByIp } from './repositories/directus.js';
+import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
 	accountability: {
@@ -32,6 +32,8 @@ type SendCodeResponse = {
 	longitude: number;
 	asn: number;
 	network: string;
+	isIPv4Supported: boolean;
+	isIPv6Supported: boolean;
 }
 
 export type AdoptedProbe = {
@@ -52,6 +54,8 @@ export type AdoptedProbe = {
 	longitude: number | null;
 	asn: number | null;
 	network: string | null;
+	isIPv4Supported: boolean;
+	isIPv6Supported: boolean;
 };
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
@@ -100,9 +104,9 @@ export default defineEndpoint((router, context) => {
 
 			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
 
-			const adoptedProbes = await findAdoptedProbesByIp(ip, context as unknown as EndpointExtensionContext);
+			const adoptedProbe = await findAdoptedProbeByIp(ip, context as unknown as EndpointExtensionContext);
 
-			if (adoptedProbes.length > 0) {
+			if (adoptedProbe) {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe with this IP address is already adopted', 400))();
 			}
 
@@ -127,6 +131,8 @@ export default defineEndpoint((router, context) => {
 				longitude: null,
 				asn: null,
 				network: null,
+				isIPv4Supported: false,
+				isIPv6Supported: false,
 			});
 
 			if (env.ENABLE_E2E_MOCKS === true) {
@@ -148,6 +154,8 @@ export default defineEndpoint((router, context) => {
 					longitude: -1.53,
 					asn: 3302,
 					network: 'e2e network provider',
+					isIPv4Supported: true,
+					isIPv6Supported: false,
 				});
 
 				res.send('Code was sent to the probe.');
@@ -179,6 +187,8 @@ export default defineEndpoint((router, context) => {
 				longitude: data.longitude,
 				asn: data.asn,
 				network: data.network,
+				isIPv4Supported: data.isIPv4Supported,
+				isIPv6Supported: data.isIPv6Supported,
 			});
 
 			res.send('Code was sent to the probe.');
@@ -256,6 +266,8 @@ export default defineEndpoint((router, context) => {
 				asn: probe.asn,
 				network: probe.network,
 				lastSyncDate: new Date(),
+				isIPv4Supported: probe.isIPv4Supported,
+				isIPv6Supported: probe.isIPv6Supported,
 			});
 		} catch (error: unknown) {
 			logger.error(error);

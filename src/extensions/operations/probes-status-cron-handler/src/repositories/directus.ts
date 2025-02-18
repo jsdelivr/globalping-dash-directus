@@ -1,12 +1,12 @@
 import type { OperationContext } from '@directus/extensions';
 
-export type AdoptedProbe = {
+export type Probe = {
 	id: string;
 	status: string;
 	onlineTimesToday: number;
 }
 
-export const getAdoptedProbes = async ({ services, database, getSchema }: OperationContext) => {
+export const getProbes = async ({ services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const itemsService = new ItemsService('gp_probes', {
@@ -14,12 +14,12 @@ export const getAdoptedProbes = async ({ services, database, getSchema }: Operat
 		knex: database,
 	});
 
-	const result = await itemsService.readByQuery({}) as AdoptedProbe[];
+	const result = await itemsService.readByQuery({}) as Probe[];
 	return result;
 };
 
-export const increaseOnlineTimes = async (adoptedProbes: AdoptedProbe[], { services, database, getSchema }: OperationContext) => {
-	if (adoptedProbes.length === 0) {
+export const increaseOnlineTimes = async (probes: Probe[], { services, database, getSchema }: OperationContext) => {
+	if (probes.length === 0) {
 		return [];
 	}
 
@@ -30,7 +30,7 @@ export const increaseOnlineTimes = async (adoptedProbes: AdoptedProbe[], { servi
 		knex: database,
 	});
 
-	const updatedIds = await itemsService.updateBatch(adoptedProbes.map(({ id, onlineTimesToday }) => ({
+	const updatedIds = await itemsService.updateBatch(probes.map(({ id, onlineTimesToday }) => ({
 		id,
 		onlineTimesToday: onlineTimesToday + 1,
 	})), { emitEvents: false }) as number[];

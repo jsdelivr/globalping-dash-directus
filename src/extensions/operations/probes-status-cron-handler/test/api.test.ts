@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { checkOnlineStatus } from '../src/actions/check-online-status.js';
 
-describe('Adopted probes status cron handler', () => {
+describe('Probes status cron handler', () => {
 	const database = {} as OperationContext['database'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
@@ -11,7 +11,6 @@ describe('Adopted probes status cron handler', () => {
 	const env = {
 		GLOBALPING_URL: 'https://api.globalping.io/v1',
 		GP_SYSTEM_KEY: 'system',
-		ADOPTED_PROBES_CHECK_TIME_MAX_DEVIATION_MINS: '5',
 	};
 
 	const data = {};
@@ -65,7 +64,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 1 ]);
 	});
 
-	it('should not call "updateBatch" if adopted probe is not connected to gp', async () => {
+	it('should not call "updateBatch" if probe is not connected to gp', async () => {
 		readByQuery.resolves([{
 			id: '1',
 			status: 'offline',

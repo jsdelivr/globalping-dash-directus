@@ -3,6 +3,7 @@ export default function wallaby () {
 		testFramework: 'mocha',
 		files: [
 			'src/**/*.ts',
+			'lib/**/*.ts',
 			'package.json',
 			'test/*.json',
 		],
@@ -18,7 +19,9 @@ export default function wallaby () {
 			},
 		},
 		preprocessors: {
-			'**/*.ts': file => file.content.replace(/\.ts/g, '.js'),
+			'**/*.ts': file => file.content
+				.replaceAll('.ts', '.js')
+				.replaceAll('../../../lib/src/', '../lib/'),
 		},
 		workers: { restart: true, initial: 1, regular: 1 },
 	};

@@ -39,6 +39,7 @@ export const getProbesToCheck = async (offsetId: string, { env, database }: Oper
 				(nodeVersion != ? AND nodeVersion IS NOT NULL)
 				OR (hardwareDeviceFirmware != ? AND hardwareDeviceFirmware IS NOT NULL)
 			)
+			AND userId IS NOT NULL
 			AND status != 'offline'
 			AND id > ?
 		`, [ env.TARGET_NODE_VERSION, env.TARGET_HW_DEVICE_FIRMWARE, offsetId ])

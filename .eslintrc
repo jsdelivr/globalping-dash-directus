@@ -10,6 +10,7 @@
 		"**/dist",
 		"/extensions",
 		"**/shims.d.ts",
+		"src/extensions/*/*/lib",
 		"test/e2e/globalping-dash",
 		"test-results"
 	],

@@ -36,7 +36,7 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	const user = await getUser(userId, accountability, context);
 
 	if (!user || !user.github_username) {
-		throw payloadError('User does not have enough github data.');
+		throw payloadError('User does not have required github data.');
 	}
 
 	const newTags = fields.tags.filter(tag => existingTagsArrays

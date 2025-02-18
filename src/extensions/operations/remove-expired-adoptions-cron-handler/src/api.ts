@@ -1,12 +1,12 @@
 import type { OperationContext } from '@directus/extensions';
 import { defineOperationApi } from '@directus/extensions-sdk';
-import { removeExpiredProbes } from './actions/remove-expired-probes.js';
+import { removeExpiredAdoptions } from './actions/remove-expired-probes.js';
 
 export default defineOperationApi({
 	id: 'remove-expired-adoptions-cron-handler',
 	handler: async (_operationData, context) => {
-		const { removedIds, notifiedIds } = await removeExpiredProbes(context as OperationContext);
+		const { removedIds, notifiedIds } = await removeExpiredAdoptions(context as OperationContext);
 
-		return `Removed probes with ids: ${removedIds.toString() || '[]'}. Notified probes with ids: ${notifiedIds.toString() || '[]'}.`;
+		return `Removed adoptions for probes: ${removedIds.toString() || '[]'}. Notified adoptions with ids: ${notifiedIds.toString() || '[]'}.`;
 	},
 });

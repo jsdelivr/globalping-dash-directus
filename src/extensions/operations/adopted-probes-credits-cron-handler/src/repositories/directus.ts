@@ -21,7 +21,13 @@ export const getAdoptedProbes = async ({ services, database, getSchema }: Operat
 		knex: database,
 	});
 
-	const result = await itemsService.readByQuery({}) as AdoptedProbe[];
+	const result = await itemsService.readByQuery({
+		filter: {
+			userId: {
+				_nnull: true,
+			},
+		},
+	}) as AdoptedProbe[];
 	return result;
 };
 

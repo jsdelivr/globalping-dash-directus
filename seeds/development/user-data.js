@@ -241,7 +241,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: '[]',
-		userId: user.id,
+		userId: null,
 		uuid: '70b83916-ba6d-481e-adea-4fe9d77761fd',
 		version: '0.28.0',
 		hardwareDevice: null,

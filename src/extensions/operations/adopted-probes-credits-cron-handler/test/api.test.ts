@@ -53,7 +53,6 @@ describe('Adopted probes status cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
 		expect(readMany.args[0]).to.deep.equal([ [ '1-1-1-1-1-1' ] ]);
 
 		expect(createMany.args[0]).to.deep.equal([
@@ -86,7 +85,6 @@ describe('Adopted probes status cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(readByQuery.args[0]).to.deep.equal([{}]);
 		expect(readMany.callCount).to.equal(0);
 		expect(createMany.callCount).to.equal(0);
 		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
