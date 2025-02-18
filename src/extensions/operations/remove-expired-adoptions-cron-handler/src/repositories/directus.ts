@@ -114,6 +114,9 @@ export const deleteProbes = async (probes: AdoptedProbe[], { services, database,
 
 	const result = await probesService.updateByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }, {
 		userId: null,
-	}) as string[];
+		tags: [],
+		isCustomCity: false,
+		countryOfCustomCity: null,
+	}, { emitEvents: false }) as string[];
 	return result;
 };

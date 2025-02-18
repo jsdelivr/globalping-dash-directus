@@ -1,6 +1,6 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
-import { resetMetadata, updateMetadata } from './update-metadata.js';
+import { resetCustomCityData, updateCustomCityData } from './update-metadata.js';
 import { validateCity, validateTags } from './validate-fields.js';
 
 export type Probe = {
@@ -22,7 +22,7 @@ export default defineHook(({ filter, action }, context) => {
 	filter('gp_probes.items.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
 
-		if (!accountability) {
+		if (!accountability || !accountability.user) {
 			throw new UserNotFoundError();
 		}
 
@@ -40,9 +40,9 @@ export default defineHook(({ filter, action }, context) => {
 		const fields = payload as Fields;
 
 		if (fields.city) {
-			await updateMetadata(fields, keys, context);
+			await updateCustomCityData(fields, keys, context);
 		} else if (fields.city === null) {
-			await resetMetadata(fields, keys, context);
+			await resetCustomCityData(fields, keys, context);
 		}
 	});
 });

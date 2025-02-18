@@ -2,7 +2,7 @@ import type { HookExtensionContext } from '@directus/extensions';
 import { geonamesCache, getKey } from './geonames-cache.js';
 import type { Fields } from './index.js';
 
-export const resetMetadata = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const resetCustomCityData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
@@ -21,7 +21,7 @@ export const resetMetadata = async (_fields: Fields, keys: string[], { services,
 	});
 };
 
-export const updateMetadata = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const updateCustomCityData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
