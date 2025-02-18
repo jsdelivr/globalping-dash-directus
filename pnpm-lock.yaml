@@ -922,7 +922,7 @@ importers:
         specifier: ^3.4.35
         version: 3.4.35(typescript@5.5.4)
 
-  src/extensions/operations/adopted-probes-status-cron-handler:
+  src/extensions/operations/probes-status-cron-handler:
     dependencies:
       axios:
         specifier: ^1.7.3

@@ -30,7 +30,7 @@ COPY src/extensions/interfaces/token/package.json src/extensions/interfaces/toke
 COPY src/extensions/lib/package.json src/extensions/lib/
 COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/probes-adapter/
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
-COPY src/extensions/operations/adopted-probes-status-cron-handler/package.json src/extensions/operations/adopted-probes-status-cron-handler/
+COPY src/extensions/operations/probes-status-cron-handler/package.json src/extensions/operations/probes-status-cron-handler/
 COPY src/extensions/operations/check-outdated-firmware-cron-handler/package.json src/extensions/operations/check-outdated-firmware-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
@@ -86,8 +86,8 @@ COPY --from=builder /builder/src/extensions/modules/probes-adapter/dist/* /direc
 COPY --from=builder /builder/src/extensions/modules/probes-adapter/package.json /directus/extensions/probes-adapter/
 COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/dist/* /directus/extensions/adopted-probes-credits-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/package.json /directus/extensions/adopted-probes-credits-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/adopted-probes-status-cron-handler/dist/* /directus/extensions/adopted-probes-status-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/adopted-probes-status-cron-handler/package.json /directus/extensions/adopted-probes-status-cron-handler/
+COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/dist/* /directus/extensions/probes-status-cron-handler/dist/
+COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/package.json /directus/extensions/probes-status-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/dist/* /directus/extensions/check-outdated-firmware-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/package.json /directus/extensions/check-outdated-firmware-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/dist/* /directus/extensions/gh-webhook-handler/dist/
