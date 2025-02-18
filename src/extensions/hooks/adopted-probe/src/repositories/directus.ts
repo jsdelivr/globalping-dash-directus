@@ -1,6 +1,6 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
-import type { AdoptedProbe } from '../index.js';
+import type { Probe } from '../index.js';
 
 type User = {
 	github_username: string | null;
@@ -16,7 +16,7 @@ export const getProbes = async (keys: string[], { services, database, getSchema 
 		accountability,
 	});
 
-	const currentProbes = await adoptedProbesService.readMany(keys) as AdoptedProbe[];
+	const currentProbes = await adoptedProbesService.readMany(keys) as Probe[];
 
 	return currentProbes;
 };

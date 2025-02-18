@@ -2952,7 +2952,7 @@ fields:
       options:
         enableCreate: false
       readonly: false
-      required: true
+      required: false
       sort: 11
       special:
         - m2o
@@ -4462,7 +4462,7 @@ relations:
       foreign_key_column: id
       constraint_name: gp_probes_userid_foreign
       on_update: RESTRICT
-      on_delete: CASCADE
+      on_delete: SET NULL
   - collection: gp_tokens
     field: user_created
     related_collection: directus_users
