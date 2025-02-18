@@ -3,7 +3,7 @@ import { defineHook } from '@directus/extensions-sdk';
 import { resetMetadata, updateMetadata } from './update-metadata.js';
 import { validateCity, validateTags } from './validate-fields.js';
 
-export type AdoptedProbe = {
+export type Probe = {
 	city: string | null;
 	state: string | null;
 	latitude: string | null;
@@ -14,7 +14,7 @@ export type AdoptedProbe = {
 	userId: string | null;
 };
 
-export type Fields = Partial<AdoptedProbe>;
+export type Fields = Partial<Probe>;
 
 export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 

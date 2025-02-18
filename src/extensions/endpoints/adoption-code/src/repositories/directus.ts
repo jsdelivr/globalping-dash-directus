@@ -9,7 +9,7 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 
 	const name = await getDefaultProbeName(req, probe, context);
 
-	const id: string = await itemsService.createOne({
+	const adoption = {
 		ip: probe.ip,
 		name,
 		uuid: probe.uuid,
@@ -28,12 +28,24 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		network: probe.network,
 		userId: req.accountability.user,
 		lastSyncDate: new Date(),
-	});
+	};
+
+	const existingProbe = (await itemsService.readByQuery({
+		ip: probe.ip,
+	}) as { id: string }[])[0];
+
+	let id: string;
+
+	if (existingProbe) {
+		id = await itemsService.updateOne(existingProbe.id, adoption);
+	} else {
+		id = await itemsService.createOne(adoption);
+	}
 
 	return [ id, name ] as const;
 };
 
-export const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
+const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: await getSchema({ database }),
 		knex: database,

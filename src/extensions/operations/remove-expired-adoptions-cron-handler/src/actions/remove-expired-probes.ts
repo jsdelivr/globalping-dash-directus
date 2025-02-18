@@ -1,6 +1,6 @@
 
 import type { OperationContext } from '@directus/extensions';
-import { getOfflineProbes, getExistingNotifications, notifyProbes, deleteProbes } from '../repositories/directus.js';
+import { getOfflineAdoptions, getExistingNotifications, notifyProbes, deleteProbes } from '../repositories/directus.js';
 import type { AdoptedProbe } from '../types.js';
 
 export const NOTIFY_AFTER_DAYS = 2;
@@ -8,7 +8,7 @@ export const REMOVE_AFTER_DAYS = 30;
 
 
 export const removeExpiredProbes = async (context: OperationContext): Promise<{ notifiedIds: string[], removedIds: string[] }> => {
-	const offlineAdoptedProbes = await getOfflineProbes(context);
+	const offlineAdoptedProbes = await getOfflineAdoptions(context);
 	const probesToNotify = [];
 	const probesToDelete = [];
 
