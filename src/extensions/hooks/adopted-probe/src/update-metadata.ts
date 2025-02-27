@@ -47,3 +47,22 @@ export const updateCustomCityData = async (_fields: Fields, keys: string[], { se
 		emitEvents: false,
 	});
 };
+
+export const resetUserDefinedData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+	const { ItemsService } = services;
+
+	const adoptedProbesService = new ItemsService('gp_probes', {
+		database,
+		schema: await getSchema(),
+	});
+
+	await adoptedProbesService.updateMany(keys, {
+		name: null,
+		userId: null,
+		tags: [],
+		isCustomCity: false,
+		countryOfCustomCity: null,
+	}, {
+		emitEvents: false,
+	});
+};

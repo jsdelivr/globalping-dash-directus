@@ -28,18 +28,22 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		network: probe.network,
 		userId: req.accountability.user,
 		lastSyncDate: new Date(),
+		isIPv4Supported: probe.isIPv4Supported,
+		isIPv6Supported: probe.isIPv6Supported,
 	};
 
-	const existingProbe = (await itemsService.readByQuery({
-		ip: probe.ip,
+	const existingProbe = (await itemsService.readByQuery({ // TODO: handle adoption by alt ip
+		filter: {
+			ip: probe.ip,
+		},
 	}) as { id: string }[])[0];
 
 	let id: string;
 
 	if (existingProbe) {
-		id = await itemsService.updateOne(existingProbe.id, adoption);
+		id = await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
 	} else {
-		id = await itemsService.createOne(adoption);
+		id = await itemsService.createOne(adoption, { emitEvents: false });
 	}
 
 	return [ id, name ] as const;
@@ -75,9 +79,13 @@ const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: E
 };
 
 export const findAdoptedProbesByIp = async (ip: string, { database }: EndpointExtensionContext) => {
-	const probes = await database('gp_probes')
-		.whereRaw('JSON_CONTAINS(altIps, ?)', [ `"${ip}"` ])
-		.orWhere('ip', ip);
+	const probes = await database('gp_probes').whereRaw(`
+			(
+				ip = ?
+				OR JSON_CONTAINS(altIps, ?)
+			)
+			AND userId IS NOT NULL
+	`, [ ip, `"${ip}"` ]);
 
 	return probes;
 };
