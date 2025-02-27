@@ -82,7 +82,7 @@ export const notifyProbes = async (probes: AdoptedProbe[], { services, database,
 	return probes.map(probe => probe.id);
 };
 
-export const deleteProbes = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const removeAdoption = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService, ItemsService } = services;
 
 	if (!probes.length) {
@@ -113,6 +113,7 @@ export const deleteProbes = async (probes: AdoptedProbe[], { services, database,
 	});
 
 	const result = await probesService.updateByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }, {
+		name: null,
 		userId: null,
 		tags: [],
 		isCustomCity: false,
