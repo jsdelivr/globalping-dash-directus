@@ -42,7 +42,7 @@ export const seed = async (knex) => {
 	await Promise.all([
 		knex('gp_apps').delete(),
 		knex('gp_tokens').delete(),
-		knex('gp_adopted_probes').delete(),
+		knex('gp_probes').delete(),
 		knex('sponsors').delete(),
 		knex('gp_credits_additions').delete(),
 		knex('gp_credits_deductions').delete(),
@@ -168,7 +168,7 @@ export const seed = async (knex) => {
 	]);
 
 	const probeId = randomUUID();
-	await knex('gp_adopted_probes').insert([{
+	await knex('gp_probes').insert([{
 		id: probeId,
 		asn: 3302,
 		city: 'Naples',

@@ -7,7 +7,7 @@ export async function up (knex) {
 		if (!tokensTableExists || !probesTableExists || !usersTableExists) {
 			console.log('Old collections do not exist, migration of data is not required.');
 		} else {
-			await trx.raw(`INSERT INTO gp_adopted_probes (
+			await trx.raw(`INSERT INTO gp_probes (
 				asn,
 				country,
 				city,
@@ -47,7 +47,7 @@ export async function up (knex) {
 		});
 
 		await trx('directus_permissions').where('collection', 'adopted_probes').update({
-			collection: 'gp_adopted_probes',
+			collection: 'gp_probes',
 		});
 
 		await trx('directus_permissions').where('collection', 'credits').update({

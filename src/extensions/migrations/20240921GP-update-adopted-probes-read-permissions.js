@@ -1,6 +1,6 @@
 import { getUserPermissions, editPermissions } from '../migration-utils.js';
 
-const COLLECTION_NAME = 'gp_adopted_probes';
+const COLLECTION_NAME = 'gp_probes';
 const FIELDS_TO_ADD = [ 'state', 'onlineTimesToday', 'isIPv4Supported', 'isIPv6Supported' ];
 const FIELDS_TO_REMOVE = [];
 

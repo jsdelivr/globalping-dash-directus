@@ -9,7 +9,7 @@ const OFFLINE_PROBE_NOTIFICATIION_TYPE = 'offline_probe';
 export const getOfflineProbes = async ({ services, database, getSchema }: OperationContext): Promise<AdoptedProbe[]> => {
 	const { ItemsService } = services;
 
-	const probesService = new ItemsService('gp_adopted_probes', {
+	const probesService = new ItemsService('gp_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -41,7 +41,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 	const result = await notificationsService.readByQuery({
 		filter: {
 			type: OFFLINE_PROBE_NOTIFICATIION_TYPE,
-			collection: 'gp_adopted_probes',
+			collection: 'gp_probes',
 			item: {
 				_in: probes.map(probe => probe.id),
 			},
@@ -71,7 +71,7 @@ export const notifyProbes = async (probes: AdoptedProbe[], { services, database,
 		await notificationsService.createOne({
 			recipient: probe.userId,
 			item: probe.id,
-			collection: 'gp_adopted_probes',
+			collection: 'gp_probes',
 			type: OFFLINE_PROBE_NOTIFICATIION_TYPE,
 			subject: 'Your probe went offline',
 			message: `Your ${probe.name ? `probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} has been offline for more than 24 hours. If it does not come back online before **${dateOfExpiration.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}** it will be removed from your account.`,
@@ -93,7 +93,7 @@ export const deleteProbes = async (probes: AdoptedProbe[], { services, database,
 		knex: database,
 	});
 
-	const probesService = new ItemsService('gp_adopted_probes', {
+	const probesService = new ItemsService('gp_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
@@ -107,7 +107,7 @@ export const deleteProbes = async (probes: AdoptedProbe[], { services, database,
 			subject: 'Your probe has been deleted',
 			message: `Your ${probe.name ? `probe **${probe.name}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			item: probe.id,
-			collection: 'gp_adopted_probes',
+			collection: 'gp_probes',
 		});
 	});
 

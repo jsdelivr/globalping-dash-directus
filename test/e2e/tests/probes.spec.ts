@@ -6,7 +6,7 @@ import { randomIP } from '../utils.ts';
 
 const addData = async (user: User) => {
 	const probeId = randomUUID();
-	await sql('gp_adopted_probes').insert([{
+	await sql('gp_probes').insert([{
 		id: probeId,
 		asn: 16019,
 		city: 'Prague',
