@@ -32,7 +32,7 @@ export const getAlreadyNotifiedProbes = async ({ env, services, database, getSch
 
 
 export const getProbesToCheck = async (offsetId: string, { env, database }: OperationContext) => {
-	const probes: AdoptedProbe[] = await database('gp_adopted_probes')
+	const probes: AdoptedProbe[] = await database('gp_probes')
 		.select('*')
 		.whereRaw(`
 			(

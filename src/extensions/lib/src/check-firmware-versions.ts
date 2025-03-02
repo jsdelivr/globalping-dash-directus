@@ -63,7 +63,7 @@ const sendNotification = async (probe: ProbeInfo, userId: string, { services, ge
 	await notificationsService.createOne({
 		recipient: userId,
 		item: probe.id,
-		collection: 'gp_adopted_probes',
+		collection: 'gp_probes',
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Your probe is running an outdated firmware',

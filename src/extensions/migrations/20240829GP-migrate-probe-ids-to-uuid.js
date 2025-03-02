@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 export async function up (knex) {
-	const columnsInfo = await knex('gp_adopted_probes').columnInfo();
+	const columnsInfo = await knex('gp_probes').columnInfo();
 
 	if (columnsInfo?.id?.type === 'char') {
 		console.log('Probe ids are already UUIDs');
@@ -14,14 +14,14 @@ export async function up (knex) {
 	});
 
 	// Update primary col type
-	await knex.raw(`ALTER TABLE gp_adopted_probes MODIFY id char(36) not null;`);
+	await knex.raw(`ALTER TABLE gp_probes MODIFY id char(36) not null;`);
 
 	// Update reference col type
 	await knex.raw(`ALTER TABLE gp_credits_additions MODIFY adopted_probe char(36);`);
 
 	// Update columns to new values
 	await knex.transaction(async (trx) => {
-		const result = await trx('gp_adopted_probes').select('id');
+		const result = await trx('gp_probes').select('id');
 		const prevIdToNewId = {};
 
 		for (const { id: prevId } of result) {
@@ -29,7 +29,7 @@ export async function up (knex) {
 		}
 
 		for (const [ prevId, newId ] of Object.entries(prevIdToNewId)) {
-			await trx('gp_adopted_probes').where({ id: prevId }).update({ id: newId });
+			await trx('gp_probes').where({ id: prevId }).update({ id: newId });
 			await trx('gp_credits_additions').where({ adopted_probe: prevId }).update({ adopted_probe: newId });
 		}
 	});
@@ -38,7 +38,7 @@ export async function up (knex) {
 	await knex.schema.alterTable('gp_credits_additions', (table) => {
 		table.foreign('adopted_probe', 'gp_credits_additions_adopted_probe_foreign')
 			.references('id')
-			.inTable('gp_adopted_probes')
+			.inTable('gp_probes')
 			.onDelete('SET NULL');
 	});
 

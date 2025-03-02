@@ -31,7 +31,7 @@ export const clearUserData = async (user: User) => {
 	await client('gp_credits_additions').where({ github_id: user.external_identifier }).delete();
 	await client('gp_credits').where({ user_id: user.id }).delete();
 	await client('gp_credits_deductions').where({ user_id: user.id }).delete();
-	await client('gp_adopted_probes').where({ userId: user.id }).delete();
+	await client('gp_probes').where({ userId: user.id }).delete();
 	await client('gp_tokens').where({ user_created: user.id }).delete();
 	await client('gp_apps').where({ user_created: user.id }).delete();
 	await client('gp_apps_approvals').where({ user: user.id }).delete();

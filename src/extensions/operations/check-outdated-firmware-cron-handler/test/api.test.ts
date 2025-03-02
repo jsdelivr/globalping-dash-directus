@@ -54,7 +54,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(createOne.args[0]?.[0]).to.deep.equal({
 			recipient: 'user-id',
 			item: 'probe-id',
-			collection: 'gp_adopted_probes',
+			collection: 'gp_probes',
 			type: 'outdated_firmware',
 			secondary_type: 'v2.0_v20.13.0',
 			subject: 'Your probe is running an outdated firmware',
@@ -78,7 +78,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(createOne.args[0]?.[0]).to.deep.equal({
 			recipient: 'user-id',
 			item: 'probe-id',
-			collection: 'gp_adopted_probes',
+			collection: 'gp_probes',
 			type: 'outdated_firmware',
 			secondary_type: 'v2.0_v20.13.0',
 			subject: 'Your probe is running an outdated firmware',
