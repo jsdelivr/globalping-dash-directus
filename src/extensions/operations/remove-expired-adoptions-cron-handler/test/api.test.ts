@@ -9,10 +9,10 @@ describe('Remove expired adoptions CRON handler', () => {
 
 	const itemsReadByQuery = sinon.stub();
 	const notificationsReadByQuery = sinon.stub();
-	const deleteByQuery = sinon.stub();
+	const updateByQuery = sinon.stub();
 	const createOne = sinon.stub();
 	const services = {
-		ItemsService: sinon.stub().returns({ readByQuery: itemsReadByQuery, deleteByQuery }),
+		ItemsService: sinon.stub().returns({ readByQuery: itemsReadByQuery, updateByQuery }),
 		NotificationsService: sinon.stub().returns({ createOne, readByQuery: notificationsReadByQuery }),
 	};
 	const context = { database, getSchema, services } as any;
@@ -71,7 +71,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 		]);
 
-		expect(result).to.deep.equal('Removed probes with ids: []. Notified probes with ids: probeId1,probeId2.');
+		expect(result).to.deep.equal('Removed adoptions for probes: []. Notified adoptions with ids: probeId1,probeId2.');
 	});
 
 	it('should not notify user if probe is offline for <2 days', async () => {
@@ -89,7 +89,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.callCount).to.equal(0);
 
-		expect(result).to.deep.equal('Removed probes with ids: []. Notified probes with ids: [].');
+		expect(result).to.deep.equal('Removed adoptions for probes: []. Notified adoptions with ids: [].');
 	});
 
 	it('should not create duplicated notifications for the same offline period', async () => {
@@ -112,7 +112,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.callCount).to.equal(0);
 
-		expect(result).to.deep.equal('Removed probes with ids: []. Notified probes with ids: [].');
+		expect(result).to.deep.equal('Removed adoptions for probes: []. Notified adoptions with ids: [].');
 	});
 
 	it('should create notification for the new offline period', async () => {
@@ -146,7 +146,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 		]);
 
-		expect(result).to.deep.equal('Removed probes with ids: []. Notified probes with ids: probeId1.');
+		expect(result).to.deep.equal('Removed adoptions for probes: []. Notified adoptions with ids: probeId1.');
 	});
 
 	it('should delete adoption if probe is offline for >30 days', async () => {
@@ -160,7 +160,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		itemsReadByQuery.onSecondCall().resolves([]);
 
-		deleteByQuery.resolves([ 'probeId1' ]);
+		updateByQuery.resolves([ 'probeId1' ]);
 
 		const result = await operationApi.handler({}, context);
 
@@ -176,15 +176,23 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 		]);
 
-		expect(deleteByQuery.callCount).to.equal(1);
+		expect(updateByQuery.callCount).to.equal(1);
 
-		expect(deleteByQuery.args[0]).to.deep.equal([
+		expect(updateByQuery.args[0]).to.deep.equal([
 			{
 				filter: { id: { _in: [ 'probeId1' ] } },
 			},
+			{
+				name: null,
+				userId: null,
+				tags: [],
+				isCustomCity: false,
+				countryOfCustomCity: null,
+			},
+			{ emitEvents: false },
 		]);
 
-		expect(result).to.deep.equal('Removed probes with ids: probeId1. Notified probes with ids: [].');
+		expect(result).to.deep.equal('Removed adoptions for probes: probeId1. Notified adoptions with ids: [].');
 	});
 
 	it('should not delete adoption if probe is offline for <30 days', async () => {
@@ -200,6 +208,6 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		await operationApi.handler({}, context);
 
-		expect(deleteByQuery.callCount).to.equal(0);
+		expect(updateByQuery.callCount).to.equal(0);
 	});
 });

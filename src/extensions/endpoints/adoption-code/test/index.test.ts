@@ -8,7 +8,7 @@ import endpoint from '../src/index.js';
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub().resolves('generatedId');
 	const readByQuery = sinon.stub().resolves([]);
-	const orWhere = sinon.stub().resolves([]);
+	const whereRaw = sinon.stub().resolves([]);
 	const notificationCreateOne = sinon.stub();
 	const endpointContext = {
 		logger: {
@@ -16,9 +16,7 @@ describe('adoption code endpoints', () => {
 		},
 		getSchema: () => {},
 		database: () => ({
-			whereRaw: () => ({
-				orWhere,
-			}),
+			whereRaw,
 		}),
 		env: {
 			GLOBALPING_URL: 'https://api.globalping.io/v1',
@@ -60,7 +58,7 @@ describe('adoption code endpoints', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 		readByQuery.resolves([]);
-		orWhere.resolves([]);
+		whereRaw.resolves([]);
 	});
 
 	after(() => {
@@ -239,7 +237,7 @@ describe('adoption code endpoints', () => {
 				},
 			};
 
-			orWhere.resolves([{}]);
+			whereRaw.resolves([{}]);
 
 			await request('/send-code', req, res);
 
@@ -283,6 +281,8 @@ describe('adoption code endpoints', () => {
 				longitude: 2.35,
 				asn: 12876,
 				network: 'SCALEWAY S.A.S.',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
 			});
 
 			await request('/send-code', {
@@ -326,6 +326,8 @@ describe('adoption code endpoints', () => {
 					asn: 12876,
 					network: 'SCALEWAY S.A.S.',
 					lastSyncDate: new Date(),
+					isIPv4Supported: true,
+					isIPv6Supported: false,
 				},
 			]);
 
@@ -350,6 +352,8 @@ describe('adoption code endpoints', () => {
 				network: 'SCALEWAY S.A.S.',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				lastSyncDate: new Date(),
+				isIPv4Supported: true,
+				isIPv6Supported: false,
 			});
 		});
 
@@ -404,6 +408,8 @@ describe('adoption code endpoints', () => {
 					asn: null,
 					network: null,
 					lastSyncDate: new Date(),
+					isIPv4Supported: false,
+					isIPv6Supported: false,
 				},
 			]);
 
@@ -428,6 +434,8 @@ describe('adoption code endpoints', () => {
 				network: null,
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				lastSyncDate: new Date(),
+				isIPv4Supported: false,
+				isIPv6Supported: false,
 			});
 		});
 
@@ -453,6 +461,8 @@ describe('adoption code endpoints', () => {
 				longitude: 2.35,
 				asn: 12876,
 				network: 'SCALEWAY S.A.S.',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
 			});
 
 			await request('/send-code', {
@@ -496,6 +506,8 @@ describe('adoption code endpoints', () => {
 					asn: 12876,
 					network: 'SCALEWAY S.A.S.',
 					lastSyncDate: new Date(),
+					isIPv4Supported: true,
+					isIPv6Supported: false,
 				},
 			]);
 
@@ -520,6 +532,8 @@ describe('adoption code endpoints', () => {
 				network: 'SCALEWAY S.A.S.',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				lastSyncDate: new Date(),
+				isIPv4Supported: true,
+				isIPv6Supported: false,
 			});
 		});
 
