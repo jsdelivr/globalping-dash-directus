@@ -2,7 +2,7 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import type { AdoptedProbe, Request } from '../index.js';
 
 export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
-	const { services } = context;
+	const { services, database } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: req.schema,
 	});
@@ -32,7 +32,13 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		isIPv6Supported: probe.isIPv6Supported,
 	};
 
-	const existingProbe = await findAdoptedProbeByIp(probe.ip, context);
+	const existingProbe = await database('gp_probes').whereRaw(`
+		(
+			ip = ?
+			OR JSON_CONTAINS(altIps, ?)
+		)
+		AND userId IS NULL
+	`, [ probe.ip, `"${probe.ip}"` ]).first();
 
 	let id: string;
 
