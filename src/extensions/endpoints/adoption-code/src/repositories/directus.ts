@@ -2,7 +2,7 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import type { AdoptedProbe, Request } from '../index.js';
 
 export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
-	const { services, database } = context;
+	const { services } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: req.schema,
 	});
@@ -32,13 +32,7 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		isIPv6Supported: probe.isIPv6Supported,
 	};
 
-	const existingProbe = (await database('gp_probes').whereRaw(`
-		(
-			ip = ?
-			OR JSON_CONTAINS(altIps, ?)
-		)
-		AND userId IS NULL
-	`, [ probe.ip, `"${probe.ip}"` ]))[0];
+	const existingProbe = await findAdoptedProbeByIp(probe.ip, context);
 
 	let id: string;
 
@@ -80,14 +74,14 @@ const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: E
 	return name;
 };
 
-export const findAdoptedProbesByIp = async (ip: string, { database }: EndpointExtensionContext) => {
-	const probes = await database('gp_probes').whereRaw(`
+export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExtensionContext) => {
+	const probe = await database('gp_probes').whereRaw(`
 			(
 				ip = ?
 				OR JSON_CONTAINS(altIps, ?)
 			)
 			AND userId IS NOT NULL
-	`, [ ip, `"${ip}"` ]);
+	`, [ ip, `"${ip}"` ]).first();
 
-	return probes;
+	return probe;
 };
