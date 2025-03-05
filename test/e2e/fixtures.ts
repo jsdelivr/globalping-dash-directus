@@ -6,13 +6,18 @@ import { clearUserData, generateUser } from './utils.ts';
 import { User } from './types.ts';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{ user: User }>({
+export const test = baseTest.extend<{ user: User, user2: User }>({
 	user: async ({}, use) => {
 		const user = await generateUser();
 		use(user);
 	},
-	storageState: async ({ user }, use) => {
+	user2: async ({}, use) => {
+		const user2 = await generateUser('2');
+		use(user2);
+	},
+	storageState: async ({ user, user2 }, use) => {
 		await sql('directus_users').insert(user);
+		await sql('directus_users').insert(user2);
 
 		// Make sure we authenticate in a clean environment by unsetting storage state.
 		const context = await request.newContext({ storageState: undefined });
@@ -38,6 +43,7 @@ export const test = baseTest.extend<{ user: User }>({
 
 		// Clear the data after the test.
 		await clearUserData(user);
+		await clearUserData(user2);
 		await fs.unlink(fileName);
 	},
 });

@@ -3,27 +3,23 @@ import { randomUUID } from 'crypto';
 import { client } from './client.ts';
 import { User } from './types.ts';
 
-const commonUserFields = {
-	first_name: 'John',
-	last_name: 'Doe',
-	password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
-	provider: 'default',
-	email_notifications: 0,
-	github_organizations: JSON.stringify([ 'Scrubs' ]),
-	github_username: 'johndoe',
-	user_type: 'sponsor',
-};
-
-export const generateUser = async (): Promise<User> => {
+export const generateUser = async (suffix = ''): Promise<User> => {
 	const userId = randomUUID();
 	const userRole = await client('directus_roles').where({ name: 'User' }).select('id').first();
 
 	return {
-		...commonUserFields,
 		id: userId,
 		external_identifier: randomExternalId(),
 		email: `${userId.split('-')[0]}@example.com`,
 		role: userRole.id,
+		first_name: `John${suffix}`,
+		last_name: `Doe${suffix}`,
+		password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
+		provider: 'default',
+		email_notifications: 0,
+		github_organizations: JSON.stringify([ `Scrubs${suffix}` ]),
+		github_username: `johndoe${suffix}`,
+		user_type: 'sponsor',
 	};
 };
 

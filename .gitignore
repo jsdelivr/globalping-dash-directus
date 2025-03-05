@@ -12,3 +12,4 @@ config/local*
 /blob-report/
 /playwright/.cache/
 /test/e2e/globalping-dash/
+/src/extensions/*/*/lib

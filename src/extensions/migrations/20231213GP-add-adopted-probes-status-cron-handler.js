@@ -1,6 +1,7 @@
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
-const FLOW_ID = '284f22f9-0233-44ee-a9e1-503e9a2e3830'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
+
+export const FLOW_ID = '284f22f9-0233-44ee-a9e1-503e9a2e3830'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
 
 async function createFlow () {
 	const URL = `${DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;

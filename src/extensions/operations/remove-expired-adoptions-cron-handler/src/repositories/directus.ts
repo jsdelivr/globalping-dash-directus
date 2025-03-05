@@ -6,7 +6,7 @@ import type { AdoptedProbe } from '../types.js';
 
 const OFFLINE_PROBE_NOTIFICATIION_TYPE = 'offline_probe';
 
-export const getOfflineProbes = async ({ services, database, getSchema }: OperationContext): Promise<AdoptedProbe[]> => {
+export const getOfflineAdoptions = async ({ services, database, getSchema }: OperationContext): Promise<AdoptedProbe[]> => {
 	const { ItemsService } = services;
 
 	const probesService = new ItemsService('gp_probes', {
@@ -17,6 +17,7 @@ export const getOfflineProbes = async ({ services, database, getSchema }: Operat
 	const rows: (Omit<AdoptedProbe, 'lastSyncDate'> & { lastSyncDate: string })[] = await probesService.readByQuery({
 		filter: {
 			status: 'offline',
+			userId: { _nnull: true },
 		},
 	});
 
@@ -81,7 +82,7 @@ export const notifyProbes = async (probes: AdoptedProbe[], { services, database,
 	return probes.map(probe => probe.id);
 };
 
-export const deleteProbes = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const removeAdoption = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService, ItemsService } = services;
 
 	if (!probes.length) {
@@ -111,6 +112,12 @@ export const deleteProbes = async (probes: AdoptedProbe[], { services, database,
 		});
 	});
 
-	const result = await probesService.deleteByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }) as string[];
+	const result = await probesService.updateByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }, {
+		name: null,
+		userId: null,
+		tags: [],
+		isCustomCity: false,
+		countryOfCustomCity: null,
+	}, { emitEvents: false }) as string[];
 	return result;
 };

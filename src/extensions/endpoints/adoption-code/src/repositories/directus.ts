@@ -2,14 +2,14 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import type { AdoptedProbe, Request } from '../index.js';
 
 export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
-	const { services } = context;
+	const { services, database } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: req.schema,
 	});
 
 	const name = await getDefaultProbeName(req, probe, context);
 
-	const id: string = await itemsService.createOne({
+	const adoption = {
 		ip: probe.ip,
 		name,
 		uuid: probe.uuid,
@@ -28,12 +28,30 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		network: probe.network,
 		userId: req.accountability.user,
 		lastSyncDate: new Date(),
-	});
+		isIPv4Supported: probe.isIPv4Supported,
+		isIPv6Supported: probe.isIPv6Supported,
+	};
+
+	const existingProbe = await database('gp_probes').whereRaw(`
+		(
+			ip = ?
+			OR JSON_CONTAINS(altIps, ?)
+		)
+		AND userId IS NULL
+	`, [ probe.ip, `"${probe.ip}"` ]).first();
+
+	let id: string;
+
+	if (existingProbe) {
+		id = await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
+	} else {
+		id = await itemsService.createOne(adoption, { emitEvents: false });
+	}
 
 	return [ id, name ] as const;
 };
 
-export const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
+const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
@@ -62,10 +80,14 @@ const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: E
 	return name;
 };
 
-export const findAdoptedProbesByIp = async (ip: string, { database }: EndpointExtensionContext) => {
-	const probes = await database('gp_probes')
-		.whereRaw('JSON_CONTAINS(altIps, ?)', [ `"${ip}"` ])
-		.orWhere('ip', ip);
+export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExtensionContext) => {
+	const probe = await database('gp_probes').whereRaw(`
+			(
+				ip = ?
+				OR JSON_CONTAINS(altIps, ?)
+			)
+			AND userId IS NOT NULL
+	`, [ ip, `"${ip}"` ]).first();
 
-	return probes;
+	return probe;
 };

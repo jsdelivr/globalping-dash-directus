@@ -1,20 +1,20 @@
 
 import type { OperationContext } from '@directus/extensions';
-import { getOfflineProbes, getExistingNotifications, notifyProbes, deleteProbes } from '../repositories/directus.js';
+import { getOfflineAdoptions, getExistingNotifications, notifyProbes, removeAdoption } from '../repositories/directus.js';
 import type { AdoptedProbe } from '../types.js';
 
 export const NOTIFY_AFTER_DAYS = 2;
 export const REMOVE_AFTER_DAYS = 30;
 
 
-export const removeExpiredProbes = async (context: OperationContext): Promise<{ notifiedIds: string[], removedIds: string[] }> => {
-	const offlineAdoptedProbes = await getOfflineProbes(context);
+export const removeExpiredAdoptions = async (context: OperationContext): Promise<{ notifiedIds: string[], removedIds: string[] }> => {
+	const offlineAdoptedProbes = await getOfflineAdoptions(context);
 	const probesToNotify = [];
-	const probesToDelete = [];
+	const probesToRemoveAdoption = [];
 
 	for (const probe of offlineAdoptedProbes) {
 		if (isExpired(probe.lastSyncDate, REMOVE_AFTER_DAYS)) {
-			probesToDelete.push(probe);
+			probesToRemoveAdoption.push(probe);
 		} else if (isExpired(probe.lastSyncDate, NOTIFY_AFTER_DAYS)) {
 			probesToNotify.push(probe);
 		}
@@ -22,7 +22,7 @@ export const removeExpiredProbes = async (context: OperationContext): Promise<{ 
 
 	const probesWithoutNotifications = await excludeAlreadyNotifiedProbes(probesToNotify, context);
 	const notifiedIds = await notifyProbes(probesWithoutNotifications, context);
-	const removedIds = await deleteProbes(probesToDelete, context);
+	const removedIds = await removeAdoption(probesToRemoveAdoption, context);
 	return { notifiedIds, removedIds };
 };
 
