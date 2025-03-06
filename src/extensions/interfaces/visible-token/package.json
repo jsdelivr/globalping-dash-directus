@@ -1,0 +1,35 @@
+{
+	"name": "visible-token",
+	"description": "Visible token, that is shown to the user every time",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-interface"
+	],
+	"type": "module",
+	"directus:extension": {
+		"type": "interface",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.1.1"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"test": "echo 'No tests for that extension'",
+		"test:dev": "echo 'No tests for that extension'"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^1.0.9",
+		"@directus/extensions-sdk": "11.0.9",
+		"@directus/types": "^11.2.0",
+		"@types/node": "^20.14.13",
+		"sass": "^1.77.8",
+		"typescript": "^5.5.4",
+		"vue": "^3.4.35",
+		"vue-i18n": "^9.13.1"
+	}
+}
