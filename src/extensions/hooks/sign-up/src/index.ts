@@ -1,8 +1,9 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
+import { generateBytes } from '../../../lib/src/bytes.js';
 
-type User = {
+export type User = {
 	provider: string;
 	external_identifier: string;
 	email?: string | undefined;
@@ -13,6 +14,7 @@ type User = {
 	github_username?: string;
 	github_organizations: string[];
 	email_notifications: boolean;
+	adoption_token?: string;
 }
 
 type GithubOrgsResponse = {
@@ -46,6 +48,7 @@ export default defineHook(({ filter, action }, context) => {
 		}
 
 		user.email_notifications = false;
+		user.adoption_token = await generateBytes();
 	});
 
 	action('users.create', async (payload) => {

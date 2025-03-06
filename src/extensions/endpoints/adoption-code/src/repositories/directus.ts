@@ -1,51 +1,63 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import type { AdoptedProbe, Request } from '../index.js';
+import type { AdoptedProbe, ProbeToAdopt } from '../index.js';
 
-export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
-	const { services, database } = context;
+export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
+	const { services, database, getSchema } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
-		schema: req.schema,
+		schema: await getSchema({ database }),
+		knex: database,
 	});
 
-	const name = await getDefaultProbeName(req, probe, context);
+	const name = await getDefaultProbeName(userId, probe, context);
 
-	const adoption = {
+	const adoption: Omit<AdoptedProbe, 'id'> = {
 		ip: probe.ip,
+		altIps: probe.altIps,
 		name,
 		uuid: probe.uuid,
 		version: probe.version,
 		nodeVersion: probe.nodeVersion,
 		hardwareDevice: probe.hardwareDevice,
 		hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
+		systemTags: probe.systemTags,
 		status: probe.status,
 		city: probe.city,
-		systemTags: probe.systemTags,
 		state: probe.state,
 		country: probe.country,
 		latitude: probe.latitude,
 		longitude: probe.longitude,
 		asn: probe.asn,
 		network: probe.network,
-		userId: req.accountability.user,
+		userId,
 		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
 	};
 
-	const existingProbe = await database('gp_probes').whereRaw(`
-		(
-			ip = ?
-			OR JSON_CONTAINS(altIps, ?)
-		)
-		AND userId IS NULL
-	`, [ probe.ip, `"${probe.ip}"` ]).first();
+	const existingProbe = await database('gp_probes')
+		.where({ uuid: probe.uuid })
+		.orWhere({ ip: probe.ip })
+		.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ probe.ip ])
+		.first<AdoptedProbe>();
 
 	let id: string;
 
 	if (existingProbe) {
-		id = await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
+		id = await itemsService.updateOne(existingProbe.id, {
+			name: adoption.name,
+			userId: adoption.userId,
+			tags: '[]',
+			isCustomCity: false,
+			countryOfCustomCity: null,
+		}, { emitEvents: false });
+
+		await Promise.all([
+			sendNotificationProbeAdopted({ ...adoption, id }, context),
+			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe, context),
+		]);
 	} else {
 		id = await itemsService.createOne(adoption, { emitEvents: false });
+		await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	}
 
 	return [ id, name ] as const;
@@ -59,18 +71,18 @@ const findAdoptedProbes = async (filter: Record<string, unknown>, { services, ge
 
 	const probes = await itemsService.readByQuery({
 		filter,
-	}) as AdoptedProbe[];
+	}) as ProbeToAdopt[];
 
 	return probes;
 };
 
-const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
+const getDefaultProbeName = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
 	let name = null;
 	const namePrefix = probe.country && probe.city ? `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}` : null;
 
 	if (namePrefix) {
 		const currentProbes = await findAdoptedProbes({
-			userId: req.accountability.user,
+			userId,
 			country: probe.country,
 			city: probe.city,
 		}, context);
@@ -90,4 +102,32 @@ export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExt
 	`, [ ip, `"${ip}"` ]).first();
 
 	return probe;
+};
+
+const sendNotificationProbeAdopted = async (adoption: AdoptedProbe, { services, database, getSchema }: EndpointExtensionContext) => {
+	const { NotificationsService } = services;
+	const notificationsService = new NotificationsService({
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	await notificationsService.createOne({
+		recipient: adoption.userId,
+		subject: 'New probe adopted',
+		message: `A new probe [**${adoption.name}**](/probes/${adoption.id}) with IP address **${adoption.ip}** has been assigned to your account.`,
+	});
+};
+
+const sendNotificationProbeUnassigned = async (existingProbe: AdoptedProbe, { services, database, getSchema }: EndpointExtensionContext) => {
+	const { NotificationsService } = services;
+	const notificationsService = new NotificationsService({
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	await notificationsService.createOne({
+		recipient: existingProbe.userId,
+		subject: 'Probe unassigned',
+		message: `Your probe ${existingProbe.name ? `**${existingProbe.name}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
+	});
 };

@@ -2,7 +2,7 @@
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
-import hook from '../src/index.js';
+import hook, { type User } from '../src/index.js';
 
 type FilterCallback = (payload: any) => Promise<void>;
 type ActionCallback = (meta: any) => Promise<void>;
@@ -110,33 +110,33 @@ describe('Sign-up hook', () => {
 		});
 	});
 
-	it('filter should fulfill first_name, last_name, github_username', async () => {
+	it('filter should fulfill first_name, last_name, github_username, adoption_token', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
 		hook(events, context);
 
-		const payload = {
+		const payload: Partial<User> = {
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: 'Dmitriy Akulov',
 			last_name: 'jimaek',
-			github_username: null,
-			github_organizations: null,
+			github_username: undefined,
 		};
 
 		await callbacks.filter['users.create']?.(payload);
 
-		expect(payload).to.deep.equal({
+		expect(payload).to.deep.include({
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: 'Dmitriy',
 			last_name: 'Akulov',
 			github_username: 'jimaek',
-			github_organizations: null,
 			email_notifications: false,
 		});
+
+		expect(payload.adoption_token!.length).to.equal(32);
 	});
 
 	it('filter should use gh login as first_name if name is not provided', async () => {
@@ -148,7 +148,7 @@ describe('Sign-up hook', () => {
 
 		const payload = {
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: null,
 			last_name: 'jimaek',
 			github_username: null,
@@ -157,9 +157,9 @@ describe('Sign-up hook', () => {
 
 		await callbacks.filter['users.create']?.(payload);
 
-		expect(payload).to.deep.equal({
+		expect(payload).to.deep.include({
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: 'jimaek',
 			last_name: undefined,
 			github_username: 'jimaek',
@@ -185,7 +185,7 @@ describe('Sign-up hook', () => {
 
 		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: 'Dmitriy Akulov',
 			last_name: 'jimaek',
 			github_username: null,
@@ -197,7 +197,7 @@ describe('Sign-up hook', () => {
 		expect(creditsAdditionsService.updateByQuery.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.updateByQuery.args[0]).to.deep.equal([
-			{ filter: { github_id: 1834071, consumed: false } },
+			{ filter: { github_id: '1834071', consumed: false } },
 			{ consumed: true },
 		]);
 
@@ -217,7 +217,7 @@ describe('Sign-up hook', () => {
 
 		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: 'Dmitriy Akulov',
 			last_name: 'jimaek',
 			github_username: null,
@@ -233,14 +233,14 @@ describe('Sign-up hook', () => {
 			.reply(200, [{ login: 'jsdelivr' }]);
 
 		sponsorsService.readByQuery.resolves([{
-			github_id: 1834071,
+			github_id: '1834071',
 		}]);
 
 		hook(events, context);
 
 		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
 			provider: 'github',
-			external_identifier: 1834071,
+			external_identifier: '1834071',
 			first_name: 'Dmitriy Akulov',
 			last_name: 'jimaek',
 			github_username: null,

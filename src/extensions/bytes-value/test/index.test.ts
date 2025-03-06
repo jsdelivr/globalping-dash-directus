@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import type { Router } from 'express';
 import * as sinon from 'sinon';
+import { WrongValueError } from '../../lib/src/bytes.js';
 import endpoint from '../src/generator/index.js';
-import { WrongValueError } from '../src/utils/bytes.js';
 import hook from '../src/validator/index.js';
 
 type FilterCallback = (payload: any) => Promise<void>;

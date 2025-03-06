@@ -20,6 +20,7 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 		github_organizations: JSON.stringify([ `Scrubs${suffix}` ]),
 		github_username: `johndoe${suffix}`,
 		user_type: 'sponsor',
+		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
 	};
 };
 

@@ -27,6 +27,7 @@ COPY src/extensions/interfaces/github-username/package.json src/extensions/inter
 COPY src/extensions/interfaces/gp-tags/package.json src/extensions/interfaces/gp-tags/
 COPY src/extensions/interfaces/secrets/package.json src/extensions/interfaces/secrets/
 COPY src/extensions/interfaces/token/package.json src/extensions/interfaces/token/
+COPY src/extensions/interfaces/visible-token/package.json src/extensions/interfaces/visible-token/
 COPY src/extensions/lib/package.json src/extensions/lib/
 COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/probes-adapter/
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
@@ -82,6 +83,8 @@ COPY --from=builder /builder/src/extensions/interfaces/secrets/dist/* /directus/
 COPY --from=builder /builder/src/extensions/interfaces/secrets/package.json /directus/extensions/secrets/
 COPY --from=builder /builder/src/extensions/interfaces/token/dist/* /directus/extensions/token/dist/
 COPY --from=builder /builder/src/extensions/interfaces/token/package.json /directus/extensions/token/
+COPY --from=builder /builder/src/extensions/interfaces/visible-token/dist/* /directus/extensions/visible-token/dist/
+COPY --from=builder /builder/src/extensions/interfaces/visible-token/package.json /directus/extensions/visible-token/
 COPY --from=builder /builder/src/extensions/modules/probes-adapter/dist/* /directus/extensions/probes-adapter/dist/
 COPY --from=builder /builder/src/extensions/modules/probes-adapter/package.json /directus/extensions/probes-adapter/
 COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/dist/* /directus/extensions/adopted-probes-credits-cron-handler/dist/
