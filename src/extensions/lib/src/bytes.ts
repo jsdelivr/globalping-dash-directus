@@ -12,7 +12,7 @@ export const WrongValueError = createError('INVALID_PAYLOAD_ERROR', 'Bytestring 
 
 const bytesMap = new TTLCache<string, Buffer>({ ttl: 30 * 60 * 1000 });
 
-export const generateBytes = async (bytesAmount: number) => {
+export const generateBytes = async (bytesAmount = 20) => {
 	const bytes = await getRandomBytes(bytesAmount);
 	const byteString = base32.encode(bytes).toLowerCase();
 	bytesMap.set(byteString, bytes);

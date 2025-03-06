@@ -10,6 +10,9 @@
 	},
 	"keywords": [],
 	"dependencies": {
+		"@directus/errors": "^0.3.3",
+		"@isaacs/ttlcache": "^1.4.1",
+		"@scure/base": "^1.1.7",
 		"any-ascii": "^0.3.2"
 	},
 	"devDependencies": {

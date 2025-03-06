@@ -32,6 +32,7 @@ export const seed = async (knex) => {
 			github_organizations: JSON.stringify([ 'MaxCDN', 'appfleetcloud', 'jsdelivr', 'nice-registry', 'polyfills' ]),
 			github_username: 'jimaek',
 			user_type: 'member',
+			adoption_token: 'HwuHxzK9ewaFjhWcFR0m3zPTuqyITyql',
 		}]);
 
 		console.log('Mock user created. email: user@example.com password: user');

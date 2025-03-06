@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request, Response } from 'express';
 import Joi, { type ValidationError } from 'joi';
-import { generateBytes } from '../utils/bytes.js';
+import { generateBytes } from '../../../lib/src/bytes.js';
 
 type DirectusRequest = Request & {
 	accountability?: {
@@ -30,7 +30,7 @@ export default defineEndpoint((router) => {
 			return next(new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))());
 		}
 
-		const bytesAmount = req.body.size === 'lg' ? 30 : 20;
+		const bytesAmount = req.body.size === 'lg' ? 30 : undefined;
 		const byteString = await generateBytes(bytesAmount);
 		res.send({
 			data: byteString,

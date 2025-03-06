@@ -37,6 +37,9 @@
 		"typescript": "^5.5.4"
 	},
 	"dependencies": {
+		"@directus/errors": "^0.3.3",
+		"@isaacs/ttlcache": "^1.4.1",
+		"@scure/base": "^1.1.7",
 		"axios": "^1.7.3",
 		"nock": "^13.5.4"
 	}
