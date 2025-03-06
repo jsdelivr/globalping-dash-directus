@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { deleteBytes, hashBytes, isHashed } from '../utils/bytes.js';
+import { deleteBytes, hashBytes, isHashed } from '../../../lib/src/bytes.js';
 
 type Token = {
     id: number;
