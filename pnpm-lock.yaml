@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@scure/base':
+        specifier: ^1.1.7
+        version: 1.1.7
       config:
         specifier: ^3.3.12
         version: 3.3.12
