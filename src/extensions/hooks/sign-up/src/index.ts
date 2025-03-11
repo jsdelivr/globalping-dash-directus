@@ -3,7 +3,7 @@ import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
 import { generateBytes } from '../../../lib/src/bytes.js';
 
-type User = {
+export type User = {
 	provider: string;
 	external_identifier: string;
 	email?: string | undefined;
