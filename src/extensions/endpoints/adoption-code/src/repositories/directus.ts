@@ -19,7 +19,6 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
 		status: probe.status,
 		city: probe.city,
-		systemTags: probe.systemTags,
 		state: probe.state,
 		country: probe.country,
 		latitude: probe.latitude,
