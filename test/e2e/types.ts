@@ -11,4 +11,5 @@ export type User = {
 	github_organizations: string;
 	github_username: string;
 	user_type: string;
+	adoption_token: string;
 };
