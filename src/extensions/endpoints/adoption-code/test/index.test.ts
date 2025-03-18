@@ -405,25 +405,9 @@ describe('adoption code endpoints', () => {
 			expect(updateOne.callCount).to.equal(1);
 			expect(updateOne.args[0]![0]).to.equal('existing-unassigned-probe-id');
 
-			expect(updateOne.args[0]![1]).to.deep.include({
-				ip: '1.1.1.1',
+			expect(updateOne.args[0]![1]).to.deep.equal({
 				name: 'probe-fr-paris-01',
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: 'v1',
-				hardwareDeviceFirmware: 'v2.0',
-				status: 'ready',
-				city: 'Paris',
-				state: null,
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				isIPv4Supported: true,
-				isIPv6Supported: false,
 			});
 		});
 

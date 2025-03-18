@@ -42,7 +42,10 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 	let id: string;
 
 	if (existingProbe) {
-		id = await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
+		id = await itemsService.updateOne(existingProbe.id, {
+			name: adoption.name,
+			userId: adoption.userId,
+		}, { emitEvents: false });
 	} else {
 		id = await itemsService.createOne(adoption, { emitEvents: false });
 	}
