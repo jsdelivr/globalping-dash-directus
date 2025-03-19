@@ -79,7 +79,7 @@ describe('adoption code endpoints', () => {
 					ip: '1.1.1.1',
 				},
 			};
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
@@ -115,7 +115,7 @@ describe('adoption code endpoints', () => {
 					ip: '2a04:4e42:0200:0000:0000:0000:0000:0485',
 				},
 			};
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
@@ -151,7 +151,7 @@ describe('adoption code endpoints', () => {
 					ip: '2a04:4e42:200::485',
 				},
 			};
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
@@ -265,7 +265,7 @@ describe('adoption code endpoints', () => {
 		it('should accept valid verification code', async () => {
 			endpoint(router, endpointContext);
 			let code = '';
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				code = body.code;
@@ -360,7 +360,7 @@ describe('adoption code endpoints', () => {
 		it('should adopt already synced non-adopted probe', async () => {
 			endpoint(router, endpointContext);
 			let code = '';
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
 			}).reply(200, {
@@ -430,7 +430,7 @@ describe('adoption code endpoints', () => {
 		it('should accept valid verification code even if request to GP api failed', async () => {
 			endpoint(router, endpointContext);
 			let code = '';
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				code = body.code;
@@ -510,7 +510,7 @@ describe('adoption code endpoints', () => {
 		it('should accept valid verification code with spaces', async () => {
 			endpoint(router, endpointContext);
 			let code = '';
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				code = body.code;
@@ -605,7 +605,7 @@ describe('adoption code endpoints', () => {
 		it('should reject non authorized requests', async () => {
 			endpoint(router, endpointContext);
 			let code = '';
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				code = body.code;
@@ -650,7 +650,7 @@ describe('adoption code endpoints', () => {
 		it('should reject without code', async () => {
 			endpoint(router, endpointContext);
 
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
@@ -695,7 +695,7 @@ describe('adoption code endpoints', () => {
 		it('should reject with wrong code', async () => {
 			endpoint(router, endpointContext);
 
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
@@ -743,7 +743,7 @@ describe('adoption code endpoints', () => {
 			endpoint(router, endpointContext);
 			let code = '';
 
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
 			}).reply(200, {
@@ -794,7 +794,7 @@ describe('adoption code endpoints', () => {
 			endpoint(router, { ...endpointContext, env: { ...endpointContext.env, TARGET_HW_DEVICE_FIRMWARE: 'v2.0' } });
 			let code = '';
 
-			nock('https://api.globalping.io').post('/v1/adoption-code?systemkey=system', (body) => {
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
 			}).reply(200, {

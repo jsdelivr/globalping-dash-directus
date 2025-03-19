@@ -158,10 +158,13 @@ export default defineEndpoint((router, context) => {
 				return;
 			}
 
-			const { data } = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code?systemkey=${env.GP_SYSTEM_KEY}`, {
+			const { data } = await axios.post<SendCodeResponse>(`${env.GLOBALPING_URL}/adoption-code`, {
 				ip,
 				code,
 			}, {
+				headers: {
+					Authorization: `Bearer ${env.GP_SYSTEM_KEY}`,
+				},
 				timeout: 5000,
 			});
 
