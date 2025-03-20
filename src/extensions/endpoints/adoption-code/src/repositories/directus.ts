@@ -1,13 +1,14 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import type { AdoptedProbe, Request } from '../index.js';
+import type { AdoptedProbe } from '../index.js';
 
-export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
-	const { services, database } = context;
+export const createAdoptedProbe = async (userId: string, probe: AdoptedProbe, context: EndpointExtensionContext) => {
+	const { services, database, getSchema } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
-		schema: req.schema,
+		schema: await getSchema({ database }),
+		knex: database,
 	});
 
-	const name = await getDefaultProbeName(req, probe, context);
+	const name = await getDefaultProbeName(userId, probe, context);
 
 	const adoption = {
 		ip: probe.ip,
@@ -17,6 +18,7 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		nodeVersion: probe.nodeVersion,
 		hardwareDevice: probe.hardwareDevice,
 		hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
+		systemTags: probe.systemTags,
 		status: probe.status,
 		city: probe.city,
 		state: probe.state,
@@ -25,24 +27,28 @@ export const createAdoptedProbe = async (req: Request, probe: AdoptedProbe, cont
 		longitude: probe.longitude,
 		asn: probe.asn,
 		network: probe.network,
-		userId: req.accountability.user,
+		userId,
 		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
 	};
 
-	const existingProbe = await database('gp_probes').whereRaw(`
-		(
-			ip = ?
-			OR JSON_CONTAINS(altIps, ?)
-		)
-		AND userId IS NULL
-	`, [ probe.ip, `"${probe.ip}"` ]).first();
+	const existingProbe = await database('gp_probes')
+		.where({ uuid: probe.uuid })
+		.orWhere({ ip: probe.ip })
+		.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ probe.ip ])
+		.first();
 
 	let id: string;
 
 	if (existingProbe) {
-		id = await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
+		id = await itemsService.updateOne(existingProbe.id, {
+			name: adoption.name,
+			userId: adoption.userId,
+			tags: '[]',
+			isCustomCity: false,
+			countryOfCustomCity: null,
+		}, { emitEvents: false });
 	} else {
 		id = await itemsService.createOne(adoption, { emitEvents: false });
 	}
@@ -63,13 +69,13 @@ const findAdoptedProbes = async (filter: Record<string, unknown>, { services, ge
 	return probes;
 };
 
-const getDefaultProbeName = async (req: Request, probe: AdoptedProbe, context: EndpointExtensionContext) => {
+const getDefaultProbeName = async (userId: string, probe: AdoptedProbe, context: EndpointExtensionContext) => {
 	let name = null;
 	const namePrefix = probe.country && probe.city ? `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}` : null;
 
 	if (namePrefix) {
 		const currentProbes = await findAdoptedProbes({
-			userId: req.accountability.user,
+			userId,
 			country: probe.country,
 			city: probe.city,
 		}, context);
