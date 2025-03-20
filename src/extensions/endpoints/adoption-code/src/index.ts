@@ -17,7 +17,7 @@ export type Request = ExpressRequest & {
 	schema: object,
 };
 
-export type AdoptedProbe = {
+export type ProbeToAdopt = {
 	ip: string;
 	name: string | null;
 	uuid: string | null;
@@ -38,6 +38,12 @@ export type AdoptedProbe = {
 	isIPv6Supported: boolean;
 };
 
+export type AdoptedProbe = ProbeToAdopt & {
+	id: string;
+	userId: string;
+	lastSyncDate: Date;
+};
+
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
 
@@ -46,7 +52,7 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 30 * 60,
 });
 
-const probesToAdopt = new TTLCache<string, { code: string, probe: AdoptedProbe }>({ ttl: 30 * 60 * 1000 });
+const probesToAdopt = new TTLCache<string, { code: string, probe: ProbeToAdopt }>({ ttl: 30 * 60 * 1000 });
 
 const generateRandomCode = () => {
 	const randomNumber = Math.floor(Math.random() * 1000000);
@@ -146,7 +152,7 @@ export default defineEndpoint((router, context) => {
 				return;
 			}
 
-			const { data: probe } = await axios.post<AdoptedProbe>(`${env.GLOBALPING_URL}/adoption-code`, {
+			const { data: probe } = await axios.post<ProbeToAdopt>(`${env.GLOBALPING_URL}/adoption-code`, {
 				ip,
 				code,
 			}, {
@@ -257,7 +263,7 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
 			}
 
-			const probe = request.body.probe as AdoptedProbe;
+			const probe = request.body.probe as ProbeToAdopt;
 			const user = request.body.user as { id: string };
 
 			const [ id, name ] = await createAdoptedProbe(user.id, probe, context);
@@ -266,9 +272,9 @@ export default defineEndpoint((router, context) => {
 				id,
 				ip: probe.ip,
 				name,
-				hardwareDevice: probe.hardwareDevice || null,
-				hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
-				nodeVersion: probe.nodeVersion || null,
+				hardwareDevice: probe.hardwareDevice,
+				hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
+				nodeVersion: probe.nodeVersion,
 			}, user.id, context);
 
 			res.sendStatus(200);
