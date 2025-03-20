@@ -151,7 +151,7 @@ export default defineEndpoint((router, context) => {
 				code,
 			}, {
 				headers: {
-					Authorization: `Bearer ${env.GP_SYSTEM_KEY}`,
+					'X-Api-Key': env.GP_SYSTEM_KEY,
 				},
 				timeout: 5000,
 			});
