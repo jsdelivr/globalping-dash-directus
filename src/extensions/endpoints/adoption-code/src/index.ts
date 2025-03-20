@@ -252,20 +252,34 @@ export default defineEndpoint((router, context) => {
 	});
 
 	router.post('/adopt-by-token', async (request, res) => {
-		const probe = request.body.probe as AdoptedProbe;
-		const user = request.body.user as { id: string };
+		try {
+			if (request.headers['x-api-key'] !== env.GP_SYSTEM_KEY) {
+				throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
+			}
 
-		const [ id, name ] = await createAdoptedProbe(user.id, probe, context);
+			const probe = request.body.probe as AdoptedProbe;
+			const user = request.body.user as { id: string };
 
-		await checkFirmwareVersions({
-			id,
-			ip: probe.ip,
-			name,
-			hardwareDevice: probe.hardwareDevice || null,
-			hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
-			nodeVersion: probe.nodeVersion || null,
-		}, user.id, context);
+			const [ id, name ] = await createAdoptedProbe(user.id, probe, context);
 
-		res.sendStatus(200);
+			await checkFirmwareVersions({
+				id,
+				ip: probe.ip,
+				name,
+				hardwareDevice: probe.hardwareDevice || null,
+				hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
+				nodeVersion: probe.nodeVersion || null,
+			}, user.id, context);
+
+			res.sendStatus(200);
+		} catch (error: unknown) {
+			logger.error(error);
+
+			if (isDirectusError(error)) {
+				res.status(error.status).send(error.message);
+			} else {
+				res.status(500).send('Internal Server Error');
+			}
+		}
 	});
 });
