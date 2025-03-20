@@ -7,14 +7,20 @@ import endpoint from '../src/index.js';
 
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub().resolves('generatedId');
-	const updateOne = sinon.stub();
+	const updateOne = sinon.stub().resolves('generatedId');
 	const readByQuery = sinon.stub().resolves([]);
 	const notificationCreateOne = sinon.stub();
 	const sql = {
+		where: sinon.stub(),
 		whereRaw: sinon.stub(),
+		orWhere: sinon.stub(),
+		orWhereRaw: sinon.stub(),
 		first: sinon.stub(),
 	};
+	sql.where.returns(sql);
 	sql.whereRaw.returns(sql);
+	sql.orWhere.returns(sql);
+	sql.orWhereRaw.returns(sql);
 	const endpointContext = {
 		logger: {
 			error: console.error,
@@ -36,9 +42,10 @@ describe('adoption code endpoints', () => {
 	} as unknown as EndpointExtensionContext;
 	const resSend = sinon.stub();
 	const resStatus = sinon.stub().returns({ send: resSend });
-	const res = { status: resStatus, send: resSend };
+	const resSendStatus = sinon.stub();
+	const res = { status: resStatus, send: resSend, sendStatus: resSendStatus };
 
-	const routes: Record<string, (request: object, response: typeof res) => void> = {};
+	const routes: Record<string, (request: object, response: typeof res) => Promise<void>> = {};
 	const request = (route: string, request: object, response: typeof res) => {
 		const handler = routes[route];
 
@@ -49,7 +56,7 @@ describe('adoption code endpoints', () => {
 		return handler(request, response);
 	};
 	const router = {
-		post: (route: string, handler: (request: object, response: typeof res) => void) => {
+		post: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
 			routes[route] = handler;
 		},
 	} as unknown as Router;
@@ -252,6 +259,31 @@ describe('adoption code endpoints', () => {
 	});
 
 	describe('/adoption-code/verify-code endpoint', () => {
+		const defaultAdoptionCodeResponse = {
+			userId: null,
+			ip: '1.1.1.1',
+			name: null,
+			altIps: [],
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			tags: [],
+			systemTags: [ 'datacenter-network' ],
+			status: 'ready',
+			isIPv4Supported: true,
+			isIPv6Supported: false,
+			version: '0.26.0',
+			nodeVersion: '18.17.0',
+			hardwareDevice: 'v1',
+			hardwareDeviceFirmware: 'v2.0',
+			city: 'Paris',
+			state: null,
+			country: 'FR',
+			latitude: 48.85,
+			longitude: 2.35,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
+			isCustomCity: false,
+			countryOfCustomCity: null,
+		};
 		let sandbox: sinon.SinonSandbox;
 
 		beforeEach(() => {
@@ -270,22 +302,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: 'v1',
-				hardwareDeviceFirmware: 'v2.0',
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-				isIPv4Supported: true,
-				isIPv6Supported: false,
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -312,12 +329,13 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[1]).to.deep.equal([
 				{
 					id: 'generatedId',
-					ip: '1.1.1.1',
 					name: 'probe-fr-paris-01',
+					ip: '1.1.1.1',
 					version: '0.26.0',
 					nodeVersion: '18.17.0',
 					hardwareDevice: 'v1',
 					hardwareDeviceFirmware: 'v2.0',
+					systemTags: [ 'datacenter-network' ],
 					status: 'ready',
 					city: 'Paris',
 					state: null,
@@ -336,12 +354,14 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
+				altIps: [],
 				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
+				systemTags: [ 'datacenter-network' ],
 				status: 'ready',
 				city: 'Paris',
 				state: null,
@@ -363,22 +383,7 @@ describe('adoption code endpoints', () => {
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: 'v1',
-				hardwareDeviceFirmware: 'v2.0',
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-				isIPv4Supported: true,
-				isIPv6Supported: false,
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -405,25 +410,12 @@ describe('adoption code endpoints', () => {
 			expect(updateOne.callCount).to.equal(1);
 			expect(updateOne.args[0]![0]).to.equal('existing-unassigned-probe-id');
 
-			expect(updateOne.args[0]![1]).to.deep.include({
-				ip: '1.1.1.1',
+			expect(updateOne.args[0]![1]).to.deep.equal({
 				name: 'probe-fr-paris-01',
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: 'v1',
-				hardwareDeviceFirmware: 'v2.0',
-				status: 'ready',
-				city: 'Paris',
-				state: null,
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				isIPv4Supported: true,
-				isIPv6Supported: false,
+				tags: '[]',
+				isCustomCity: false,
+				countryOfCustomCity: null,
 			});
 		});
 
@@ -462,12 +454,13 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[1]).to.deep.equal([
 				{
 					id: 'generatedId',
-					ip: '1.1.1.1',
 					name: null,
+					ip: '1.1.1.1',
 					version: null,
 					nodeVersion: null,
 					hardwareDevice: null,
 					hardwareDeviceFirmware: null,
+					systemTags: [],
 					status: 'offline',
 					city: null,
 					state: null,
@@ -486,12 +479,14 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
+				altIps: [],
 				name: null,
 				uuid: null,
 				version: null,
 				nodeVersion: null,
 				hardwareDevice: null,
 				hardwareDeviceFirmware: null,
+				systemTags: [],
 				status: 'offline',
 				city: null,
 				state: null,
@@ -515,22 +510,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-				isIPv4Supported: true,
-				isIPv6Supported: false,
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -557,12 +537,13 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[1]).to.deep.equal([
 				{
 					id: 'generatedId',
-					ip: '1.1.1.1',
 					name: 'probe-fr-paris-01',
+					ip: '1.1.1.1',
 					version: '0.26.0',
 					nodeVersion: '18.17.0',
-					hardwareDevice: null,
-					hardwareDeviceFirmware: null,
+					hardwareDevice: 'v1',
+					hardwareDeviceFirmware: 'v2.0',
+					systemTags: [ 'datacenter-network' ],
 					status: 'ready',
 					city: 'Paris',
 					state: null,
@@ -581,12 +562,14 @@ describe('adoption code endpoints', () => {
 
 			expect(createOne.args[0]?.[0]).to.deep.equal({
 				ip: '1.1.1.1',
+				altIps: [],
 				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
 				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
+				systemTags: [ 'datacenter-network' ],
 				status: 'ready',
 				city: 'Paris',
 				state: null,
@@ -610,20 +593,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -654,20 +624,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -699,20 +656,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -746,20 +690,7 @@ describe('adoption code endpoints', () => {
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: 'v1',
-				hardwareDeviceFirmware: 'v2.0',
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', {
 				accountability: {
@@ -798,18 +729,9 @@ describe('adoption code endpoints', () => {
 				code = body.code;
 				return true;
 			}).reply(200, {
+				...defaultAdoptionCodeResponse,
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v1.9',
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
 			});
 
 			await request('/send-code', {
@@ -840,11 +762,150 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[1]?.[0].name).to.deep.equal('probe-fr-paris-02');
 			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
 
+			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({
+				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				subject: 'New probe adopted',
+				message: 'New probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** was successfully assigned to your account.',
+			});
+		});
+	});
+
+	describe('/adoption-code/adopt-by-token endpoint', () => {
+		const adoptionTokenRequest = {
+			probe: {
+				userId: null,
+				ip: '1.1.1.1',
+				name: null,
+				altIps: [],
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				tags: [],
+				systemTags: [ 'datacenter-network' ],
+				status: 'ready',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
+				city: 'Paris',
+				state: null,
+				country: 'FR',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+				isCustomCity: false,
+				countryOfCustomCity: null,
+			},
+			user: { id: 'f3115997-31d1-4cf5-8b41-0617a99c5706' },
+		};
+
+		it('should adopt unassigned probe', async () => {
+			endpoint(router, endpointContext);
+
+			await request('/adopt-by-token', {
+				headers: {
+					'x-api-key': 'system',
+				},
+				body: adoptionTokenRequest,
+			}, res);
+
+
+			expect(createOne.callCount).to.equal(1);
+
+			expect(createOne.args[0]?.[0]).to.deep.include({
+				ip: '1.1.1.1',
+				altIps: [],
+				name: 'probe-fr-paris-01',
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
+				systemTags: [ 'datacenter-network' ],
+				status: 'ready',
+				city: 'Paris',
+				state: null,
+				country: 'FR',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
+			});
+
+
+			expect(notificationCreateOne.callCount).to.equal(1);
+
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				item: 'generatedId',
-				collection: 'gp_probes',
+				subject: 'New probe adopted',
+				message: 'New probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** was successfully assigned to your account.',
 			});
+		});
+
+		it('should adopt assigned probe', async () => {
+			endpoint(router, endpointContext);
+
+			sql.first.resolves({
+				id: 'assignedProbeId',
+				name: 'other-user-probe-01',
+				ip: '1.1.1.1',
+				userId: 'otherUserId',
+			});
+
+			await request('/adopt-by-token', {
+				headers: {
+					'x-api-key': 'system',
+				},
+				body: adoptionTokenRequest,
+			}, res);
+
+
+			expect(createOne.callCount).to.equal(0);
+			expect(updateOne.callCount).to.equal(1);
+
+			expect(updateOne.args[0]).to.deep.equal([
+				'assignedProbeId',
+				{
+					name: 'probe-fr-paris-01',
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					tags: '[]',
+					isCustomCity: false,
+					countryOfCustomCity: null,
+				},
+				{ emitEvents: false },
+			]);
+
+
+			expect(notificationCreateOne.callCount).to.equal(2);
+
+			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
+				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				subject: 'New probe adopted',
+				message: 'New probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** was successfully assigned to your account.',
+			});
+
+			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
+				recipient: 'otherUserId',
+				subject: 'Probe was unassigned',
+				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** was assigned to another account. That happened because probe specified adoption token of that account.',
+			});
+		});
+
+		it('should reject without system token', async () => {
+			endpoint(router, endpointContext);
+			const result = await request('/adopt-by-token', {
+				headers: {},
+				body: adoptionTokenRequest,
+			}, res);
+
+			console.log(result);
+			expect(createOne.callCount).to.equal(0);
+			expect(notificationCreateOne.callCount).to.equal(0);
+			expect(resStatus.args[0]?.[0]).equal(403);
 		});
 	});
 });

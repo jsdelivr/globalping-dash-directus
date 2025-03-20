@@ -12,6 +12,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	const adoption: Omit<AdoptedProbe, 'id'> = {
 		ip: probe.ip,
+		altIps: probe.altIps,
 		name,
 		uuid: probe.uuid,
 		version: probe.version,

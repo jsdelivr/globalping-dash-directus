@@ -19,6 +19,7 @@ export type Request = ExpressRequest & {
 
 export type ProbeToAdopt = {
 	ip: string;
+	altIps: string[];
 	name: string | null;
 	uuid: string | null;
 	version: string | null;
@@ -103,6 +104,7 @@ export default defineEndpoint((router, context) => {
 				code,
 				probe: {
 					ip,
+					altIps: [],
 					name: null,
 					uuid: null,
 					version: null,
@@ -128,6 +130,7 @@ export default defineEndpoint((router, context) => {
 					code: '111111',
 					probe: {
 						ip,
+						altIps: [],
 						name: null,
 						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
 						version: '0.28.0',
