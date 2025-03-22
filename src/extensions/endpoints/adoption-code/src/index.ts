@@ -177,7 +177,7 @@ export default defineEndpoint((router, context) => {
 			if (isDirectusError(error)) {
 				res.status(error.status).send(error.message);
 			} else if (axios.isAxiosError(error)) {
-				const message = error.response?.status === 422 ? 'No suitable probes found' : error.message;
+				const message = error.response?.status === 422 ? 'No matching probes found' : error.message;
 				res.status(400).send(message);
 			} else {
 				res.status(500).send('Internal Server Error');
