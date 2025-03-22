@@ -765,7 +765,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({
 				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				subject: 'New probe adopted',
-				message: 'New probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** was successfully assigned to your account.',
+				message: 'A new probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 	});
@@ -842,7 +842,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				subject: 'New probe adopted',
-				message: 'New probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** was successfully assigned to your account.',
+				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -885,13 +885,13 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				subject: 'New probe adopted',
-				message: 'New probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** was successfully assigned to your account.',
+				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
 				recipient: 'otherUserId',
-				subject: 'Probe was unassigned',
-				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** was assigned to another account. That happened because probe specified adoption token of that account.',
+				subject: 'Probe unassigned',
+				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user (it reported an adoption token of another user).',
 			});
 		});
 
