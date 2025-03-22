@@ -60,7 +60,7 @@ const addUserProbes = async (user: User) => {
 };
 
 const addProbeWithoutUser = async () => {
-	await sql('gp_probes').insert({
+	const probe = {
 		id: randomUUID(),
 		ip: '2.2.2.2',
 		uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
@@ -80,7 +80,9 @@ const addProbeWithoutUser = async () => {
 		userId: null,
 		version: '0.28.0',
 		hardwareDevice: null,
-	});
+	};
+	await sql('gp_probes').insert(probe);
+	return probe;
 };
 
 const addProbeWithUser = async (user2: User) => {
@@ -114,37 +116,67 @@ test('Probes page', async ({ page, user }) => {
 	await expect(page.locator('tr')).toHaveCount(3);
 });
 
-test('Probe adoption', async ({ page }) => {
-	addProbeWithoutUser();
+test('Software probe adoption (token)', async ({ page, user }) => {
+	const probe = await addProbeWithoutUser();
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
-	await page.getByLabel('Next step').click();
+	await page.getByRole('button', { name: 'Software probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
+	await sql('gp_probes').where({ id: probe.id }).update({ userId: user.id, name: 'probe-bf-ouagadougou-01' });
+	await page.getByRole('button', { name: 'Finish' }).click();
+	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+});
+
+test('Software probe adoption (code)', async ({ page }) => {
+	await addProbeWithoutUser();
+	await page.goto('/probes');
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await page.getByRole('button', { name: 'Software probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
+	await page.waitForTimeout(10000);
+	await page.getByLabel('Adopt the probe manually').click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
 	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
 	await page.getByLabel('Verify the code').click();
-	await page.getByLabel('Finish').click();
+	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
 });
 
-test('Probe adoption fail if probe is already adopted', async ({ page, user2 }) => {
-	addProbeWithUser(user2);
+test('Hardware probe adoption', async ({ page }) => {
+	await addProbeWithoutUser();
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
-	await page.getByLabel('Next step').click();
+	await page.getByRole('button', { name: 'Hardware probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await expect(page.getByText('The probe with this IP address is already adopted').first()).toBeVisible();
+	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByLabel('Verify the code').click();
+	await page.getByRole('button', { name: 'Finish' }).click();
+	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
 });
 
 test('Probe adoption of non-synced probe', async ({ page }) => {
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
-	await page.getByLabel('Next step').click();
+	await page.getByRole('button', { name: 'Hardware probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
 	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
 	await page.getByLabel('Verify the code').click();
-	await page.getByLabel('Finish').click();
+	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+});
+
+test('Probe adoption by code fails if probe is already adopted', async ({ page, user2 }) => {
+	await addProbeWithUser(user2);
+	await page.goto('/probes');
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await page.getByRole('button', { name: 'Hardware probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
+	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
+	await page.getByLabel('Send adoption code').click();
+	await expect(page.getByText('The probe with this IP address is already adopted').first()).toBeVisible();
 });
