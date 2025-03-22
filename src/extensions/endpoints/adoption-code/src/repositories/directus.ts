@@ -114,7 +114,7 @@ const sendNotificationProbeAdopted = async (adoption: AdoptedProbe, { services, 
 	await notificationsService.createOne({
 		recipient: adoption.userId,
 		subject: 'New probe adopted',
-		message: `New probe [**${adoption.name}**](/probes/${adoption.id}) with IP address **${adoption.ip}** was successfully assigned to your account.`,
+		message: `A new probe [**${adoption.name}**](/probes/${adoption.id}) with IP address **${adoption.ip}** has been assigned to your account.`,
 	});
 };
 
@@ -127,7 +127,7 @@ const sendNotificationProbeUnassigned = async (existingProbe: AdoptedProbe, { se
 
 	await notificationsService.createOne({
 		recipient: existingProbe.userId,
-		subject: 'Probe was unassigned',
-		message: `Your probe ${existingProbe.name ? `**${existingProbe.name}** ` : ''}with IP address **${existingProbe.ip}** was assigned to another account. That happened because probe specified adoption token of that account.`,
+		subject: 'Probe unassigned',
+		message: `Your probe ${existingProbe.name ? `**${existingProbe.name}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
 	});
 };
