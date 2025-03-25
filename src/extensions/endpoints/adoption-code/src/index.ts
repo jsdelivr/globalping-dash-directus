@@ -260,7 +260,7 @@ export default defineEndpoint((router, context) => {
 		}
 	});
 
-	router.post('/adopt-by-token', async (request, res) => {
+	router.put('/adopt-by-token', async (request, res) => {
 		try {
 			if (request.headers['x-api-key'] !== env.GP_SYSTEM_KEY) {
 				throw new (createError('FORBIDDEN', 'Invalid system token', 403))();

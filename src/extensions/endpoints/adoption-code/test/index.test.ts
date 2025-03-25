@@ -59,6 +59,9 @@ describe('adoption code endpoints', () => {
 		post: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
 			routes[route] = handler;
 		},
+		put: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
+			routes[route] = handler;
+		},
 	} as unknown as Router;
 
 	before(() => {
@@ -893,6 +896,29 @@ describe('adoption code endpoints', () => {
 				subject: 'Probe unassigned',
 				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user (it reported an adoption token of another user).',
 			});
+		});
+
+		it('should do nothing if already assigned to that user', async () => {
+			endpoint(router, endpointContext);
+
+			sql.first.resolves({
+				id: 'assignedProbeId',
+				name: 'other-user-probe-01',
+				ip: '1.1.1.1',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			});
+
+			await request('/adopt-by-token', {
+				headers: {
+					'x-api-key': 'system',
+				},
+				body: adoptionTokenRequest,
+			}, res);
+
+
+			expect(createOne.callCount).to.equal(0);
+			expect(updateOne.callCount).to.equal(0);
+			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
 		it('should reject without system token', async () => {

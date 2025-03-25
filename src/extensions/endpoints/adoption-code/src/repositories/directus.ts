@@ -42,6 +42,10 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	let id: string;
 
+	if (existingProbe && existingProbe.userId === adoption.userId) {
+		return [ existingProbe.id, existingProbe.name ] as const;
+	}
+
 	if (existingProbe) {
 		id = await itemsService.updateOne(existingProbe.id, {
 			name: adoption.name,
