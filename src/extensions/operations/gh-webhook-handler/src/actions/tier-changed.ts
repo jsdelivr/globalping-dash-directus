@@ -1,17 +1,11 @@
 import type { OperationContext } from '@directus/extensions';
-import { addCredits } from '../repositories/credits.js';
+import { addCredits } from '../../../../lib/src/add-credits.js';
 import { updateSponsor } from '../repositories/sponsors.js';
 import type { Data } from '../types.js';
 
-type TierChangedActionArgs = {
-	services: OperationContext['services'];
-	database: OperationContext['database'];
-	getSchema: OperationContext['getSchema'];
-	env: OperationContext['env'];
-	body: Data['$trigger']['body'];
-};
+export const tierChangedAction = async (body: Data['$trigger']['body'], context: OperationContext) => {
+	const { services, database, getSchema } = context;
 
-export const tierChangedAction = async ({ body, services, database, getSchema, env }: TierChangedActionArgs) => {
 	if (!body?.sponsorship?.sponsor) {
 		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor?.toString()}`);
 	}
@@ -34,7 +28,8 @@ export const tierChangedAction = async ({ body, services, database, getSchema, e
 		const creditsId = await addCredits({
 			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: tierDiff,
-		}, { services, database, getSchema, env });
+			comment: `One-time $${tierDiff} sponsorship.`,
+		}, context);
 		return `Sponsor with id: ${sponsorId} updated. Credits item with id: ${creditsId} created.`;
 	}
 
