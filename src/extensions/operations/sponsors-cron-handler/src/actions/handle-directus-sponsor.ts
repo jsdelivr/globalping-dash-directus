@@ -1,6 +1,7 @@
 
 import type { OperationContext } from '@directus/extensions';
-import { deleteDirectusSponsor, updateDirectusSponsor, addCredits } from '../repositories/directus.js';
+import { addCredits } from '../../../../lib/src/add-credits.js';
+import { deleteDirectusSponsor, updateDirectusSponsor } from '../repositories/directus.js';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
 const is30DaysAgo = (dateString: string) => {
@@ -17,45 +18,40 @@ type HandleSponsorData = {
 	directusSponsor: DirectusSponsor;
 	githubSponsors: GithubSponsor[];
 }
-type HandleSponsorContext = {
-		services: OperationContext['services'];
-		database: OperationContext['database'];
-		getSchema: OperationContext['getSchema'];
-		env: OperationContext['env'];
-}
 
-export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }: HandleSponsorData, { services, database, getSchema, env }: HandleSponsorContext) => {
+export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }: HandleSponsorData, context: OperationContext) => {
 	const id = directusSponsor.github_id;
 	const githubSponsor = githubSponsors.find(githubSponsor => githubSponsor.githubId === id);
 
 	if (!githubSponsor) {
-		await deleteDirectusSponsor(directusSponsor, { services, database, getSchema, env });
+		await deleteDirectusSponsor(directusSponsor, context);
 		return `Sponsor with github id: ${id} not found on github sponsors list. Sponsor deleted from directus.`;
 	}
 
 	if (!githubSponsor.isActive) {
-		await deleteDirectusSponsor(directusSponsor, { services, database, getSchema, env });
+		await deleteDirectusSponsor(directusSponsor, context);
 		return `Sponsor with github id: ${id} is not active on github sponsors list. Sponsor deleted from directus.`;
 	}
 
 	if (githubSponsor.isOneTimePayment) {
-		await deleteDirectusSponsor(directusSponsor, { services, database, getSchema, env });
+		await deleteDirectusSponsor(directusSponsor, context);
 		return `Sponsorship of user with github id: ${id} is one-time. Sponsor deleted from directus.`;
 	}
 
 	if (githubSponsor.monthlyAmount !== directusSponsor.monthly_amount) {
-		await updateDirectusSponsor(directusSponsor.id, { monthly_amount: githubSponsor.monthlyAmount }, { services, database, getSchema, env });
+		await updateDirectusSponsor(directusSponsor.id, { monthly_amount: githubSponsor.monthlyAmount }, context);
 	}
 
 	const shouldCreditsBeAdded = is30DaysAgo(directusSponsor.last_earning_date);
 
 	if (shouldCreditsBeAdded) {
-		await updateDirectusSponsor(directusSponsor.id, { last_earning_date: new Date().toISOString() }, { services, database, getSchema, env });
-		const creditsId = await addCredits({
+		await updateDirectusSponsor(directusSponsor.id, { last_earning_date: new Date().toISOString() }, context);
+		const { creditsId, githubId } = await addCredits({
 			github_id: githubSponsor.githubId,
 			amount: githubSponsor.monthlyAmount,
-		}, { services, database, getSchema, env });
-		return `Credits item with id: ${creditsId} for user with github id: ${id} created. Recurring sponsorship handled.`;
+			comment: `Recurring $${githubSponsor.monthlyAmount} sponsorship.`,
+		}, context);
+		return `Credits item with id: ${creditsId} for user with github id: ${githubId} created. Recurring sponsorship handled.`;
 	}
 
 	return null;

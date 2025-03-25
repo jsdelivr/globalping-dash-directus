@@ -1,6 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' assert { type: 'json' };
 
@@ -20,6 +21,7 @@ describe('GitHub webhook one-time handler', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		delete SOURCE_ID_TO_TARGET_ID[2];
 	});
 
 	it('should handle valid one-time sponsorship', async () => {
@@ -42,6 +44,35 @@ describe('GitHub webhook one-time handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([{
 			github_id: '2',
+			amount: 50000,
+			comment: 'One-time $5 sponsorship.',
+		}]);
+
+		expect(result).to.equal('Credits item with id: 1 created. One-time sponsorship handled.');
+	});
+
+	it('should redirect credits to another GitHub id if specified', async () => {
+		SOURCE_ID_TO_TARGET_ID[2] = '3';
+
+		const data = {
+			$trigger: {
+				headers: {
+					'x-hub-signature-256': 'sha256=005bb451b83a393675d01ae33e2f778c2c245b4093d46702ad15917717384c9b',
+				},
+				body: oneTimeSponsorshipCreated,
+			},
+		};
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(services.ItemsService.callCount).to.equal(1);
+
+		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('gp_credits_additions');
+
+		expect(createOne.callCount).to.equal(1);
+
+		expect(createOne.args[0]).to.deep.equal([{
+			github_id: '3',
 			amount: 50000,
 			comment: 'One-time $5 sponsorship.',
 		}]);

@@ -1,14 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
-type Context = {
-	services: OperationContext['services'];
-	database: OperationContext['database'];
-	getSchema: OperationContext['getSchema'];
-	env: OperationContext['env'];
-};
-
-export const getDirectusSponsors = async ({ services, database, getSchema }: Context): Promise<DirectusSponsor[]> => {
+export const getDirectusSponsors = async ({ services, database, getSchema }: OperationContext): Promise<DirectusSponsor[]> => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
@@ -20,7 +13,7 @@ export const getDirectusSponsors = async ({ services, database, getSchema }: Con
 	return result;
 };
 
-export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { services, database, getSchema }: Context) => {
+export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService, UsersService } = services;
 
 	const result = await database.transaction(async (trx) => {
@@ -54,7 +47,7 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 	return result;
 };
 
-export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSponsor>, { services, database, getSchema }: Context) => {
+export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSponsor>, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
@@ -66,7 +59,7 @@ export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSp
 	return result;
 };
 
-export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { services, database, getSchema }: Context) => {
+export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService, UsersService } = services;
 
 	const result = await database.transaction(async (trx) => {
@@ -91,26 +84,5 @@ export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { 
 		return result;
 	});
 
-	return result;
-};
-
-type AddCreditsData = {
-	github_id: string;
-	amount: number;
-}
-
-export const addCredits = async ({ github_id, amount }: AddCreditsData, { services, database, getSchema, env }: Context) => {
-	const { ItemsService } = services;
-
-	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
-		knex: database,
-	});
-
-	const result = await creditsAdditionsService.createOne({
-		github_id,
-		amount: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
-		comment: `Recurring $${amount} sponsorship.`,
-	});
 	return result;
 };
