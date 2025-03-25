@@ -8,10 +8,9 @@ import type { Data } from './types.js';
 type ValidateGithubSignatureArgs = {
 	headers: Data['$trigger']['headers'],
 	body: Data['$trigger']['body'],
-	env: OperationContext['env']
 };
 
-const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignatureArgs) => {
+const validateGithubSignature = ({ headers, body }: ValidateGithubSignatureArgs, { env }: OperationContext) => {
 	const GITHUB_WEBHOOK_SECRET = env.GITHUB_WEBHOOK_SECRET as string | undefined;
 	const githubSignature = headers['x-hub-signature-256'];
 
@@ -26,12 +25,16 @@ const validateGithubSignature = ({ headers, body, env }: ValidateGithubSignature
 	const hmac = crypto.createHmac('sha256', GITHUB_WEBHOOK_SECRET);
 	const computedSignature = 'sha256=' + hmac.update(JSON.stringify(body), 'utf-8').digest('hex');
 	const isGithubSignatureValid = crypto.timingSafeEqual(Buffer.from(githubSignature), Buffer.from(computedSignature));
-	return isGithubSignatureValid;
+
+	if (!isGithubSignatureValid) {
+		throw new Error('Signature is not valid');
+	}
 };
 
 export default defineOperationApi({
 	id: 'gh-webhook-handler',
-	handler: async (_operationData, { data, database, env, getSchema, services }) => {
+	handler: async (_operationData, context) => {
+		const { data } = context;
 		const { $trigger: { headers, body } } = data as {$trigger: Partial<Data['$trigger']>};
 
 		if (!headers) {
@@ -42,16 +45,12 @@ export default defineOperationApi({
 			throw new Error(`"body" field is ${body}`);
 		}
 
-		const isGithubSignatureValid = validateGithubSignature({ headers, body, env });
-
-		if (!isGithubSignatureValid) {
-			throw new Error('Signature is not valid');
-		}
+		validateGithubSignature({ headers, body }, context);
 
 		if (body.action === 'created') {
-			return createdAction({ body, services, database, getSchema, env });
+			return createdAction(body, context);
 		} else if (body.action === 'tier_changed') {
-			return tierChangedAction({ body, services, database, getSchema, env });
+			return tierChangedAction(body, context);
 		}
 
 		return `Handler for action: ${body.action} is not defined`;
