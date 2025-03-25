@@ -25,7 +25,10 @@ const validateGithubSignature = ({ headers, body }: ValidateGithubSignatureArgs,
 	const hmac = crypto.createHmac('sha256', GITHUB_WEBHOOK_SECRET);
 	const computedSignature = 'sha256=' + hmac.update(JSON.stringify(body), 'utf-8').digest('hex');
 	const isGithubSignatureValid = crypto.timingSafeEqual(Buffer.from(githubSignature), Buffer.from(computedSignature));
-	return isGithubSignatureValid;
+
+	if (!isGithubSignatureValid) {
+		throw new Error('Signature is not valid');
+	}
 };
 
 export default defineOperationApi({
@@ -42,11 +45,7 @@ export default defineOperationApi({
 			throw new Error(`"body" field is ${body}`);
 		}
 
-		const isGithubSignatureValid = validateGithubSignature({ headers, body }, context);
-
-		if (!isGithubSignatureValid) {
-			throw new Error('Signature is not valid');
-		}
+		validateGithubSignature({ headers, body }, context);
 
 		if (body.action === 'created') {
 			return createdAction(body, context);

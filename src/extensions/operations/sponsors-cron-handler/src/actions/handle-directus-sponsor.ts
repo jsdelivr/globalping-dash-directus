@@ -46,12 +46,12 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 
 	if (shouldCreditsBeAdded) {
 		await updateDirectusSponsor(directusSponsor.id, { last_earning_date: new Date().toISOString() }, context);
-		const creditsId = await addCredits({
+		const { creditsId, githubId } = await addCredits({
 			github_id: githubSponsor.githubId,
 			amount: githubSponsor.monthlyAmount,
 			comment: `Recurring $${githubSponsor.monthlyAmount} sponsorship.`,
 		}, context);
-		return `Credits item with id: ${creditsId} for user with github id: ${id} created. Recurring sponsorship handled.`;
+		return `Credits item with id: ${creditsId} for user with github id: ${githubId} created. Recurring sponsorship handled.`;
 	}
 
 	return null;

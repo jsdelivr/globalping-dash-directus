@@ -11,7 +11,7 @@ export const createdAction = async (body: Data['$trigger']['body'], context: Ope
 	}
 
 	if (body.sponsorship.tier.is_one_time) {
-		const creditsId = await addCredits({
+		const { creditsId } = await addCredits({
 			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: body.sponsorship.tier.monthly_price_in_dollars,
 			comment: `One-time $${body.sponsorship.tier.monthly_price_in_dollars} sponsorship.`,
@@ -25,7 +25,7 @@ export const createdAction = async (body: Data['$trigger']['body'], context: Ope
 		monthly_amount: body.sponsorship.tier.monthly_price_in_dollars,
 		last_earning_date: new Date().toISOString(),
 	}, { services, database, getSchema });
-	const creditsId = await addCredits({
+	const { creditsId } = await addCredits({
 		github_id: body.sponsorship.sponsor.id.toString(),
 		amount: body.sponsorship.tier.monthly_price_in_dollars,
 		comment: `One-time $${body.sponsorship.tier.monthly_price_in_dollars} sponsorship.`,

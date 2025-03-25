@@ -25,7 +25,7 @@ export const tierChangedAction = async (body: Data['$trigger']['body'], context:
 			github_id: body.sponsorship.sponsor.id.toString(),
 			monthly_amount: body.sponsorship.tier.monthly_price_in_dollars,
 		}, { services, database, getSchema });
-		const creditsId = await addCredits({
+		const { creditsId } = await addCredits({
 			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: tierDiff,
 			comment: `One-time $${tierDiff} sponsorship.`,

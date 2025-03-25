@@ -19,12 +19,13 @@ export const addCredits = async ({ github_id, amount, comment }: AddCreditsData,
 		knex: database,
 	});
 
-	const result = await creditsAdditionsService.createOne({
-		github_id: redirectGithubId(github_id),
+	const githubId = redirectGithubId(github_id);
+	const creditsId = await creditsAdditionsService.createOne({
+		github_id: githubId,
 		amount: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
 		comment,
 	});
-	return result;
+	return { creditsId, githubId };
 };
 
 export const redirectGithubId = (githubId: string) => {
