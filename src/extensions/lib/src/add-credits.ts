@@ -1,6 +1,6 @@
 import type { ApiExtensionContext } from '@directus/extensions';
 
-const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
+export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 	// For example:
 	// 6191378: '1834071',
 };
