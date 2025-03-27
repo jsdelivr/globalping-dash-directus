@@ -1,4 +1,5 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
+import _ from 'lodash';
 import type { AdoptedProbe, ProbeToAdopt } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
@@ -40,14 +41,14 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ probe.ip ])
 		.first<AdoptedProbe>();
 
-	let id: string;
-
+	// Probe already assigned to the user.
 	if (existingProbe && existingProbe.userId === adoption.userId) {
 		return [ existingProbe.id, existingProbe.name ] as const;
 	}
 
+	// Probe exists but not assigned to the user.
 	if (existingProbe) {
-		id = await itemsService.updateOne(existingProbe.id, {
+		const id = await itemsService.updateOne(existingProbe.id, {
 			name: adoption.name,
 			userId: adoption.userId,
 			tags: '[]',
@@ -59,11 +60,28 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 			sendNotificationProbeAdopted({ ...adoption, id }, context),
 			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe, context),
 		]);
-	} else {
-		id = await itemsService.createOne(adoption, { emitEvents: false });
-		await sendNotificationProbeAdopted({ ...adoption, id }, context);
+
+		return [ id, name ] as const;
 	}
 
+	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
+	const probeByAsn = await database('gp_probes')
+		.where({
+			userId: adoption.userId,
+			status: 'offline',
+			asn: adoption.asn,
+			city: adoption.city,
+		})
+		.first<AdoptedProbe>();
+
+	if (probeByAsn) {
+		const id = await itemsService.updateOne(probeByAsn.id, _.omit(adoption, 'name'), { emitEvents: false });
+		return [ id, name ] as const;
+	}
+
+	// Probe not exists.
+	const id = await itemsService.createOne(adoption, { emitEvents: false });
+	await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	return [ id, name ] as const;
 };
 
