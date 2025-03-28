@@ -26,14 +26,15 @@ COPY src/extensions/hooks/sign-up/package.json src/extensions/hooks/sign-up/
 COPY src/extensions/interfaces/github-username/package.json src/extensions/interfaces/github-username/
 COPY src/extensions/interfaces/gp-tags/package.json src/extensions/interfaces/gp-tags/
 COPY src/extensions/interfaces/secrets/package.json src/extensions/interfaces/secrets/
+COPY src/extensions/interfaces/tag-prefix-selector/package.json src/extensions/interfaces/tag-prefix-selector/
 COPY src/extensions/interfaces/token/package.json src/extensions/interfaces/token/
 COPY src/extensions/interfaces/visible-token/package.json src/extensions/interfaces/visible-token/
 COPY src/extensions/lib/package.json src/extensions/lib/
 COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/probes-adapter/
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
-COPY src/extensions/operations/probes-status-cron-handler/package.json src/extensions/operations/probes-status-cron-handler/
 COPY src/extensions/operations/check-outdated-firmware-cron-handler/package.json src/extensions/operations/check-outdated-firmware-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
+COPY src/extensions/operations/probes-status-cron-handler/package.json src/extensions/operations/probes-status-cron-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
 COPY src/extensions/operations/remove-expired-adoptions-cron-handler/package.json src/extensions/operations/remove-expired-adoptions-cron-handler/
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
@@ -81,6 +82,8 @@ COPY --from=builder /builder/src/extensions/interfaces/gp-tags/dist/* /directus/
 COPY --from=builder /builder/src/extensions/interfaces/gp-tags/package.json /directus/extensions/gp-tags/
 COPY --from=builder /builder/src/extensions/interfaces/secrets/dist/* /directus/extensions/secrets/dist/
 COPY --from=builder /builder/src/extensions/interfaces/secrets/package.json /directus/extensions/secrets/
+COPY --from=builder /builder/src/extensions/interfaces/tag-prefix-selector/dist/* /directus/extensions/tag-prefix-selector/dist/
+COPY --from=builder /builder/src/extensions/interfaces/tag-prefix-selector/package.json /directus/extensions/tag-prefix-selector/
 COPY --from=builder /builder/src/extensions/interfaces/token/dist/* /directus/extensions/token/dist/
 COPY --from=builder /builder/src/extensions/interfaces/token/package.json /directus/extensions/token/
 COPY --from=builder /builder/src/extensions/interfaces/visible-token/dist/* /directus/extensions/visible-token/dist/
@@ -89,12 +92,12 @@ COPY --from=builder /builder/src/extensions/modules/probes-adapter/dist/* /direc
 COPY --from=builder /builder/src/extensions/modules/probes-adapter/package.json /directus/extensions/probes-adapter/
 COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/dist/* /directus/extensions/adopted-probes-credits-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/package.json /directus/extensions/adopted-probes-credits-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/dist/* /directus/extensions/probes-status-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/package.json /directus/extensions/probes-status-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/dist/* /directus/extensions/check-outdated-firmware-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/package.json /directus/extensions/check-outdated-firmware-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/dist/* /directus/extensions/gh-webhook-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/package.json /directus/extensions/gh-webhook-handler/
+COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/dist/* /directus/extensions/probes-status-cron-handler/dist/
+COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/package.json /directus/extensions/probes-status-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/remove-banned-users-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/package.json /directus/extensions/remove-banned-users-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-cron-handler/dist/* /directus/extensions/remove-expired-adoptions-cron-handler/dist/
