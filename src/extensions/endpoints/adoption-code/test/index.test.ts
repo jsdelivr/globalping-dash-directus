@@ -15,12 +15,14 @@ describe('adoption code endpoints', () => {
 		whereRaw: sinon.stub(),
 		orWhere: sinon.stub(),
 		orWhereRaw: sinon.stub(),
+		orderByRaw: sinon.stub(),
 		first: sinon.stub(),
 	};
 	sql.where.returns(sql);
 	sql.whereRaw.returns(sql);
 	sql.orWhere.returns(sql);
 	sql.orWhereRaw.returns(sql);
+	sql.orderByRaw.returns(sql);
 	const endpointContext = {
 		logger: {
 			error: console.error,

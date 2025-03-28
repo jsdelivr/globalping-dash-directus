@@ -66,6 +66,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
 	const probeByAsn = await database('gp_probes')
+		.orderByRaw(`gp_probes.lastSyncDate DESC, gp_probes.id DESC`)
 		.where({
 			userId: adoption.userId,
 			status: 'offline',
