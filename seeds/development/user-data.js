@@ -33,6 +33,7 @@ export const seed = async (knex) => {
 			github_username: 'jimaek',
 			user_type: 'member',
 			adoption_token: 'HwuHxzK9ewaFjhWcFR0m3zPTuqyITyql',
+			default_prefix: 'jimaek',
 		}]);
 
 		console.log('Mock user created. email: user@example.com password: user');

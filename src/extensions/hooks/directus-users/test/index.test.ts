@@ -6,7 +6,7 @@ import defineHook from '../src/index.js';
 type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;
 
-describe('token hooks', () => {
+describe('users hooks', () => {
 	const callbacks = {
 		filter: {} as Record<string, FilterCallback>,
 		action: {} as Record<string, ActionCallback>,
@@ -51,27 +51,83 @@ describe('token hooks', () => {
 		sinon.resetHistory();
 	});
 
-	it('should additionally delete user credits additions', async () => {
-		usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
+	describe('users.delete', () => {
+		it('should additionally delete user credits additions', async () => {
+			usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
 
-		await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: {} });
+			await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: { user: 'userIdValue' } });
 
-		expect(creditsAdditionsService.deleteByQuery.args[0]).to.deep.equal([{ filter: { github_id: { _in: [ '123' ] } } }]);
+			expect(creditsAdditionsService.deleteByQuery.args[0]).to.deep.equal([{ filter: { github_id: { _in: [ '123' ] } } }]);
+		});
+
+		it('should do nothing if read query returned nothing', async () => {
+			usersService.readByQuery.resolves([]);
+
+			await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: { user: 'userIdValue' } });
+
+			expect(creditsAdditionsService.deleteByQuery.callCount).to.deep.equal(0);
+		});
+
+		it('should throw if accountability was not provided', async () => {
+			usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
+
+			const err = await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
+
+			expect(err.message).to.equal('User is not authenticated');
+		});
 	});
 
-	it('should do nothing if read query returned nothing', async () => {
-		usersService.readByQuery.resolves([]);
+	describe('users.update', () => {
+		it('should allow updating default_prefix', async () => {
+			usersService.readByQuery.resolves([{
+				id: '1-1-1-1-1',
+				github_username: 'testuser',
+				github_organizations: [ 'org1', 'org2' ],
+			}]);
 
-		await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: {} });
+			await callbacks.filter['users.update']?.(
+				{ default_prefix: 'testuser' },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			);
 
-		expect(creditsAdditionsService.deleteByQuery.callCount).to.deep.equal(0);
-	});
+			expect(usersService.readByQuery.args[0]).to.deep.equal([{
+				filter: { id: { _in: [ '1-1-1-1-1' ] } },
+			}]);
+		});
 
-	it('should throw if accountability was not provided', async () => {
-		usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
+		it('should throw error if default_prefix is not valid', async () => {
+			usersService.readByQuery.resolves([{
+				id: '1-1-1-1-1',
+				github_username: 'testuser',
+				github_organizations: [ 'org1', 'org2' ],
+			}]);
 
-		const err = await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
+			const err = await callbacks.filter['users.update']?.(
+				{ default_prefix: 'invalid-prefix' },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			).catch(err => err);
 
-		expect(err.message).to.equal('User is not authenticated');
+			expect(err.message).to.equal('"value" must be one of [testuser, org1, org2]');
+		});
+
+		it('should do nothing if default_prefix is not being updated', async () => {
+			await callbacks.filter['users.update']?.(
+				{ email: 'test@example.com' },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			);
+
+			expect(usersService.readByQuery.callCount).to.equal(0);
+		});
+
+		it('should do nothing if user is not authenticated', async () => {
+			await callbacks.filter['users.update']?.(
+				{ lastPage: '/settings' },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: undefined },
+			);
+		});
 	});
 });

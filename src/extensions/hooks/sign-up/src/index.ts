@@ -15,6 +15,7 @@ export type User = {
 	github_organizations: string[];
 	email_notifications: boolean;
 	adoption_token?: string;
+	default_prefix?: string;
 }
 
 type GithubOrgsResponse = {
@@ -68,6 +69,7 @@ const fulfillUsername = (user: User) => {
 	const login = user.last_name;
 	user.last_name = undefined;
 	user.github_username = login;
+	user.default_prefix = login;
 };
 
 const fulfillFirstNameAndLastName = (user: User) => {
