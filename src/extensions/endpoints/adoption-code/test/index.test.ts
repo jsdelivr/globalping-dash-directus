@@ -6,21 +6,23 @@ import * as sinon from 'sinon';
 import endpoint from '../src/index.js';
 
 describe('adoption code endpoints', () => {
-	const createOne = sinon.stub().resolves('generatedId');
-	const updateOne = sinon.stub().resolves('generatedId');
-	const readByQuery = sinon.stub().resolves([]);
+	const createOne = sinon.stub();
+	const updateOne = sinon.stub();
+	const readByQuery = sinon.stub();
 	const notificationCreateOne = sinon.stub();
 	const sql = {
 		where: sinon.stub(),
 		whereRaw: sinon.stub(),
 		orWhere: sinon.stub(),
 		orWhereRaw: sinon.stub(),
+		orderByRaw: sinon.stub(),
 		first: sinon.stub(),
 	};
 	sql.where.returns(sql);
 	sql.whereRaw.returns(sql);
 	sql.orWhere.returns(sql);
 	sql.orWhereRaw.returns(sql);
+	sql.orderByRaw.returns(sql);
 	const endpointContext = {
 		logger: {
 			error: console.error,
@@ -70,8 +72,10 @@ describe('adoption code endpoints', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		sql.first.reset();
 		readByQuery.resolves([]);
-		sql.first.resolves(undefined);
+		createOne.resolves('generatedId');
+		updateOne.resolves('generatedId');
 	});
 
 	after(() => {
@@ -896,6 +900,55 @@ describe('adoption code endpoints', () => {
 				subject: 'Probe unassigned',
 				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user (it reported an adoption token of another user).',
 			});
+		});
+
+		it('should adopt offline probe by asn/city', async () => {
+			endpoint(router, endpointContext);
+
+			sql.first.onFirstCall().resolves(null);
+
+			sql.first.resolves({
+				id: 'offlineProbeId',
+				ip: '2.2.2.2',
+				uuid: 'offlineProbeUuid',
+			});
+
+			await request('/adopt-by-token', {
+				headers: {
+					'x-api-key': 'system',
+				},
+				body: adoptionTokenRequest,
+			}, res);
+
+
+			expect(createOne.callCount).to.equal(0);
+			expect(updateOne.callCount).to.equal(1);
+
+			expect(updateOne.args[0]?.[0]).to.deep.equal('offlineProbeId');
+
+			expect(updateOne.args[0]?.[1]).to.deep.include({
+				ip: '1.1.1.1',
+				altIps: [],
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
+				systemTags: [ 'datacenter-network' ],
+				status: 'ready',
+				city: 'Paris',
+				state: null,
+				country: 'FR',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
+			});
+
+			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
 		it('should do nothing if already assigned to that user', async () => {

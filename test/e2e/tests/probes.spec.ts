@@ -1,8 +1,14 @@
 import { randomUUID } from 'node:crypto';
+import axios from 'axios';
+import _ from 'lodash';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { User } from '../types.ts';
 import { randomIP } from '../utils.ts';
+
+test.afterEach(async () => {
+	await sql('gp_probes').where({ ip: '2.2.2.2' }).delete();
+});
 
 const addUserProbes = async (user: User) => {
 	const probeId = randomUUID();
@@ -59,53 +65,48 @@ const addUserProbes = async (user: User) => {
 	}]);
 };
 
+const defaultProbe = {
+	id: randomUUID(),
+	ip: '2.2.2.2',
+	uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
+	name: null,
+	asn: 3302,
+	city: 'Ouagadougou',
+	country: 'BF',
+	date_created: new Date(),
+	isCustomCity: 0,
+	lastSyncDate: new Date(),
+	latitude: 12.37,
+	longitude: -1.53,
+	network: 'IRIDEOS S.P.A.',
+	onlineTimesToday: 50,
+	state: null,
+	status: 'ready',
+	userId: null,
+	version: '0.28.0',
+	hardwareDevice: null,
+};
+
 const addProbeWithoutUser = async () => {
-	const probe = {
-		id: randomUUID(),
-		ip: '2.2.2.2',
-		uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
-		name: null,
-		asn: 3302,
-		city: 'Ouagadougou',
-		country: 'BF',
-		date_created: new Date(),
-		isCustomCity: 0,
-		lastSyncDate: new Date(),
-		latitude: 12.37,
-		longitude: -1.53,
-		network: 'IRIDEOS S.P.A.',
-		onlineTimesToday: 50,
-		state: null,
-		status: 'ready',
-		userId: null,
-		version: '0.28.0',
-		hardwareDevice: null,
-	};
-	await sql('gp_probes').insert(probe);
-	return probe;
+	await sql('gp_probes').insert(defaultProbe);
+	return defaultProbe;
 };
 
 const addProbeWithUser = async (user2: User) => {
 	await sql('gp_probes').insert({
-		id: randomUUID(),
-		ip: '2.2.2.2',
-		uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
-		name: null,
-		asn: 3302,
-		city: 'Ouagadougou',
-		country: 'BF',
-		date_created: new Date(),
-		isCustomCity: 0,
-		lastSyncDate: new Date(),
-		latitude: 12.37,
-		longitude: -1.53,
-		network: 'IRIDEOS S.P.A.',
-		onlineTimesToday: 50,
-		state: null,
-		status: 'ready',
+		...defaultProbe,
 		userId: user2.id,
-		version: '0.28.0',
-		hardwareDevice: null,
+	});
+};
+
+const addOfflineProbeWithSameAsn = async (user: User) => {
+	await sql('gp_probes').insert({
+		...defaultProbe,
+		name: 'probe-bf-ouagadougou-01',
+		ip: '1.1.1.1',
+		uuid: 'outdatedUuid',
+		status: 'offline',
+		userId: user.id,
 	});
 };
 
@@ -122,9 +123,38 @@ test('Software probe adoption (token)', async ({ page, user }) => {
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Software probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
-	await sql('gp_probes').where({ id: probe.id }).update({ userId: user.id, name: 'probe-bf-ouagadougou-01' });
+
+	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
+		probe: _.omit(probe, 'id'),
+		user: { id: user.id },
+	}, {
+		headers: {
+			'X-Api-Key': 'system',
+		},
+	});
+
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+});
+
+test('Software probe adoption by asn/city', async ({ page, user }) => {
+	await addOfflineProbeWithSameAsn(user);
+	await page.goto('/probes');
+	await expect(page.locator('tr')).toHaveCount(2);
+	await expect(page.getByText('1.1.1.1').first()).toBeVisible();
+
+	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
+		probe: _.omit(defaultProbe, 'id'),
+		user: { id: user.id },
+	}, {
+		headers: {
+			'X-Api-Key': 'system',
+		},
+	});
+
+	await page.goto('/probes');
+	await expect(page.locator('tr')).toHaveCount(2);
+	await expect(page.getByText('2.2.2.2').first()).toBeVisible();
 });
 
 test('Software probe adoption (code)', async ({ page }) => {
