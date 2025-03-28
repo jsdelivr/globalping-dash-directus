@@ -3,6 +3,7 @@ import type { ApiExtensionContext } from '@directus/extensions';
 export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 	// For example:
 	// 6191378: '1834071',
+	66716858: '6209808',
 };
 
 type AddCreditsData = {
