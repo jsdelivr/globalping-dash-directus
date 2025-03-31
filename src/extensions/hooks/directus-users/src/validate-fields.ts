@@ -6,7 +6,11 @@ import { getDirectusUsers } from './repositories/directus.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
-export const validateDefaultPrefix = async (defaultPrefix: string, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+export const validateDefaultPrefix = async (defaultPrefix: string, keys: string[], accountability: EventContext['accountability'] | null, context: HookExtensionContext) => {
+	if (!accountability || !accountability.user) {
+		return;
+	}
+
 	const user = (await getDirectusUsers(keys, accountability, context))[0];
 
 	if (!user || !user.github_username || !user.github_organizations) {

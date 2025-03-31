@@ -11,17 +11,13 @@ export default defineHook(({ filter }, context) => {
 	filter('users.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
 
-		if (!accountability || !accountability.user) {
-			throw new UserNotFoundError();
-		}
-
 		if (fields.default_prefix) {
 			await validateDefaultPrefix(fields.default_prefix, keys, accountability, context);
 		}
 	});
 
 	filter('users.delete', async (userIds, _payload, { accountability }) => {
-		if (!accountability) {
+		if (!accountability || !accountability.user) {
 			throw new Error('User is not authenticated');
 		}
 
