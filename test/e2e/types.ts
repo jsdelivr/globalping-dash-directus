@@ -12,4 +12,5 @@ export type User = {
 	github_username: string;
 	user_type: string;
 	adoption_token: string;
+	default_prefix: string;
 };
