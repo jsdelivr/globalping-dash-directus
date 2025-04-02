@@ -32,7 +32,7 @@ export default defineHook(({ filter, action }, context) => {
 			await validateTags(fields, keys, accountability, context);
 		}
 
-		if (fields.city || fields.city === '') {
+		if (fields.city) {
 			await validateCity(fields, keys, accountability, context);
 		}
 	});
@@ -43,7 +43,7 @@ export default defineHook(({ filter, action }, context) => {
 
 		if (fields.city) {
 			await updateCustomCityData(fields, keys, context);
-		} else if (fields.city === null) {
+		} else if (!fields.city && fields.city !== undefined) {
 			await resetCustomCityData(fields, keys, context);
 		}
 
