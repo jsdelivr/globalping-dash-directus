@@ -3402,14 +3402,14 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_probes
-    field: possibleCountries
+    field: allowedCountries
     type: json
     meta:
       collection: gp_probes
       conditions: null
       display: null
       display_options: null
-      field: possibleCountries
+      field: allowedCountries
       group: null
       hidden: false
       interface: input-code
@@ -3426,7 +3426,7 @@ fields:
       validation_message: null
       width: full
     schema:
-      name: possibleCountries
+      name: allowedCountries
       table: gp_probes
       data_type: longtext
       default_value: []
@@ -3434,6 +3434,46 @@ fields:
       numeric_precision: null
       numeric_scale: null
       is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_probes
+    field: customLocation
+    type: json
+    meta:
+      collection: gp_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: customLocation
+      group: null
+      hidden: false
+      interface: input-code
+      note: null
+      options:
+        lineNumber: false
+      readonly: false
+      required: false
+      sort: 30
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: customLocation
+      table: gp_probes
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
       is_unique: false
       is_primary_key: false
       is_generated: false
