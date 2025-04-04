@@ -69,11 +69,11 @@ export const validateCustomLocation = async (fields: Fields, keys: string[], acc
 		throw payloadError('Adopted probe not found.');
 	}
 
-	if (!probe.country || !probe.city || !probe.possibleCountries.length) {
+	if (!probe.country || !probe.city || !probe.allowedCountries.length) {
 		throw payloadError('Required data missing. Wait for the probe data to be synced with globalping.');
 	}
 
-	if (fields.country && !probe.possibleCountries.includes(fields.country)) {
+	if (fields.country && !probe.allowedCountries.includes(fields.country)) {
 		throw payloadError('Invalid country value.');
 	}
 

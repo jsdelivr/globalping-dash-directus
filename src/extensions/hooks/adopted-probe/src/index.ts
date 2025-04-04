@@ -14,7 +14,7 @@ export type Probe = {
 	isCustomCity: boolean;
 	tags: {value: string; prefix: string}[] | null;
 	userId: string | null;
-	possibleCountries: string[];
+	allowedCountries: string[];
 };
 
 export type Fields = Partial<Probe>;
