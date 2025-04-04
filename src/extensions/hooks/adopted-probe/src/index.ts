@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
-import { resetCustomCityData, resetUserDefinedData, updateCustomCityData } from './update-metadata.js';
-import { validateCity, validateTags } from './validate-fields.js';
+import { resetCustomLocation, resetUserDefinedData, updateCustomLocationData } from './update-metadata.js';
+import { validateCustomLocation, validateTags } from './validate-fields.js';
 
 export type Probe = {
 	name: string | null;
@@ -14,6 +14,7 @@ export type Probe = {
 	isCustomCity: boolean;
 	tags: {value: string; prefix: string}[] | null;
 	userId: string | null;
+	possibleCountries: string[];
 };
 
 export type Fields = Partial<Probe>;
@@ -32,8 +33,8 @@ export default defineHook(({ filter, action }, context) => {
 			await validateTags(fields, keys, accountability, context);
 		}
 
-		if (fields.city) {
-			await validateCity(fields, keys, accountability, context);
+		if (fields.city || fields.country) {
+			await validateCustomLocation(fields, keys, accountability, context);
 		}
 	});
 
@@ -42,9 +43,9 @@ export default defineHook(({ filter, action }, context) => {
 		const fields = payload as Fields;
 
 		if (fields.city) {
-			await updateCustomCityData(fields, keys, context);
+			await updateCustomLocationData(fields, keys, context);
 		} else if (!fields.city && fields.city !== undefined) {
-			await resetCustomCityData(fields, keys, context);
+			await resetCustomLocation(fields, keys, context);
 		}
 
 		// In case of removing adoption, reset all user affected fields.
