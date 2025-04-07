@@ -10,8 +10,7 @@ export type Probe = {
 	latitude: string | null;
 	longitude: string | null;
 	country: string | null;
-	countryOfCustomCity: string | null;
-	isCustomCity: boolean;
+	customLocation: { country: string, city: string, latitude: number, longitude: number, state: string | null } | null;
 	tags: {value: string; prefix: string}[] | null;
 	userId: string | null;
 	allowedCountries: string[];

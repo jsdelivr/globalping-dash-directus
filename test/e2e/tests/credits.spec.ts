@@ -13,12 +13,10 @@ const addCredits = async (user: User) => {
 		asn: 16019,
 		city: 'Prague',
 		country: 'CZ',
-		countryOfCustomCity: null,
 		date_created: '2024-02-22 11:02:12',
 		date_updated: null,
 		ip: probeIP,
 		altIps: JSON.stringify([]),
-		isCustomCity: 0,
 		lastSyncDate: new Date(),
 		latitude: 50.07,
 		longitude: 14.42,
@@ -33,6 +31,8 @@ const addCredits = async (user: User) => {
 		uuid: randomUUID(),
 		version: '0.28.0',
 		hardwareDevice: null,
+		allowedCountries: JSON.stringify([ 'CZ' ]),
+		customLocation: null,
 	}]);
 
 	await sql('gp_credits_additions').insert([{

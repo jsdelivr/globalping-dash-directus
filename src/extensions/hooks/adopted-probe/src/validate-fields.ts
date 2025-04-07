@@ -89,7 +89,8 @@ export const validateCustomLocation = async (fields: Fields, keys: string[], acc
 	}
 
 	const city = cities[0]!;
+	city.toponymName = normalizeCityName(city.toponymName);
 	geonamesCache.set(getKey(keys), city);
 
-	fields.city = normalizeCityName(city.toponymName);
+	fields.city = city.toponymName;
 };
