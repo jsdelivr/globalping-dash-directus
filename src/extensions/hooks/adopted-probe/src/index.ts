@@ -28,13 +28,10 @@ export default defineHook(({ filter, action }, context) => {
 			throw new UserNotFoundError();
 		}
 
-		if (fields.tags && fields.tags.length > 0) {
-			await validateTags(fields, keys, accountability, context);
-		}
-
-		if (fields.city || fields.country) {
-			await validateCustomLocation(fields, keys, accountability, context);
-		}
+		await Promise.all([
+			(fields.tags && fields.tags.length > 0) && validateTags(fields, keys, accountability, context),
+			(fields.city || fields.country) && validateCustomLocation(fields, keys, accountability, context),
+		]);
 	});
 
 	// State, latitude and longitude are updated in action hook, because user operation doesn't have permissions to edit them.

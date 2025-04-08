@@ -1,5 +1,12 @@
 export async function up (knex) {
 	const TABLE_NAME = 'gp_probes';
+	const columnsInfo = await knex(TABLE_NAME).columnInfo();
+
+	if (!columnsInfo?.isCustomCity) {
+		console.log('Custom location is already in new format.');
+		return;
+	}
+
 	const probesWithCustomLocation = await knex(TABLE_NAME).select().where({ isCustomCity: true });
 
 	const updatedProbes = await Promise.all(probesWithCustomLocation.map(async (probe) => {
@@ -30,5 +37,3 @@ export async function up (knex) {
 export async function down () {
 	console.log('There is no down operation for that migration.');
 }
-
-// To remove: countryOfCustomCity, isCustomCity
