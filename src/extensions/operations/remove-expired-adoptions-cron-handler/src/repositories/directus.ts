@@ -116,8 +116,7 @@ export const removeAdoption = async (probes: AdoptedProbe[], { services, databas
 		name: null,
 		userId: null,
 		tags: [],
-		isCustomCity: false,
-		countryOfCustomCity: null,
+		customLocation: null,
 	}, { emitEvents: false }) as string[];
 	return result;
 };

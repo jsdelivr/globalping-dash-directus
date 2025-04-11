@@ -56,27 +56,28 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	}
 };
 
-export const validateCity = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+export const validateCustomLocation = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	const { env } = context;
-	const currentProbes = await getProbes(keys, context, accountability);
 
-	if (!currentProbes || currentProbes.length === 0) {
-		throw payloadError('Adopted probes not found.');
+	if (keys.length > 1) {
+		throw payloadError('Batch probe update is not supported.');
 	}
 
-	const country = currentProbes[0]!.country;
+	const [ probe ] = await getProbes(keys, context, accountability);
 
-	if (!country) {
-		throw payloadError('Country is not defined. Wait for the probe data to be synced with globalping.');
+	if (!probe) {
+		throw payloadError('Adopted probe not found.');
 	}
 
-	const allInSameCountry = currentProbes.every(currentProbe => currentProbe.country === country);
-
-	if (!allInSameCountry) {
-		throw payloadError('Requested adopted probes are in different countries. Update the list of items you want to edit.');
+	if (!probe.country || !probe.city || !probe.allowedCountries.length) {
+		throw payloadError('Required data missing. Wait for the probe data to be synced with globalping.');
 	}
 
-	const url = `http://api.geonames.org/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=${env.GEONAMES_USERNAME}&country=${country}&q=${fields.city}`;
+	if (fields.country && !probe.allowedCountries.includes(fields.country)) {
+		throw payloadError('Invalid country value.');
+	}
+
+	const url = `http://api.geonames.org/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=${env.GEONAMES_USERNAME}&country=${fields.country || probe.country}&q=${fields.city || probe.city}`;
 	const response = await axios<{totalResultsCount: number, geonames: City[]}>(url, {
 		timeout: 5000,
 	});
@@ -84,11 +85,12 @@ export const validateCity = async (fields: Fields, keys: string[], accountabilit
 	const cities = response.data.geonames;
 
 	if (cities.length === 0) {
-		throw payloadError('No valid cities found. Please check "city" value. City search algorithm can be checked here: https://www.geonames.org/advanced-search.html?featureClass=P');
+		throw payloadError('No valid cities found. Please check "city" and "country" values. Search algorithm can be checked here: https://www.geonames.org/advanced-search.html?featureClass=P');
 	}
 
 	const city = cities[0]!;
+	city.toponymName = normalizeCityName(city.toponymName);
 	geonamesCache.set(getKey(keys), city);
 
-	fields.city = normalizeCityName(city.toponymName);
+	fields.city = city.toponymName;
 };

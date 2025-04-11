@@ -17,12 +17,10 @@ const addUserProbes = async (user: User) => {
 		asn: 16019,
 		city: 'Prague',
 		country: 'CZ',
-		countryOfCustomCity: null,
 		date_created: '2024-02-22 11:02:12',
 		date_updated: null,
 		ip: randomIP(),
 		altIps: JSON.stringify([]),
-		isCustomCity: 0,
 		lastSyncDate: new Date(),
 		latitude: 50.07,
 		longitude: 14.42,
@@ -36,18 +34,17 @@ const addUserProbes = async (user: User) => {
 		userId: user.id,
 		uuid: randomUUID(),
 		version: '0.28.0',
-		hardwareDevice: null,
+		allowedCountries: JSON.stringify([ 'CZ' ]),
+		customLocation: null,
 	}, {
 		id: randomUUID(),
 		asn: 3302,
 		city: 'Naples',
 		country: 'IT',
-		countryOfCustomCity: 'IT',
 		date_created: '2024-02-22 11:04:30',
 		date_updated: '2024-02-22 11:05:48',
 		ip: randomIP(),
 		altIps: JSON.stringify([ '89.64.80.78' ]),
-		isCustomCity: 1,
 		lastSyncDate: new Date(),
 		latitude: 40.85,
 		longitude: 14.27,
@@ -62,6 +59,13 @@ const addUserProbes = async (user: User) => {
 		uuid: randomUUID(),
 		version: '0.28.0',
 		hardwareDevice: null,
+		customLocation: JSON.stringify({
+			city: 'Naples',
+			country: 'IT',
+			latitude: 40.85,
+			longitude: 14.27,
+			state: null,
+		}),
 	}]);
 };
 
@@ -74,7 +78,6 @@ const defaultProbe = {
 	city: 'Ouagadougou',
 	country: 'BF',
 	date_created: new Date(),
-	isCustomCity: 0,
 	lastSyncDate: new Date(),
 	latitude: 12.37,
 	longitude: -1.53,
@@ -85,6 +88,8 @@ const defaultProbe = {
 	userId: null,
 	version: '0.28.0',
 	hardwareDevice: null,
+	allowedCountries: JSON.stringify([ 'BF' ]),
+	customLocation: null,
 };
 
 const addProbeWithoutUser = async () => {

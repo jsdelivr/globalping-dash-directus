@@ -75,7 +75,8 @@ describe('adopted-probe hook', () => {
 			latitude: '48.85',
 			longitude: '2.35',
 			country: 'FR',
-			isCustomCity: false,
+			customLocation: null,
+			allowedCountries: [ 'FR' ],
 		}]);
 
 		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=FR&q=marsel')
@@ -120,7 +121,18 @@ describe('adopted-probe hook', () => {
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ latitude: 43.3, longitude: 5.38, isCustomCity: true, countryOfCustomCity: 'FR', state: null },
+			{
+				state: null,
+				latitude: 43.3,
+				longitude: 5.38,
+				customLocation: {
+					country: 'FR',
+					city: 'Marseille',
+					latitude: 43.3,
+					longitude: 5.38,
+					state: null,
+				},
+			},
 			{ emitEvents: false },
 		]);
 	});
@@ -133,7 +145,8 @@ describe('adopted-probe hook', () => {
 			latitude: '42.33',
 			longitude: '-83.05',
 			country: 'US',
-			isCustomCity: false,
+			allowedCountries: [ 'US' ],
+			customLocation: null,
 		}]);
 
 		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=US&q=miami')
@@ -178,7 +191,18 @@ describe('adopted-probe hook', () => {
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ latitude: 25.77, longitude: -80.19, isCustomCity: true, countryOfCustomCity: 'US', state: 'FL' },
+			{
+				state: 'FL',
+				latitude: 25.77,
+				longitude: -80.19,
+				customLocation: {
+					country: 'US',
+					city: 'Miami',
+					latitude: 25.77,
+					longitude: -80.19,
+					state: 'FL',
+				},
+			},
 			{ emitEvents: false },
 		]);
 	});
@@ -188,10 +212,17 @@ describe('adopted-probe hook', () => {
 			userId: '1',
 			city: 'Paris',
 			state: null,
-			latitude: '48.85',
-			longitude: '2.35',
+			latitude: 48.85,
+			longitude: 2.35,
 			country: 'FR',
-			isCustomCity: true,
+			allowedCountries: [ 'FR' ],
+			customLocation: {
+				city: 'Paris',
+				state: null,
+				latitude: 48.85,
+				longitude: 2.35,
+				country: 'FR',
+			},
 		}]);
 
 		hook(events, context);
@@ -204,7 +235,14 @@ describe('adopted-probe hook', () => {
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ latitude: null, longitude: null, isCustomCity: false, countryOfCustomCity: null, state: null },
+			{
+				country: null,
+				city: null,
+				latitude: null,
+				longitude: null,
+				state: null,
+				customLocation: null,
+			},
 			{ emitEvents: false },
 		]);
 
@@ -219,7 +257,8 @@ describe('adopted-probe hook', () => {
 			latitude: '48.85',
 			longitude: '2.35',
 			country: 'FR',
-			isCustomCity: false,
+			allowedCountries: [ 'FR' ],
+			customLocation: null,
 		}]);
 
 		hook(events, context);
@@ -249,7 +288,7 @@ describe('adopted-probe hook', () => {
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
-		expect(err).to.deep.equal(payloadError('Adopted probes not found.'));
+		expect(err).to.deep.equal(payloadError('Adopted probe not found.'));
 	});
 
 	it('should send valid error if country is not defined', async () => {
@@ -260,7 +299,8 @@ describe('adopted-probe hook', () => {
 			latitude: '48.85',
 			longitude: '2.35',
 			country: null,
-			isCustomCity: false,
+			allowedCountries: [ 'FR' ],
+			customLocation: null,
 		}]);
 
 		hook(events, context);
@@ -271,30 +311,6 @@ describe('adopted-probe hook', () => {
 		expect(adoptedProbes.updateMany.callCount).to.equal(0);
 	});
 
-	it('should send valid error if target probes are in different countries', async () => {
-		adoptedProbes.readMany.resolves([{
-			userId: '1',
-			city: 'Paris',
-			state: null,
-			latitude: '48.85',
-			longitude: '2.35',
-			country: 'FR',
-			isCustomCity: false,
-		}, {
-			city: 'London',
-			latitude: '51.51',
-			longitude: '-0.13',
-			country: 'GB',
-			isCustomCity: false,
-		}]);
-
-		hook(events, context);
-		const payload = { city: 'marsel' };
-		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
-
-		expect(err.status).to.equal(400);
-	});
-
 	it('should send valid error if provided city is not valid', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
@@ -303,7 +319,8 @@ describe('adopted-probe hook', () => {
 			latitude: '48.85',
 			longitude: '2.35',
 			country: 'FR',
-			isCustomCity: false,
+			allowedCountries: [ 'FR' ],
+			customLocation: null,
 		}]);
 
 		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=FR&q=invalidcity')
@@ -330,7 +347,8 @@ describe('adopted-probe hook', () => {
 				latitude: '48.85',
 				longitude: '2.35',
 				country: 'FR',
-				isCustomCity: false,
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
 			}]);
 		});
 
@@ -353,7 +371,8 @@ describe('adopted-probe hook', () => {
 				latitude: '48.85',
 				longitude: '2.35',
 				country: 'FR',
-				isCustomCity: false,
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
 			}]);
 
 			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }] };
@@ -375,7 +394,8 @@ describe('adopted-probe hook', () => {
 				latitude: '48.85',
 				longitude: '2.35',
 				country: 'FR',
-				isCustomCity: false,
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
 			}]);
 
 			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }, { prefix: 'oldprefix', value: 'b' }] };

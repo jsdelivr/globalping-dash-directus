@@ -2,7 +2,7 @@ import type { HookExtensionContext } from '@directus/extensions';
 import { geonamesCache, getKey } from './geonames-cache.js';
 import type { Fields } from './index.js';
 
-export const resetCustomCityData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const resetCustomLocation = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
@@ -11,17 +11,18 @@ export const resetCustomCityData = async (_fields: Fields, keys: string[], { ser
 	});
 
 	await adoptedProbesService.updateMany(keys, {
+		country: null,
+		city: null,
 		latitude: null,
 		longitude: null,
 		state: null,
-		isCustomCity: false,
-		countryOfCustomCity: null,
+		customLocation: null,
 	}, {
 		emitEvents: false,
 	});
 };
 
-export const updateCustomCityData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const updateCustomLocationData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
@@ -35,14 +36,22 @@ export const updateCustomCityData = async (_fields: Fields, keys: string[], { se
 		throw new Error('geonames result not found');
 	}
 
+	const country = city.countryCode;
 	const state = city.countryCode === 'US' ? city.adminCode1 : null;
+	const latitude = Math.round(Number(city.lat) * 100) / 100;
+	const longitude = Math.round(Number(city.lng) * 100) / 100;
 
 	await adoptedProbesService.updateMany(keys, {
-		countryOfCustomCity: city.countryCode,
-		latitude: Math.round(Number(city.lat) * 100) / 100,
-		longitude: Math.round(Number(city.lng) * 100) / 100,
 		state,
-		isCustomCity: true,
+		latitude,
+		longitude,
+		customLocation: {
+			country,
+			city: city.toponymName,
+			latitude,
+			longitude,
+			state,
+		},
 	}, {
 		emitEvents: false,
 	});
@@ -60,8 +69,7 @@ export const resetUserDefinedData = async (_fields: Fields, keys: string[], { se
 		name: null,
 		userId: null,
 		tags: [],
-		isCustomCity: false,
-		countryOfCustomCity: null,
+		customLocation: null,
 	}, {
 		emitEvents: false,
 	});

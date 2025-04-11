@@ -182,13 +182,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			{
 				filter: { id: { _in: [ 'probeId1' ] } },
 			},
-			{
-				name: null,
-				userId: null,
-				tags: [],
-				isCustomCity: false,
-				countryOfCustomCity: null,
-			},
+			{ name: null, userId: null, tags: [], customLocation: null },
 			{ emitEvents: false },
 		]);
 

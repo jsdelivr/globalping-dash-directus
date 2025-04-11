@@ -46,14 +46,13 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		return [ existingProbe.id, existingProbe.name ] as const;
 	}
 
-	// Probe exists but not assigned to the user.
+	// Probe exists but not assigned to the user (may be assigned to another user).
 	if (existingProbe) {
 		const id = await itemsService.updateOne(existingProbe.id, {
 			name: adoption.name,
 			userId: adoption.userId,
 			tags: '[]',
-			isCustomCity: false,
-			countryOfCustomCity: null,
+			customLocation: null,
 		}, { emitEvents: false });
 
 		await Promise.all([

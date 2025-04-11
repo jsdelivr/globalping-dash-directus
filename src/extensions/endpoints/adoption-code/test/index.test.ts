@@ -288,8 +288,7 @@ describe('adoption code endpoints', () => {
 			longitude: 2.35,
 			asn: 12876,
 			network: 'SCALEWAY S.A.S.',
-			isCustomCity: false,
-			countryOfCustomCity: null,
+			customLocation: null,
 		};
 		let sandbox: sinon.SinonSandbox;
 
@@ -421,8 +420,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				tags: '[]',
-				isCustomCity: false,
-				countryOfCustomCity: null,
+				customLocation: null,
 			});
 		});
 
@@ -801,8 +799,7 @@ describe('adoption code endpoints', () => {
 				longitude: 2.35,
 				asn: 12876,
 				network: 'SCALEWAY S.A.S.',
-				isCustomCity: false,
-				countryOfCustomCity: null,
+				customLocation: null,
 			},
 			user: { id: 'f3115997-31d1-4cf5-8b41-0617a99c5706' },
 		};
@@ -880,8 +877,7 @@ describe('adoption code endpoints', () => {
 					name: 'probe-fr-paris-01',
 					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					tags: '[]',
-					isCustomCity: false,
-					countryOfCustomCity: null,
+					customLocation: null,
 				},
 				{ emitEvents: false },
 			]);
