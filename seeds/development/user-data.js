@@ -300,8 +300,8 @@ export const seed = async (knex) => {
 		date_updated: null,
 		user_created: null,
 		user_updated: null,
-		github_id: '6192491',
-		github_login: 'MartinKolarik',
+		github_id: '6192491999',
+		github_login: 'MartinKolarikU1',
 		last_earning_date: '2024-02-22 11:48:00',
 		monthly_amount: 100,
 	}]);
