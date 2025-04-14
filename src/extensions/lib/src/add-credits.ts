@@ -9,10 +9,11 @@ export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 type AddCreditsData = {
 	github_id: string;
 	amount: number;
-	comment: string;
+	reason: 'recurring_sponsorship' | 'one_time_sponsorship' | 'tier_changed';
+	meta: { amountInDollars: number };
 };
 
-export const addCredits = async ({ github_id, amount, comment }: AddCreditsData, { services, database, getSchema, env }: ApiExtensionContext) => {
+export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, { services, database, getSchema, env }: ApiExtensionContext) => {
 	const { ItemsService } = services;
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
@@ -24,7 +25,8 @@ export const addCredits = async ({ github_id, amount, comment }: AddCreditsData,
 	const creditsId = await creditsAdditionsService.createOne({
 		github_id: githubId,
 		amount: amount * parseInt(env.CREDITS_PER_DOLLAR, 10),
-		comment,
+		reason,
+		meta,
 	});
 	return { creditsId, githubId };
 };

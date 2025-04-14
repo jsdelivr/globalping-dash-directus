@@ -1447,44 +1447,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_credits_additions
-    field: comment
-    type: string
-    meta:
-      collection: gp_credits_additions
-      conditions: null
-      display: null
-      display_options: null
-      field: comment
-      group: null
-      hidden: false
-      interface: input
-      note: Why credits are added?
-      options: null
-      readonly: false
-      required: true
-      sort: 6
-      special: null
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: comment
-      table: gp_credits_additions
-      data_type: varchar
-      default_value: null
-      max_length: 255
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: gp_credits_additions
     field: consumed
     type: boolean
     meta:
@@ -1683,46 +1645,95 @@ fields:
       foreign_key_table: directus_users
       foreign_key_column: id
   - collection: gp_credits_additions
-    field: adopted_probe
+    field: reason
     type: string
     meta:
       collection: gp_credits_additions
       conditions: null
       display: null
       display_options: null
-      field: adopted_probe
+      field: reason
       group: null
       hidden: false
-      interface: select-dropdown-m2o
+      interface: select-dropdown
       note: null
       options:
-        enableCreate: false
-        template: '{{ip}}'
+        choices:
+          - text: adopted_probe
+            value: adopted_probe
+          - text: one_time_sponsorship
+            value: one_time_sponsorship
+          - text: recurring_sponsorship
+            value: recurring_sponsorship
+          - text: tier_changed
+            value: tier_changed
+          - text: other
+            value: other
       readonly: false
-      required: false
-      sort: 7
-      special:
-        - m2o
+      required: true
+      sort: 9
+      special: null
       translations: null
       validation: null
       validation_message: null
       width: full
     schema:
-      name: adopted_probe
+      name: reason
       table: gp_credits_additions
-      data_type: char
+      data_type: varchar
       default_value: null
-      max_length: 36
+      max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
       generation_expression: null
       has_auto_increment: false
-      foreign_key_table: gp_probes
-      foreign_key_column: id
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_credits_additions
+    field: meta
+    type: json
+    meta:
+      collection: gp_credits_additions
+      conditions: null
+      display: null
+      display_options: null
+      field: meta
+      group: null
+      hidden: false
+      interface: input-code
+      note: null
+      options:
+        lineNumber: false
+      readonly: false
+      required: true
+      sort: 10
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: meta
+      table: gp_credits_additions
+      data_type: longtext
+      default_value:
+        comment: ''
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: gp_credits_deductions
     field: amount
     type: integer
@@ -4436,27 +4447,6 @@ relations:
       constraint_name: gp_credits_additions_user_updated_foreign
       on_update: RESTRICT
       on_delete: RESTRICT
-  - collection: gp_credits_additions
-    field: adopted_probe
-    related_collection: gp_probes
-    meta:
-      junction_field: null
-      many_collection: gp_credits_additions
-      many_field: adopted_probe
-      one_allowed_collections: null
-      one_collection: gp_probes
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: gp_credits_additions
-      column: adopted_probe
-      foreign_key_table: gp_probes
-      foreign_key_column: id
-      constraint_name: gp_credits_additions_adopted_probe_foreign
-      on_update: RESTRICT
-      on_delete: SET NULL
   - collection: gp_credits_deductions
     field: user_id
     related_collection: directus_users
