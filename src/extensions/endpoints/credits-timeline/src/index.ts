@@ -12,9 +12,9 @@ type CreditsChange = {
 	id: string;
 	type: 'addition' | 'deduction';
 	date_created: string;
-	comment?: string;
 	amount: number;
-	adopted_probe?: number | null;
+	reason: string;
+	meta: string;
 };
 
 const creditsTimelineSchema = Joi.object<Request>({
@@ -49,7 +49,8 @@ export default defineEndpoint((router, context) => {
 						database.raw('"addition" as type'),
 						'gp_credits_additions.date_created',
 						'gp_credits_additions.amount',
-						'gp_credits_additions.comment',
+						'gp_credits_additions.reason',
+						'gp_credits_additions.meta',
 					),
 				database('gp_credits_deductions')
 					.where('user_id', value.accountability!.user!)
@@ -58,7 +59,8 @@ export default defineEndpoint((router, context) => {
 						database.raw('"deduction" as type'),
 						database.raw('date as date_created'),
 						'amount',
-						database.raw('NULL as comment'),
+						database.raw('NULL as reason'),
+						database.raw('NULL as meta'),
 					),
 			]))
 				.select('*')

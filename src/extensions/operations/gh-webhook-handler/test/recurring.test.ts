@@ -74,7 +74,10 @@ describe('GitHub webhook recurring handler', () => {
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			amount: 150000,
-			comment: 'Recurring $15 sponsorship.',
+			reason: 'recurring_sponsorship',
+			meta: {
+				amountInDollars: 15,
+			},
 		}]);
 
 		expect(sponsorsService.createOne.callCount).to.equal(1);
@@ -134,7 +137,10 @@ describe('GitHub webhook recurring handler', () => {
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			amount: 50000,
-			comment: 'One-time $5 sponsorship.',
+			reason: 'one_time_sponsorship',
+			meta: {
+				amountInDollars: 5,
+			},
 		}]);
 
 		expect(result).to.equal('Sponsor with id: 2 updated. Credits item with id: 1 created.');

@@ -49,7 +49,8 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 		const { creditsId, githubId } = await addCredits({
 			github_id: githubSponsor.githubId,
 			amount: githubSponsor.monthlyAmount,
-			comment: `Recurring $${githubSponsor.monthlyAmount} sponsorship.`,
+			reason: 'recurring_sponsorship',
+			meta: { amountInDollars: githubSponsor.monthlyAmount },
 		}, context);
 		return `Credits item with id: ${creditsId} for user with github id: ${githubId} created. Recurring sponsorship handled.`;
 	}
