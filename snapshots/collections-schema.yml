@@ -1744,6 +1744,10 @@ fields:
             value: one_time_sponsorship
           - text: recurring_sponsorship
             value: recurring_sponsorship
+          - text: tier_changed
+            value: tier_changed
+          - text: other
+            value: other
       readonly: false
       required: true
       sort: 9
@@ -1796,7 +1800,8 @@ fields:
       name: meta
       table: gp_credits_additions
       data_type: longtext
-      default_value: null
+      default_value:
+        comment: ''
       max_length: 4294967295
       numeric_precision: null
       numeric_scale: null

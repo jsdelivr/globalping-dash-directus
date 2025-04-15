@@ -6,7 +6,7 @@ export async function up (knex) {
 		let reason = '';
 		let meta = {};
 
-		if (addition.comment.includes('One-time $')) {
+		if (addition.comment.startsWith('One-time $')) {
 			reason = 'one_time_sponsorship';
 			const amountMatch = addition.comment.match(/\$(\d+)/);
 
@@ -15,7 +15,7 @@ export async function up (knex) {
 			}
 
 			meta = { amountInDollars: parseInt(amountMatch[1]) };
-		} else if (addition.comment.includes('Recurring $')) {
+		} else if (addition.comment.startsWith('Recurring $')) {
 			reason = 'recurring_sponsorship';
 			const amountMatch = addition.comment.match(/\$(\d+)/);
 
@@ -24,18 +24,29 @@ export async function up (knex) {
 			}
 
 			meta = { amountInDollars: parseInt(amountMatch[1]) };
-		} else if (addition.comment.includes('Adopted probe')) {
+		} else if (addition.comment.startsWith('Adopted probe')) {
 			reason = 'adopted_probe';
-			const ipMatch = addition.comment.match(/\((.*?)\)\.$/);
-			const nameMatch = addition.comment.match(/Adopted probe "(.*?)" \(/);
+			const ipPartIndex = addition.comment.lastIndexOf(' (');
+			const ipPart = addition.comment.slice(ipPartIndex);
+			const ipMatch = ipPart.match(/\((.*?)\)\.$/);
+			const ip = ipMatch[1];
 
-			if (ipMatch && addition.adopted_probe) {
-				meta = {
-					id: addition.adopted_probe,
-					name: nameMatch ? nameMatch[1] : null,
-					ip: ipMatch[1],
-				};
+			const namePart = addition.comment.slice(0, ipPartIndex);
+			let name = namePart.replace('Adopted probe', '').trim();
+
+			if (name.startsWith('"')) {
+				name = name.slice(1);
 			}
+
+			if (name.endsWith('"')) {
+				name = name.slice(0, -1);
+			}
+
+			meta = {
+				id: addition.adopted_probe,
+				name: name || null,
+				ip,
+			};
 		} else {
 			reason = 'other';
 			meta = { comment: addition.comment };
