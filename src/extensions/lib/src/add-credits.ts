@@ -9,8 +9,8 @@ export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 type AddCreditsData = {
 	github_id: string;
 	amount: number;
-	reason: 'adopted_probe' | 'recurring_sponsorship' | 'one_time_sponsorship'
-	meta: { amountInDollars: number }
+	reason: 'adopted_probe' | 'recurring_sponsorship' | 'one_time_sponsorship' | 'tier_changed' | 'other';
+	meta: { amountInDollars: number };
 };
 
 export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, { services, database, getSchema, env }: ApiExtensionContext) => {

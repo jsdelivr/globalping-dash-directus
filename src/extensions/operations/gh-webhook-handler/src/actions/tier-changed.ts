@@ -28,7 +28,7 @@ export const tierChangedAction = async (body: Data['$trigger']['body'], context:
 		const { creditsId } = await addCredits({
 			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: tierDiff,
-			reason: 'one_time_sponsorship',
+			reason: 'tier_changed',
 			meta: { amountInDollars: tierDiff },
 		}, context);
 		return `Sponsor with id: ${sponsorId} updated. Credits item with id: ${creditsId} created.`;

@@ -137,7 +137,7 @@ describe('GitHub webhook recurring handler', () => {
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			amount: 50000,
-			reason: 'one_time_sponsorship',
+			reason: 'tier_changed',
 			meta: {
 				amountInDollars: 5,
 			},
