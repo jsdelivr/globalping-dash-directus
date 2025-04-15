@@ -307,7 +307,7 @@ export const seed = async (knex) => {
 	}]);
 
 	await knex('gp_credits_additions').insert([{
-		amount: 10000,
+		amount: 100000,
 		reason: 'one_time_sponsorship',
 		meta: JSON.stringify({
 			amountInDollars: 50,
@@ -318,7 +318,7 @@ export const seed = async (knex) => {
 		user_updated: null,
 	},
 	{
-		amount: 1000,
+		amount: 10000,
 		reason: 'recurring_sponsorship',
 		meta: JSON.stringify({
 			amountInDollars: 5,
@@ -380,7 +380,7 @@ export const seed = async (knex) => {
 		github_id: user.external_identifier,
 		user_updated: null,
 	}, {
-		amount: 2000,
+		amount: 20000,
 		reason: 'one_time_sponsorship',
 		meta: JSON.stringify({
 			amountInDollars: 10,
@@ -391,7 +391,7 @@ export const seed = async (knex) => {
 		user_updated: null,
 	},
 	{
-		amount: 3000,
+		amount: 30000,
 		reason: 'recurring_sponsorship',
 		meta: JSON.stringify({
 			amountInDollars: 15,

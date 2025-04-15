@@ -68,6 +68,7 @@ export default defineEndpoint((router, context) => {
 				.orderBy([{ column: 'date_created', order: 'desc' }, { column: 'type', order: 'desc' }])
 				.limit(query.limit).offset(query.offset) as CreditsChange[];
 
+			changes.forEach((change) => { change.meta = JSON.parse(change.meta); });
 			res.send({ changes });
 		} catch (error: unknown) {
 			logger.error(error);

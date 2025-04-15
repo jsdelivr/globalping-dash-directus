@@ -6,6 +6,10 @@ export async function up (knex) {
 		let reason = '';
 		let meta = {};
 
+		if (addition.comment === undefined) {
+			continue;
+		}
+
 		if (addition.comment.startsWith('One-time $')) {
 			reason = 'one_time_sponsorship';
 			const amountMatch = addition.comment.match(/\$(\d+)/);
