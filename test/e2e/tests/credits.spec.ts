@@ -47,6 +47,18 @@ const addCredits = async (user: User) => {
 			ip: probeIP,
 			name: 'e2e-credits-adopted-probe',
 		}),
+	}, {
+		amount: 150,
+		consumed: 1,
+		date_created: relativeDayUtc(-1),
+		github_id: user.external_identifier,
+		user_updated: null,
+		reason: 'adopted_probe',
+		meta: JSON.stringify({
+			id: probeId,
+			ip: probeIP,
+			name: 'e2e-credits-adopted-probe',
+		}),
 	},
 	{
 		amount: 150,
@@ -99,10 +111,15 @@ test.beforeEach(async ({ user }) => {
 test('Credits page', async ({ page }) => {
 	await page.goto('/credits');
 	await expect(page.locator('h1')).toHaveText('Credits');
-	await expect(page.getByTestId('total-credits')).toHaveText('10,300');
-	await expect(page.getByTestId('generated-credits')).toHaveText('11,300');
+	await expect(page.getByTestId('total-credits')).toHaveText('10,450');
+	await expect(page.getByTestId('generated-credits')).toHaveText('11,450');
 	await expect(page.getByTestId('spent-credits')).toHaveText('7,000');
 	await expect(page.getByTestId('estimated-credits')).toHaveText('150');
+	await expect(page.locator('tbody')).toContainText('-1,000');
+	await expect(page.locator('tbody')).toContainText('+300');
+	await expect(page.locator('tbody')).toContainText('+150');
+	await expect(page.locator('tbody')).toContainText('-6,000');
+	await expect(page.locator('tbody')).toContainText('+10,000');
 });
 
 test('Second credits page is accessible', async ({ page }) => {

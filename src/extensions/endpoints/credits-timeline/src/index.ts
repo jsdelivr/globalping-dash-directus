@@ -48,10 +48,15 @@ export default defineEndpoint((router, context) => {
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
 						'gp_credits_additions.date_created',
-						'gp_credits_additions.amount',
+						database.raw('SUM(gp_credits_additions.amount) as amount'),
 						'gp_credits_additions.reason',
-						'gp_credits_additions.meta',
-					),
+						database.raw('CASE WHEN gp_credits_additions.reason = "adopted_probe" THEN NULL ELSE gp_credits_additions.meta END as meta'),
+					)
+					// Group by date if reason is 'adopted_probe', otherwise no grouping (by adding grouping by id).
+					.groupByRaw(`
+						DATE(gp_credits_additions.date_created),
+						CASE WHEN gp_credits_additions.reason != 'adopted_probe' THEN gp_credits_additions.id END
+					`),
 				database('gp_credits_deductions')
 					.where('user_id', value.accountability!.user!)
 					.select(
