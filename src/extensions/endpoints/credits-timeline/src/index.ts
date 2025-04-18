@@ -12,9 +12,9 @@ type CreditsChange = {
 	id: string;
 	type: 'addition' | 'deduction';
 	date_created: string;
-	comment?: string;
 	amount: number;
-	adopted_probe?: number | null;
+	reason: string;
+	meta: string;
 };
 
 const creditsTimelineSchema = Joi.object<Request>({
@@ -48,9 +48,15 @@ export default defineEndpoint((router, context) => {
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
 						'gp_credits_additions.date_created',
-						'gp_credits_additions.amount',
-						'gp_credits_additions.comment',
-					),
+						database.raw('SUM(gp_credits_additions.amount) as amount'),
+						'gp_credits_additions.reason',
+						database.raw('CASE WHEN gp_credits_additions.reason = "adopted_probe" THEN NULL ELSE gp_credits_additions.meta END as meta'),
+					)
+					// Group by date if reason is 'adopted_probe', otherwise no grouping (by adding grouping by id).
+					.groupByRaw(`
+						DATE(gp_credits_additions.date_created),
+						CASE WHEN gp_credits_additions.reason != 'adopted_probe' THEN gp_credits_additions.id END
+					`),
 				database('gp_credits_deductions')
 					.where('user_id', value.accountability!.user!)
 					.select(
@@ -58,7 +64,8 @@ export default defineEndpoint((router, context) => {
 						database.raw('"deduction" as type'),
 						database.raw('date as date_created'),
 						'amount',
-						database.raw('NULL as comment'),
+						database.raw('NULL as reason'),
+						database.raw('NULL as meta'),
 					),
 			]))
 				.select('*')
@@ -66,6 +73,7 @@ export default defineEndpoint((router, context) => {
 				.orderBy([{ column: 'date_created', order: 'desc' }, { column: 'type', order: 'desc' }])
 				.limit(query.limit).offset(query.offset) as CreditsChange[];
 
+			changes.forEach((change) => { change.meta = JSON.parse(change.meta); });
 			res.send({ changes });
 		} catch (error: unknown) {
 			logger.error(error);

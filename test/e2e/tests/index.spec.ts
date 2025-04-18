@@ -67,21 +67,27 @@ const addData = async (user: User) => {
 
 	await sql('gp_credits_additions').insert([{
 		amount: 150,
-		comment: `Adopted probe "e2e-credits-adopted-probe" (${probeIP}).`,
 		consumed: 1,
 		date_created: relativeDayUtc(-1),
 		github_id: user.external_identifier,
 		user_updated: null,
-		adopted_probe: probeId,
+		reason: 'adopted_probe',
+		meta: JSON.stringify({
+			id: probeId,
+			ip: probeIP,
+			name: 'e2e-credits-adopted-probe',
+		}),
 	},
 	...[ -2, -32, -62 ].map(daysAgo => ({
 		amount: 1000,
-		comment: 'Recurring $5 sponsorship.',
 		consumed: 1,
 		date_created: relativeDayUtc(daysAgo),
 		github_id: user.external_identifier,
 		user_updated: null,
-		adopted_probe: null,
+		reason: 'recurring_sponsorship',
+		meta: JSON.stringify({
+			amountInDollars: 5,
+		}),
 	})),
 	]);
 
@@ -105,12 +111,14 @@ test('Show recurring sponsorships up to 35 days ago', async ({ page, user }) => 
 	await sql('gp_credits_additions').insert([
 		...[ -32 ].map(daysAgo => ({
 			amount: 1000,
-			comment: 'Recurring $5 sponsorship.',
 			consumed: 1,
 			date_created: relativeDayUtc(daysAgo),
 			github_id: user.external_identifier,
 			user_updated: null,
-			adopted_probe: null,
+			reason: 'recurring_sponsorship',
+			meta: JSON.stringify({
+				amountInDollars: 5,
+			}),
 		})),
 	]);
 

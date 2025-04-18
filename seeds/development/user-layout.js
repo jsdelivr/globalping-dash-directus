@@ -38,7 +38,7 @@ export const seed = async (knex) => {
 	{
 		user: user.id,
 		collection: 'gp_credits_additions',
-		layout_query: { tabular: { fields: [ 'amount', 'comment', 'adopted_probe.ip' ] } },
+		layout_query: { tabular: { fields: [ 'amount', 'reason' ] } },
 		icon: 'bookmark',
 	},
 	{
