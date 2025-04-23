@@ -185,7 +185,7 @@ export const seed = async (knex) => {
 		longitude: -0.13,
 		name: 'london-probe-01',
 		network: 'Google LLC',
-		onlineTimesToday: 180,
+		onlineTimesToday: 100,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -234,7 +234,7 @@ export const seed = async (knex) => {
 		longitude: 103.86,
 		name: 'singapore-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 240,
+		onlineTimesToday: 24,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -272,7 +272,7 @@ export const seed = async (knex) => {
 		longitude: 151.21,
 		name: 'sydney-probe-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 200,
+		onlineTimesToday: 20,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -307,7 +307,7 @@ export const seed = async (knex) => {
 		longitude: 8.68,
 		name: 'frankfurt-probe-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 300,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -344,7 +344,7 @@ export const seed = async (knex) => {
 		longitude: -46.63,
 		name: 'sao-paulo-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 280,
+		onlineTimesToday: 28,
 		state: 'SP',
 		status: 'ready',
 		tags: JSON.stringify([
@@ -390,7 +390,7 @@ export const seed = async (knex) => {
 		longitude: 72.87,
 		name: 'mumbai-probe-01',
 		network: 'Google LLC',
-		onlineTimesToday: 320,
+		onlineTimesToday: 0,
 		state: 'MH',
 		status: 'offline',
 		tags: JSON.stringify([]),
@@ -423,7 +423,7 @@ export const seed = async (knex) => {
 		longitude: 139.76,
 		name: 'tokyo-probe-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 340,
+		onlineTimesToday: 34,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -466,7 +466,7 @@ export const seed = async (knex) => {
 		longitude: 126.97,
 		name: 'seoul-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 360,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -509,7 +509,7 @@ export const seed = async (knex) => {
 		longitude: 2.35,
 		name: 'paris-probe-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 380,
+		onlineTimesToday: 38,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -542,7 +542,7 @@ export const seed = async (knex) => {
 		longitude: -6.26,
 		name: 'dublin-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 400,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -586,7 +586,7 @@ export const seed = async (knex) => {
 		longitude: -3.70,
 		name: 'madrid-probe-01',
 		network: 'Google LLC',
-		onlineTimesToday: 420,
+		onlineTimesToday: 42,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([]),
@@ -620,7 +620,7 @@ export const seed = async (knex) => {
 		longitude: 12.50,
 		name: 'rome-probe-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 440,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -666,7 +666,7 @@ export const seed = async (knex) => {
 		longitude: 4.90,
 		name: 'amsterdam-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 460,
+		onlineTimesToday: 46,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -705,7 +705,7 @@ export const seed = async (knex) => {
 		longitude: 18.07,
 		name: 'stockholm-probe-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 480,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -743,7 +743,7 @@ export const seed = async (knex) => {
 		longitude: 16.37,
 		name: 'vienna-probe-01',
 		network: 'Google LLC',
-		onlineTimesToday: 500,
+		onlineTimesToday: 50,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -780,7 +780,7 @@ export const seed = async (knex) => {
 		longitude: 8.54,
 		name: 'zurich-probe-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 520,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -829,7 +829,7 @@ export const seed = async (knex) => {
 		longitude: 12.57,
 		name: 'copenhagen-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 540,
+		onlineTimesToday: 54,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -863,7 +863,7 @@ export const seed = async (knex) => {
 		longitude: 24.94,
 		name: 'HELSINKI #1',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 560,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -909,7 +909,7 @@ export const seed = async (knex) => {
 		longitude: 10.75,
 		name: 'oslo-probe-01',
 		network: 'Google LLC',
-		onlineTimesToday: 580,
+		onlineTimesToday: 58,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -946,7 +946,7 @@ export const seed = async (knex) => {
 		longitude: 21.01,
 		name: 'Warsaw Edge Node v2.0',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 600,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -989,7 +989,7 @@ export const seed = async (knex) => {
 		longitude: 4.35,
 		name: 'Brussels-AWS-Node-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 620,
+		onlineTimesToday: 62,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1023,7 +1023,7 @@ export const seed = async (knex) => {
 		longitude: 19.04,
 		name: 'budapest-probe-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 640,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1066,7 +1066,7 @@ export const seed = async (knex) => {
 		longitude: 26.10,
 		name: 'RO/Bucharest/Edge',
 		network: 'Google LLC',
-		onlineTimesToday: 660,
+		onlineTimesToday: 66,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1103,7 +1103,7 @@ export const seed = async (knex) => {
 		longitude: 23.32,
 		name: 'Sofia-Microsoft-Edge-Node',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 680,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1147,7 +1147,7 @@ export const seed = async (knex) => {
 		longitude: 20.46,
 		name: 'belgrade-probe-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 700,
+		onlineTimesToday: 70,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1181,7 +1181,7 @@ export const seed = async (knex) => {
 		longitude: 15.98,
 		name: 'HR-ZAGREB-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 720,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1223,7 +1223,7 @@ export const seed = async (knex) => {
 		longitude: 14.51,
 		name: 'SI Ljubljana Node v1.0',
 		network: 'Google LLC',
-		onlineTimesToday: 740,
+		onlineTimesToday: 74,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1260,7 +1260,7 @@ export const seed = async (knex) => {
 		longitude: 24.11,
 		name: 'LV-RIGA-EDGE-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 760,
+		onlineTimesToday: 76,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1293,7 +1293,7 @@ export const seed = async (knex) => {
 		longitude: 24.75,
 		name: null,
 		network: 'Google LLC',
-		onlineTimesToday: 780,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1336,7 +1336,7 @@ export const seed = async (knex) => {
 		longitude: 25.28,
 		name: 'Vilnius Node v3.0',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 800,
+		onlineTimesToday: 80,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1372,7 +1372,7 @@ export const seed = async (knex) => {
 		longitude: 17.11,
 		name: 'SK/Bratislava/Edge',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 820,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1415,7 +1415,7 @@ export const seed = async (knex) => {
 		longitude: 23.73,
 		name: 'GR/Athens/Google/Node',
 		network: 'Google LLC',
-		onlineTimesToday: 940,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1455,7 +1455,7 @@ export const seed = async (knex) => {
 		longitude: 28.98,
 		name: 'TR-ISTANBUL-EDGE-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 960,
+		onlineTimesToday: 96,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1491,7 +1491,7 @@ export const seed = async (knex) => {
 		longitude: 44.78,
 		name: null,
 		network: 'Google LLC',
-		onlineTimesToday: 980,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1533,7 +1533,7 @@ export const seed = async (knex) => {
 		longitude: 44.51,
 		name: 'Yerevan Node v2.0',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1000,
+		onlineTimesToday: 10,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1569,7 +1569,7 @@ export const seed = async (knex) => {
 		longitude: 49.87,
 		name: 'AZ/BAKU/AWS/01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 1020,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1608,7 +1608,7 @@ export const seed = async (knex) => {
 		longitude: 51.42,
 		name: 'IR-TEHRAN-EDGE-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 1040,
+		onlineTimesToday: 104,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1644,7 +1644,7 @@ export const seed = async (knex) => {
 		longitude: 44.36,
 		name: 'Baghdad IQ',
 		network: 'Google LLC',
-		onlineTimesToday: 1060,
+		onlineTimesToday: 106,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1686,7 +1686,7 @@ export const seed = async (knex) => {
 		longitude: 69.17,
 		name: 'Kabul-Microsoft-Node',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1080,
+		onlineTimesToday: 108,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1722,7 +1722,7 @@ export const seed = async (knex) => {
 		longitude: 73.06,
 		name: 'PK-ISLAMABAD-AWS-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 1100,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1764,7 +1764,7 @@ export const seed = async (knex) => {
 		longitude: 76.85,
 		name: 'KZ-ALMATY-GOOGLE-01',
 		network: 'Google LLC',
-		onlineTimesToday: 1220,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1806,7 +1806,7 @@ export const seed = async (knex) => {
 		longitude: 106.92,
 		name: 'MN-ULAANBAATAR-MS-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1240,
+		onlineTimesToday: 124,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1842,7 +1842,7 @@ export const seed = async (knex) => {
 		longitude: 125.75,
 		name: 'KP-PYONGYANG-AWS-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 1260,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1881,7 +1881,7 @@ export const seed = async (knex) => {
 		longitude: 102.60,
 		name: 'LA-VIENTIANE-CF-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 1280,
+		onlineTimesToday: 128,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1917,7 +1917,7 @@ export const seed = async (knex) => {
 		longitude: 104.93,
 		name: 'KH-PHNOM-PENH-GOOGLE-01',
 		network: 'Google LLC',
-		onlineTimesToday: 1300,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -1959,7 +1959,7 @@ export const seed = async (knex) => {
 		longitude: 96.08,
 		name: 'MM-NAYPYIDAW-MS-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1320,
+		onlineTimesToday: 132,
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
@@ -1995,7 +1995,7 @@ export const seed = async (knex) => {
 		longitude: 89.64,
 		name: 'BT-THIMPHU-AWS-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 1340,
+		onlineTimesToday: 0,
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
@@ -2038,7 +2038,7 @@ export const seed = async (knex) => {
 		longitude: -74.01,
 		name: 'NY-GOOGLE',
 		network: 'Google LLC',
-		onlineTimesToday: 1360,
+		onlineTimesToday: 136,
 		state: 'NY',
 		status: 'ready',
 		tags: JSON.stringify([
@@ -2074,7 +2074,7 @@ export const seed = async (knex) => {
 		longitude: -118.24,
 		name: null,
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1380,
+		onlineTimesToday: 0,
 		state: 'CA',
 		status: 'offline',
 		tags: JSON.stringify([
@@ -2107,7 +2107,7 @@ export const seed = async (knex) => {
 		longitude: -87.63,
 		name: 'US-CHICAGO-CF-01',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 1400,
+		onlineTimesToday: 14,
 		state: 'IL',
 		status: 'ready',
 		tags: JSON.stringify([
@@ -2143,7 +2143,7 @@ export const seed = async (knex) => {
 		longitude: -80.19,
 		name: 'US-MIAMI-AWS-01',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 1420,
+		onlineTimesToday: 0,
 		state: 'FL',
 		status: 'offline',
 		tags: JSON.stringify([
@@ -2179,7 +2179,7 @@ export const seed = async (knex) => {
 		longitude: -122.33,
 		name: 'US-SEATTLE',
 		network: 'Google LLC',
-		onlineTimesToday: 1440,
+		onlineTimesToday: 14,
 		state: 'WA',
 		status: 'ready',
 		tags: JSON.stringify([
@@ -2215,7 +2215,7 @@ export const seed = async (knex) => {
 		longitude: -96.80,
 		name: 'US-DALLAS-MS-01',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1460,
+		onlineTimesToday: 0,
 		state: 'TX',
 		status: 'offline',
 		tags: JSON.stringify([
@@ -2248,7 +2248,7 @@ export const seed = async (knex) => {
 		longitude: -104.99,
 		name: 'Denver',
 		network: 'Cloudflare, Inc.',
-		onlineTimesToday: 1480,
+		onlineTimesToday: 80,
 		state: 'CO',
 		status: 'ready',
 		tags: JSON.stringify([
@@ -2284,7 +2284,7 @@ export const seed = async (knex) => {
 		longitude: -84.39,
 		name: 'Atlanta Hawks',
 		network: 'Amazon.com, Inc.',
-		onlineTimesToday: 1500,
+		onlineTimesToday: 0,
 		state: 'GA',
 		status: 'offline',
 		tags: JSON.stringify([
@@ -2320,7 +2320,7 @@ export const seed = async (knex) => {
 		longitude: -71.06,
 		name: 'US-BOSTON-GOOGLE-01',
 		network: 'Google LLC',
-		onlineTimesToday: 1520,
+		onlineTimesToday: 20,
 		state: 'MA',
 		status: 'ready',
 		tags: JSON.stringify([
@@ -2356,7 +2356,7 @@ export const seed = async (knex) => {
 		longitude: -112.07,
 		name: 'MS',
 		network: 'Microsoft Corporation',
-		onlineTimesToday: 1540,
+		onlineTimesToday: 0,
 		state: 'AZ',
 		status: 'offline',
 		tags: JSON.stringify([
