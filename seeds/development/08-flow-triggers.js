@@ -79,8 +79,6 @@ export const seed = async (knex) => {
 			type: 'sponsors-cron-handler',
 		},
 	});
-
-	console.log('Manual triggers for flows added');
 };
 
 const createManualTrigger = async (config) => {
