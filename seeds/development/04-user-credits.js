@@ -101,7 +101,7 @@ export const seed = async (knex) => {
 
 	// Adopted probe credits
 	await knex('gp_credits_additions').insert([
-		...Array.from(Array(200).keys()).map(i => ({
+		...Array.from(Array(205).keys()).map(i => ({
 			amount: 150,
 			reason: 'adopted_probe',
 			meta: JSON.stringify({
