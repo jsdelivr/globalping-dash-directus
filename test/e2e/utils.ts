@@ -12,16 +12,16 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 		external_identifier: randomExternalId(),
 		email: `${userId.split('-')[0]}@example.com`,
 		role: userRole.id,
-		first_name: `John${suffix}`,
-		last_name: `Doe${suffix}`,
+		first_name: `Elliot${suffix}`,
+		last_name: `Reid${suffix}`,
 		password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
 		provider: 'default',
 		email_notifications: 0,
 		github_organizations: JSON.stringify([ `Scrubs${suffix}` ]),
-		github_username: `johndoe${suffix}`,
+		github_username: `elliotreid${suffix}`,
 		user_type: 'sponsor',
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
-		default_prefix: `johndoe${suffix}`,
+		default_prefix: `elliotreid${suffix}`,
 	};
 };
 
