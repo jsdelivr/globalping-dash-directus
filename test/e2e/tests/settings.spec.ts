@@ -8,14 +8,14 @@ test('Settings page', async ({ page }) => {
 	await page.getByLabel('Regenerate').click();
 	await page.getByLabel('Apply settings').click();
 
-	await page.getByLabel('First Name').fill('Johnny');
-	await page.getByLabel('johndoe').click();
+	await page.getByLabel('Last Name').fill('Reid-Dorian');
+	await page.getByLabel('elliotreid').click();
 	await page.locator('#defaultPrefix_1').getByText('Scrubs').click();
 	await page.getByLabel('Regenerate').click();
 	await page.getByLabel('Apply settings').click();
 
 	await page.goto('/settings');
-	await expect(page.getByLabel('First Name')).toHaveValue('Johnny');
+	await expect(page.getByLabel('Last Name')).toHaveValue('Reid-Dorian');
 });
 
 test('Delete account', async ({ page }) => {
