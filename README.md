@@ -1,5 +1,7 @@
 # Globalping dashboard directus
 
+The backend part of the [Globalping dashboard](https://github.com/jsdelivr/globalping-dash).
+
 ## Contributing
 
 You can run the project by following these steps:
@@ -23,8 +25,25 @@ You can run the project by following these steps:
 8. `pnpm init:dev`
 9. Go to http://localhost:18055 and log in:
     - Using your GitHub account
-    - As admin using email `admin@example.com` and password `password`
-    - Or as user using email `user@example.com` and password `user`
+    - As a regular user with lots of testing data using email `user@example.com` and password `user`
+    - As a regular user with no data (fresh account) using email `newuser@example.com` and password `newuser`
+    - As an admin using email `admin@example.com` and password `password`
+
+### Updates
+
+These commands should be enough in most cases:
+
+```
+pnpm run schema:apply
+pnpm run migrate
+docker compose up --build -d
+```
+
+To refresh the seed data if needed:
+
+```
+pnpm run seed
+```
 
 ## Prod first deploy
 
@@ -38,7 +57,7 @@ You can run the project by following these steps:
 8. login using github. Re-login as admin and give github user admin rights. Then set that value `AUTH_DISABLE_DEFAULT=true`. Then restart the container
 9. Login using github. Generate a static access token for your user and save it to the local .env file as `ADMIN_ACCESS_TOKEN`
 
-## Prod other deploys
+### Prod updates
 
 1. fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
 2. if there are changes in `.env.production.example` copy them to the env vars of the container
