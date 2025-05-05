@@ -64,6 +64,7 @@ export const addCredits = async (adoptedProbes: AdoptedProbe[], { services, data
 			ip,
 			name: name ?? null,
 		},
+		adopted_probe: id,
 	}))) as number[];
 
 	return result;
