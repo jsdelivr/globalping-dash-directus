@@ -66,6 +66,7 @@ describe('Adopted probes status cron handler', () => {
 						ip: '1.2.3.4',
 						name: null,
 					},
+					adopted_probe: '1',
 				},
 			],
 		]);

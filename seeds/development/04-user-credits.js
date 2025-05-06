@@ -113,6 +113,7 @@ export const seed = async (knex) => {
 			date_created: relativeDayUtc(-i),
 			github_id: user.external_identifier,
 			user_updated: null,
+			adopted_probe: probe1.id,
 		})),
 		...Array.from(Array(50).keys()).map(i => ({
 			amount: 150,
@@ -126,6 +127,7 @@ export const seed = async (knex) => {
 			date_created: relativeDayUtc(-i),
 			github_id: user.external_identifier,
 			user_updated: null,
+			adopted_probe: probe2.id,
 		})),
 	]);
 

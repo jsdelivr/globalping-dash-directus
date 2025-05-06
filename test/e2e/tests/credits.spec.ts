@@ -47,6 +47,7 @@ const addCredits = async (user: User) => {
 			ip: probeIP,
 			name: 'e2e-credits-adopted-probe',
 		}),
+		adopted_probe: probeId,
 	}, {
 		amount: 150,
 		consumed: 1,
@@ -59,6 +60,7 @@ const addCredits = async (user: User) => {
 			ip: probeIP,
 			name: 'e2e-credits-adopted-probe',
 		}),
+		adopted_probe: probeId,
 	},
 	{
 		amount: 150,
@@ -72,6 +74,7 @@ const addCredits = async (user: User) => {
 			ip: probeIP,
 			name: 'e2e-credits-adopted-probe',
 		}),
+		adopted_probe: probeId,
 	},
 	{
 		amount: 10000,
