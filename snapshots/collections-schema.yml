@@ -1761,7 +1761,7 @@ fields:
       table: gp_credits_additions
       data_type: varchar
       default_value: null
-      max_length: 255
+      max_length: 36
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
