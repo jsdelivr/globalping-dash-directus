@@ -77,6 +77,7 @@ const addData = async (user: User) => {
 			ip: probeIP,
 			name: 'e2e-credits-adopted-probe',
 		}),
+		adopted_probe: probeId,
 	},
 	...[ -2, -32, -62 ].map(daysAgo => ({
 		amount: 1000,
