@@ -40,7 +40,7 @@ export default defineEndpoint((router, context) => {
 
 			const query = value.query as unknown as {offset: number, limit: number};
 
-			const changes = await database.with('rows', database.unionAll([
+			const changesSql = database.unionAll([
 				database('gp_credits_additions')
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
 					.where('directus_users.id', value.accountability!.user!)
@@ -67,14 +67,18 @@ export default defineEndpoint((router, context) => {
 						database.raw('NULL as reason'),
 						database.raw('NULL as meta'),
 					),
-			]))
+			]);
+
+			const countSql = database.from(changesSql.clone().as('changes')).select(database.raw('count(*) over () as count')).first() as Promise<{ count: number }>;
+			const changesPageSql = changesSql
 				.select('*')
-				.from('rows')
 				.orderBy([{ column: 'date_created', order: 'desc' }, { column: 'type', order: 'desc' }])
-				.limit(query.limit).offset(query.offset) as CreditsChange[];
+				.limit(query.limit).offset(query.offset) as Promise<CreditsChange[]>;
+
+			const [{ count }, changes ] = await Promise.all([ countSql, changesPageSql ]);
 
 			changes.forEach((change) => { change.meta = JSON.parse(change.meta); });
-			res.send({ changes });
+			res.send({ changes, count });
 		} catch (error: unknown) {
 			logger.error(error);
 
