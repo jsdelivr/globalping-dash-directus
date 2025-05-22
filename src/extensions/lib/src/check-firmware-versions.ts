@@ -23,7 +23,7 @@ export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, co
 		const firmwareOutdated = isOutdated(probe.hardwareDeviceFirmware, context.env.TARGET_HW_DEVICE_FIRMWARE);
 		const nodeOutdated = isOutdated(probe.nodeVersion, context.env.TARGET_NODE_VERSION);
 
-		if (firmwareOutdated || nodeOutdated) {
+		if (firmwareOutdated || nodeOutdated || !probe.hardwareDeviceFirmware) {
 			const id = await sendNotificationToHardwareProbe(probe, userId, context);
 			return id;
 		}
