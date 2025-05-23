@@ -2447,8 +2447,8 @@ fields:
       hidden: false
       interface: input
       note: >-
-        Country value is not editable. If you are sure it is wrong please leave
-        a message here: https://github.com/jsdelivr/globalping/issues/268
+        Country value is not editable. If you are sure it is wrong please follow
+        these steps: https://github.com/jsdelivr/globalping/issues/660
       options: null
       readonly: false
       required: false
