@@ -3,11 +3,6 @@ import { defineHook } from '@directus/extensions-sdk';
 import axios from 'axios';
 import _ from 'lodash';
 
-type GithubUserResponse = {
-	login: string;
-	id: number;
-};
-
 type GithubOrgsResponse = {
 	login: string;
 }[];
@@ -28,7 +23,38 @@ type AuthPayload = {
 	session: string;
 };
 
+type GithubAuthMeta = {
+	event: 'auth.create' | 'auth.update';
+	identifier: string;
+	provider: 'github';
+	providerPayload: {
+		accessToken: string;
+		userInfo: { login: string };
+	};
+};
+
 export default defineHook(({ action, filter }, context) => {
+	filter('auth.create', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
+		const githubMeta = meta as GithubAuthMeta;
+		const token = githubMeta.providerPayload.accessToken;
+		const login = githubMeta.providerPayload.userInfo.login;
+
+		payload.github_oauth_token = token;
+		payload.github_username = login;
+		payload.default_prefix = login;
+		return payload;
+	});
+
+	filter('auth.update', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
+		const githubMeta = meta as GithubAuthMeta;
+		const token = githubMeta.providerPayload.accessToken;
+		const login = githubMeta.providerPayload.userInfo.login;
+
+		payload.github_oauth_token = token;
+		payload.github_username = login;
+		return payload;
+	});
+
 	action('auth.login', async (payload) => {
 		const userId = payload.user;
 		const provider = payload.provider;
@@ -75,24 +101,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 		throw new Error('Not enough data to sync with GitHub');
 	}
 
-	await Promise.all([
-		syncGitHubUsername(user, context),
-		syncGitHubOrganizations(user, context),
-	]);
-};
-
-const syncGitHubUsername = async (user: User, context: HookExtensionContext) => {
-	const githubResponse = await axios.get<GithubUserResponse>(`https://api.github.com/user/${user.external_identifier}`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
-	const githubUsername = githubResponse.data.login;
-
-	if (user.github_username !== githubUsername) {
-		await updateUser(user, { github_username: githubUsername }, context);
-	}
+	await syncGitHubOrganizations(user, context);
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
