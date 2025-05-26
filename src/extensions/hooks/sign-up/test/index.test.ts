@@ -60,7 +60,7 @@ describe('Sign-up hook', () => {
 			}),
 		},
 		env: {
-			GITHUB_ACCESS_TOKEN: 'fakeToken',
+			GITHUB_ACCESS_TOKEN: 'default-github-token',
 		},
 		database: {
 			transaction: async (f: any) => {
@@ -170,6 +170,7 @@ describe('Sign-up hook', () => {
 
 	it('action should fulfill organizations, credits', async () => {
 		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-github-token')
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
@@ -190,6 +191,7 @@ describe('Sign-up hook', () => {
 			last_name: 'jimaek',
 			github_username: null,
 			github_organizations: null,
+			github_oauth_token: 'user-github-token',
 		} });
 
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { github_organizations: [ 'jsdelivr' ] }]);

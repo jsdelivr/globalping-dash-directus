@@ -1,4 +1,3 @@
-
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import { getDirectusUsers, deleteUser } from '../repositories/directus.js';
@@ -11,7 +10,7 @@ export const removeBannedUsers = async (context: OperationContext) => {
 			return null;
 		}
 
-		const githubUser = await getGithubUser(user.external_identifier, context);
+		const githubUser = await getGithubUser(user, context);
 
 		if (githubUser === null) {
 			const id = await deleteUser(user, context);
