@@ -1,7 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
-import axios from 'axios';
 import { generateBytes } from '../../../lib/src/bytes.js';
+import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 
 export type User = {
 	provider: string;
@@ -13,6 +13,7 @@ export type User = {
 	user_type: string;
 	github_username?: string;
 	github_organizations: string[];
+	github_oauth_token: string | null;
 	email_notifications: boolean;
 	adoption_token?: string;
 	default_prefix?: string;
@@ -90,12 +91,8 @@ const fulfillFirstNameAndLastName = (user: User) => {
 };
 
 const fulfillOrganizations = async (userId: string, user: User, context: HookExtensionContext) => {
-	const orgsResponse = await axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
+	const client = getGithubApiClient(user.github_oauth_token, context);
+	const orgsResponse = await client.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`);
 	const githubOrgs = orgsResponse.data.map(org => org.login);
 
 	await updateUser(userId, { github_organizations: githubOrgs }, context);

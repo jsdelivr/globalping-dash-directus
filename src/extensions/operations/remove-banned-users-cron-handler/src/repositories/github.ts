@@ -1,15 +1,12 @@
 import type { OperationContext } from '@directus/extensions';
-import axios, { isAxiosError } from 'axios';
+import { isAxiosError } from 'axios';
+import { getGithubApiClient } from '../../../../lib/src/github-api-client.js';
 import type { DirectusUser, GithubUser } from '../types.js';
 
-export const getGithubUser = async (id: DirectusUser['external_identifier'], context: OperationContext) => {
+export const getGithubUser = async (user: DirectusUser, context: OperationContext) => {
 	try {
-		const response = await axios.get<GithubUser>(`https://api.github.com/user/${id}`, {
-			timeout: 5000,
-			headers: {
-				Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-			},
-		});
+		const client = getGithubApiClient(user.github_oauth_token, context);
+		const response = await client.get<GithubUser>(`https://api.github.com/user/${user.external_identifier}`);
 		return response.data;
 	} catch (error) {
 		if (isAxiosError(error) && error.response && error.response.status === 404) {

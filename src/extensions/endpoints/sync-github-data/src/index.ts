@@ -10,6 +10,7 @@ import { syncGithubData } from './actions/sync-github-data.js';
 export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
+		admin: boolean;
 	},
 	schema: object,
 };

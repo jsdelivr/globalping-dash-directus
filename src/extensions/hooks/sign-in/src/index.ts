@@ -1,12 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
-import axios from 'axios';
 import _ from 'lodash';
-
-type GithubUserResponse = {
-	login: string;
-	id: number;
-};
+import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 
 type GithubOrgsResponse = {
 	login: string;
@@ -17,6 +12,7 @@ type User = {
 	external_identifier: string | null;
 	github_username: string | null;
 	github_organizations: string[];
+	github_oauth_token: string | null;
 }
 
 type AuthPayload = {
@@ -28,7 +24,33 @@ type AuthPayload = {
 	session: string;
 };
 
+type GithubAuthMeta = {
+	event: 'auth.create' | 'auth.update';
+	identifier: string;
+	provider: 'github';
+	providerPayload: {
+		accessToken: string;
+		userInfo: { login: string };
+	};
+};
+
 export default defineHook(({ action, filter }, context) => {
+	filter('auth.create', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
+		const githubMeta = meta as GithubAuthMeta;
+
+		payload.github_oauth_token = githubMeta.providerPayload.accessToken;
+		payload.github_username = githubMeta.providerPayload.userInfo.login;
+		return payload;
+	});
+
+	filter('auth.update', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
+		const githubMeta = meta as GithubAuthMeta;
+
+		payload.github_oauth_token = githubMeta.providerPayload.accessToken;
+		payload.github_username = githubMeta.providerPayload.userInfo.login;
+		return payload;
+	});
+
 	action('auth.login', async (payload) => {
 		const userId = payload.user;
 		const provider = payload.provider;
@@ -75,33 +97,12 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 		throw new Error('Not enough data to sync with GitHub');
 	}
 
-	await Promise.all([
-		syncGitHubUsername(user, context),
-		syncGitHubOrganizations(user, context),
-	]);
-};
-
-const syncGitHubUsername = async (user: User, context: HookExtensionContext) => {
-	const githubResponse = await axios.get<GithubUserResponse>(`https://api.github.com/user/${user.external_identifier}`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
-	const githubUsername = githubResponse.data.login;
-
-	if (user.github_username !== githubUsername) {
-		await updateUser(user, { github_username: githubUsername }, context);
-	}
+	await syncGitHubOrganizations(user, context);
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
-	const orgsResponse = await axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
+	const client = getGithubApiClient(user.github_oauth_token, context);
+	const orgsResponse = await client.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`);
 	const githubOrgs = orgsResponse.data.map(org => org.login);
 
 	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {

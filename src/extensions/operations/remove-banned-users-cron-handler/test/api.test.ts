@@ -38,17 +38,23 @@ describe('Remove banned users CRON handler', () => {
 			id: 1,
 			github_username: 'valid_user',
 			external_identifier: 1,
+			github_oauth_token: 'user-1-github-token',
 		}, {
 			id: 2,
 			github_username: 'banned_user',
 			external_identifier: 2,
+			github_oauth_token: 'user-2-github-token',
 		}]);
 
-		nock('https://api.github.com').get('/user/1').reply(200, {
-			login: 'valid_user',
-		});
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-1-github-token')
+			.get('/user/1').reply(200, {
+				login: 'valid_user',
+			});
 
-		nock('https://api.github.com').get('/user/2').reply(404);
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-2-github-token')
+			.get('/user/2').reply(404);
 
 		deleteOne.resolves([ 2 ]);
 
