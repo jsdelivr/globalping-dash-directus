@@ -30,6 +30,9 @@ importers:
         specifier: ^2.18.1
         version: 2.18.1
     devDependencies:
+      '@isaacs/ttlcache':
+        specifier: ^1.4.1
+        version: 1.4.1
       '@martin-kolarik/eslint-config':
         specifier: ^7.3.2
         version: 7.3.2(eslint-plugin-chai-expect@3.1.0(eslint@8.57.0))(eslint-plugin-jsonc@2.16.0(eslint@8.57.0))(eslint-plugin-n@16.6.2(eslint@8.57.0))(eslint-plugin-prefer-let@3.0.1)(eslint-plugin-promise@6.6.0(eslint@8.57.0))(eslint@8.57.0)

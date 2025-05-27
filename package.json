@@ -15,6 +15,7 @@
 		"mysql": "^2.18.1"
 	},
 	"devDependencies": {
+		"@isaacs/ttlcache": "^1.4.1",
 		"@martin-kolarik/eslint-config": "^7.3.2",
 		"@playwright/test": "^1.48.2",
 		"@types/bluebird": "^3.5.42",
