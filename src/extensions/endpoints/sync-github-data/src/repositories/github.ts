@@ -1,5 +1,5 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import axios from 'axios';
+import { getGithubAxiosClient } from '../../../../lib/src/github-api-client.js';
 import type { User } from '../actions/sync-github-data.js';
 
 type GithubUserResponse = {
@@ -12,23 +12,15 @@ type GithubOrgsResponse = {
 }[];
 
 export const getGithubUsername = async (user: User, context: EndpointExtensionContext) => {
-	const response = await axios.get<GithubUserResponse>(`https://api.github.com/user/${user.external_identifier}`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
+	const client = getGithubAxiosClient(user.github_oauth_token, context);
+	const response = await client.get<GithubUserResponse>(`https://api.github.com/user/${user.external_identifier}`);
 	const githubUsername = response.data.login;
 	return githubUsername;
 };
 
 export const getGithubOrgs = async (user: User, context: EndpointExtensionContext) => {
-	const orgsResponse = await axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
+	const client = getGithubAxiosClient(user.github_oauth_token, context);
+	const orgsResponse = await client.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`);
 	const githubOrgs = orgsResponse.data.map(org => org.login);
 	return githubOrgs;
 };

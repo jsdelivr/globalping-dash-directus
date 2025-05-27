@@ -10,6 +10,7 @@ export type User = {
 	external_identifier: string | null;
 	github_username: string | null;
 	github_organizations: string[];
+	github_oauth_token: string | null;
 };
 
 const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data to sync with GitHub', 400);
