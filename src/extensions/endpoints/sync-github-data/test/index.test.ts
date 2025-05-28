@@ -70,10 +70,49 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
-				user: 'requester-id',
+				user: 'directus-id',
 			},
 			body: {
-				userId: 'user-id',
+				userId: 'directus-id',
+			},
+		};
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, {
+			login: 'new-username',
+		});
+
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+			login: 'new-org',
+		}]);
+
+		await request('/', req, res);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(resSend.callCount).to.equal(1);
+
+		expect(resSend.args[0]).to.deep.equal([{
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
+		}]);
+
+		expect(readOne.callCount).to.equal(1);
+		expect(updateOne.callCount).to.equal(1);
+
+		expect(updateOne.args[0]?.[1]).to.deep.equal({
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
+		});
+	});
+
+	it('should work if requester is admin', async () => {
+		endpoint(router, endpointContext);
+		const req = {
+			accountability: {
+				user: 'admin-id',
+				admin: true,
+			},
+			body: {
+				userId: 'directus-id',
 			},
 		};
 
@@ -108,10 +147,10 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
-				user: 'requester-id',
+				user: 'directus-id',
 			},
 			body: {
-				userId: 'user-id',
+				userId: 'directus-id',
 			},
 		};
 
@@ -152,10 +191,10 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
-				user: 'requester-id',
+				user: 'directus-id',
 			},
 			body: {
-				userId: 'user-id',
+				userId: 'directus-id',
 			},
 		};
 
@@ -185,7 +224,7 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			body: {
-				userId: 'user-id',
+				userId: 'directus-id',
 			},
 		};
 
@@ -201,7 +240,7 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
-				user: 'requester-id',
+				user: 'directus-id',
 			},
 			body: {},
 		};
@@ -218,10 +257,10 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
-				user: 'requester-id',
+				user: 'directus-id',
 			},
 			body: {
-				userId: 'user-id',
+				userId: 'directus-id',
 			},
 		};
 
@@ -239,10 +278,10 @@ describe('/sync-github-data endpoint', () => {
 		endpoint(router, endpointContext);
 		const req = {
 			accountability: {
-				user: 'requester-id',
+				user: 'directus-id',
 			},
 			body: {
-				userId: 'user-id',
+				userId: 'directus-id',
 			},
 		};
 
