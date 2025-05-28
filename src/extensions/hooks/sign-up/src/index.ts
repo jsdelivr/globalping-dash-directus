@@ -45,6 +45,7 @@ export default defineHook(({ filter, action }, context) => {
 		const user = payload as User;
 
 		if (user.provider === 'github') {
+			fulfillUsername(user);
 			fulfillFirstNameAndLastName(user);
 		}
 
@@ -64,6 +65,13 @@ export default defineHook(({ filter, action }, context) => {
 		]);
 	});
 });
+
+const fulfillUsername = (user: User) => {
+	const login = user.last_name;
+	user.last_name = undefined;
+	user.github_username = login;
+	user.default_prefix = login;
+};
 
 const fulfillFirstNameAndLastName = (user: User) => {
 	const login = user.github_username;

@@ -37,22 +37,17 @@ type GithubAuthMeta = {
 export default defineHook(({ action, filter }, context) => {
 	filter('auth.create', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
 		const githubMeta = meta as GithubAuthMeta;
-		const token = githubMeta.providerPayload.accessToken;
-		const login = githubMeta.providerPayload.userInfo.login;
 
-		payload.github_oauth_token = token;
-		payload.github_username = login;
-		payload.default_prefix = login;
+		payload.github_oauth_token = githubMeta.providerPayload.accessToken;
+		payload.github_username = githubMeta.providerPayload.userInfo.login;
 		return payload;
 	});
 
 	filter('auth.update', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
 		const githubMeta = meta as GithubAuthMeta;
-		const token = githubMeta.providerPayload.accessToken;
-		const login = githubMeta.providerPayload.userInfo.login;
 
-		payload.github_oauth_token = token;
-		payload.github_username = login;
+		payload.github_oauth_token = githubMeta.providerPayload.accessToken;
+		payload.github_username = githubMeta.providerPayload.userInfo.login;
 		return payload;
 	});
 
