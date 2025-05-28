@@ -2,7 +2,7 @@ import type { ApiExtensionContext } from '@directus/extensions';
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
-export const getGithubAxiosClient = (userToken: string | null, context: ApiExtensionContext) => {
+export const getGithubApiClient = (userToken: string | null, context: ApiExtensionContext) => {
 	if (!userToken) {
 		return axios.create({
 			timeout: 5000,

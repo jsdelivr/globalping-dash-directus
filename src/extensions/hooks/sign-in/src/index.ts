@@ -1,7 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
-import axios from 'axios';
 import _ from 'lodash';
+import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 
 type GithubOrgsResponse = {
 	login: string;
@@ -12,6 +12,7 @@ type User = {
 	external_identifier: string | null;
 	github_username: string | null;
 	github_organizations: string[];
+	github_oauth_token: string | null;
 }
 
 type AuthPayload = {
@@ -105,12 +106,8 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
-	const orgsResponse = await axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
+	const client = getGithubApiClient(user.github_oauth_token, context);
+	const orgsResponse = await client.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`);
 	const githubOrgs = orgsResponse.data.map(org => org.login);
 
 	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
