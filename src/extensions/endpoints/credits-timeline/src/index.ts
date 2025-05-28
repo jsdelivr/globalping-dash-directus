@@ -69,13 +69,13 @@ export default defineEndpoint((router, context) => {
 					),
 			]);
 
-			const countSql = database.from(changesSql.clone().as('changes')).select(database.raw('count(*) over () as count')).first() as Promise<{ count: number }>;
+			const countSql = database.from(changesSql.clone().as('changes')).select(database.raw('count(*) over () as count')).first() as Promise<{ count: number } | undefined>;
 			const changesPageSql = changesSql
 				.select('*')
 				.orderBy([{ column: 'date_created', order: 'desc' }, { column: 'type', order: 'desc' }])
 				.limit(query.limit).offset(query.offset) as Promise<CreditsChange[]>;
 
-			const [{ count }, changes ] = await Promise.all([ countSql, changesPageSql ]);
+			const [ { count } = { count: 0 }, changes ] = await Promise.all([ countSql, changesPageSql ]);
 
 			changes.forEach((change) => { change.meta = JSON.parse(change.meta); });
 			res.send({ changes, count });
