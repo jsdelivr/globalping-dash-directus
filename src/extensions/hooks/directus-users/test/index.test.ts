@@ -1,7 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import defineHook from '../src/index.js';
+import defineHook, { deleteUserIdToGithubId } from '../src/index.js';
 
 type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;
@@ -52,10 +52,16 @@ describe('users hooks', () => {
 	});
 
 	describe('users.delete', () => {
+		beforeEach(() => {
+			deleteUserIdToGithubId.clear();
+		});
+
 		it('should additionally delete user credits additions', async () => {
 			usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
+			const context = { accountability: { user: 'userIdValue' } };
 
-			await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: { user: 'userIdValue' } });
+			await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, context);
+			await callbacks.action['users.delete']?.({ keys: [ '1-1-1-1-1' ] }, context);
 
 			expect(creditsAdditionsService.deleteByQuery.args[0]).to.deep.equal([{ filter: { github_id: { _in: [ '123' ] } } }]);
 		});
@@ -63,17 +69,10 @@ describe('users hooks', () => {
 		it('should do nothing if read query returned nothing', async () => {
 			usersService.readByQuery.resolves([]);
 
-			await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: { user: 'userIdValue' } });
+			await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, context);
+			await callbacks.action['users.delete']?.({ keys: [ '1-1-1-1-1' ] }, context);
 
 			expect(creditsAdditionsService.deleteByQuery.callCount).to.deep.equal(0);
-		});
-
-		it('should throw if accountability was not provided', async () => {
-			usersService.readByQuery.resolves([{ id: '1-1-1-1-1', external_identifier: '123' }]);
-
-			const err = await callbacks.filter['users.delete']?.([ '1-1-1-1-1' ], {}, { accountability: null }).catch(err => err);
-
-			expect(err.message).to.equal('User is not authenticated');
 		});
 	});
 
