@@ -36,7 +36,7 @@ describe('Sign-in hook', () => {
 			}),
 		},
 		env: {
-			GITHUB_ACCESS_TOKEN: 'fakeToken',
+			GITHUB_ACCESS_TOKEN: 'default-github-token',
 		},
 		database: {},
 		getSchema: () => Promise.resolve({}),
@@ -66,7 +66,7 @@ describe('Sign-in hook', () => {
 			callbacks.filter['auth.create']?.(payload, {
 				provider: 'github',
 				providerPayload: {
-					accessToken: '123',
+					accessToken: 'user-github-token',
 					userInfo: { login: 'testUser' },
 				},
 			});
@@ -74,7 +74,7 @@ describe('Sign-in hook', () => {
 			expect(payload).to.deep.include({
 				auth_data: undefined,
 				github_username: 'testUser',
-				github_oauth_token: '123',
+				github_oauth_token: 'user-github-token',
 			});
 		});
 	});
@@ -88,7 +88,7 @@ describe('Sign-in hook', () => {
 			callbacks.filter['auth.create']?.(payload, {
 				provider: 'github',
 				providerPayload: {
-					accessToken: '123',
+					accessToken: 'user-github-token',
 					userInfo: { login: 'testUser' },
 				},
 			});
@@ -96,7 +96,7 @@ describe('Sign-in hook', () => {
 			expect(payload).to.deep.include({
 				auth_data: undefined,
 				github_username: 'testUser',
-				github_oauth_token: '123',
+				github_oauth_token: 'user-github-token',
 			});
 		});
 	});
@@ -106,9 +106,10 @@ describe('Sign-in hook', () => {
 			const userId = '123';
 			const githubId = '456';
 
-			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: null, github_organizations: [], github_oauth_token: '123' });
+			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer user-github-token')
 				.get(`/user/${githubId}/orgs`)
 				.reply(200, [{ login: 'jsdelivr' }]);
 
@@ -127,9 +128,10 @@ describe('Sign-in hook', () => {
 			const userId = '123';
 			const githubId = '456';
 
-			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: '123' });
+			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer user-github-token')
 				.get(`/user/${githubId}/orgs`)
 				.reply(200, [{ login: 'jsdelivr' }]);
 
@@ -141,6 +143,29 @@ describe('Sign-in hook', () => {
 			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
 			expect(nock.isDone()).to.equal(true);
 			expect(usersService.updateOne.callCount).to.equal(0);
+		});
+
+		it('should fallback to default github token if user token is invalid', async () => {
+			const userId = '123';
+			const githubId = '456';
+
+			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
+
+			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer user-github-token')
+				.get(`/user/${githubId}/orgs`)
+				.reply(401);
+
+			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer default-github-token')
+				.get(`/user/${githubId}/orgs`)
+				.reply(200, [{ login: 'jsdelivr' }]);
+
+			hook(events, context);
+
+			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
+
+			expect(nock.isDone()).to.equal(true);
 		});
 
 		it('should send error if there is no enough data to check username', async () => {

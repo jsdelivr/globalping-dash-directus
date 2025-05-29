@@ -19,7 +19,7 @@ describe('/sync-github-data endpoint', () => {
 			error: console.error,
 		},
 		env: {
-			GITHUB_ACCESS_TOKEN: 'your-github-access-token',
+			GITHUB_ACCESS_TOKEN: 'default-github-token',
 		},
 		services: {
 			ItemsService: itemsServiceStub,
@@ -55,10 +55,13 @@ describe('/sync-github-data endpoint', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 
+		readOne.reset();
+
 		readOne.resolves({
 			external_identifier: 'github-id',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
+			github_oauth_token: 'user-github-token',
 		});
 	});
 
@@ -185,6 +188,83 @@ describe('/sync-github-data endpoint', () => {
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
 		});
+	});
+
+	it('should retry with default github token if user token failed', async () => {
+		endpoint(router, endpointContext);
+		const req = {
+			accountability: {
+				user: 'directus-id',
+			},
+			body: {
+				userId: 'directus-id',
+			},
+		};
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-github-token')
+			.get('/user/github-id')
+			.reply(401);
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer default-github-token')
+			.get('/user/github-id')
+			.reply(200, {
+				login: 'new-username',
+			});
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-github-token')
+			.get('/user/github-id/orgs')
+			.reply(401);
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer default-github-token')
+			.get('/user/github-id/orgs')
+			.reply(200, [{
+				login: 'new-org',
+			}]);
+
+		await request('/', req, res);
+
+		expect(nock.isDone()).to.equal(true);
+	});
+
+	it('should use default github token if user token is null', async () => {
+		readOne.resolves({
+			external_identifier: 'github-id',
+			github_username: 'old-username',
+			github_organizations: [ 'old-org' ],
+			github_oauth_token: null,
+		});
+
+		endpoint(router, endpointContext);
+		const req = {
+			accountability: {
+				user: 'directus-id',
+			},
+			body: {
+				userId: 'directus-id',
+			},
+		};
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer default-github-token')
+			.get('/user/github-id')
+			.reply(200, {
+				login: 'new-username',
+			});
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer default-github-token')
+			.get('/user/github-id/orgs')
+			.reply(200, [{
+				login: 'new-org',
+			}]);
+
+		await request('/', req, res);
+
+		expect(nock.isDone()).to.equal(true);
 	});
 
 	it('should not call update if data is the same', async () => {
