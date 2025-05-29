@@ -4522,7 +4522,7 @@ relations:
       foreign_key_column: id
       constraint_name: gp_credits_additions_user_updated_foreign
       on_update: RESTRICT
-      on_delete: RESTRICT
+      on_delete: SET NULL
   - collection: gp_credits_deductions
     field: user_id
     related_collection: directus_users
@@ -4564,7 +4564,7 @@ relations:
       foreign_key_column: id
       constraint_name: gp_location_overrides_user_created_foreign
       on_update: RESTRICT
-      on_delete: RESTRICT
+      on_delete: SET NULL
   - collection: gp_location_overrides
     field: user_updated
     related_collection: directus_users
@@ -4585,7 +4585,7 @@ relations:
       foreign_key_column: id
       constraint_name: gp_location_overrides_user_updated_foreign
       on_update: RESTRICT
-      on_delete: RESTRICT
+      on_delete: SET NULL
   - collection: gp_probes
     field: userId
     related_collection: directus_users
@@ -4711,7 +4711,7 @@ relations:
       foreign_key_column: id
       constraint_name: sponsors_user_created_foreign
       on_update: RESTRICT
-      on_delete: RESTRICT
+      on_delete: SET NULL
   - collection: sponsors
     field: user_updated
     related_collection: directus_users
@@ -4732,4 +4732,4 @@ relations:
       foreign_key_column: id
       constraint_name: sponsors_user_updated_foreign
       on_update: RESTRICT
-      on_delete: RESTRICT
+      on_delete: SET NULL
