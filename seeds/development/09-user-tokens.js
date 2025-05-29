@@ -6,41 +6,31 @@ import { randomUUID } from 'node:crypto';
  */
 
 export const seed = async (knex) => {
-	const getUser = async () => {
-		return knex('directus_users')
-			.where({ github_username: 'johndoe' })
-			.select('id', 'external_identifier', 'github_username')
-			.first();
-	};
+	const getUser = async () => knex('directus_users')
+		.where({ github_username: 'johndoe' })
+		.select('id', 'external_identifier', 'github_username')
+		.first();
 
-	let user = await getUser();
+	const getAuthCodeApp = async () => knex('gp_apps')
+		.where({ name: 'Auth Code App' })
+		.select('id')
+		.first();
 
-	const authCodeAppId = randomUUID();
-	const clientCredentialsAppId = randomUUID();
-	await knex('gp_apps').insert([{
-		id: authCodeAppId,
-		user_created: user.id,
-		date_created: '2024-09-01 00:00:00',
-		name: 'Auth Code App',
-		secrets: JSON.stringify([ 'QicY5X3BLipbyojWkfzyd0vRYth/C/2GsCYw6VRfLgI=' ]), // secret: ic3sba25i27s6gic3ksb376krrmtsjbxk2uzn7v5fk6gmiqj
-		grants: JSON.stringify([ 'authorization_code', 'refresh_token' ]),
-		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
-	}, {
-		id: clientCredentialsAppId,
-		user_created: user.id,
-		date_created: '2024-09-01 00:00:00',
-		name: 'Client Credentials App',
-		owner_name: 'jsDelivr',
-		owner_url: 'https://www.jsdelivr.com/',
-		secrets: JSON.stringify([ 'xhQKGe2+hSCGgAnYYNF6uBNMFJ1YvcpaRzVs+JSpaWw=' ]), // secret: lyrhib7f2dtuh6fzojvupfhh4olkxofd4kibutw6z5guihvz
-		grants: JSON.stringify([ 'globalping_client_credentials', 'refresh_token' ]),
-		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
-	}]);
+	const getClientCredentialsApp = async () => knex('gp_apps')
+		.where({ name: 'Client Credentials App' })
+		.select('id')
+		.first();
+
+	const [ user, authCodeApp, clientCredentialsApp ] = await Promise.all([
+		getUser(),
+		getAuthCodeApp(),
+		getClientCredentialsApp(),
+	]);
 
 	await knex('gp_apps_approvals').insert([{
 		id: randomUUID(),
 		user: user.id,
-		app: authCodeAppId,
+		app: authCodeApp.id,
 		scopes: JSON.stringify([ 'measurements' ]),
 	}]);
 
@@ -78,7 +68,7 @@ export const seed = async (knex) => {
 		user_created: user.id,
 		user_updated: null,
 		value: 'mDyYJ7cYn0/txr8fQtqaCxW1MN3bbjBc8y+bz5M4+Cg=', // token: w7nkybaxtfnajebtagdcrxsbqr42kjre
-		app_id: authCodeAppId,
+		app_id: authCodeApp.id,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'refresh_token',
 		parent: null,
@@ -94,7 +84,7 @@ export const seed = async (knex) => {
 		user_created: user.id,
 		user_updated: null,
 		value: 't3lHNCiCf17iGssMzftULAGHr8jmttRORB7EeUonYn8=', // token: irhkax22pl5qd6qm6iiegikyndel4hh6
-		app_id: authCodeAppId,
+		app_id: authCodeApp.id,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'access_token',
 		parent: 3,
@@ -110,7 +100,7 @@ export const seed = async (knex) => {
 		user_created: user.id,
 		user_updated: null,
 		value: 'XfP0hC+L1TNOOTIP0U6LX7GWSUDuL/oEqTr+Dm+Z7gg=', // token: cd4j7g2m37e74wxivpuuj2xdt2acl6j6
-		app_id: clientCredentialsAppId,
+		app_id: clientCredentialsApp.id,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'refresh_token',
 		parent: null,
@@ -126,7 +116,7 @@ export const seed = async (knex) => {
 		user_created: user.id,
 		user_updated: null,
 		value: 'jR3Jx0KCKRc6IhuavjG7MqzslEFBDvTEb76hOMvVEx8=', // token: 3f2qkqbct7skzarkpihsrnak2brdasxk
-		app_id: clientCredentialsAppId,
+		app_id: clientCredentialsApp.id,
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'access_token',
 		parent: 5,
@@ -156,7 +146,7 @@ export const seed = async (knex) => {
 	},
 	{
 		id: 9,
-		name: 'prod-api-key-2024',
+		name: 'api-key-2024',
 		value: '8tV0wX1yZ3aB3cD5fG7hJ9kL2mN4pQ6rS8tV0wX1yZ3=',
 		date_created: '2024-03-21 09:15:00',
 		date_last_used: '2024-03-22',
@@ -240,7 +230,7 @@ export const seed = async (knex) => {
 	},
 	{
 		id: 16,
-		name: 'auth_token_prod',
+		name: 'auth_token_p',
 		value: 'W2xY4z6a7b9chI0jK2lM4nP6qS8tU0vW2xY4z6a7b9c=',
 		date_created: '2024-03-28 16:50:00',
 		date_last_used: '2024-03-29',

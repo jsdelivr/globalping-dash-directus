@@ -22,7 +22,7 @@ export const getGithubApiClient = (userToken: string | null, context: ApiExtensi
 	axiosRetry(client, {
 		retries: 1,
 		retryCondition: (error) => {
-			return error.response?.status === 401;
+			return error.response?.status === 401 || error.response?.status === 403;
 		},
 		onRetry: (_retryCount, _error, request) => {
 			request.headers!.Authorization = `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`;
