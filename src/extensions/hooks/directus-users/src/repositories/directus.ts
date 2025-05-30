@@ -26,15 +26,16 @@ export const getDirectusUsers = async (userIds: string[], accountability: Accoun
 	return users;
 };
 
-export const deleteCreditsAdditions = async (users: DirectusUser[], { services, database, getSchema }: HookExtensionContext) => {
-	const { ItemsService } = services;
+export const deleteCreditsAdditions = async (githubIds: string[], { services, database, getSchema }: HookExtensionContext) => {
+	if (githubIds.length === 0) {
+		return;
+	}
 
+	const { ItemsService } = services;
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 		schema: await getSchema({ database }),
 		knex: database,
 	});
 
-	const githubIds = users.map(user => user.external_identifier);
-	const result = await creditsAdditionsService.deleteByQuery({ filter: { github_id: { _in: githubIds } } }) as string[];
-	return result;
+	await creditsAdditionsService.deleteByQuery({ filter: { github_id: { _in: githubIds } } });
 };
