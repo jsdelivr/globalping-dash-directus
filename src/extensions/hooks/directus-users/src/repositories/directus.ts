@@ -26,7 +26,7 @@ export const getDirectusUsers = async (userIds: string[], accountability: Accoun
 	return users;
 };
 
-export const deleteCreditsAdditions = async (githubIds: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const deleteCreditsAdditions = async (githubIds: string[], accountability: Accountability | null, { services, database, getSchema }: HookExtensionContext) => {
 	if (githubIds.length === 0) {
 		return;
 	}
@@ -34,6 +34,7 @@ export const deleteCreditsAdditions = async (githubIds: string[], { services, da
 	const { ItemsService } = services;
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 		schema: await getSchema({ database }),
+		accountability,
 		knex: database,
 	});
 

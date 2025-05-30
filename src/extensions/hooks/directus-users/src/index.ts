@@ -24,9 +24,9 @@ export default defineHook(({ filter, action }, context) => {
 		users.forEach(user => deleteUserIdToGithubId.set(user.id, user.external_identifier));
 	});
 
-	action('users.delete', async (payload) => {
+	action('users.delete', async (payload, { accountability }) => {
 		const userIds = (payload.keys as string[]) || [];
 		const githubIds = userIds.map(id => deleteUserIdToGithubId.get(id)).filter(Boolean) as string[];
-		await deleteCreditsAdditions(githubIds, context);
+		await deleteCreditsAdditions(githubIds, accountability, context);
 	});
 });
