@@ -45,7 +45,7 @@ export const getProbesToCheck = async (offsetId: string, { env, database }: Oper
 		.whereRaw(`
 			(
 				(nodeVersion != ? AND nodeVersion IS NOT NULL)
-				OR (hardwareDeviceFirmware != ? AND hardwareDeviceFirmware IS NOT NULL)
+				OR (hardwareDeviceFirmware != ? AND hardwareDevice IS NOT NULL)
 			)
 			AND userId IS NOT NULL
 			AND status != 'offline'
