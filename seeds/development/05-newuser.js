@@ -6,7 +6,7 @@
 export const seed = async (knex) => {
 	const getUser = async () => {
 		return knex('directus_users')
-			.where({ github_username: 'christopherturk' })
+			.where({ github_username: 'christopher-turk' })
 			.select('id', 'external_identifier', 'github_username')
 			.first();
 	};
@@ -27,11 +27,11 @@ export const seed = async (knex) => {
 			external_identifier: '1234567892',
 			email_notifications: 0,
 			github_organizations: JSON.stringify([]),
-			github_username: 'christopherturk',
+			github_username: 'christopher-turk',
 			user_type: 'member',
 			token: 'dgx4jbUG7q7FmJF4zGFHtPyov2h3vIoB',
 			adoption_token: 'y5blwmhcwlxlc4asuagxp2lv3vuqeve7',
-			default_prefix: 'christopherturk',
+			default_prefix: 'christopher-turk',
 		}]);
 
 		console.log('Mock new user created. email: newuser@example.com password: newuser');

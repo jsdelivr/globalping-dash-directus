@@ -3,6 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
+import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validateUrl } from './utils.js';
 
 type Request = ExpressRequest & {
@@ -21,21 +22,25 @@ type AppToken = {
 const getApplicationsSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
+		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
+		userId: Joi.string().required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 	}).required(),
-}).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
 const revokeApplicationSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
+		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
+		userId: Joi.string().required(),
 		id: Joi.string().required(),
 	}).required(),
-}).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context) => {
 	const { database, logger } = context;
@@ -58,7 +63,7 @@ export default defineEndpoint((router, context) => {
 					ROW_NUMBER() OVER (PARTITION BY app_id ORDER BY date_last_used DESC) AS row_num
 				FROM gp_tokens
 				WHERE gp_tokens.user_created = ? AND gp_tokens.app_id IS NOT NULL
-			) AS rankedTokens`, [ value.accountability.user ]);
+			) AS rankedTokens`, [ value.query.userId ]);
 
 			const [ appTokens, [{ total }] ] = await Promise.all([
 				database
@@ -124,12 +129,12 @@ export default defineEndpoint((router, context) => {
 				database('gp_tokens')
 					.where({
 						app_id: req.body.id,
-						user_created: req.accountability.user,
+						user_created: req.body.userId,
 					}).del(),
 				database('gp_apps_approvals')
 					.where({
 						app: req.body.id,
-						user: req.accountability.user,
+						user: req.body.userId,
 					}).del(),
 			]);
 

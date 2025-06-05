@@ -3,6 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
+import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 
 type Request = ExpressRequest & {
 	accountability: EventContext['accountability'];
@@ -20,12 +21,14 @@ type CreditsChange = {
 const creditsTimelineSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
+		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
+		userId: Joi.string().required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 	}).required(),
-}).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
 export default defineEndpoint((router, context) => {
 	const { database, logger } = context;
@@ -43,7 +46,7 @@ export default defineEndpoint((router, context) => {
 			const changesSql = database.unionAll([
 				database('gp_credits_additions')
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
-					.where('directus_users.id', value.accountability!.user!)
+					.where('directus_users.id', value.query.userId)
 					.select(
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
@@ -58,7 +61,7 @@ export default defineEndpoint((router, context) => {
 						CASE WHEN gp_credits_additions.reason != 'adopted_probe' THEN gp_credits_additions.id END
 					`),
 				database('gp_credits_deductions')
-					.where('user_id', value.accountability!.user!)
+					.where('user_id', value.query.userId)
 					.select(
 						'id',
 						database.raw('"deduction" as type'),

@@ -5,9 +5,10 @@ import TTLCache from '@isaacs/ttlcache';
 import axios from 'axios';
 import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
-import Joi, { type CustomHelpers, type ErrorReport } from 'joi';
+import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
+import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
@@ -62,16 +63,6 @@ const generateRandomCode = () => {
 	return randomCode;
 };
 
-const allowOnlyForCurrentUserAndAdmin = (value: Request, helpers: CustomHelpers): Request | ErrorReport => {
-	const { accountability, body } = value;
-
-	if (accountability.admin !== true && accountability.user !== body.userId) {
-		return helpers.message({ custom: 'Allowed only for the current user or admin.' });
-	}
-
-	return value;
-};
-
 const sendCodeSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
@@ -81,7 +72,7 @@ const sendCodeSchema = Joi.object<Request>({
 		userId: Joi.string().required(),
 		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
 	}).required(),
-}).custom(allowOnlyForCurrentUserAndAdmin).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context) => {
 	const { env, logger } = context;
@@ -207,7 +198,7 @@ export default defineEndpoint((router, context) => {
 			userId: Joi.string().required(),
 			code: Joi.string().required(),
 		}).required(),
-	}).custom(allowOnlyForCurrentUserAndAdmin).unknown(true);
+	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 	router.post('/verify-code', async (request, res) => {
 		try {
