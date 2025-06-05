@@ -29,6 +29,7 @@ export const seed = async (knex) => {
 			github_organizations: JSON.stringify([ 'MaxCDN', 'appfleetcloud', 'jsdelivr', 'nice-registry', 'polyfills' ]),
 			github_username: 'johndoe',
 			user_type: 'sponsor',
+			token: 'ZUGcg_zQgPPuxmE9SWnR0eDyp-qszMP7',
 			adoption_token: 'HwuHxzK9ewaFjhWcFR0m3zPTuqyITyql',
 			default_prefix: 'johndoe',
 			public_probes: true,
