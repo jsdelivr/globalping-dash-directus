@@ -24,7 +24,12 @@ const creditsTimelineSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		userId: Joi.string().required(),
+		admin: Joi.boolean(),
+		userId: Joi.string().when('...accountability.admin', {
+			is: true,
+			then: Joi.string().allow(null),
+			otherwise: Joi.string(),
+		}).required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 	}).required(),
