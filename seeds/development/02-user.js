@@ -6,7 +6,7 @@
 export const seed = async (knex) => {
 	const getUser = async () => {
 		return knex('directus_users')
-			.where({ github_username: 'john-doe' })
+			.where({ github_username: 'john' })
 			.select('id', 'external_identifier', 'github_username')
 			.first();
 	};
@@ -27,11 +27,11 @@ export const seed = async (knex) => {
 			external_identifier: '1234567890',
 			email_notifications: 0,
 			github_organizations: JSON.stringify([ 'MaxCDN', 'appfleetcloud', 'jsdelivr', 'nice-registry', 'polyfills' ]),
-			github_username: 'john-doe',
+			github_username: 'john',
 			user_type: 'sponsor',
 			token: 'ZUGcg_zQgPPuxmE9SWnR0eDyp-qszMP7',
 			adoption_token: 'HwuHxzK9ewaFjhWcFR0m3zPTuqyITyql',
-			default_prefix: 'john-doe',
+			default_prefix: 'john',
 			public_probes: true,
 		}]);
 
