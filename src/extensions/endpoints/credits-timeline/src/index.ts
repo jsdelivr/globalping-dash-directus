@@ -24,11 +24,10 @@ const creditsTimelineSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		admin: Joi.boolean(),
 		userId: Joi.string().when('...accountability.admin', {
 			is: true,
-			then: Joi.string().allow(null),
-			otherwise: Joi.string(),
+			then: Joi.string(),
+			otherwise: Joi.string().disallow('all'),
 		}).required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
@@ -46,12 +45,12 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 			}
 
-			const query = value.query as unknown as {offset: number, limit: number};
+			const query = value.query as unknown as { userId: string, offset: number, limit: number };
 
 			const changesSql = database.unionAll([
 				database('gp_credits_additions')
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
-					.where('directus_users.id', value.query.userId)
+					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
 					.select(
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
@@ -66,7 +65,7 @@ export default defineEndpoint((router, context) => {
 						CASE WHEN gp_credits_additions.reason != 'adopted_probe' THEN gp_credits_additions.id END
 					`),
 				database('gp_credits_deductions')
-					.where('user_id', value.query.userId)
+					.modify(q => query.userId === 'all' ? q : q.where('user_id', query.userId))
 					.select(
 						'id',
 						database.raw('"deduction" as type'),
