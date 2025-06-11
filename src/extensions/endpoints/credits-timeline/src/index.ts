@@ -57,13 +57,24 @@ export default defineEndpoint((router, context) => {
 						'gp_credits_additions.date_created',
 						database.raw('SUM(gp_credits_additions.amount) as amount'),
 						'gp_credits_additions.reason',
-						database.raw('CASE WHEN gp_credits_additions.reason = "adopted_probe" THEN NULL ELSE gp_credits_additions.meta END as meta'),
+						database.raw('NULL as meta'),
 					)
-					// Group by date if reason is 'adopted_probe', otherwise no grouping (by adding grouping by id).
-					.groupByRaw(`
-						DATE(gp_credits_additions.date_created),
-						CASE WHEN gp_credits_additions.reason != 'adopted_probe' THEN gp_credits_additions.id END
-					`),
+					.where('gp_credits_additions.reason', 'adopted_probe')
+					.groupByRaw('DATE(gp_credits_additions.date_created)'),
+
+				database('gp_credits_additions')
+					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
+					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
+					.select(
+						'gp_credits_additions.id',
+						database.raw('"addition" as type'),
+						'gp_credits_additions.date_created',
+						database.raw('SUM(gp_credits_additions.amount) as amount'),
+						'gp_credits_additions.reason',
+						'gp_credits_additions.meta',
+					)
+					.whereNot('gp_credits_additions.reason', 'adopted_probe'),
+
 				database('gp_credits_deductions')
 					.modify(q => query.userId === 'all' ? q : q.where('user_id', query.userId))
 					.select(
