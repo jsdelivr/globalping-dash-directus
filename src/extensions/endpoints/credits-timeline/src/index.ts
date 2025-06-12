@@ -24,11 +24,7 @@ const creditsTimelineSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		userId: Joi.string().when('...accountability.admin', {
-			is: true,
-			then: Joi.string(),
-			otherwise: Joi.string().disallow('all'),
-		}).required(),
+		userId: Joi.string().required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 	}).required(),
@@ -69,7 +65,7 @@ export default defineEndpoint((router, context) => {
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
 						'gp_credits_additions.date_created',
-						database.raw('SUM(gp_credits_additions.amount) as amount'),
+						'gp_credits_additions.amount',
 						'gp_credits_additions.reason',
 						'gp_credits_additions.meta',
 					)
@@ -80,7 +76,7 @@ export default defineEndpoint((router, context) => {
 					.select(
 						'id',
 						database.raw('"deduction" as type'),
-						database.raw('date as date_created'),
+						database.raw('DATE_FORMAT(date, "%Y-%m-%d") as date_created'),
 						'amount',
 						database.raw('NULL as reason'),
 						database.raw('NULL as meta'),

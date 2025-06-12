@@ -17,6 +17,7 @@ type AppToken = {
 	app_name: string;
 	owner_name: string;
 	owner_url: string;
+	user_created: string;
 };
 
 const getApplicationsSchema = Joi.object<Request>({
@@ -53,17 +54,19 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 			}
 
-			const query = value.query as unknown as {offset: number, limit: number};
+			const query = value.query as unknown as {userId: string, offset: number, limit: number};
 
-			const rankedTokensQuery = database.raw(`(
-				SELECT
-					id,
-					app_id,
-					date_last_used,
-					ROW_NUMBER() OVER (PARTITION BY app_id ORDER BY date_last_used DESC) AS row_num
-				FROM gp_tokens
-				WHERE gp_tokens.user_created = ? AND gp_tokens.app_id IS NOT NULL
-			) AS rankedTokens`, [ value.query.userId ]);
+			const rankedTokensQuery = database('gp_tokens')
+				.select(
+					'id',
+					'app_id',
+					'date_last_used',
+					'user_created',
+					database.raw('ROW_NUMBER() OVER (PARTITION BY app_id, user_created ORDER BY date_last_used DESC) AS row_num'),
+				)
+				.whereNotNull('app_id')
+				.modify(q => query.userId === 'all' ? q : q.where('user_created', query.userId))
+				.as('rankedTokens');
 
 			const [ appTokens, [{ total }] ] = await Promise.all([
 				database
@@ -73,6 +76,7 @@ export default defineEndpoint((router, context) => {
 						'rankedTokens.id as id',
 						'rankedTokens.app_id as app_id',
 						'rankedTokens.date_last_used as date_last_used',
+						'rankedTokens.user_created',
 						'gp_apps.name as app_name',
 						'gp_apps.owner_name as owner_name',
 						'gp_apps.owner_url as owner_url',
@@ -96,6 +100,7 @@ export default defineEndpoint((router, context) => {
 					date_last_used: token.date_last_used,
 					owner_name: token.owner_name || 'Globalping',
 					owner_url: validateUrl(token.owner_url),
+					user_id: token.user_created,
 				};
 
 				if (!app.owner_url && app.owner_name === 'Globalping') {
