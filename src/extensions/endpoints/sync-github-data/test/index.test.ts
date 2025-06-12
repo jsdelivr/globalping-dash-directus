@@ -74,6 +74,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',
@@ -151,6 +152,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',
@@ -195,6 +197,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',
@@ -242,6 +245,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',
@@ -272,6 +276,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',
@@ -321,6 +326,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {},
 		};
@@ -338,6 +344,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',
@@ -359,6 +366,7 @@ describe('/sync-github-data endpoint', () => {
 		const req = {
 			accountability: {
 				user: 'directus-id',
+				admin: false,
 			},
 			body: {
 				userId: 'directus-id',

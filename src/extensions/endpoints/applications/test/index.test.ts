@@ -6,13 +6,13 @@ import * as sinon from 'sinon';
 import endpoint from '../src/index.js';
 
 describe('/credits-timeline endpoint', () => {
-	const firstStub = sinon.stub();
+	const countStub = sinon.stub();
 	const offsetStub = sinon.stub();
 
 	const database = new Proxy(() => database, {
 		get: (_target, property) => {
-			if (property === 'first') {
-				return firstStub;
+			if (property === 'count') {
+				return countStub;
 			} else if (property === 'offset') {
 				return offsetStub;
 			}
@@ -45,29 +45,33 @@ describe('/credits-timeline endpoint', () => {
 		get: (route: string, handler: (request: object, response: typeof res) => void) => {
 			routes[route] = handler;
 		},
+		post: (route: string, handler: (request: object, response: typeof res) => void) => {
+			routes[route] = handler;
+		},
 	} as unknown as Router;
 
 	beforeEach(() => {
 		sinon.reset();
 		resStatus.returns({ send: resSend });
-		firstStub.resolves({ count: 0 });
+		countStub.resolves([{ total: 0 }]);
 		offsetStub.resolves([]);
 	});
 
+	// @ts-expect-error Looks like @directus/extensions-sdk v12 adds wrong type.
 	endpoint(router, endpointContext);
 
 	it('should accept user request', async () => {
-		firstStub.resolves({ count: 1 });
-
 		offsetStub.resolves([{
 			id: '1',
-			type: 'addition',
-			date_created: '2025-04-10 02:00:00',
-			amount: 2000,
-			reason: 'one_time_sponsorship',
-			meta: JSON.stringify({ amountInDollars: 1 }),
-			adopted_probe: null,
+			app_id: 'app-1',
+			date_last_used: '2025-04-10 02:00:00',
+			user_created: 'user-1',
+			app_name: 'Client Credentials App',
+			owner_name: null,
+			owner_url: null,
 		}]);
+
+		countStub.resolves([{ total: 1 }]);
 
 		const req = {
 			accountability: {
@@ -85,18 +89,17 @@ describe('/credits-timeline endpoint', () => {
 
 		expect(resSend.args[0]).to.deep.equal([
 			{
-				changes: [
+				applications: [
 					{
-						id: '1',
-						type: 'addition',
-						date_created: '2025-04-10 02:00:00',
-						amount: 2000,
-						reason: 'one_time_sponsorship',
-						meta: { amountInDollars: 1 },
-						adopted_probe: null,
+						id: 'app-1',
+						name: 'Client Credentials App',
+						date_last_used: '2025-04-10 02:00:00',
+						owner_name: 'Globalping',
+						owner_url: 'https://globalping.io/',
+						user_id: 'user-1',
 					},
 				],
-				count: 1,
+				total: 1,
 			},
 		]);
 	});
@@ -131,7 +134,7 @@ describe('/credits-timeline endpoint', () => {
 
 		await request('/', req, res);
 
-		expect(resSend.args[0]).to.deep.equal([{ changes: [], count: 0 }]);
+		expect(resSend.args[0]).to.deep.equal([{ applications: [], total: 0 }]);
 	});
 
 	it('should accept admin request for all users', async () => {
@@ -147,7 +150,7 @@ describe('/credits-timeline endpoint', () => {
 
 		await request('/', req, res);
 
-		expect(resSend.args[0]).to.deep.equal([{ changes: [], count: 0 }]);
+		expect(resSend.args[0]).to.deep.equal([{ applications: [], total: 0 }]);
 	});
 
 	it('should reject user request for all users', async () => {
