@@ -5,7 +5,7 @@ import type { Knex } from 'knex';
 import * as sinon from 'sinon';
 import endpoint from '../src/index.js';
 
-describe('/credits-timeline endpoint', () => {
+describe('/applications endpoint', () => {
 	const countStub = sinon.stub();
 	const offsetStub = sinon.stub();
 
