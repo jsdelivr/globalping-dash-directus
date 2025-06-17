@@ -49,7 +49,7 @@ export const seed = async (knex) => {
 		status: 'offline',
 		tags: JSON.stringify([
 			{ value: 'tag-1', prefix: user.github_username },
-			{ value: 'naples-italy-irideo-network-3302', prefix: 'appfleetcloud' },
+			{ value: 'naples-italy-irideo-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4085-1427', prefix: user.github_username },
 			{ value: 'irideos-spa-italy-probe-0280', prefix: user.github_username },
 			{ value: 'backupnodebackupnodebackupnodeba', prefix: user.github_username },
@@ -164,7 +164,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'london-uk-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'london-uk-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5151--013', prefix: user.github_username },
 			{ value: 'google-llc-uk-probe-0340', prefix: user.github_username },
 			{ value: 'london-probe-01-ready-status', prefix: user.github_username },
@@ -213,7 +213,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'singapore-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'singapore-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-135-10386', prefix: user.github_username },
 			{ value: 'amazon-sg-probe-0340', prefix: user.github_username },
 		]),
@@ -251,7 +251,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'sydney-au-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'sydney-au-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter--3387-15121', prefix: user.github_username },
 			{ value: 'microsoft-au-probe-0340', prefix: user.github_username },
 			{ value: 'sydney-probe-01-ready', prefix: 'MaxCDN' },
@@ -286,7 +286,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'frankfurt-de-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'frankfurt-de-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5011-868', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -323,7 +323,7 @@ export const seed = async (knex) => {
 		state: 'SP',
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'sao-paulo-br-amazon-network-16550', prefix: 'appfleetcloud' },
+			{ value: 'sao-paulo-br-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter--2355--4663', prefix: user.github_username },
 			{ value: 'amazon-br-probe-0340', prefix: user.github_username },
 			{ value: 'sao-paulo-probe-01-ready', prefix: 'MaxCDN' },
@@ -402,7 +402,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'tokyo-jp-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'tokyo-jp-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3568-13976', prefix: user.github_username },
 			{ value: 'microsoft-jp-probe-0340', prefix: user.github_username },
 			{ value: 'tokyo-probe-01-ready', prefix: 'MaxCDN' },
@@ -445,7 +445,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'seoul-kr-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'seoul-kr-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3756-12697', prefix: user.github_username },
 			{ value: 'amazon-kr-probe-0340', prefix: user.github_username },
 		]),
@@ -488,7 +488,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'paris-fr-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'paris-fr-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4886-235', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -521,7 +521,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'dublin-ie-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'dublin-ie-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5335--626', prefix: user.github_username },
 			{ value: 'amazon-ie-probe-0340', prefix: user.github_username },
 		]),
@@ -599,7 +599,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'rome-it-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'rome-it-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4190-1250', prefix: user.github_username },
 			{ value: 'microsoft-it-probe-0340', prefix: user.github_username },
 			{ value: 'rome-probe-01-ready', prefix: 'MaxCDN' },
@@ -645,7 +645,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'amsterdam-nl-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'amsterdam-nl-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5237-490', prefix: user.github_username },
 			{ value: 'amazon-nl-probe-0340', prefix: user.github_username },
 			{ value: 'amsterdam-probe-01-ready', prefix: 'MaxCDN' },
@@ -684,7 +684,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'stockholm-se-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'stockholm-se-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5933-1807', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -722,7 +722,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'vienna-at-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'vienna-at-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4821-1637', prefix: user.github_username },
 			{ value: 'google-at-probe-0340', prefix: user.github_username },
 		]),
@@ -759,7 +759,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'zurich-ch-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'zurich-ch-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4738-854', prefix: user.github_username },
 			{ value: 'microsoft-ch-probe-0340', prefix: user.github_username },
 			{ value: 'zurich-probe-01-ready', prefix: 'MaxCDN' },
@@ -808,7 +808,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'copenhagen-dk-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'copenhagen-dk-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5568-1257', prefix: user.github_username },
 			{ value: 'amazon-dk-probe-0340', prefix: user.github_username },
 		]),
@@ -842,7 +842,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'helsinki-fi-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'helsinki-fi-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-6017-2494', prefix: user.github_username },
 			{ value: 'cloudflare-fi-probe-0340', prefix: user.github_username },
 			{ value: 'helsinki-probe-01-ready', prefix: 'MaxCDN' },
@@ -888,7 +888,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'oslo-no-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'oslo-no-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5991-1075', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -925,7 +925,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'warsaw-pl-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'warsaw-pl-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5223-2101', prefix: user.github_username },
 			{ value: 'microsoft-pl-probe-0340', prefix: user.github_username },
 		]),
@@ -968,7 +968,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'brussels-be-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'brussels-be-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5085-435', prefix: user.github_username },
 			{ value: 'amazon-be-probe-0340', prefix: user.github_username },
 		]),
@@ -1002,7 +1002,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'budapest-hu-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'budapest-hu-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4750-1904', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1045,7 +1045,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'bucharest-ro-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'bucharest-ro-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4443-2610', prefix: user.github_username },
 			{ value: 'google-ro-probe-0340', prefix: user.github_username },
 		]),
@@ -1082,7 +1082,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'sofia-bg-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'sofia-bg-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4270-2332', prefix: user.github_username },
 			{ value: 'microsoft-bg-probe-0340', prefix: user.github_username },
 		]),
@@ -1126,7 +1126,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'belgrade-rs-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'belgrade-rs-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4482-2046', prefix: user.github_username },
 			{ value: 'amazon-rs-probe-0340', prefix: user.github_username },
 		]),
@@ -1160,7 +1160,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'zagreb-hr-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'zagreb-hr-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4581-1598', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1202,7 +1202,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'ljubljana-si-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'ljubljana-si-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4606-1451', prefix: user.github_username },
 			{ value: 'google-si-probe-0340', prefix: user.github_username },
 		]),
@@ -1239,7 +1239,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'riga-lv-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'riga-lv-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5695-2411', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1272,7 +1272,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'tallinn-ee-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'tallinn-ee-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5944-2475', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1315,7 +1315,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'vilnius-lt-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'vilnius-lt-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-5469-2528', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1351,7 +1351,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'bratislava-sk-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'bratislava-sk-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4815-1711', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1394,7 +1394,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'athens-gr-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'athens-gr-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3798-2373', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1434,7 +1434,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'istanbul-tr-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'istanbul-tr-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4101-2898', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1470,7 +1470,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'tbilisi-ge-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'tbilisi-ge-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4172-4478', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1512,7 +1512,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'yerevan-am-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'yerevan-am-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4018-4451', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1548,7 +1548,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'baku-az-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'baku-az-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4041-4987', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1587,7 +1587,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'tehran-ir-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'tehran-ir-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3570-5142', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1623,7 +1623,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'baghdad-iq-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'baghdad-iq-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3331-4436', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1665,7 +1665,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'kabul-af-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'kabul-af-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3453-6917', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1701,7 +1701,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'islamabad-pk-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'islamabad-pk-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3372-7306', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1743,7 +1743,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'almaty-kz-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'almaty-kz-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4322-7685', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1785,7 +1785,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'ulaanbaatar-mn-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'ulaanbaatar-mn-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4792-10692', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1821,7 +1821,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'pyongyang-kp-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'pyongyang-kp-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3903-12575', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1860,7 +1860,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'vientiane-la-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'vientiane-la-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-1797-10260', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1896,7 +1896,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'phnom-penh-kh-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'phnom-penh-kh-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-1156-10493', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -1938,7 +1938,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'naypyidaw-mm-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'naypyidaw-mm-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-1976-9608', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -1974,7 +1974,7 @@ export const seed = async (knex) => {
 		state: null,
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'thimphu-bt-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'thimphu-bt-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-2747-8964', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -2017,7 +2017,7 @@ export const seed = async (knex) => {
 		state: 'NY',
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'new-york-us-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'new-york-us-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4071-7401', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2053,7 +2053,7 @@ export const seed = async (knex) => {
 		state: 'CA',
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'los-angeles-us-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'los-angeles-us-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3405-11824', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2086,7 +2086,7 @@ export const seed = async (knex) => {
 		state: 'IL',
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'chicago-us-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'chicago-us-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4188-8763', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2122,7 +2122,7 @@ export const seed = async (knex) => {
 		state: 'FL',
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'miami-us-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'miami-us-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-2576-8019', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -2158,7 +2158,7 @@ export const seed = async (knex) => {
 		state: 'WA',
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'seattle-us-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'seattle-us-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4761-12233', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2194,7 +2194,7 @@ export const seed = async (knex) => {
 		state: 'TX',
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'dallas-us-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'dallas-us-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3278-9680', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2227,7 +2227,7 @@ export const seed = async (knex) => {
 		state: 'CO',
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'denver-us-cloudflare-network-13335', prefix: 'appfleetcloud' },
+			{ value: 'denver-us-cloudflare-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3974-10499', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2263,7 +2263,7 @@ export const seed = async (knex) => {
 		state: 'GA',
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'atlanta-us-amazon-network-16509', prefix: 'appfleetcloud' },
+			{ value: 'atlanta-us-amazon-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3375-8439', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([]),
@@ -2299,7 +2299,7 @@ export const seed = async (knex) => {
 		state: 'MA',
 		status: 'ready',
 		tags: JSON.stringify([
-			{ value: 'boston-us-google-network-15169', prefix: 'appfleetcloud' },
+			{ value: 'boston-us-google-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-4236-7106', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2335,7 +2335,7 @@ export const seed = async (knex) => {
 		state: 'AZ',
 		status: 'offline',
 		tags: JSON.stringify([
-			{ value: 'phoenix-us-microsoft-network-8075', prefix: 'appfleetcloud' },
+			{ value: 'phoenix-us-microsoft-network', prefix: 'appfleetcloud' },
 			{ value: 'datacenter-3345-11207', prefix: user.github_username },
 		]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
