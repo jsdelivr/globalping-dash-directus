@@ -4,6 +4,11 @@ The backend part of the [Globalping dashboard](https://github.com/jsdelivr/globa
 
 ## Contributing
 
+To run this project, you need to have the following dependencies installed:
+ - Docker
+ - node.js
+ - [`jq`](https://jqlang.org/) (used in some of the dev scripts)
+
 You can run the project by following these steps:
 
 1. Copy `.env.example` to `.env`
