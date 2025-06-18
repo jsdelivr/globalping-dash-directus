@@ -74,12 +74,9 @@ pnpm run seed
 
 Create extension:
 
-`npx --yes create-directus-extension@latest`
-
-Add tests to extension:
-
+1. `npx --yes create-directus-extension@latest`
+2. Run script from the extension folder to set up unit testing
 ```bash
-# From the extension folder call:
 original_dir=$PWD
 pnpm add --save-dev chai @types/chai mocha @types/mocha sinon @types/sinon ts-node @directus/extensions @directus/types
 jq --tab 'del(.compilerOptions.rootDir) | .compilerOptions.module = "ESNext" | .compilerOptions.resolveJsonModule = true | .include = ["./src/**/*.ts", "../../lib/*.ts", "./test/**/*.ts"]' tsconfig.json > temp.json && mv temp.json tsconfig.json

@@ -5,6 +5,7 @@ import axios from 'axios';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { syncGithubData } from './actions/sync-github-data.js';
 
 export type Request = ExpressRequest & {
@@ -25,11 +26,12 @@ const rateLimiter = new RateLimiterMemory({
 const syncGithubDataSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
+		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
 		userId: Joi.string().required(),
 	}).required(),
-}).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context: EndpointExtensionContext) => {
 	router.post('/', async (req, res) => {
@@ -47,7 +49,7 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 
 			await rateLimiter.consume(requesterId, 1).catch(() => { throw new TooManyRequestsError(); });
 
-			const result = await syncGithubData(userId, value.accountability, context);
+			const result = await syncGithubData(userId, context);
 
 			res.send(result);
 		} catch (error: unknown) {

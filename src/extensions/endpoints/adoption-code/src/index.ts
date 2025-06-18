@@ -8,11 +8,13 @@ import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
+import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
+		admin: boolean;
 	},
 	schema: object,
 };
@@ -64,11 +66,13 @@ const generateRandomCode = () => {
 const sendCodeSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
+		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
+		userId: Joi.string().required(),
 		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
 	}).required(),
-}).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context) => {
 	const { env, logger } = context;
@@ -80,7 +84,7 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 			}
 
-			const userId = value.accountability.user;
+			const userId = value.body.userId;
 			let ip: string;
 
 			try {
@@ -89,7 +93,7 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe IP address format is wrong', 400))();
 			}
 
-			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
+			await rateLimiter.consume(value.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
 
 			const adoptedProbe = await findAdoptedProbeByIp(ip, context as unknown as EndpointExtensionContext);
 
@@ -188,11 +192,13 @@ export default defineEndpoint((router, context) => {
 	const verifyCodeSchema = Joi.object<Request>({
 		accountability: Joi.object({
 			user: Joi.string().required(),
+			admin: Joi.boolean().required(),
 		}).required().unknown(true),
 		body: Joi.object({
+			userId: Joi.string().required(),
 			code: Joi.string().required(),
 		}).required(),
-	}).unknown(true);
+	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 	router.post('/verify-code', async (request, res) => {
 		try {
@@ -202,10 +208,10 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 			}
 
-			const userId = req.accountability.user;
+			const userId = req.body.userId;
 			const userCode = req.body.code.replaceAll(' ', '');
 
-			await rateLimiter.consume(userId, 1).catch(() => { throw new TooManyRequestsError(); });
+			await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
 
 			const value = probesToAdopt.get(userId);
 
@@ -217,7 +223,7 @@ export default defineEndpoint((router, context) => {
 			const [ id, name ] = await createAdoptedProbe(userId, probe, context);
 
 			probesToAdopt.delete(userId);
-			await rateLimiter.delete(userId);
+			await rateLimiter.delete(req.accountability.user);
 
 			await checkFirmwareVersions({
 				id,

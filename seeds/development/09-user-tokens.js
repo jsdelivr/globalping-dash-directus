@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 
 export const seed = async (knex) => {
 	const getUser = async () => knex('directus_users')
-		.where({ github_username: 'johndoe' })
+		.where({ github_username: 'john' })
 		.select('id', 'external_identifier', 'github_username')
 		.first();
 

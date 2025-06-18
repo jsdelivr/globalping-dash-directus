@@ -1,7 +1,6 @@
 import { createError } from '@directus/errors';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
-import type { Request } from '../index.js';
 import { getDirectusUser, updateDirectusUser } from '../repositories/directus.js';
 import { getGithubOrgs, getGithubUsername } from '../repositories/github.js';
 
@@ -15,8 +14,8 @@ export type User = {
 
 const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data to sync with GitHub', 400);
 
-export const syncGithubData = async (userId: string, accountability: Request['accountability'], context: EndpointExtensionContext) => {
-	const user = await getDirectusUser(userId, accountability, context);
+export const syncGithubData = async (userId: string, context: EndpointExtensionContext) => {
+	const user = await getDirectusUser(userId, context);
 	const githubId = user?.external_identifier;
 	const username = user?.github_username;
 

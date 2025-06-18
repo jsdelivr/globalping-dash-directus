@@ -88,8 +88,10 @@ describe('adoption code endpoints', () => {
 			const req = {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			};
@@ -124,8 +126,10 @@ describe('adoption code endpoints', () => {
 			const req = {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '2a04:4e42:0200:0000:0000:0000:0000:0485',
 				},
 			};
@@ -160,8 +164,10 @@ describe('adoption code endpoints', () => {
 			const req = {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '2a04:4e42:200::485',
 				},
 			};
@@ -207,13 +213,76 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[0]).to.deep.equal([ '"accountability" is required' ]);
 		});
 
+		it('should reject requests with another user', async () => {
+			endpoint(router, endpointContext);
+			const req = {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
+				},
+				body: {
+					userId: 'anotherUserId',
+					ip: '1.1.1.1',
+				},
+			};
+
+			await request('/send-code', req, res);
+
+			expect(resStatus.callCount).to.equal(1);
+			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
+			expect(resSend.callCount).to.equal(1);
+			expect(resSend.args[0]).to.deep.equal([ 'Allowed only for the current user or admin.' ]);
+		});
+
+		it('should allow admin requests with another user', async () => {
+			endpoint(router, endpointContext);
+			const req = {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: true,
+				},
+				body: {
+					userId: 'anotherUserId',
+					ip: '1.1.1.1',
+				},
+			};
+
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				expect(body.ip).to.equal('1.1.1.1');
+				expect(body.code.length).to.equal(6);
+				return true;
+			}).reply(200, {
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
+				status: 'ready',
+				city: 'Paris',
+				country: 'FR',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+			});
+
+			await request('/send-code', req, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(1);
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+		});
+
 		it('should reject without ip', async () => {
 			endpoint(router, endpointContext);
 			const req = {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
-				body: {},
+				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
 			};
 
 			await request('/send-code', req, res);
@@ -224,13 +293,35 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[0]).to.deep.equal([ '"body.ip" is required' ]);
 		});
 
+		it('should reject without userId', async () => {
+			endpoint(router, endpointContext);
+			const req = {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
+				},
+				body: {
+					ip: '1.1.1.1',
+				},
+			};
+
+			await request('/send-code', req, res);
+
+			expect(resStatus.callCount).to.equal(1);
+			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
+			expect(resSend.callCount).to.equal(1);
+			expect(resSend.args[0]).to.deep.equal([ '"body.userId" is required' ]);
+		});
+
 		it('should reject with wrong ip', async () => {
 			endpoint(router, endpointContext);
 			const req = {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.863',
 				},
 			};
@@ -248,8 +339,10 @@ describe('adoption code endpoints', () => {
 			const req = {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			};
@@ -313,17 +406,21 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
 					ip: '1.1.1.1',
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				},
 			}, res);
 
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code,
 				},
 			}, res);
@@ -394,9 +491,11 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
 					ip: '1.1.1.1',
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 				},
 			}, res);
 
@@ -405,8 +504,10 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code,
 				},
 			}, res);
@@ -437,8 +538,10 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
@@ -446,8 +549,10 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code,
 				},
 			}, res);
@@ -520,8 +625,10 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
@@ -529,8 +636,10 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code: ` ${[ ...code ].join(' ')} `,
 				},
 			}, res);
@@ -603,14 +712,17 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
 
 			await request('/verify-code', {
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code,
 				},
 			}, res);
@@ -620,6 +732,82 @@ describe('adoption code endpoints', () => {
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 			expect(resSend.args[1]).to.deep.equal([ '"accountability" is required' ]);
 			expect(createOne.callCount).to.equal(0);
+		});
+
+		it('should reject another user requests', async () => {
+			endpoint(router, endpointContext);
+			let code = '';
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				expect(body.ip).to.equal('1.1.1.1');
+				expect(body.code.length).to.equal(6);
+				code = body.code;
+				return true;
+			}).reply(200, defaultAdoptionCodeResponse);
+
+			await request('/send-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
+				},
+				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			await request('/verify-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
+				},
+				body: {
+					userId: 'anotherUserId',
+					code,
+				},
+			}, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(2);
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(resSend.args[1]).to.deep.equal([ 'Allowed only for the current user or admin.' ]);
+			expect(createOne.callCount).to.equal(0);
+		});
+
+		it('should allow another user admin requests', async () => {
+			endpoint(router, endpointContext);
+			let code = '';
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				expect(body.ip).to.equal('1.1.1.1');
+				expect(body.code.length).to.equal(6);
+				code = body.code;
+				return true;
+			}).reply(200, defaultAdoptionCodeResponse);
+
+			await request('/send-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: true,
+				},
+				body: {
+					userId: 'anotherUserId',
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			await request('/verify-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: true,
+				},
+				body: {
+					userId: 'anotherUserId',
+					code,
+				},
+			}, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(2);
+			expect(createOne.callCount).to.equal(1);
 		});
 
 		it('should reject without code', async () => {
@@ -634,8 +822,10 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
@@ -643,14 +833,54 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
-				body: {},
+				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				},
 			}, res);
 
 			expect(nock.isDone()).to.equal(true);
 			expect(resSend.callCount).to.equal(2);
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 			expect(resSend.args[1]).to.deep.equal([ '"body.code" is required' ]);
+			expect(createOne.callCount).to.equal(0);
+		});
+
+		it('should reject without userId', async () => {
+			endpoint(router, endpointContext);
+
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				expect(body.ip).to.equal('1.1.1.1');
+				expect(body.code.length).to.equal(6);
+				return true;
+			}).reply(200, defaultAdoptionCodeResponse);
+
+			await request('/send-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
+				},
+				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			await request('/verify-code', {
+				accountability: {
+					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
+				},
+				body: {
+					ip: '1.1.1.1',
+				},
+			}, res);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(resSend.callCount).to.equal(2);
+			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(resSend.args[1]).to.deep.equal([ '"body.userId" is required' ]);
 			expect(createOne.callCount).to.equal(0);
 		});
 
@@ -666,8 +896,10 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
@@ -675,8 +907,10 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code: 'KLS67',
 				},
 			}, res);
@@ -700,8 +934,10 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
@@ -711,8 +947,10 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code,
 				},
 			}, res);
@@ -742,8 +980,10 @@ describe('adoption code endpoints', () => {
 			await request('/send-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					ip: '1.1.1.1',
 				},
 			}, res);
@@ -753,8 +993,10 @@ describe('adoption code endpoints', () => {
 			await request('/verify-code', {
 				accountability: {
 					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+					admin: false,
 				},
 				body: {
+					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 					code,
 				},
 			}, res);
