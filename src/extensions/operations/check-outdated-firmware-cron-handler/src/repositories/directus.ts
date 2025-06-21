@@ -9,7 +9,7 @@ export type AdoptedProbe = {
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	nodeVersion: string | null;
-}
+};
 
 export const getAlreadyNotifiedProbes = async ({ env, services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;

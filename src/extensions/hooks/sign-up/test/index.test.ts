@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
@@ -184,15 +183,18 @@ describe('Sign-up hook', () => {
 
 		hook(events, context);
 
-		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
-			provider: 'github',
-			external_identifier: '1834071',
-			first_name: 'Dmitriy Akulov',
-			last_name: 'jimaek',
-			github_username: null,
-			github_organizations: null,
-			github_oauth_token: 'user-github-token',
-		} });
+		await callbacks.action['users.create']?.({
+			key: '1-1-1-1',
+			payload: {
+				provider: 'github',
+				external_identifier: '1834071',
+				first_name: 'Dmitriy Akulov',
+				last_name: 'jimaek',
+				github_username: null,
+				github_organizations: null,
+				github_oauth_token: 'user-github-token',
+			},
+		});
 
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { github_organizations: [ 'jsdelivr' ] }]);
 
@@ -217,14 +219,17 @@ describe('Sign-up hook', () => {
 
 		hook(events, context);
 
-		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
-			provider: 'github',
-			external_identifier: '1834071',
-			first_name: 'Dmitriy Akulov',
-			last_name: 'jimaek',
-			github_username: null,
-			github_organizations: null,
-		} });
+		await callbacks.action['users.create']?.({
+			key: '1-1-1-1',
+			payload: {
+				provider: 'github',
+				external_identifier: '1834071',
+				first_name: 'Dmitriy Akulov',
+				last_name: 'jimaek',
+				github_username: null,
+				github_organizations: null,
+			},
+		});
 
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { user_type: 'sponsor' }]);
 	});
@@ -240,14 +245,17 @@ describe('Sign-up hook', () => {
 
 		hook(events, context);
 
-		await callbacks.action['users.create']?.({ key: '1-1-1-1', payload: {
-			provider: 'github',
-			external_identifier: '1834071',
-			first_name: 'Dmitriy Akulov',
-			last_name: 'jimaek',
-			github_username: null,
-			github_organizations: null,
-		} });
+		await callbacks.action['users.create']?.({
+			key: '1-1-1-1',
+			payload: {
+				provider: 'github',
+				external_identifier: '1834071',
+				first_name: 'Dmitriy Akulov',
+				last_name: 'jimaek',
+				github_username: null,
+				github_organizations: null,
+			},
+		});
 
 		expect(notificationsService.createOne.args[0]).to.deep.equal([{
 			recipient: '1-1-1-1',

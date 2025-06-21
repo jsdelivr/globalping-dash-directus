@@ -5,4 +5,4 @@ export type AdoptedProbe = {
 	ip: string;
 	status: string;
 	lastSyncDate: Date;
-}
+};

@@ -27,10 +27,12 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 			knex: trx,
 		});
 
-		await usersService.updateByQuery({ filter: {
-			external_identifier: githubSponsor.githubId,
-			user_type: { _neq: 'special' },
-		} }, {
+		await usersService.updateByQuery({
+			filter: {
+				external_identifier: githubSponsor.githubId,
+				user_type: { _neq: 'special' },
+			},
+		}, {
 			user_type: 'sponsor',
 		});
 
@@ -73,10 +75,12 @@ export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { 
 			knex: trx,
 		});
 
-		await usersService.updateByQuery({ filter: {
-			external_identifier: directusSponsor.github_id,
-			user_type: { _neq: 'special' },
-		} }, {
+		await usersService.updateByQuery({
+			filter: {
+				external_identifier: directusSponsor.github_id,
+				user_type: { _neq: 'special' },
+			},
+		}, {
 			user_type: 'member',
 		});
 

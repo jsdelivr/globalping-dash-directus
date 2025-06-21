@@ -78,7 +78,7 @@ export const validateCustomLocation = async (fields: Fields, keys: string[], acc
 	}
 
 	const url = `http://api.geonames.org/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=${env.GEONAMES_USERNAME}&country=${fields.country || probe.country}&q=${fields.city || probe.city}`;
-	const response = await axios<{totalResultsCount: number, geonames: City[]}>(url, {
+	const response = await axios<{ totalResultsCount: number; geonames: City[] }>(url, {
 		timeout: 5000,
 	});
 

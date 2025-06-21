@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { isDirectusError } from '@directus/errors';
 import { expect } from 'chai';
 import nock from 'nock';

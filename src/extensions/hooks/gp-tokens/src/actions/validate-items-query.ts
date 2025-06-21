@@ -17,7 +17,7 @@ const getKeysDeep = (entity: object | object[] | string[]) => {
 	return [ ...keys, ...nestedKeys ];
 };
 
-export const validateQuery = (query: {filter?: object, search?: object} = {}) => {
+export const validateQuery = (query: { filter?: object; search?: object } = {}) => {
 	if (query.filter) {
 		const filterKeys = getKeysDeep(query.filter);
 		const dataFields = _.uniq(filterKeys).filter(key => !key.startsWith('_'));

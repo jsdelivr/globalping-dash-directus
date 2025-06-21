@@ -7,7 +7,7 @@ export const NOTIFY_AFTER_DAYS = 2;
 export const REMOVE_AFTER_DAYS = 30;
 
 
-export const removeExpiredAdoptions = async (context: OperationContext): Promise<{ notifiedIds: string[], removedIds: string[] }> => {
+export const removeExpiredAdoptions = async (context: OperationContext): Promise<{ notifiedIds: string[]; removedIds: string[] }> => {
 	const offlineAdoptedProbes = await getOfflineAdoptions(context);
 	const probesToNotify = [];
 	const probesToRemoveAdoption = [];

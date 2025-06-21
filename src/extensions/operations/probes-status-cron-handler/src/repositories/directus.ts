@@ -4,7 +4,7 @@ export type Probe = {
 	id: string;
 	status: string;
 	onlineTimesToday: number;
-}
+};
 
 export const getProbes = async ({ services, database, getSchema }: OperationContext) => {
 	const { ItemsService } = services;

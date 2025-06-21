@@ -12,8 +12,8 @@ export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
 		admin: boolean;
-	},
-	schema: object,
+	};
+	schema: object;
 };
 
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);

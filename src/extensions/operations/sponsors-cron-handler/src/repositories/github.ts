@@ -9,22 +9,22 @@ type GithubResponse = {
 			pageInfo: {
 				hasNextPage: boolean;
 				endCursor: string;
-			},
+			};
 			edges: {
 				node: {
 					sponsorEntity: {
 						login: string;
 						databaseId: number;
-					},
+					};
 					isActive: boolean;
 					isOneTimePayment: boolean;
 					tier: {
 						monthlyPriceInDollars: number;
-					}
-				}
-			}[]
-		}
-	}
+					};
+				};
+			}[];
+		};
+	};
 };
 
 const query = `

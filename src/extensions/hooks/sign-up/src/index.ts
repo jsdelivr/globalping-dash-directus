@@ -17,16 +17,16 @@ export type User = {
 	email_notifications: boolean;
 	adoption_token?: string;
 	default_prefix?: string;
-}
+};
 
 type GithubOrgsResponse = {
 	login: string;
 }[];
 
 type CreditsAdditions = {
-	amount: number,
-	github_id: string,
-	consumed: boolean,
+	amount: number;
+	github_id: string;
+	consumed: boolean;
 };
 
 export default defineHook(({ filter, action }, context) => {
@@ -124,10 +124,12 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 			knex: trx,
 		});
 
-		const creditsAdditions = await creditsAdditionsService.readByQuery({ filter: {
-			github_id: user.external_identifier,
-			consumed: false,
-		} }) as CreditsAdditions[];
+		const creditsAdditions = await creditsAdditionsService.readByQuery({
+			filter: {
+				github_id: user.external_identifier,
+				consumed: false,
+			},
+		}) as CreditsAdditions[];
 
 		if (creditsAdditions.length === 0) {
 			return;
@@ -136,10 +138,12 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 		const sum = creditsAdditions.reduce((sum, { amount }) => sum + amount, 0);
 
 		await Promise.all([
-			creditsAdditionsService.updateByQuery({ filter: {
-				github_id: user.external_identifier,
-				consumed: false,
-			} }, { consumed: true }),
+			creditsAdditionsService.updateByQuery({
+				filter: {
+					github_id: user.external_identifier,
+					consumed: false,
+				},
+			}, { consumed: true }),
 			creditsService.createOne({ amount: sum, user_id: userId }),
 		]);
 	});

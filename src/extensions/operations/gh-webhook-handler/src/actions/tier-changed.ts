@@ -7,6 +7,7 @@ export const tierChangedAction = async (body: Data['$trigger']['body'], context:
 	const { services, database, getSchema } = context;
 
 	if (!body?.sponsorship?.sponsor) {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new Error(`"sponsorship.sponsor" field is ${body?.sponsorship?.sponsor?.toString()}`);
 	}
 
