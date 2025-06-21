@@ -6,8 +6,8 @@ import { tierChangedAction } from './actions/tier-changed.js';
 import type { Data } from './types.js';
 
 type ValidateGithubSignatureArgs = {
-	headers: Data['$trigger']['headers'],
-	body: Data['$trigger']['body'],
+	headers: Data['$trigger']['headers'];
+	body: Data['$trigger']['body'];
 };
 
 const validateGithubSignature = ({ headers, body }: ValidateGithubSignatureArgs, { env }: OperationContext) => {
@@ -35,7 +35,7 @@ export default defineOperationApi({
 	id: 'gh-webhook-handler',
 	handler: async (_operationData, context) => {
 		const { data } = context;
-		const { $trigger: { headers, body } } = data as {$trigger: Partial<Data['$trigger']>};
+		const { $trigger: { headers, body } } = data as { $trigger: Partial<Data['$trigger']> };
 
 		if (!headers) {
 			throw new Error(`"headers" field is ${headers}`);

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
@@ -407,14 +406,16 @@ describe('adopted-probe hook', () => {
 
 		it('should send valid error if there are too many tags', async () => {
 			hook(events, context);
-			const payload = { tags: [
-				{ prefix: 'jimaek', value: 'a' },
-				{ prefix: 'jimaek', value: 'b' },
-				{ prefix: 'jimaek', value: 'c' },
-				{ prefix: 'jimaek', value: 'd' },
-				{ prefix: 'jimaek', value: 'e' },
-				{ prefix: 'jimaek', value: 'f' },
-			] };
+			const payload = {
+				tags: [
+					{ prefix: 'jimaek', value: 'a' },
+					{ prefix: 'jimaek', value: 'b' },
+					{ prefix: 'jimaek', value: 'c' },
+					{ prefix: 'jimaek', value: 'd' },
+					{ prefix: 'jimaek', value: 'e' },
+					{ prefix: 'jimaek', value: 'f' },
+				],
+			};
 			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
 			expect(err.message).to.equal('"value" must contain less than or equal to 5 items');

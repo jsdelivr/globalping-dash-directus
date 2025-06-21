@@ -1,6 +1,7 @@
 import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import axios from 'axios';
+// eslint-disable-next-line n/no-missing-import
 import ipaddr from 'ipaddr.js';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import type { Fields } from './index.js';
@@ -16,11 +17,11 @@ type City = {
 	fcode: string;
 	adminCode1: string;
 	countryId: string;
-	population: number,
+	population: number;
 	fclName: string;
 	adminCodes1: {
-			ISO3166_2: string;
-	},
+		ISO3166_2: string;
+	};
 	countryName: string;
 	fcodeName: string;
 	adminName1: string;
@@ -31,7 +32,7 @@ const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERRO
 export const validateLocation = async (fields: Fields, context: HookExtensionContext) => {
 	const { env } = context;
 
-	const response = await axios<{totalResultsCount: number, geonames: City[]}>('http://api.geonames.org/searchJSON', {
+	const response = await axios<{ totalResultsCount: number; geonames: City[] }>('http://api.geonames.org/searchJSON', {
 		params: {
 			featureClass: 'P',
 			style: 'medium',

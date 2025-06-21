@@ -89,8 +89,7 @@ const addData = async (user: User) => {
 		meta: JSON.stringify({
 			amountInDollars: 5,
 		}),
-	})),
-	]);
+	})) ]);
 
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
 };

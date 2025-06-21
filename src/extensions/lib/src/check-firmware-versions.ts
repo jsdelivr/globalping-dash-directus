@@ -7,7 +7,7 @@ type ProbeInfo = {
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	nodeVersion: string | null;
-}
+};
 
 export const OUTDATED_SOFTWARE_NOTIFICATION_TYPE = 'outdated_software';
 export const OUTDATED_FIRMWARE_NOTIFICATION_TYPE = 'outdated_firmware';

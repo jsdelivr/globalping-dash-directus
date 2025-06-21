@@ -7,7 +7,7 @@ function findProtocolSymbol (str: string) {
 	const firstPart = str.split('.')[0]!;
 	const regex = /(:\/\/|:\/|:)/;
 
-	const match = firstPart.match(regex);
+	const match = regex.exec(firstPart);
 	return match ? match[0] : null;
 }
 
@@ -24,7 +24,7 @@ const validateOrigin = (value: string, helpers: CustomHelpers) => {
 	try {
 		new URL(value);
 		return value;
-	} catch (err) {
+	} catch {
 		return helpers.message({ custom: `Invalid URL: ${value}` });
 	}
 };
@@ -34,7 +34,7 @@ const tokenSchema = Joi.object({
 }).unknown(true);
 
 export const validateToken = (token: Partial<Token>) => {
-	const { value, error } = tokenSchema.validate(token) as { value: Partial<Token>, error?: ValidationError };
+	const { value, error } = tokenSchema.validate(token) as { value: Partial<Token>; error?: ValidationError };
 
 	if (error) {
 		throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();

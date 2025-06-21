@@ -45,7 +45,8 @@ export const seed = async (knex) => {
 		origins: '[]',
 		user_created: user.id,
 		user_updated: null,
-	}, {
+	},
+	{
 		id: 2,
 		name: 'gp-token-2',
 		value: '8YZ2pZoGQxfOeEGvUUkagX1yizZckq3weL+IN0chvU0=', // token: vumzijbzihrskmc2hj34yw22batpibmt
@@ -120,7 +121,8 @@ export const seed = async (knex) => {
 		scopes: JSON.stringify([ 'measurements' ]),
 		type: 'access_token',
 		parent: 5,
-	}, {
+	},
+	{
 		id: 7,
 		name: 'XYZ token',
 		value: '0u08dZaKMFihg+Bx+Tq+1PY96/MBb+s2KyW32Fu60pc=',
@@ -275,6 +277,5 @@ export const seed = async (knex) => {
 		origins: JSON.stringify([ 'https://api.cloudflare.com' ]),
 		user_created: user.id,
 		user_updated: user.id,
-	},
-	]);
+	}]);
 };

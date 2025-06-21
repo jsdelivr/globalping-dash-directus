@@ -4,6 +4,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import TTLCache from '@isaacs/ttlcache';
 import axios from 'axios';
 import type { Request as ExpressRequest } from 'express';
+// eslint-disable-next-line n/no-missing-import
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
@@ -15,8 +16,8 @@ export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
 		admin: boolean;
-	},
-	schema: object,
+	};
+	schema: object;
 };
 
 export type ProbeToAdopt = {
@@ -55,7 +56,7 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 30 * 60,
 });
 
-const probesToAdopt = new TTLCache<string, { code: string, probe: ProbeToAdopt }>({ ttl: 30 * 60 * 1000 });
+const probesToAdopt = new TTLCache<string, { code: string; probe: ProbeToAdopt }>({ ttl: 30 * 60 * 1000 });
 
 const generateRandomCode = () => {
 	const randomNumber = Math.floor(Math.random() * 1000000);
@@ -89,7 +90,7 @@ export default defineEndpoint((router, context) => {
 
 			try {
 				ip = ipaddr.parse(value.body.ip).toString();
-			} catch (err) {
+			} catch {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe IP address format is wrong', 400))();
 			}
 

@@ -1,10 +1,14 @@
+packages:
+  - src/extensions/endpoints/*
+  - src/extensions/hooks/*
+  - src/extensions/interfaces/*
+  - src/extensions/lib
+  - src/extensions/modules/*
+  - src/extensions/operations/*
+  - src/extensions/bytes-value
+
 ignore-workspace-root-check: true
 
-packages:
-  - 'src/extensions/endpoints/*'
-  - 'src/extensions/hooks/*'
-  - 'src/extensions/interfaces/*'
-  - 'src/extensions/lib'
-  - 'src/extensions/modules/*'
-  - 'src/extensions/operations/*'
-  - 'src/extensions/bytes-value'
+onlyBuiltDependencies:
+  - esbuild
+  - vue-demi

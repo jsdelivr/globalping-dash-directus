@@ -6,7 +6,7 @@ import type { DirectusSponsor, GithubSponsor } from '../types.js';
 type HandleSponsorData = {
 	githubSponsor: GithubSponsor;
 	directusSponsors: DirectusSponsor[];
-}
+};
 
 export const handleGithubSponsor = async ({ githubSponsor, directusSponsors }: HandleSponsorData, context: OperationContext) => {
 	const id = githubSponsor.githubId;

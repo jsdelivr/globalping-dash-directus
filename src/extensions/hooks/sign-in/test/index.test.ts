@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';

@@ -6,7 +6,7 @@ type AdoptedProbe = {
 	ip: string;
 	onlineTimesToday: number;
 	userId: string;
-}
+};
 
 type User = {
 	id: string;

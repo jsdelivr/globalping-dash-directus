@@ -13,7 +13,7 @@ type User = {
 	github_username: string | null;
 	github_organizations: string[];
 	github_oauth_token: string | null;
-}
+};
 
 type AuthPayload = {
 	id: string;
@@ -35,7 +35,7 @@ type GithubAuthMeta = {
 };
 
 export default defineHook(({ action, filter }, context) => {
-	filter('auth.create', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
+	filter('auth.create', (payload: { auth_data: undefined; [key: string]: unknown }, meta: Record<string, unknown>) => {
 		const githubMeta = meta as GithubAuthMeta;
 
 		payload.github_oauth_token = githubMeta.providerPayload.accessToken;
@@ -43,7 +43,7 @@ export default defineHook(({ action, filter }, context) => {
 		return payload;
 	});
 
-	filter('auth.update', (payload: { auth_data: undefined, [key: string]: unknown }, meta: Record<string, unknown>) => {
+	filter('auth.update', (payload: { auth_data: undefined; [key: string]: unknown }, meta: Record<string, unknown>) => {
 		const githubMeta = meta as GithubAuthMeta;
 
 		payload.github_oauth_token = githubMeta.providerPayload.accessToken;

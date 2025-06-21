@@ -3,20 +3,20 @@ import { validateQuery } from './actions/validate-items-query.js';
 import { validateToken } from './actions/validate-token.js';
 
 export type Token = {
-		id: number;
-		name: string;
-		value: string;
-		expire?: string;
-		origins?: string;
-		date_created: string;
-		date_updated?: string;
-		user_created: string;
-		user_updated?: string;
+	id: number;
+	name: string;
+	value: string;
+	expire?: string;
+	origins?: string;
+	date_created: string;
+	date_updated?: string;
+	user_created: string;
+	user_updated?: string;
 };
 
 type Revision = {
-		data: Token;
-		delta: Token;
+	data: Token;
+	delta: Token;
 };
 
 export default defineHook(({ action, filter }) => {

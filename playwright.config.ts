@@ -17,8 +17,7 @@ export default defineConfig({
 	projects: [
 		{ name: 'setup', testMatch: /.*\.setup\.ts/ },
 
-		{
-			name: 'teardown', testMatch: /.*\.teardown\.ts/ },
+		{ name: 'teardown', testMatch: /.*\.teardown\.ts/ },
 
 		{
 			name: 'chromium',

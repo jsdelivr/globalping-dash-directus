@@ -127,8 +127,7 @@ describe('GitHub webhook recurring handler', () => {
 			},
 		}, {
 			monthly_amount: 15,
-		},
-		]);
+		}]);
 
 		expect(usersService.updateByQuery.callCount).to.equal(0);
 
@@ -172,8 +171,7 @@ describe('GitHub webhook recurring handler', () => {
 			},
 		}, {
 			monthly_amount: 5,
-		},
-		]);
+		}]);
 
 		expect(usersService.updateByQuery.callCount).to.equal(0);
 

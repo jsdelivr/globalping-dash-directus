@@ -11,7 +11,7 @@ type DirectusRequest = Request & {
 	body: {
 		size?: 'md' | 'lg';
 	};
-}
+};
 
 const bytesSchema = Joi.object<DirectusRequest>({
 	accountability: Joi.object({
@@ -24,7 +24,7 @@ const bytesSchema = Joi.object<DirectusRequest>({
 
 export default defineEndpoint((router) => {
 	router.post('/', async (request: Request, res: Response, next) => {
-		const { value: req, error } = bytesSchema.validate(request) as { value: DirectusRequest, error?: ValidationError };
+		const { value: req, error } = bytesSchema.validate(request) as { value: DirectusRequest; error?: ValidationError };
 
 		if (error) {
 			return next(new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))());
