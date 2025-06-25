@@ -6,7 +6,7 @@
 
 	const props = withDefaults(
 		defineProps<{
-			value: {value: string, prefix: string}[] | null;
+			value: { value: string; prefix: string }[] | null;
 			primaryKey: string;
 			type: string;
 			disabled?: boolean;
@@ -30,7 +30,7 @@
 		emit('input', updatedArray);
 	};
 
-	const tags = ref<{value: string, prefix: string}[]>(props.value ?? []);
+	const tags = ref<{ value: string; prefix: string }[]>(props.value ?? []);
 	watch(() => props.value, (newVal) => {
 		tags.value = newVal ?? [];
 	});

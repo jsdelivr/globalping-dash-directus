@@ -7,7 +7,7 @@ import sanitizeHtml from 'sanitize-html';
 export type Request = ExpressRequest & {
 	accountability?: {
 		customParams?: Record<string, unknown>;
-	},
+	};
 };
 
 const md = markdownit();

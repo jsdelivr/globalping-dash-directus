@@ -54,7 +54,7 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 			}
 
-			const query = value.query as unknown as {userId: string, offset: number, limit: number};
+			const query = value.query as unknown as { userId: string; offset: number; limit: number };
 
 			const rankedTokensQuery = database('gp_tokens')
 				.select(

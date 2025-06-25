@@ -2,15 +2,15 @@ import { defineHook } from '@directus/extensions-sdk';
 import { deleteBytes, hashBytes, isHashed } from '../../../lib/src/bytes.js';
 
 type Token = {
-    id: number;
-    name: string;
-    value: string;
-    expire?: string;
-    origins?: string;
-    date_created: string;
-    date_updated?: string;
-    user_created: string;
-    user_updated?: string;
+	id: number;
+	name: string;
+	value: string;
+	expire?: string;
+	origins?: string;
+	date_created: string;
+	date_updated?: string;
+	user_created: string;
+	user_updated?: string;
 };
 
 type App = {
@@ -19,7 +19,7 @@ type App = {
 
 type User = {
 	adoption_token: string;
-}
+};
 
 export default defineHook(({ filter }) => {
 	// GP_TOKENS

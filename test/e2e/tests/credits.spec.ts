@@ -48,7 +48,8 @@ const addCredits = async (user: User) => {
 			name: 'e2e-credits-adopted-probe',
 		}),
 		adopted_probe: probeId,
-	}, {
+	},
+	{
 		amount: 150,
 		consumed: 1,
 		date_created: relativeDayUtc(-1),
@@ -97,8 +98,7 @@ const addCredits = async (user: User) => {
 		meta: JSON.stringify({
 			amountInDollars: 5,
 		}),
-	})),
-	]);
+	})) ]);
 
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 6000 ]) });
 

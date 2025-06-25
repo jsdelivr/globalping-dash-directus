@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import hook from '../src/index.js';
 
 type FilterCallback = (payload: any) => void;
-type ActionCallback = (meta: any, context: any) => void
+type ActionCallback = (meta: any, context: any) => void;
 
 describe('token hooks', () => {
 	const callbacks = {

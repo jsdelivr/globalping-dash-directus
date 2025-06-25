@@ -6,12 +6,12 @@ type AddItemData = {
 	github_id: string;
 	monthly_amount: number;
 	last_earning_date: string;
-}
+};
 
 type Context = {
-	services: OperationContext['services'],
-	database: OperationContext['database'],
-	getSchema: OperationContext['getSchema'],
+	services: OperationContext['services'];
+	database: OperationContext['database'];
+	getSchema: OperationContext['getSchema'];
 };
 
 export const addSponsor = async ({ github_login, github_id, monthly_amount, last_earning_date }: AddItemData, { services, database, getSchema }: Context) => {
@@ -28,10 +28,12 @@ export const addSponsor = async ({ github_login, github_id, monthly_amount, last
 			knex: trx,
 		});
 
-		await usersService.updateByQuery({ filter: {
-			external_identifier: github_id,
-			user_type: { _neq: 'special' },
-		} }, {
+		await usersService.updateByQuery({
+			filter: {
+				external_identifier: github_id,
+				user_type: { _neq: 'special' },
+			},
+		}, {
 			user_type: 'sponsor',
 		});
 
@@ -51,7 +53,7 @@ export const addSponsor = async ({ github_login, github_id, monthly_amount, last
 type UpdateItemData = {
 	github_id: string;
 	monthly_amount: number;
-}
+};
 
 export const updateSponsor = async ({ github_id, monthly_amount }: UpdateItemData, { services, database, getSchema }: Context) => {
 	const { ItemsService } = services;

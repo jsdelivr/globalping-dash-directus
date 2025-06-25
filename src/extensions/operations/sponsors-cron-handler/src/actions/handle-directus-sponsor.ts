@@ -17,7 +17,7 @@ const is30DaysAgo = (dateString: string) => {
 type HandleSponsorData = {
 	directusSponsor: DirectusSponsor;
 	githubSponsors: GithubSponsor[];
-}
+};
 
 export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }: HandleSponsorData, context: OperationContext) => {
 	const id = directusSponsor.github_id;

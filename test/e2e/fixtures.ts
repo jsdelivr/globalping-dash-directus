@@ -6,7 +6,7 @@ import { clearUserData, generateUser } from './utils.ts';
 import { User } from './types.ts';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{ user: User, user2: User }>({
+export const test = baseTest.extend<{ user: User; user2: User }>({
 	user: async ({}, use) => {
 		const user = await generateUser();
 		use(user);

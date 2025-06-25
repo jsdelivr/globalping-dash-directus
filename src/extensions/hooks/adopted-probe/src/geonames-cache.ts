@@ -11,15 +11,15 @@ export type City = {
 	fcode: string;
 	adminCode1: string;
 	countryId: string;
-	population: number,
+	population: number;
 	fclName: string;
 	adminCodes1: {
-			ISO3166_2: string;
-	},
+		ISO3166_2: string;
+	};
 	countryName: string;
 	fcodeName: string;
 	adminName1: string;
-}
+};
 
 export const getKey = (keys: string[]) => keys.join(',');
 
