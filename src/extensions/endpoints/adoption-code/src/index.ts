@@ -33,7 +33,12 @@ export type ProbeToAdopt = {
 	status: string;
 	city: string | null;
 	state: string | null;
+	stateName: string | null;
 	country: string | null;
+	countryName: string | null;
+	continent: string | null;
+	continentName: string | null;
+	region: string | null;
 	latitude: number | null;
 	longitude: number | null;
 	asn: number | null;
@@ -120,7 +125,12 @@ export default defineEndpoint((router, context) => {
 					status: 'offline',
 					city: null,
 					state: null,
+					stateName: null,
 					country: null,
+					countryName: null,
+					continent: null,
+					continentName: null,
+					region: null,
 					latitude: null,
 					longitude: null,
 					asn: null,
@@ -146,7 +156,12 @@ export default defineEndpoint((router, context) => {
 						status: 'offline',
 						city: 'Ouagadougou',
 						state: null,
+						stateName: null,
 						country: 'BF',
+						countryName: 'Burkina Faso',
+						continent: 'AF',
+						continentName: 'Africa',
+						region: 'Western Africa',
 						latitude: 12.37,
 						longitude: -1.53,
 						asn: 3302,
@@ -247,7 +262,12 @@ export default defineEndpoint((router, context) => {
 				status: probe.status,
 				city: probe.city,
 				state: probe.state,
+				stateName: probe.stateName,
 				country: probe.country,
+				countryName: probe.countryName,
+				continent: probe.continent,
+				continentName: probe.continentName,
+				region: probe.region,
 				latitude: probe.latitude,
 				longitude: probe.longitude,
 				asn: probe.asn,

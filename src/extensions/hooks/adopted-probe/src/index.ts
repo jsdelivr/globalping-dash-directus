@@ -34,7 +34,7 @@ export default defineHook(({ filter, action }, context) => {
 		]);
 	});
 
-	// State, latitude and longitude are updated in action hook, because user operation doesn't have permissions to edit them.
+	// State, latitude, longitude, customLocation are updated in action hook, because user operation doesn't have permissions to edit them.
 	action('gp_probes.items.update', async ({ keys, payload }) => {
 		const fields = payload as Fields;
 
