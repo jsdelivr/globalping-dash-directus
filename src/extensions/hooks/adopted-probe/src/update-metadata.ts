@@ -1,5 +1,5 @@
 import type { HookExtensionContext } from '@directus/extensions';
-import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location.js';
+import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location/location.js';
 import { geonamesCache, getKey } from './geonames-cache.js';
 import type { Fields } from './index.js';
 

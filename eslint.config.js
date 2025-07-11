@@ -5,7 +5,7 @@ import eslintImport from 'eslint-plugin-import';
 import eslintVue from 'eslint-plugin-vue';
 
 export default defineConfig([
-	typescriptTypeChecked.forFiles([ [ 'src/**/src/**/*.ts', '!src/extensions/lib/src/*.ts' ] ]),
+	typescriptTypeChecked.forFiles([ [ 'src/**/src/**/*.ts', '!src/extensions/lib/src/**/*.ts' ] ]),
 	typescript.forFiles([ '**/*.ts', '**/*.vue' ]),
 	eslintVue.configs['flat/recommended'],
 	{
@@ -69,7 +69,7 @@ export default defineConfig([
 			'src/**/*.ts',
 		],
 		ignores: [
-			'src/extensions/lib/src/*.ts',
+			'src/extensions/lib/src/**/*.ts',
 		],
 		languageOptions: {
 			parserOptions: {
@@ -87,7 +87,7 @@ export default defineConfig([
 	},
 	{
 		files: [
-			[ 'src/**/src/**/*.ts', '!src/extensions/lib/src/*.ts' ],
+			[ 'src/**/src/**/*.ts', '!src/extensions/lib/src/**/*.ts' ],
 		],
 		rules: {
 			'@typescript-eslint/no-unsafe-argument': 'off',
