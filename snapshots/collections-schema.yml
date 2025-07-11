@@ -3683,6 +3683,44 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: gp_probes
+    field: searchIndex
+    type: string
+    meta:
+      collection: gp_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: searchIndex
+      group: null
+      hidden: false
+      interface: input
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 34
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: searchIndex
+      table: gp_probes
+      data_type: varchar
+      default_value: null
+      max_length: 8190
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: gp_tokens
     field: date_created
     type: timestamp

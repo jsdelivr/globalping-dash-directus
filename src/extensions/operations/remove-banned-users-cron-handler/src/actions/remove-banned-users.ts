@@ -10,6 +10,11 @@ export const removeBannedUsers = async (context: OperationContext) => {
 			return null;
 		}
 
+		// Ignore seeded users
+		if ([ '1234567890', '1234567892' ].includes(user.external_identifier)) {
+			return null;
+		}
+
 		const githubUser = await getGithubUser(user, context);
 
 		if (githubUser === null) {
