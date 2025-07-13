@@ -13,12 +13,15 @@ export async function up (knex) {
 				continent VARCHAR(255),
 				continentName VARCHAR(255),
 				region VARCHAR(255),
-				tags LONGTEXT
+				tags LONGTEXT,
+				systemTags LONGTEXT
 			) RETURNS TEXT
 			DETERMINISTIC
 			BEGIN
 				DECLARE tagsText TEXT;
-				SELECT GROUP_CONCAT(CONCAT('u-', jt.prefix, ':', jt.value) SEPARATOR ' ')
+				DECLARE systemTagsText TEXT;
+
+				SELECT GROUP_CONCAT(CONCAT('u-', t.prefix, ':', t.value) SEPARATOR ' ')
 				INTO tagsText
 				FROM JSON_TABLE(
 					tags,
@@ -26,7 +29,16 @@ export async function up (knex) {
 					prefix VARCHAR(255) PATH '$.prefix',
 					value  VARCHAR(255) PATH '$.value'
 					)
-				) AS jt;
+				) AS t;
+
+				SELECT GROUP_CONCAT(st.value SEPARATOR ' ')
+				INTO systemTagsText
+				FROM JSON_TABLE(
+					systemTags,
+					'$[*]' COLUMNS (
+					value VARCHAR(255) PATH '$'
+					)
+				) AS st;
 
 				RETURN LOWER(CONCAT_WS(' ',
 					name,
@@ -40,7 +52,8 @@ export async function up (knex) {
 					continent,
 					continentName,
 					region,
-					tagsText
+					tagsText,
+					systemTagsText
 				));
 			END;
 		`);
@@ -62,7 +75,8 @@ export async function up (knex) {
 					NEW.continent,
 					NEW.continentName,
 					NEW.region,
-					NEW.tags
+					NEW.tags,
+					NEW.systemTags
 				);
 			END;
 		`);
@@ -84,7 +98,8 @@ export async function up (knex) {
 					NEW.continent,
 					NEW.continentName,
 					NEW.region,
-					NEW.tags
+					NEW.tags,
+					NEW.systemTags
 				);
 			END;
 		`);
@@ -92,7 +107,7 @@ export async function up (knex) {
 		await trx.raw(`
 			UPDATE gp_probes
 			SET searchIndex = generate_search_index(
-				name, city, country, countryName, state, stateName, asn, network, continent, continentName, region, tags
+				name, city, country, countryName, state, stateName, asn, network, continent, continentName, region, tags, systemTags
 			)
 		`);
 	});
