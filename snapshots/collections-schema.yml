@@ -3710,7 +3710,7 @@ fields:
       table: gp_probes
       data_type: varchar
       default_value: null
-      max_length: 8190
+      max_length: 4090
       numeric_precision: null
       numeric_scale: null
       is_nullable: true

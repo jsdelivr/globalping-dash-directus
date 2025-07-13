@@ -31,8 +31,6 @@
 		"@types/node": "^20.14.13",
 		"@types/sinon": "^17.0.3",
 		"chai": "^5.1.1",
-		"countries-list": "^3.1.1",
-		"lodash": "^4.17.21",
 		"mocha": "^10.7.0",
 		"nock": "^13.5.4",
 		"sinon": "^18.0.0",
@@ -44,6 +42,8 @@
 		"@isaacs/ttlcache": "^1.4.1",
 		"any-ascii": "^0.3.2",
 		"axios": "^1.7.3",
-		"joi": "^17.13.3"
+		"countries-list": "^3.1.1",
+		"joi": "^17.13.3",
+		"lodash": "^4.17.21"
 	}
 }

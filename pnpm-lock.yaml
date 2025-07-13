@@ -475,9 +475,15 @@ importers:
       axios:
         specifier: ^1.7.3
         version: 1.7.3
+      countries-list:
+        specifier: ^3.1.1
+        version: 3.1.1
       joi:
         specifier: ^17.13.3
         version: 17.13.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
     devDependencies:
       '@directus/extensions':
         specifier: ^1.0.9
@@ -503,12 +509,6 @@ importers:
       chai:
         specifier: ^5.1.1
         version: 5.1.1
-      countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       mocha:
         specifier: ^10.7.0
         version: 10.7.0
