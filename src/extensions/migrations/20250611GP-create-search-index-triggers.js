@@ -88,6 +88,13 @@ export async function up (knex) {
 				);
 			END;
 		`);
+
+		await trx.raw(`
+			UPDATE gp_probes
+			SET searchIndex = generate_search_index(
+				name, city, country, countryName, state, stateName, asn, network, continent, continentName, region, tags
+			)
+		`);
 	});
 
 	console.log('Triggers for searchIndex column of gp_probes created');
