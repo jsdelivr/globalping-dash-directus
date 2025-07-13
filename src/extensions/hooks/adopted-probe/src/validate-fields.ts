@@ -50,7 +50,7 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	}));
 
 	if (fields.tags.length > 5) {
-		throw payloadError('Maximum of 5 tags is allowed.');
+		throw payloadError('A maximum of 5 tags is allowed.');
 	}
 
 	const { error } = tagsSchema.validate(newTags);

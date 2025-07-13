@@ -66,6 +66,36 @@ describe('adoption code endpoints', () => {
 		},
 	} as unknown as Router;
 
+	const defaultAdoptionCodeResponse = {
+		userId: null,
+		ip: '1.1.1.1',
+		name: null,
+		altIps: [],
+		uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+		tags: [],
+		systemTags: [ 'datacenter-network' ],
+		status: 'ready',
+		isIPv4Supported: true,
+		isIPv6Supported: false,
+		version: '0.26.0',
+		nodeVersion: '18.17.0',
+		hardwareDevice: 'v1',
+		hardwareDeviceFirmware: 'v2.0',
+		city: 'Paris',
+		state: null,
+		stateName: null,
+		country: 'FR',
+		countryName: 'France',
+		continent: 'EU',
+		continentName: 'Europe',
+		region: 'Western Europe',
+		latitude: 48.85,
+		longitude: 2.35,
+		asn: 12876,
+		network: 'SCALEWAY S.A.S.',
+		customLocation: null,
+	};
+
 	before(() => {
 		nock.disableNetConnect();
 	});
@@ -99,20 +129,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', req, res);
 
@@ -137,20 +154,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', req, res);
 
@@ -175,20 +179,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', req, res);
 
@@ -251,20 +242,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, {
-				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-				version: '0.26.0',
-				nodeVersion: '18.17.0',
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				status: 'ready',
-				city: 'Paris',
-				country: 'FR',
-				latitude: 48.85,
-				longitude: 2.35,
-				asn: 12876,
-				network: 'SCALEWAY S.A.S.',
-			});
+			}).reply(200, defaultAdoptionCodeResponse);
 
 			await request('/send-code', req, res);
 
@@ -359,30 +337,6 @@ describe('adoption code endpoints', () => {
 	});
 
 	describe('/adoption-code/verify-code endpoint', () => {
-		const defaultAdoptionCodeResponse = {
-			userId: null,
-			ip: '1.1.1.1',
-			name: null,
-			altIps: [],
-			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-			tags: [],
-			systemTags: [ 'datacenter-network' ],
-			status: 'ready',
-			isIPv4Supported: true,
-			isIPv6Supported: false,
-			version: '0.26.0',
-			nodeVersion: '18.17.0',
-			hardwareDevice: 'v1',
-			hardwareDeviceFirmware: 'v2.0',
-			city: 'Paris',
-			state: null,
-			country: 'FR',
-			latitude: 48.85,
-			longitude: 2.35,
-			asn: 12876,
-			network: 'SCALEWAY S.A.S.',
-			customLocation: null,
-		};
 		let sandbox: sinon.SinonSandbox;
 
 		beforeEach(() => {
@@ -442,7 +396,12 @@ describe('adoption code endpoints', () => {
 					status: 'ready',
 					city: 'Paris',
 					state: null,
+					stateName: null,
 					country: 'FR',
+					countryName: 'France',
+					continent: 'EU',
+					continentName: 'Europe',
+					region: 'Western Europe',
 					latitude: 48.85,
 					longitude: 2.35,
 					asn: 12876,
@@ -468,7 +427,12 @@ describe('adoption code endpoints', () => {
 				status: 'ready',
 				city: 'Paris',
 				state: null,
+				stateName: null,
 				country: 'FR',
+				countryName: 'France',
+				continent: 'EU',
+				continentName: 'Europe',
+				region: 'Western Europe',
 				latitude: 48.85,
 				longitude: 2.35,
 				asn: 12876,
@@ -574,7 +538,12 @@ describe('adoption code endpoints', () => {
 					status: 'offline',
 					city: null,
 					state: null,
+					stateName: null,
 					country: null,
+					countryName: null,
+					continent: null,
+					continentName: null,
+					region: null,
 					latitude: null,
 					longitude: null,
 					asn: null,
@@ -600,7 +569,12 @@ describe('adoption code endpoints', () => {
 				status: 'offline',
 				city: null,
 				state: null,
+				stateName: null,
 				country: null,
+				countryName: null,
+				continent: null,
+				continentName: null,
+				region: null,
 				latitude: null,
 				longitude: null,
 				asn: null,
@@ -661,7 +635,12 @@ describe('adoption code endpoints', () => {
 					status: 'ready',
 					city: 'Paris',
 					state: null,
+					stateName: null,
 					country: 'FR',
+					countryName: 'France',
+					continent: 'EU',
+					continentName: 'Europe',
+					region: 'Western Europe',
 					latitude: 48.85,
 					longitude: 2.35,
 					asn: 12876,
@@ -687,7 +666,12 @@ describe('adoption code endpoints', () => {
 				status: 'ready',
 				city: 'Paris',
 				state: null,
+				stateName: null,
 				country: 'FR',
+				countryName: 'France',
+				continent: 'EU',
+				continentName: 'Europe',
+				region: 'Western Europe',
 				latitude: 48.85,
 				longitude: 2.35,
 				asn: 12876,
