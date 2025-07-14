@@ -21,7 +21,7 @@ export async function up (knex) {
 				DECLARE tagsText TEXT;
 				DECLARE systemTagsText TEXT;
 
-				SELECT GROUP_CONCAT(CONCAT('u-', t.prefix, ':', t.value) SEPARATOR ' ')
+				SELECT GROUP_CONCAT(CONCAT('u-', t.prefix, ':', t.value) SEPARATOR '\n')
 				INTO tagsText
 				FROM JSON_TABLE(
 					tags,
@@ -31,7 +31,7 @@ export async function up (knex) {
 					)
 				) AS t;
 
-				SELECT GROUP_CONCAT(st.value SEPARATOR ' ')
+				SELECT GROUP_CONCAT(st.value SEPARATOR '\n')
 				INTO systemTagsText
 				FROM JSON_TABLE(
 					systemTags,
@@ -40,7 +40,7 @@ export async function up (knex) {
 					)
 				) AS st;
 
-				RETURN LOWER(CONCAT_WS(' ',
+				RETURN LOWER(CONCAT_WS('\n',
 					name,
 					city,
 					country,
