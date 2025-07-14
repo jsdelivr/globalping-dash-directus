@@ -122,8 +122,13 @@ describe('adopted-probe hook', () => {
 			[ '1' ],
 			{
 				state: null,
+				stateName: null,
 				latitude: 43.3,
 				longitude: 5.38,
+				countryName: 'France',
+				continent: 'EU',
+				continentName: 'Europe',
+				region: 'Western Europe',
 				customLocation: {
 					country: 'FR',
 					city: 'Marseille',
@@ -192,6 +197,11 @@ describe('adopted-probe hook', () => {
 			[ '1' ],
 			{
 				state: 'FL',
+				stateName: 'Florida',
+				countryName: 'United States',
+				continent: 'NA',
+				continentName: 'North America',
+				region: 'Northern America',
 				latitude: 25.77,
 				longitude: -80.19,
 				customLocation: {
@@ -235,6 +245,11 @@ describe('adopted-probe hook', () => {
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
 			{
+				stateName: null,
+				countryName: null,
+				continent: null,
+				continentName: null,
+				region: null,
 				country: null,
 				city: null,
 				latitude: null,
@@ -418,7 +433,7 @@ describe('adopted-probe hook', () => {
 			};
 			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
-			expect(err.message).to.equal('"value" must contain less than or equal to 5 items');
+			expect(err.message).to.equal('A maximum of 5 tags is allowed.');
 		});
 
 		it('should send valid error if the tag is too big', async () => {

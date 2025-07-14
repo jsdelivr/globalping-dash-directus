@@ -123,13 +123,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^1.0.9
-        version: 1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
+        version: 1.0.9(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(vue@3.5.13(typescript@5.5.4))
       '@directus/extensions-sdk':
         specifier: 11.0.9
-        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
+        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
       '@directus/types':
         specifier: ^11.2.0
-        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.4.27(typescript@5.5.4))
+        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.13(typescript@5.5.4))
       '@types/chai':
         specifier: ^4.3.17
         version: 4.3.17
@@ -475,19 +475,25 @@ importers:
       axios:
         specifier: ^1.7.3
         version: 1.7.3
+      countries-list:
+        specifier: ^3.1.1
+        version: 3.1.1
       joi:
         specifier: ^17.13.3
         version: 17.13.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
     devDependencies:
       '@directus/extensions':
         specifier: ^1.0.9
-        version: 1.0.9(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(vue@3.5.13(typescript@5.5.4))
+        version: 1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
       '@directus/extensions-sdk':
         specifier: 11.0.9
-        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
+        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
       '@directus/types':
         specifier: ^11.2.0
-        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.13(typescript@5.5.4))
+        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.4.27(typescript@5.5.4))
       '@types/chai':
         specifier: ^4.3.17
         version: 4.3.17
@@ -999,6 +1005,12 @@ importers:
       axios-retry:
         specifier: ^4.5.0
         version: 4.5.0(axios@1.8.1)
+      countries-list:
+        specifier: ^3.1.1
+        version: 3.1.1
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
     devDependencies:
       '@directus/extensions':
         specifier: ^2.0.6
@@ -3614,6 +3626,9 @@ packages:
   cosmiconfig@7.1.0:
     resolution: {integrity: sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA==}
     engines: {node: '>=10'}
+
+  countries-list@3.1.1:
+    resolution: {integrity: sha512-nPklKJ5qtmY5MdBKw1NiBAoyx5Sa7p2yPpljZyQ7gyCN1m+eMFs9I6CT37Mxt8zvR5L3VzD3DJBE4WQzX3WF4A==}
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
@@ -9930,7 +9945,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.34.1(typescript@5.8.3)
       '@typescript-eslint/types': 8.34.1
       '@typescript-eslint/visitor-keys': 8.34.1
-      debug: 4.3.6(supports-color@8.1.1)
+      debug: 4.4.1
       fast-glob: 3.3.2
       is-glob: 4.0.3
       minimatch: 9.0.5
@@ -10942,6 +10957,8 @@ snapshots:
       parse-json: 5.2.0
       path-type: 4.0.0
       yaml: 1.10.2
+
+  countries-list@3.1.1: {}
 
   create-require@1.1.1: {}
 

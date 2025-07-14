@@ -42,6 +42,8 @@
 		"@isaacs/ttlcache": "^1.4.1",
 		"any-ascii": "^0.3.2",
 		"axios": "^1.7.3",
-		"joi": "^17.13.3"
+		"countries-list": "^3.1.1",
+		"joi": "^17.13.3",
+		"lodash": "^4.17.21"
 	}
 }

@@ -47,7 +47,11 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	const tagsSchema = Joi.array().items(Joi.object({
 		value: Joi.string().trim().pattern(/^[a-zA-Z0-9-]+$/).max(32).required(),
 		prefix: Joi.string().valid(...validPrefixes).required(),
-	})).max(5);
+	}));
+
+	if (fields.tags.length > 5) {
+		throw payloadError('A maximum of 5 tags is allowed.');
+	}
 
 	const { error } = tagsSchema.validate(newTags);
 

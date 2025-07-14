@@ -1,10 +1,8 @@
 {
 	"compilerOptions": {
-		"target": "ES2019",
+		"target": "ES2021",
 		"lib": [
-			"ES2019",
-			"DOM",
-			"ES2021.String"
+			"ES2021"
 		],
 		"moduleResolution": "node",
 		"module": "ESNext",
@@ -30,7 +28,7 @@
 	},
 	"include": [
 		"./src/**/*.ts",
-		"../../lib/*.ts",
+		"../../lib/**/*.ts",
 		"./test/**/*.ts"
 	]
 }
