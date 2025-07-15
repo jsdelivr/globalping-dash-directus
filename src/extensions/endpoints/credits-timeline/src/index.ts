@@ -50,7 +50,7 @@ export default defineEndpoint((router, context) => {
 					.select(
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
-						'gp_credits_additions.date_created',
+						database.raw('DATE_FORMAT(gp_credits_additions.date_created, "%Y-%m-%d") as date_created'),
 						database.raw('SUM(gp_credits_additions.amount) as amount'),
 						'gp_credits_additions.reason',
 						database.raw('NULL as meta'),
@@ -64,7 +64,7 @@ export default defineEndpoint((router, context) => {
 					.select(
 						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
-						'gp_credits_additions.date_created',
+						database.raw('DATE_FORMAT(gp_credits_additions.date_created, "%Y-%m-%d") as date_created'),
 						'gp_credits_additions.amount',
 						'gp_credits_additions.reason',
 						'gp_credits_additions.meta',
