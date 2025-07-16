@@ -73,7 +73,7 @@ export default defineConfig([
 		],
 		languageOptions: {
 			parserOptions: {
-				project: true,
+				projectService: true,
 			},
 		},
 		rules: {
