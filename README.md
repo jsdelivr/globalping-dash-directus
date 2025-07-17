@@ -40,7 +40,7 @@ These commands should be enough in most cases:
 
 ```
 pnpm run schema:apply
-pnpm run migrate:dev
+pnpm run migrate:development
 docker compose up --build -d
 ```
 
