@@ -48,7 +48,7 @@ perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
 
 pnpm run schema:apply
 
-pnpm run migrate
+pnpm run migrate:dev
 
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
