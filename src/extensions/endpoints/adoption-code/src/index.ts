@@ -236,23 +236,16 @@ export default defineEndpoint((router, context) => {
 			}
 
 			const probe = value.probe;
-			const [ id, name ] = await createAdoptedProbe(userId, probe, context);
+			const adoptedProbe = await createAdoptedProbe(userId, probe, context);
 
 			probesToAdopt.delete(userId);
 			await rateLimiter.delete(req.accountability.user);
 
-			await checkFirmwareVersions({
-				id,
-				ip: probe.ip,
-				name,
-				hardwareDevice: probe.hardwareDevice || null,
-				hardwareDeviceFirmware: probe.hardwareDeviceFirmware || null,
-				nodeVersion: probe.nodeVersion || null,
-			}, userId, context);
+			await checkFirmwareVersions(adoptedProbe, userId, context);
 
 			res.send({
-				id,
-				name,
+				id: adoptedProbe.id,
+				name: adoptedProbe.name,
 				ip: probe.ip,
 				version: probe.version,
 				nodeVersion: probe.nodeVersion,
@@ -295,17 +288,8 @@ export default defineEndpoint((router, context) => {
 
 			const probe = request.body.probe as ProbeToAdopt;
 			const user = request.body.user as { id: string };
-
-			const [ id, name ] = await createAdoptedProbe(user.id, probe, context);
-
-			await checkFirmwareVersions({
-				id,
-				ip: probe.ip,
-				name,
-				hardwareDevice: probe.hardwareDevice,
-				hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
-				nodeVersion: probe.nodeVersion,
-			}, user.id, context);
+			const adoptedProbe = await createAdoptedProbe(user.id, probe, context);
+			await checkFirmwareVersions(adoptedProbe, user.id, context);
 
 			res.sendStatus(200);
 		} catch (error: unknown) {

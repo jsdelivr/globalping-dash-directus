@@ -87,7 +87,8 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	// Probe not exists.
 	const id = await itemsService.createOne(adoption, { emitEvents: false });
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
-	return [ id, name ] as const;
+	const adoptedProbe = await itemsService.readOne(id);
+	return adoptedProbe;
 };
 
 const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
