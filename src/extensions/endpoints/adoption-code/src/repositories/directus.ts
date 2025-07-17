@@ -48,10 +48,10 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	// Probe already assigned to the user.
 	if (existingProbe && existingProbe.userId === adoption.userId) {
-		return [ existingProbe.id, existingProbe.name ] as const;
+		return existingProbe;
 	}
 
-	// Probe exists but not assigned to the user (may be assigned to another user).
+	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
 		const id = await itemsService.updateOne(existingProbe.id, {
 			name: adoption.name,
@@ -65,7 +65,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe, context),
 		]);
 
-		return [ id, name ] as const;
+		return existingProbe;
 	}
 
 	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
@@ -80,8 +80,8 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		.first<AdoptedProbe>();
 
 	if (probeByAsn) {
-		const id = await itemsService.updateOne(probeByAsn.id, _.omit(adoption, 'name'), { emitEvents: false });
-		return [ id, name ] as const;
+		await itemsService.updateOne(probeByAsn.id, _.omit(adoption, 'name'), { emitEvents: false });
+		return probeByAsn;
 	}
 
 	// Probe not exists.
