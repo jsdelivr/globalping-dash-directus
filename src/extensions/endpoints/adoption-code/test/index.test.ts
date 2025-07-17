@@ -9,6 +9,7 @@ describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();
 	const updateOne = sinon.stub();
 	const readByQuery = sinon.stub();
+	const readOne = sinon.stub();
 	const notificationCreateOne = sinon.stub();
 	const sql = {
 		where: sinon.stub(),
@@ -35,7 +36,7 @@ describe('adoption code endpoints', () => {
 		},
 		services: {
 			ItemsService: sinon.stub().callsFake(() => {
-				return { createOne, updateOne, readByQuery };
+				return { createOne, updateOne, readByQuery, readOne };
 			}),
 			NotificationsService: sinon.stub().callsFake(() => {
 				return { createOne: notificationCreateOne };
@@ -96,6 +97,12 @@ describe('adoption code endpoints', () => {
 		customLocation: null,
 	};
 
+	const adoptedProbe = {
+		id: 'generatedId',
+		name: 'probe-fr-paris-01',
+		isOutdated: false,
+	};
+
 	before(() => {
 		nock.disableNetConnect();
 	});
@@ -104,6 +111,7 @@ describe('adoption code endpoints', () => {
 		sinon.resetHistory();
 		sql.first.reset();
 		readByQuery.resolves([]);
+		readOne.resolves(adoptedProbe);
 		createOne.resolves('generatedId');
 		updateOne.resolves('generatedId');
 	});
@@ -509,6 +517,8 @@ describe('adoption code endpoints', () => {
 					ip: '1.1.1.1',
 				},
 			}, res);
+
+			readOne.resolves({ ...adoptedProbe, name: null });
 
 			await request('/verify-code', {
 				accountability: {
@@ -944,7 +954,6 @@ describe('adoption code endpoints', () => {
 			expect(createOne.callCount).to.equal(1);
 
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]?.[0].name).to.deep.equal('probe-fr-paris-02');
 			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
 		});
 
@@ -990,7 +999,6 @@ describe('adoption code endpoints', () => {
 			expect(createOne.callCount).to.equal(1);
 
 			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]?.[0].name).to.deep.equal('probe-fr-paris-02');
 			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({

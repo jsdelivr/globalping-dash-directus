@@ -44,6 +44,7 @@ describe('Adopted probes status cron handler', () => {
 			userId: 'user-id',
 			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
+			isOutdated: true,
 			nodeVersion: 'v20.13.0',
 		}]);
 
@@ -68,6 +69,7 @@ describe('Adopted probes status cron handler', () => {
 			userId: 'user-id',
 			hardwareDevice: null,
 			hardwareDeviceFirmware: null,
+			isOutdated: true,
 			nodeVersion: 'v20.12.0',
 		}]);
 
