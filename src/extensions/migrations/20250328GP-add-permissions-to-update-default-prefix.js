@@ -1,4 +1,4 @@
-import { getUserPermissions, editPermissions } from '../migration-utils.js';
+import { getUserPermissions, editPermissions } from '../migration-utils/permissions.js';
 
 const COLLECTION_NAME = 'directus_users';
 const FIELDS_TO_ADD = [ 'default_prefix' ];

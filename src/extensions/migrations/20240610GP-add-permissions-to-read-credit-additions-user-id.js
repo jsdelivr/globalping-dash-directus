@@ -1,4 +1,4 @@
-import { getUserPermissions, editPermissions } from '../migration-utils.js';
+import { getUserPermissions, editPermissions } from '../migration-utils/permissions.js';
 
 const COLLECTION_NAME = 'gp_credits_additions';
 const FIELDS_TO_ADD = [ 'github_id' ];
