@@ -1,4 +1,4 @@
-import { assignOperationToFlow, createFlow, createOperation } from '../../src/extensions/migration-utils.js';
+import { assignOperationToFlow, createFlow, createOperation } from '../../src/extensions/migration-utils/flows.js';
 
 /**
  * @param { import("knex").Knex } knex

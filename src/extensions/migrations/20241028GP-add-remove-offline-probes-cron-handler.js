@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { createFlow, createOperation, assignOperationToFlow } from '../migration-utils.js';
+import { createFlow, createOperation, assignOperationToFlow } from '../migration-utils/flows.js';
 
 export async function up () {
 	const flowId = randomUUID(); // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
