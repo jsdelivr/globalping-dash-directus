@@ -22,7 +22,7 @@
 		"host": "^10.1.9"
 	},
 	"scripts": {
-		"build": "directus-extension build",
+		"build": "directus-extension build --no-minify",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
 		"test": "tsc --noEmit && NODE_ENV=test mocha",
