@@ -1,6 +1,10 @@
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 
+if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN) {
+	throw new Error(`DIRECTUS_URL and ADMIN_ACCESS_TOKEN must be set. Actual values: DIRECTUS_URL: ${DIRECTUS_URL}, ADMIN_ACCESS_TOKEN: ${ADMIN_ACCESS_TOKEN}`);
+}
+
 async function createRole () {
 	const URL = `${DIRECTUS_URL}/roles?access_token=${ADMIN_ACCESS_TOKEN}`;
 	const response = await fetch(URL, {
