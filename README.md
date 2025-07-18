@@ -40,7 +40,7 @@ These commands should be enough in most cases:
 
 ```
 pnpm run schema:apply
-pnpm run migrate
+pnpm run migrate:development
 docker compose up --build -d
 ```
 
@@ -56,7 +56,7 @@ pnpm run seed
 2. copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
 3. run the remote container.
 4. `pnpm run schema:apply`
-5. `pnpm run migrate`
+5. `pnpm run migrate:production`
 6. get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
 7. restart the container
 8. login using github. Re-login as admin and give github user admin rights. Then set that value `AUTH_DISABLE_DEFAULT=true`. Then restart the container
@@ -67,7 +67,7 @@ pnpm run seed
 1. fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
 2. if there are changes in `.env.production.example` copy them to the env vars of the container
 3. `pnpm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
-4. `pnpm run migrate`
+4. `pnpm run migrate:production`
 5. stop prev container, run new container
 
 ## Commands

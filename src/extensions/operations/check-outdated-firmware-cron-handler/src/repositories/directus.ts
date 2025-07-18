@@ -9,6 +9,7 @@ export type AdoptedProbe = {
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	nodeVersion: string | null;
+	isOutdated: boolean;
 };
 
 export const getAlreadyNotifiedProbes = async ({ env, services, database, getSchema }: OperationContext) => {
@@ -39,18 +40,15 @@ export const getAlreadyNotifiedProbes = async ({ env, services, database, getSch
 };
 
 
-export const getProbesToCheck = async (offsetId: string, { env, database }: OperationContext) => {
+export const getProbesToCheck = async (offsetId: string, { database }: OperationContext) => {
 	const probes: AdoptedProbe[] = await database('gp_probes')
 		.select('*')
 		.whereRaw(`
-			(
-				(nodeVersion != ? AND nodeVersion IS NOT NULL)
-				OR (hardwareDeviceFirmware != ? AND hardwareDevice IS NOT NULL)
-			)
+			isOutdated = TRUE
 			AND userId IS NOT NULL
 			AND status != 'offline'
 			AND id > ?
-		`, [ env.TARGET_NODE_VERSION, env.TARGET_HW_DEVICE_FIRMWARE, offsetId ])
+		`, [ offsetId ])
 		.orderBy('id')
 		.limit(100);
 

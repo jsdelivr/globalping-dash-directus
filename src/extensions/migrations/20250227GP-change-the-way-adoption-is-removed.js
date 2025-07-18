@@ -1,4 +1,4 @@
-import { getUserPermissions } from '../migration-utils.js';
+import { getUserPermissions } from '../migration-utils/permissions.js';
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;

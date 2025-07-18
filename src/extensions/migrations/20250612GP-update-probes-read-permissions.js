@@ -1,4 +1,4 @@
-import { getUserPermissions, editPermissions } from '../migration-utils.js';
+import { getUserPermissions, editPermissions } from '../migration-utils/permissions.js';
 
 const COLLECTION_NAME = 'gp_probes';
 const FIELDS_TO_ADD = [ 'countryName', 'stateName', 'continent', 'continentName', 'region', 'searchIndex', 'customLocation' ];
