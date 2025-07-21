@@ -20,7 +20,7 @@ const findAdoptedProbes = async (filter: Record<string, unknown>, { services, ge
 };
 
 export const getDefaultProbeName = async (userId: string, probe: Probe, context: ApiExtensionContext) => {
-	let name = null;
+	let name: string | null = null;
 	const namePrefix = probe.country && probe.city ? `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}` : null;
 
 	if (namePrefix) {

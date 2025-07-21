@@ -26,6 +26,8 @@ describe('adopted-probe hook', () => {
 	const adoptedProbes = {
 		updateMany: sinon.stub(),
 		readMany: sinon.stub(),
+		readOne: sinon.stub(),
+		readByQuery: sinon.stub(),
 	};
 	const context = {
 		accountability: {
@@ -261,6 +263,44 @@ describe('adopted-probe hook', () => {
 		]);
 
 		expect(payload.city).to.equal(null);
+	});
+
+	it('should set default name if falsy name is provided', async () => {
+		adoptedProbes.readOne.resolves({
+			id: 'id-1',
+			userId: 'user-id-value',
+			country: 'FR',
+			city: 'Paris',
+		});
+
+		adoptedProbes.readByQuery.resolves([{ id: 'id-1' }]);
+
+		hook(events, context);
+		const payload = { name: '' };
+
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+
+		expect(payload.name).to.equal('probe-fr-paris-01');
+	});
+
+	it('should increment name index if there are other probes with the same values', async () => {
+		adoptedProbes.readOne.resolves({
+			id: 'id-1',
+			userId: 'user-id-value',
+			country: 'FR',
+			city: 'Paris',
+		});
+
+		adoptedProbes.readByQuery.resolves([{ id: 'id-2' }]);
+
+		hook(events, context);
+		const payload = { name: null };
+
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+
+		expect(payload.name).to.equal('probe-fr-paris-02');
 	});
 
 	it('should update non-city meta fields of the adopted probe', async () => {

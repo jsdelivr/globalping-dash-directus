@@ -936,7 +936,7 @@ describe('adoption code endpoints', () => {
 				},
 			}, res);
 
-			readByQuery.resolves([{}]);
+			readByQuery.resolves([{ id: 'otherProbeId' }]);
 
 			await request('/verify-code', {
 				accountability: {
@@ -981,7 +981,7 @@ describe('adoption code endpoints', () => {
 				},
 			}, res);
 
-			readByQuery.resolves([{}]);
+			readByQuery.resolves([{ id: 'otherProbeId' }]);
 
 			await request('/verify-code', {
 				accountability: {
