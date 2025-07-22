@@ -15,5 +15,6 @@ export const seed = async (knex) => {
 		await trx('gp_credits').delete();
 		await trx('gp_location_overrides').delete();
 		await trx('directus_users').whereNot({ first_name: 'Admin', last_name: 'User' }).delete();
+		await trx('directus_notifications').delete();
 	});
 };
