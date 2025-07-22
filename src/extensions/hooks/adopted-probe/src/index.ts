@@ -1,6 +1,6 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
-import { resetCustomLocation, resetUserDefinedData, updateCustomLocationData } from './update-metadata.js';
+import { resetCustomLocation, resetUserDefinedData, updateCustomLocationData, updateProbeName } from './update-metadata.js';
 import { validateCustomLocation, validateTags } from './validate-fields.js';
 
 export type Probe = {
@@ -31,6 +31,7 @@ export default defineHook(({ filter, action }, context) => {
 		await Promise.all([
 			(fields.tags && fields.tags.length > 0) && validateTags(fields, keys, accountability, context),
 			(fields.city || fields.country) && validateCustomLocation(fields, keys, accountability, context),
+			(Object.hasOwn(fields, 'name') && !fields.name) && updateProbeName(fields, keys, accountability, context),
 		]);
 	});
 

@@ -1,7 +1,9 @@
 import type { HookExtensionContext } from '@directus/extensions';
+import type { EventContext } from '@directus/types';
+import { getDefaultProbeName } from '../../../lib/src/default-probe-name.js';
 import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location/location.js';
 import { geonamesCache, getKey } from './geonames-cache.js';
-import type { Fields } from './index.js';
+import { UserNotFoundError, type Fields } from './index.js';
 
 export const resetCustomLocation = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
@@ -89,4 +91,27 @@ export const resetUserDefinedData = async (_fields: Fields, keys: string[], { se
 	}, {
 		emitEvents: false,
 	});
+};
+
+export const updateProbeName = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+	const { services, database, getSchema } = context;
+	const { ItemsService } = services;
+
+	if (!accountability || !accountability.user) {
+		throw new UserNotFoundError();
+	}
+
+	if (keys.length > 1) {
+		throw new Error('Batch name reset is not supported.');
+	}
+
+	const adoptedProbesService = new ItemsService('gp_probes', {
+		database,
+		schema: await getSchema(),
+		accountability,
+	});
+
+	const probe = await adoptedProbesService.readOne(keys[0]);
+	const name = await getDefaultProbeName(probe.userId, probe, context);
+	fields.name = name;
 };

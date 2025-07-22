@@ -1,5 +1,6 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
+import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
 import type { AdoptedProbe, ProbeToAdopt } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
@@ -89,35 +90,6 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	const adoptedProbe = await itemsService.readOne(id);
 	return adoptedProbe;
-};
-
-const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: EndpointExtensionContext) => {
-	const itemsService = new services.ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
-	});
-
-	const probes = await itemsService.readByQuery({
-		filter,
-	}) as ProbeToAdopt[];
-
-	return probes;
-};
-
-const getDefaultProbeName = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
-	let name = null;
-	const namePrefix = probe.country && probe.city ? `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}` : null;
-
-	if (namePrefix) {
-		const currentProbes = await findAdoptedProbes({
-			userId,
-			country: probe.country,
-			city: probe.city,
-		}, context);
-		name = `${namePrefix}-${(currentProbes.length + 1).toString().padStart(2, '0')}`;
-	}
-
-	return name;
 };
 
 export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExtensionContext) => {
