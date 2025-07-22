@@ -10,29 +10,10 @@ export const seed = async (knex) => {
 	const [ readyProbes, offlineProbes, outdatedProbes ] = await Promise.all([
 		knex('gp_probes').where({ userId: user.id, status: 'ready' }).select('id', 'name', 'ip').limit(7),
 		knex('gp_probes').where({ userId: user.id, status: 'offline' }).select('id', 'name', 'ip', 'lastSyncDate').limit(10),
-		knex('gp_probes').where({ userId: user.id, isOutdated: true }).select('id', 'name', 'ip', 'hardwareDeviceFirmware'),
+		knex('gp_probes').where({ userId: user.id, isOutdated: true }).select('id', 'name', 'ip', 'hardwareDevice'),
 	]);
 
-	const isFirmwareOutdated = (probeValue, metadataValue) => {
-		if (!probeValue || !metadataValue) {
-			return false;
-		}
-
-		const probeParts = probeValue.replaceAll('v', '').split('.');
-		const metadataParts = metadataValue.replaceAll('v', '').split('.');
-
-		for (let i = 0; i < 3; i++) {
-			const probePartNo = Number(probeParts[i]) || 0;
-			const metadataPartNo = Number(metadataParts[i]) || 0;
-
-			if (probePartNo > metadataPartNo) { return false; }
-
-			if (metadataPartNo > probePartNo) { return true; }
-		}
-
-		return false;
-	};
-
+	// used in outdated probe messages
 	const targetFirmware = process.env.TARGET_HW_DEVICE_FIRMWARE ?? 'v20.13.0';
 	const targetNodeVersion = process.env.TARGET_NODE_VERSION ?? 'v2.0';
 
@@ -81,7 +62,6 @@ export const seed = async (knex) => {
 				recipient: user.id,
 				timestamp: relativeDayUtc(-index),
 				status: index === 2 ? 'archived' : 'inbox',
-				item: probe.id,
 				collection: 'gp_probes',
 				subject: 'Your probe has been deleted',
 				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
@@ -114,7 +94,7 @@ export const seed = async (knex) => {
 		}),
 		// outdated software & firmware notifications
 		...outdatedProbes.map((probe, index) => {
-			if (isFirmwareOutdated(probe.hardwareDeviceFirmware, targetFirmware)) {
+			if (probe.hardwareDevice) {
 				return {
 					recipient: user.id,
 					timestamp: relativeDayUtc(0),
