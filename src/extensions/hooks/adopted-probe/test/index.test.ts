@@ -303,6 +303,25 @@ describe('adopted-probe hook', () => {
 		expect(payload.name).to.equal('probe-fr-paris-02');
 	});
 
+	it('should increment name index based on the existing names if there are other probes with the default names', async () => {
+		adoptedProbes.readOne.resolves({
+			id: 'id-1',
+			userId: 'user-id-value',
+			country: 'FR',
+			city: 'Paris',
+		});
+
+		adoptedProbes.readByQuery.resolves([{ id: 'id-2', name: 'probe-fr-paris-100' }]);
+
+		hook(events, context);
+		const payload = { name: null };
+
+		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+
+		expect(payload.name).to.equal('probe-fr-paris-101');
+	});
+
 	it('should update non-city meta fields of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
