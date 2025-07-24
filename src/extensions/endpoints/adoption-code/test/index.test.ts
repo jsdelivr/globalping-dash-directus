@@ -1206,12 +1206,12 @@ describe('adoption code endpoints', () => {
 
 		it('should reject without system token', async () => {
 			endpoint(router, endpointContext);
-			const result = await request('/adopt-by-token', {
+
+			await request('/adopt-by-token', {
 				headers: {},
 				body: adoptionTokenRequest,
 			}, res);
 
-			console.log(result);
 			expect(createOne.callCount).to.equal(0);
 			expect(notificationCreateOne.callCount).to.equal(0);
 			expect(resStatus.args[0]?.[0]).equal(403);

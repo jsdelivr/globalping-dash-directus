@@ -15,6 +15,7 @@ COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
 COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/metadata/
 COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
+COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/endpoints/sponsorship-details/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
@@ -60,6 +61,8 @@ COPY --from=builder /builder/src/extensions/endpoints/metadata/dist/* /directus/
 COPY --from=builder /builder/src/extensions/endpoints/metadata/package.json /directus/extensions/metadata/
 COPY --from=builder /builder/src/extensions/endpoints/redirect/dist/* /directus/extensions/redirect/dist/
 COPY --from=builder /builder/src/extensions/endpoints/redirect/package.json /directus/extensions/redirect/
+COPY --from=builder /builder/src/extensions/endpoints/sponsorship-details/dist/* /directus/extensions/sponsorship-details/dist/
+COPY --from=builder /builder/src/extensions/endpoints/sponsorship-details/package.json /directus/extensions/sponsorship-details/
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/dist/* /directus/extensions/sync-github-data/dist/
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/package.json /directus/extensions/sync-github-data/
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus/extensions/adopted-probe/dist/

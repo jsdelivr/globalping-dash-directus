@@ -46,7 +46,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 			item: {
 				_in: probes.map(probe => probe.id),
 			},
-			timestamp: { _gte: `$NOW(-${REMOVE_AFTER_DAYS} day)` },
+			timestamp: { _gte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000) },
 		},
 	});
 

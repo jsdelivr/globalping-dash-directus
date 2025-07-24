@@ -17,6 +17,8 @@ describe('Sponsors cron handler', () => {
 	const env = {
 		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 		CREDITS_PER_DOLLAR: '10000',
+		CREDITS_BONUS_PER_100_DOLLARS: '5',
+		MAX_CREDITS_BONUS: '1500',
 	};
 
 	const sponsorsService = {
@@ -33,6 +35,7 @@ describe('Sponsors cron handler', () => {
 	};
 	const creditsAdditionsService = {
 		createOne: sinon.stub().resolves(1),
+		readByQuery: sinon.stub().resolves([]),
 	};
 	const usersService = {
 		updateByQuery: sinon.stub(),
@@ -59,6 +62,7 @@ describe('Sponsors cron handler', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		creditsAdditionsService.readByQuery.resolves([]);
 
 		sponsorsService.readByQuery.resolves([{
 			id: 1,
@@ -100,30 +104,27 @@ describe('Sponsors cron handler', () => {
 			},
 		});
 
+		creditsAdditionsService.readByQuery.resolves([{
+			meta: { amountInDollars: 100 },
+		}]);
+
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(services.ItemsService.callCount).to.equal(3);
-
-		expect(services.ItemsService.args[0]?.[0]).deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.updateOne.callCount).to.equal(1);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
-
-		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
-			amount: 100000,
+			amount: 105000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 10,
+				bonus: 5,
 			},
 		}]);
 
@@ -359,16 +360,8 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(4);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
-		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(2);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
@@ -384,6 +377,7 @@ describe('Sponsors cron handler', () => {
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 15,
+				bonus: 0,
 			},
 		}]);
 

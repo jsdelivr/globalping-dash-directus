@@ -1,0 +1,50 @@
+{
+	"name": "sponsorship-details",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-endpoint"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "endpoint",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"validate": "directus-extension validate",
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^3.0.7",
+		"@directus/extensions-sdk": "14.0.0",
+		"@directus/types": "^11.2.0",
+		"@types/chai": "^4.3.17",
+		"@types/express": "^4.17.21",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^24.1.0",
+		"@types/sinon": "^17.0.3",
+		"chai": "^5.1.1",
+		"express": "^4.19.2",
+		"mocha": "^10.7.0",
+		"sinon": "^18.0.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"@directus/errors": "^0.3.3",
+		"joi": "^17.13.3",
+		"lodash": "^4.17.21"
+	}
+}

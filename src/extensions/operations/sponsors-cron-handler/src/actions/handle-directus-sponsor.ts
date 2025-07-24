@@ -1,4 +1,3 @@
-
 import type { OperationContext } from '@directus/extensions';
 import { addCredits } from '../../../../lib/src/add-credits.js';
 import { deleteDirectusSponsor, updateDirectusSponsor } from '../repositories/directus.js';
