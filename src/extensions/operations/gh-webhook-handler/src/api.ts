@@ -45,7 +45,7 @@ export default defineOperationApi({
 			throw new Error(`"body" field is ${body}`);
 		}
 
-		validateGithubSignature({ headers, body }, context);
+		// validateGithubSignature({ headers, body }, context);
 
 		if (body.action === 'created') {
 			return createdAction(body, context);
