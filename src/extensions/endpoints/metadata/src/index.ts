@@ -11,6 +11,8 @@ export default defineEndpoint((router, context) => {
 				targetHardwareDeviceFirmware: env.TARGET_HW_DEVICE_FIRMWARE,
 				creditsPerDollar: env.CREDITS_PER_DOLLAR,
 				creditsPerAdoptedProbe: env.CREDITS_PER_ADOPTED_PROBE_DAY,
+				creditsBonusPer100Dollars: env.CREDITS_BONUS_PER_100_DOLLARS,
+				maxCreditsBonus: env.MAX_CREDITS_BONUS,
 			});
 		} catch (error: unknown) {
 			logger.error(error);
