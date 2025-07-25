@@ -18,11 +18,11 @@ type AddCreditsData = {
 	meta: { amountInDollars: number };
 };
 
-const getUserBonus = async (githubId: string, incomingAmountInDollars: number, { services, database, getSchema, env }: ApiExtensionContext) => {
+export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, database, getSchema, env }: ApiExtensionContext) => {
 	const { ItemsService } = services;
 
-	if (!env.BONUS_PER_100_DOLLARS_IN_LAST_YEAR || !env.MAX_CREDITS_BONUS) {
-		throw new Error('BONUS_PER_100_DOLLARS_IN_LAST_YEAR or MAX_CREDITS_BONUS was not provided');
+	if (!env.CREDITS_BONUS_PER_100_DOLLARS || !env.MAX_CREDITS_BONUS) {
+		throw new Error('CREDITS_BONUS_PER_100_DOLLARS or MAX_CREDITS_BONUS was not provided');
 	}
 
 	const maxCreditsBonus = parseInt(env.MAX_CREDITS_BONUS, 10);
@@ -39,10 +39,13 @@ const getUserBonus = async (githubId: string, incomingAmountInDollars: number, {
 			date_created: { _gte: `$NOW(-1 year)` },
 		},
 	}) as CreditsAddition[];
+	console.log('additionsInLastYear', additionsInLastYear);
 
 	const dollarsInLastYear = additionsInLastYear.reduce((sum, { meta }) => sum + (meta.amountInDollars ?? 0), 0);
-	const bonus = Math.floor((dollarsInLastYear + incomingAmountInDollars) / 100) * parseInt(env.BONUS_PER_100_DOLLARS_IN_LAST_YEAR, 10);
-	return bonus <= maxCreditsBonus ? bonus : maxCreditsBonus;
+	const calculatedBonus = Math.floor((dollarsInLastYear + incomingAmountInDollars) / 100) * parseInt(env.CREDITS_BONUS_PER_100_DOLLARS, 10);
+	const bonus = calculatedBonus <= maxCreditsBonus ? calculatedBonus : maxCreditsBonus;
+
+	return { bonus, dollarsInLastYear };
 };
 
 export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, context: ApiExtensionContext) => {
@@ -55,10 +58,10 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 	});
 
 	const githubId = redirectGithubId(github_id);
-	const userBonus = await getUserBonus(githubId, amount, context);
+	const { bonus } = await getUserBonus(githubId, amount, context);
 	const creditsId = await creditsAdditionsService.createOne({
 		github_id: githubId,
-		amount: Math.floor(amount * parseInt(env.CREDITS_PER_DOLLAR, 10) * (100 + userBonus) / 100),
+		amount: Math.floor(amount * parseInt(env.CREDITS_PER_DOLLAR, 10) * (100 + bonus) / 100),
 		reason,
 		meta,
 	});
