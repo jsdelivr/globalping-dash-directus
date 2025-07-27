@@ -38,6 +38,7 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 			reason: { _in: [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ] },
 			date_created: { _gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) },
 		},
+		fields: [ 'meta' ],
 	}) as CreditsAddition[];
 
 	const dollarsInLastYear = additionsInLastYear.reduce((sum, { meta }) => sum + (meta.amountInDollars ?? 0), 0);
