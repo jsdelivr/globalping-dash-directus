@@ -39,7 +39,6 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 			date_created: { _gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) },
 		},
 	}) as CreditsAddition[];
-	console.log('additionsInLastYear', additionsInLastYear);
 
 	const dollarsInLastYear = additionsInLastYear.reduce((sum, { meta }) => sum + (meta.amountInDollars ?? 0), 0);
 	const calculatedBonus = Math.floor((dollarsInLastYear + incomingAmountInDollars) / 100) * parseInt(env.CREDITS_BONUS_PER_100_DOLLARS, 10);

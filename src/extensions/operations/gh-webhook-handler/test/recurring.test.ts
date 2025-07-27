@@ -18,12 +18,15 @@ describe('GitHub webhook recurring handler', () => {
 	const env = {
 		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 		CREDITS_PER_DOLLAR: '10000',
+		CREDITS_BONUS_PER_100_DOLLARS: '5',
+		MAX_CREDITS_BONUS: '1500',
 	};
 	const usersService = {
 		updateByQuery: sinon.stub(),
 	};
 	const creditsAdditionsService = {
 		createOne: sinon.stub().resolves(1),
+		readByQuery: sinon.stub().resolves([]),
 	};
 	const sponsorsService = {
 		createOne: sinon.stub().resolves(2),
@@ -48,6 +51,7 @@ describe('GitHub webhook recurring handler', () => {
 	});
 
 	beforeEach(() => {
+		creditsAdditionsService.readByQuery.resolves([]);
 		sinon.resetHistory();
 	});
 
@@ -61,19 +65,17 @@ describe('GitHub webhook recurring handler', () => {
 			},
 		};
 
+		creditsAdditionsService.readByQuery.resolves([{
+			meta: { amountInDollars: 100 },
+		}]);
+
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.equal('sponsors');
-
-		expect(services.ItemsService.args[1]?.[0]).to.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
-			amount: 150000,
+			amount: 157500,
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 15,
@@ -112,12 +114,6 @@ describe('GitHub webhook recurring handler', () => {
 		};
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.equal('sponsors');
-
-		expect(services.ItemsService.args[1]?.[0]).to.equal('gp_credits_additions');
 
 		expect(sponsorsService.updateByQuery.callCount).to.equal(1);
 
@@ -158,10 +154,6 @@ describe('GitHub webhook recurring handler', () => {
 		};
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.equal('sponsors');
 
 		expect(sponsorsService.updateByQuery.callCount).to.equal(1);
 

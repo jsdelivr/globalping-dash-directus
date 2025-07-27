@@ -13,14 +13,18 @@ describe('GitHub webhook one-time handler', () => {
 	const env = {
 		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 		CREDITS_PER_DOLLAR: '10000',
+		CREDITS_BONUS_PER_100_DOLLARS: '5',
+		MAX_CREDITS_BONUS: '1500',
 	};
 	const createOne = sinon.stub().resolves(1);
+	const readByQuery = sinon.stub().resolves([]);
 	const services = {
-		ItemsService: sinon.stub().returns({ createOne }),
+		ItemsService: sinon.stub().returns({ createOne, readByQuery }),
 	};
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		readByQuery.resolves([]);
 		delete SOURCE_ID_TO_TARGET_ID[2];
 	});
 
@@ -36,15 +40,49 @@ describe('GitHub webhook one-time handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('gp_credits_additions');
-
 		expect(createOne.callCount).to.equal(1);
 
 		expect(createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			amount: 50000,
+			reason: 'one_time_sponsorship',
+			meta: {
+				amountInDollars: 5,
+			},
+		}]);
+
+		expect(result).to.equal('Credits item with id: 1 created. One-time sponsorship handled.');
+	});
+
+	it('should handle valid one-time sponsorship with bonus', async () => {
+		const data = {
+			$trigger: {
+				headers: {
+					'x-hub-signature-256': 'sha256=005bb451b83a393675d01ae33e2f778c2c245b4093d46702ad15917717384c9b',
+				},
+				body: oneTimeSponsorshipCreated,
+			},
+		};
+
+		readByQuery.resolves([{ // 494 already donated + 5 incoming donation = 499
+			meta: { amountInDollars: 100 },
+		}, {
+			meta: { amountInDollars: 200 },
+		}, {
+			meta: { amountInDollars: 50 },
+		}, {
+			meta: { amountInDollars: 50 },
+		}, {
+			meta: { amountInDollars: 94 },
+		}]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(createOne.callCount).to.equal(1);
+
+		expect(createOne.args[0]).to.deep.equal([{
+			github_id: '2',
+			amount: 60000,
 			reason: 'one_time_sponsorship',
 			meta: {
 				amountInDollars: 5,
@@ -67,10 +105,6 @@ describe('GitHub webhook one-time handler', () => {
 		};
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(createOne.callCount).to.equal(1);
 

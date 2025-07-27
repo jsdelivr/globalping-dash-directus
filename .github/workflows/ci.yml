@@ -27,5 +27,5 @@ jobs:
           corepack enable
           pnpm install
           pnpm -r build
-          pnpm -r test
+          pnpm test
           pnpm lint

@@ -56,6 +56,7 @@
 		"schema:apply": "npx directus@11.1.1 schema apply --yes snapshots/collections-schema.yml",
 		"schema:snapshot": "npx directus@11.1.1 schema snapshot --yes snapshots/collections-schema.yml",
 		"prepare": "husky install || echo 'Failed to install husky'; rm -f .eslintcache",
+		"test": "pnpm -r test",
 		"test:e2e": "pnpm run test:e2e:build:directus && pnpm run test:e2e:build:dash && pnpm run test:e2e:run",
 		"test:e2e:build:directus": "docker compose -f docker-compose.e2e.yml up --build -d && pnpm run init:e2e && docker compose -f docker-compose.e2e.yml stop",
 		"test:e2e:build:dash": "./scripts/build-dash.sh",
