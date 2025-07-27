@@ -124,6 +124,7 @@ describe('Sponsors cron handler', () => {
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 10,
+				bonus: 5,
 			},
 		}]);
 
@@ -376,6 +377,7 @@ describe('Sponsors cron handler', () => {
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 15,
+				bonus: 0,
 			},
 		}]);
 

@@ -48,6 +48,7 @@ describe('GitHub webhook one-time handler', () => {
 			reason: 'one_time_sponsorship',
 			meta: {
 				amountInDollars: 5,
+				bonus: 0,
 			},
 		}]);
 
@@ -65,15 +66,15 @@ describe('GitHub webhook one-time handler', () => {
 		};
 
 		readByQuery.resolves([{ // 494 already donated + 5 incoming donation = 499
-			meta: { amountInDollars: 100 },
+			meta: { amountInDollars: 100, bonus: 5 },
 		}, {
-			meta: { amountInDollars: 200 },
+			meta: { amountInDollars: 200, bonus: 15 },
 		}, {
-			meta: { amountInDollars: 50 },
+			meta: { amountInDollars: 50, bonus: 15 },
 		}, {
-			meta: { amountInDollars: 50 },
+			meta: { amountInDollars: 50, bonus: 20 },
 		}, {
-			meta: { amountInDollars: 94 },
+			meta: { amountInDollars: 94, bonus: 20 },
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -86,6 +87,7 @@ describe('GitHub webhook one-time handler', () => {
 			reason: 'one_time_sponsorship',
 			meta: {
 				amountInDollars: 5,
+				bonus: 20,
 			},
 		}]);
 
@@ -114,6 +116,7 @@ describe('GitHub webhook one-time handler', () => {
 			reason: 'one_time_sponsorship',
 			meta: {
 				amountInDollars: 5,
+				bonus: 0,
 			},
 		}]);
 

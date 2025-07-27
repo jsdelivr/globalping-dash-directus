@@ -65,7 +65,7 @@ describe('/credits-timeline endpoint', () => {
 			date_created: '2025-04-10 02:00:00',
 			amount: 2000,
 			reason: 'one_time_sponsorship',
-			meta: JSON.stringify({ amountInDollars: 1 }),
+			meta: JSON.stringify({ amountInDollars: 1, bonus: 0 }),
 			adopted_probe: null,
 		}]);
 
@@ -92,7 +92,7 @@ describe('/credits-timeline endpoint', () => {
 						date_created: '2025-04-10 02:00:00',
 						amount: 2000,
 						reason: 'one_time_sponsorship',
-						meta: { amountInDollars: 1 },
+						meta: { amountInDollars: 1, bonus: 0 },
 						adopted_probe: null,
 					},
 				],

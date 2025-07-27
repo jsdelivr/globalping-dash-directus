@@ -69,11 +69,11 @@ describe('/sponsorship-details', () => {
 		};
 
 		readByQuery.resolves([
-			{ meta: { amountInDollars: 30 } },
-			{ meta: { amountInDollars: 30 } },
-			{ meta: { amountInDollars: 30 } },
-			{ meta: { amountInDollars: 30 } },
-			{ meta: { amountInDollars: 100 } },
+			{ meta: { amountInDollars: 30, bonus: 0 } },
+			{ meta: { amountInDollars: 30, bonus: 0 } },
+			{ meta: { amountInDollars: 30, bonus: 0 } },
+			{ meta: { amountInDollars: 30, bonus: 5 } },
+			{ meta: { amountInDollars: 100, bonus: 5 } },
 		]);
 
 		await request('/', req, res);

@@ -62,7 +62,7 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 		github_id: githubId,
 		amount: Math.floor(amount * parseInt(env.CREDITS_PER_DOLLAR, 10) * (100 + bonus) / 100),
 		reason,
-		meta,
+		meta: { ...meta, bonus },
 	});
 	return { creditsId, githubId };
 };

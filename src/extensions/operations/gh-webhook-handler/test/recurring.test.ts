@@ -66,7 +66,7 @@ describe('GitHub webhook recurring handler', () => {
 		};
 
 		creditsAdditionsService.readByQuery.resolves([{
-			meta: { amountInDollars: 100 },
+			meta: { amountInDollars: 100, bonus: 5 },
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -79,6 +79,7 @@ describe('GitHub webhook recurring handler', () => {
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 15,
+				bonus: 5,
 			},
 		}]);
 
@@ -135,6 +136,7 @@ describe('GitHub webhook recurring handler', () => {
 			reason: 'tier_changed',
 			meta: {
 				amountInDollars: 5,
+				bonus: 0,
 			},
 		}]);
 
