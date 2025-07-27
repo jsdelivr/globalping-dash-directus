@@ -36,7 +36,7 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 		filter: {
 			github_id: { _eq: githubId },
 			reason: { _in: [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ] },
-			date_created: { _gte: `$NOW(-1 year)` },
+			date_created: { _gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) },
 		},
 	}) as CreditsAddition[];
 	console.log('additionsInLastYear', additionsInLastYear);
