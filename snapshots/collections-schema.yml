@@ -1369,7 +1369,7 @@ fields:
       foreign_key_column: null
   - collection: gp_credits
     field: amount
-    type: integer
+    type: bigInteger
     meta:
       collection: gp_credits
       conditions: null
@@ -1393,10 +1393,10 @@ fields:
     schema:
       name: amount
       table: gp_credits
-      data_type: int
+      data_type: bigint
       default_value: null
       max_length: null
-      numeric_precision: 10
+      numeric_precision: 19
       numeric_scale: 0
       is_nullable: true
       is_unique: false
@@ -1448,7 +1448,7 @@ fields:
       foreign_key_column: id
   - collection: gp_credits_additions
     field: amount
-    type: integer
+    type: bigInteger
     meta:
       collection: gp_credits_additions
       conditions: null
@@ -1471,10 +1471,10 @@ fields:
     schema:
       name: amount
       table: gp_credits_additions
-      data_type: int
+      data_type: bigint
       default_value: null
       max_length: null
-      numeric_precision: 10
+      numeric_precision: 19
       numeric_scale: 0
       is_nullable: false
       is_unique: false
@@ -1812,7 +1812,7 @@ fields:
       foreign_key_column: null
   - collection: gp_credits_deductions
     field: amount
-    type: integer
+    type: bigInteger
     meta:
       collection: gp_credits_deductions
       conditions: null
@@ -1836,10 +1836,10 @@ fields:
     schema:
       name: amount
       table: gp_credits_deductions
-      data_type: int
+      data_type: bigint
       default_value: null
       max_length: null
-      numeric_precision: 10
+      numeric_precision: 19
       numeric_scale: 0
       is_nullable: false
       is_unique: false
