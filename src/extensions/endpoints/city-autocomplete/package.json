@@ -19,7 +19,8 @@
 		"host": "^10.10.0"
 	},
 	"scripts": {
-		"build": "directus-extension build",
+		"download:files": "tsx src/download.ts",
+		"build": "pnpm run download:files && directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
 		"validate": "directus-extension validate",
@@ -30,7 +31,9 @@
 		"@directus/extensions": "^3.0.7",
 		"@directus/extensions-sdk": "14.0.0",
 		"@directus/types": "^11.2.0",
+		"@types/adm-zip": "^0.5.7",
 		"@types/chai": "^4.3.17",
+		"@types/express": "^4.17.21",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^24.1.0",
 		"@types/sinon": "^17.0.3",
@@ -38,6 +41,16 @@
 		"mocha": "^10.7.0",
 		"sinon": "^18.0.0",
 		"ts-node": "^10.9.2",
+		"tsx": "^4.20.3",
 		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"@directus/errors": "^0.3.3",
+		"adm-zip": "^0.5.16",
+		"csv-parser": "^3.2.0",
+		"express": "^4.19.2",
+		"flexsearch": "^0.8.205",
+		"got": "^14.4.7",
+		"joi": "^17.13.3"
 	}
 }
