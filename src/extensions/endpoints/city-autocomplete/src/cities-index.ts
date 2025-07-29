@@ -1,8 +1,10 @@
 import fs from 'node:fs';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import csvParser from 'csv-parser';
 import { Index, Charset } from 'flexsearch';
-import { FILENAME } from '../actions/download-cities.js';
+import { FILENAME } from './actions/download-cities.js';
 
 type CityRow = {
 	geonameId: string;
@@ -74,12 +76,15 @@ export class CitiesIndex {
 
 		this.isInitialized = true;
 
-		logger.info('Cities index build successfully.');
+		logger.info('The cities index was built successfully.');
 	}
 
-	private readCitiesCsvFile = () => new Promise<City[]>((resolve, reject) => {
+	private readCitiesCsvFile = async () => new Promise<City[]>((resolve, reject) => {
 		const cities: City[] = [];
-		fs.createReadStream(`data/${FILENAME}`)
+		const __dirname = dirname(fileURLToPath(import.meta.url));
+		const filePath = path.resolve(__dirname, `../data/${FILENAME}`);
+
+		fs.createReadStream(filePath)
 			.pipe(csvParser({
 				headers: [ 'geonameId', 'name', 'asciiName', 'alternateNames', 'latitude', 'longitude', 'featureClass', 'featureCode', 'countryCode', 'cc2', 'admin1Code', 'admin2Code', 'admin3Code', 'admin4Code', 'population', 'elevation', 'dem', 'timezone', 'modificationDate' ],
 				separator: '\t',

@@ -111,3 +111,4 @@ COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/dist/* /directus/extensions/sponsors-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/package.json /directus/extensions/sponsors-cron-handler/
 # END: EXTENSIONS-RUN-BLOCK
+COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/data/* /directus/extensions/city-autocomplete/data/

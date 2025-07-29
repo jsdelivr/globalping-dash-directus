@@ -2,7 +2,7 @@ import { createError, isDirectusError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { CitiesIndex } from './repositories/cities-index.js';
+import { CitiesIndex } from './cities-index.js';
 
 type Request = ExpressRequest & {
 	accountability: {
@@ -17,7 +17,7 @@ const cityAutocompleteSchema = Joi.object<Request>({
 		user: Joi.string().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		countries: Joi.string().default(''),
+		countries: Joi.string().required(), // Comma separated list of countries
 		query: Joi.string().required(),
 	}).required(),
 }).unknown(true);
@@ -40,7 +40,7 @@ export default defineEndpoint((router, context) => {
 			}
 
 			const { query, countries } = value.query as { query: string; countries: string };
-			const countriesArray = countries.split(',').filter(Boolean);
+			const countriesArray = countries.split(',').map(country => country.trim()).filter(Boolean);
 			const cities = citiesIndex.searchCities(countriesArray, query);
 			res.send(cities);
 		} catch (error: unknown) {
