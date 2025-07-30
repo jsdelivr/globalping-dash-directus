@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import csvParser from 'csv-parser';
 import { Index, Charset } from 'flexsearch';
+import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { FILENAME } from './actions/download-cities.js';
 
 type CityRow = {
@@ -61,7 +62,8 @@ export class CitiesIndex {
 
 		for (const city of cities) {
 			const id = parseInt(city.geonameId, 10);
-			this.idToCityName.set(id, city.name);
+			const name = normalizeCityName(city.name);
+			this.idToCityName.set(id, name);
 
 			if (!this.countryToIndex.has(city.country)) {
 				this.countryToIndex.set(city.country, new Index({
@@ -71,7 +73,7 @@ export class CitiesIndex {
 				}));
 			}
 
-			this.countryToIndex.get(city.country)!.add(id, city.name);
+			this.countryToIndex.get(city.country)!.add(id, name);
 		}
 
 		this.isInitialized = true;
