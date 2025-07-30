@@ -300,6 +300,9 @@ importers:
       adm-zip:
         specifier: ^0.5.16
         version: 0.5.16
+      any-ascii:
+        specifier: ^0.3.2
+        version: 0.3.2
       axios:
         specifier: ^1.11.0
         version: 1.11.0
@@ -321,6 +324,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      nock:
+        specifier: ^13.5.4
+        version: 13.5.4
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.7
@@ -13979,7 +13985,7 @@ snapshots:
 
   nock@13.5.4:
     dependencies:
-      debug: 4.3.6
+      debug: 4.4.1(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:

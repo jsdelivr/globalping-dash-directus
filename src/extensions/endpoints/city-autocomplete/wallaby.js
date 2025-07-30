@@ -6,6 +6,8 @@ export default function wallaby () {
 			'lib/**/*.ts',
 			'package.json',
 			'test/*.json',
+			'test/*.txt',
+			'data/**/*.csv',
 		],
 		tests: [
 			'test/**/*.test.ts',

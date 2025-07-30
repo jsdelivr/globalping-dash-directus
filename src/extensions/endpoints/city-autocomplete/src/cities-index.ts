@@ -122,7 +122,8 @@ export class CitiesIndex {
 			resultsByCountry.push(ids.map(id => ({ name: this.idToCity.get(id)!.name, country: this.idToCity.get(id)!.country })));
 		}
 
-		return _.take(_.flatten(_.unzip(resultsByCountry)), limit);
+		const cities = _(resultsByCountry).unzip().flatten().filter(Boolean).take(limit).value();
+		return cities;
 	}
 
 	private moveMatchesAtTheBeginningToTheTop (results: { name: string; country: string }[], query: string) {
@@ -153,3 +154,13 @@ export class CitiesIndex {
 		return results;
 	}
 }
+
+let citiesIndex: CitiesIndex | null = null;
+
+export const getCitiesIndex = (context: EndpointExtensionContext) => {
+	if (!citiesIndex) {
+		citiesIndex = new CitiesIndex(context);
+	}
+
+	return citiesIndex;
+};

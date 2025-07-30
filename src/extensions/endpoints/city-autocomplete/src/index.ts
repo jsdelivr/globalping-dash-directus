@@ -2,7 +2,7 @@ import { createError, isDirectusError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { CitiesIndex } from './cities-index.js';
+import { getCitiesIndex } from './cities-index.js';
 
 type Request = ExpressRequest & {
 	accountability: {
@@ -17,7 +17,7 @@ const cityAutocompleteSchema = Joi.object<Request>({
 		user: Joi.string().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		countries: Joi.string().default(''), // A comma separated list of countries
+		countries: Joi.string().allow('').default(''), // A comma separated list of countries
 		query: Joi.string().lowercase().required(),
 		limit: Joi.number().default(5).max(10),
 	}).required(),
@@ -25,7 +25,7 @@ const cityAutocompleteSchema = Joi.object<Request>({
 
 export default defineEndpoint((router, context) => {
 	const { logger } = context;
-	const citiesIndex = new CitiesIndex(context);
+	const citiesIndex = getCitiesIndex(context);
 	citiesIndex.init().catch((err) => { throw err; });
 
 	router.get('/', async (req, res) => {
