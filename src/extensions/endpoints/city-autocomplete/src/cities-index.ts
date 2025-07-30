@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { FILENAME } from './actions/download-cities.js';
 
-type CityRow = {
+type CityCsvRow = {
 	geonameId: string;
 	name: string;
 	asciiName: string;
@@ -30,24 +30,29 @@ type CityRow = {
 	modificationDate: string;
 };
 
-type City = {
+type CityData = {
 	geonameId: string;
 	name: string;
 	country: string;
 	population: number;
 };
 
+type City = {
+	name: string;
+	country: string;
+};
+
 export class CitiesIndex {
 	public isInitialized = false;
 	private initializePromise: Promise<void> | null = null;
-	private countryToIndex = new Map<string, Index>();
-	private idToCity = new Map<number, { name: string; country: string }>();
 	private indexOptions = {
 		tokenize: 'full',
 		cache: true,
 	} as const;
 
 	private globalIndex = new Index(this.indexOptions);
+	private countryToIndex = new Map<string, Index>();
+	private idToCity = new Map<number, City>();
 
 	constructor (private readonly context: EndpointExtensionContext) {}
 
@@ -58,6 +63,20 @@ export class CitiesIndex {
 
 		this.initializePromise = this.initCitiesIndex();
 		return this.initializePromise;
+	}
+
+	searchCities (countries: string[], query: string, limit: number): City[] {
+		const results: City[] = [];
+
+		if (countries.length === 0) {
+			results.push(...this.searchInGlobalIndex(query, limit));
+		} else {
+			results.push(...this.searchInCountryIndexes(countries, query, limit));
+		}
+
+		this.moveMatchesAtTheBeginningToTheTop(results, query);
+
+		return results;
 	}
 
 	private async initCitiesIndex () {
@@ -71,13 +90,13 @@ export class CitiesIndex {
 			const id = parseInt(city.geonameId, 10);
 			const name = normalizeCityName(city.name);
 			this.globalIndex.add(id, name);
-			this.idToCity.set(id, { name, country: city.country });
 
 			if (!this.countryToIndex.has(city.country)) {
 				this.countryToIndex.set(city.country, new Index(this.indexOptions));
 			}
 
 			this.countryToIndex.get(city.country)!.add(id, name);
+			this.idToCity.set(id, { name, country: city.country });
 		}
 
 		this.isInitialized = true;
@@ -85,8 +104,8 @@ export class CitiesIndex {
 		logger.info('The cities index was built successfully.');
 	}
 
-	private readCitiesCsvFile = async () => new Promise<City[]>((resolve, reject) => {
-		const cities: City[] = [];
+	private readCitiesCsvFile = async () => new Promise<CityData[]>((resolve, reject) => {
+		const cities: CityData[] = [];
 		const __dirname = dirname(fileURLToPath(import.meta.url));
 		const filePath = path.resolve(__dirname, `../data/${FILENAME}`);
 
@@ -95,7 +114,7 @@ export class CitiesIndex {
 				headers: [ 'geonameId', 'name', 'asciiName', 'alternateNames', 'latitude', 'longitude', 'featureClass', 'featureCode', 'countryCode', 'cc2', 'admin1Code', 'admin2Code', 'admin3Code', 'admin4Code', 'population', 'elevation', 'dem', 'timezone', 'modificationDate' ],
 				separator: '\t',
 			}))
-			.on('data', (city: CityRow) => {
+			.on('data', (city: CityCsvRow) => {
 				cities.push({ geonameId: city.geonameId, name: city.name, country: city.countryCode, population: parseInt(city.population, 10) || 0 });
 			})
 			.on('end', () => {
@@ -110,7 +129,7 @@ export class CitiesIndex {
 	}
 
 	private searchInCountryIndexes (countries: string[], query: string, limit: number) {
-		const resultsByCountry: { name: string; country: string }[][] = [];
+		const resultsByCountry: City[][] = [];
 
 		for (const country of countries) {
 			if (!this.countryToIndex.has(country)) {
@@ -126,7 +145,7 @@ export class CitiesIndex {
 		return cities;
 	}
 
-	private moveMatchesAtTheBeginningToTheTop (results: { name: string; country: string }[], query: string) {
+	private moveMatchesAtTheBeginningToTheTop (results: City[], query: string) {
 		results.sort((a, b) => {
 			if (a.name.toLowerCase().startsWith(query) && !b.name.toLowerCase().startsWith(query)) {
 				return -1;
@@ -138,20 +157,6 @@ export class CitiesIndex {
 
 			return 0;
 		});
-	}
-
-	searchCities (countries: string[], query: string, limit: number) {
-		const results: { name: string; country: string }[] = [];
-
-		if (countries.length === 0) {
-			results.push(...this.searchInGlobalIndex(query, limit));
-		} else {
-			results.push(...this.searchInCountryIndexes(countries, query, limit));
-		}
-
-		this.moveMatchesAtTheBeginningToTheTop(results, query);
-
-		return results;
 	}
 }
 

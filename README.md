@@ -88,7 +88,7 @@ cp ./operations/gh-webhook-handler/.mocharc.json "$original_dir/"
 cp ./operations/gh-webhook-handler/wallaby.js "$original_dir/"
 cd "$original_dir"
 ```
-3. Run script from the extension to fix wallaby.js in extensions that use `extensions/lib/`
+3. Run script from the extension to fix wallaby.js
 ```bash
 original_dir=$PWD
 cd ../../lib/src
