@@ -17,8 +17,9 @@ const cityAutocompleteSchema = Joi.object<Request>({
 		user: Joi.string().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		countries: Joi.string().required(), // Comma separated list of countries
-		query: Joi.string().required(),
+		countries: Joi.string().default(''), // A comma separated list of countries
+		query: Joi.string().lowercase().required(),
+		limit: Joi.number().default(5).max(10),
 	}).required(),
 }).unknown(true);
 
@@ -39,9 +40,9 @@ export default defineEndpoint((router, context) => {
 				await citiesIndex.init();
 			}
 
-			const { query, countries } = value.query as { query: string; countries: string };
+			const { query, countries, limit } = value.query as unknown as { query: string; countries: string; limit: number };
 			const countriesArray = countries.split(',').map(country => country.trim()).filter(Boolean);
-			const cities = citiesIndex.searchCities(countriesArray, query);
+			const cities = citiesIndex.searchCities(countriesArray, query, limit);
 			res.send(cities);
 		} catch (error: unknown) {
 			logger.error(error);
