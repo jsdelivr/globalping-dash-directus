@@ -89,13 +89,13 @@ export class CitiesIndex {
 		for (const city of cities) {
 			const id = parseInt(city.geonameId, 10);
 			const name = normalizeCityName(city.name);
-			this.globalIndex.add(id, name);
+			await this.globalIndex.addAsync(id, name);
 
 			if (!this.countryToIndex.has(city.country)) {
 				this.countryToIndex.set(city.country, new Index(this.indexOptions));
 			}
 
-			this.countryToIndex.get(city.country)!.add(id, name);
+			await this.countryToIndex.get(city.country)!.addAsync(id, name);
 			this.idToCity.set(id, { name, country: city.country });
 		}
 
