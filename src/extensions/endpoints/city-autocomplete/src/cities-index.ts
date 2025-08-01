@@ -115,11 +115,9 @@ export class CitiesIndex {
 				separator: '\t',
 			}))
 			.on('data', (city: CityCsvRow) => {
-				cities.push({ geonameId: city.geonameId, name: city.name, country: city.countryCode, population: parseInt(city.population, 10) || 0 });
+				city.featureCode !== 'PPLX' && cities.push({ geonameId: city.geonameId, name: city.name, country: city.countryCode, population: parseInt(city.population, 10) || 0 });
 			})
-			.on('end', () => {
-				resolve(cities);
-			})
+			.on('end', () => resolve(cities))
 			.on('error', (err: Error) => reject(err));
 	});
 
