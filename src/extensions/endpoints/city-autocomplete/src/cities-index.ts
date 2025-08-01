@@ -32,12 +32,14 @@ type CityCsvRow = {
 type CityInIndex = {
 	name: string;
 	country: string;
+	state?: string;
 	searchValue: string;
 };
 
 type City = {
 	name: string;
 	country: string;
+	state?: string;
 };
 
 export class CitiesIndex {
@@ -80,7 +82,7 @@ export class CitiesIndex {
 			resultsByCountry.push(results);
 		}
 
-		const cities = _(resultsByCountry).unzip().flatten().filter(Boolean).take(limit).map(({ name, country }) => ({ name, country })).value();
+		const cities = _(resultsByCountry).unzip().flatten().filter(Boolean).take(limit).map(({ name, country, state }) => ({ name, country, state: state ?? null })).value();
 		return cities;
 	}
 
@@ -97,7 +99,12 @@ export class CitiesIndex {
 				this.citiesOfCountry.set(city.country, []);
 			}
 
-			this.citiesOfCountry.get(city.country)!.push({ searchValue: name.toLowerCase(), name, country: city.country });
+			this.citiesOfCountry.get(city.country)!.push({
+				searchValue: name.toLowerCase(),
+				name,
+				country: city.country,
+				...city.state ? { state: city.state } : {},
+			});
 		}
 
 		this.isInitialized = true;
@@ -114,7 +121,14 @@ export class CitiesIndex {
 				separator: '\t',
 			}))
 			.on('data', (city: CityCsvRow) => {
-				city.featureCode !== 'PPLX' && cities.push({ name: city.name, country: city.countryCode, population: parseInt(city.population, 10) || 0 });
+				if (city.featureCode !== 'PPLX') {
+					cities.push({
+						name: city.name,
+						country: city.countryCode,
+						population: parseInt(city.population, 10) || 0,
+						...city.countryCode === 'US' ? { state: city.admin1Code } : {},
+					});
+				}
 			})
 			.on('end', () => resolve(cities))
 			.on('error', (err: Error) => reject(err));
