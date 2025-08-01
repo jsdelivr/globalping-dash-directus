@@ -46,11 +46,12 @@ export default defineEndpoint((router, context) => {
 				knex: database,
 			});
 			const user = await usersService.readOne(userId) as User;
-			const { bonus, dollarsInLastYear } = await getUserBonus(user.external_identifier, 0, context);
+			const { bonus, dollarsInLastYear, dollarsByMonth } = await getUserBonus(user.external_identifier, 0, context);
 
 			res.send({
 				bonus,
 				donatedInLastYear: dollarsInLastYear,
+				donatedByMonth: dollarsByMonth,
 			});
 		} catch (error: unknown) {
 			logger.error(error);

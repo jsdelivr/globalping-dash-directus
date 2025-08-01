@@ -9,6 +9,7 @@ export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 
 type CreditsAddition = {
 	meta: { amountInDollars?: number };
+	date_created: string;
 };
 
 type AddCreditsData = {
@@ -36,16 +37,18 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 		filter: {
 			github_id: { _eq: githubId },
 			reason: { _in: [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ] },
-			date_created: { _gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) },
+			date_created: { _gte: new Date(Date.now() - 367 * 24 * 60 * 60 * 1000) },
 		},
-		fields: [ 'meta' ],
+		sort: [ 'date_created' ], // Additions should be sorted for getDollarsByMonth().
+		fields: [ 'meta', 'date_created' ],
 	}) as CreditsAddition[];
 
+	const dollarsByMonth = getDollarsByMonth(additionsInLastYear);
 	const dollarsInLastYear = additionsInLastYear.reduce((sum, { meta }) => sum + (meta.amountInDollars ?? 0), 0);
 	const calculatedBonus = Math.floor((dollarsInLastYear + incomingAmountInDollars) / 100) * parseInt(env.CREDITS_BONUS_PER_100_DOLLARS, 10);
 	const bonus = calculatedBonus <= maxCreditsBonus ? calculatedBonus : maxCreditsBonus;
 
-	return { bonus, dollarsInLastYear };
+	return { bonus, dollarsInLastYear, dollarsByMonth };
 };
 
 export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, context: ApiExtensionContext) => {
@@ -70,4 +73,40 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 
 export const redirectGithubId = (githubId: string) => {
 	return SOURCE_ID_TO_TARGET_ID[githubId] || githubId;
+};
+
+const getPrevious12Dates = () => {
+	const dates: Date[] = [];
+	const date = new Date();
+	const startDay = date.getDate();
+	dates.push(new Date(date));
+
+	for (let i = 0; i < 11; i++) {
+		date.setDate(1);
+		date.setMonth(date.getMonth() - 1);
+		const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+		date.setDate(Math.min(startDay, lastDay));
+		dates.push(new Date(date));
+	}
+
+	return dates.reverse();
+};
+
+const getDollarsByMonth = (additions: CreditsAddition[]) => {
+	const breakdown: number[] = [];
+	const previous12Dates = getPrevious12Dates();
+	let additionIndex = 0;
+
+	for (const date of previous12Dates) {
+		let currentSum = 0;
+
+		while (additions[additionIndex] && new Date(additions[additionIndex]!.date_created) <= date) {
+			currentSum += additions[additionIndex]!.meta.amountInDollars ?? 0;
+			additionIndex++;
+		}
+
+		breakdown.push(currentSum);
+	}
+
+	return breakdown;
 };

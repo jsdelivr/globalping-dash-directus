@@ -44,6 +44,7 @@
 	},
 	"dependencies": {
 		"@directus/errors": "^0.3.3",
-		"joi": "^17.13.3"
+		"joi": "^17.13.3",
+		"lodash": "^4.17.21"
 	}
 }

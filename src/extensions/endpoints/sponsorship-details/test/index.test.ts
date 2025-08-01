@@ -1,6 +1,7 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import type { Router } from 'express';
+import _ from 'lodash';
 import * as sinon from 'sinon';
 import endpoint from '../src/index.js';
 
@@ -46,14 +47,20 @@ describe('/sponsorship-details', () => {
 			routes[route] = handler;
 		},
 	} as unknown as Router;
+	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		sandbox = sinon.createSandbox({ useFakeTimers: { now: new Date('2025-07-15') } });
 		readByQuery.resolves([]);
 
 		readOne.resolves({
 			external_identifier: 'test-github-id',
 		});
+	});
+
+	afterEach(() => {
+		sandbox.restore();
 	});
 
 	it('should return sponsorship details for valid user request', async () => {
@@ -69,11 +76,23 @@ describe('/sponsorship-details', () => {
 		};
 
 		readByQuery.resolves([
-			{ meta: { amountInDollars: 30, bonus: 0 } },
-			{ meta: { amountInDollars: 30, bonus: 0 } },
-			{ meta: { amountInDollars: 30, bonus: 0 } },
-			{ meta: { amountInDollars: 30, bonus: 5 } },
-			{ meta: { amountInDollars: 100, bonus: 5 } },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-08-04 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-09-03 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-11-02 01:00:00' },
+			{ meta: { amountInDollars: 25, bonus: 0 }, date_created: '2024-12-02 01:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-12-02 01:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-01-01 01:00:00' },
+			{ meta: { amountInDollars: 20, bonus: 0 }, date_created: '2025-01-31 01:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-01-31 01:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-03-02 01:00:00' },
+			{ meta: { amountInDollars: 15, bonus: 0 }, date_created: '2025-04-01 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-04-01 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-05-01 02:00:00' },
+			{ meta: { amountInDollars: 10, bonus: 5 }, date_created: '2025-05-31 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-05-31 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-06-30 02:00:00' },
+			{ meta: { amountInDollars: 50, bonus: 5 }, date_created: '2025-07-10 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-07-10 02:00:00' },
 		]);
 
 		await request('/', req, res);
@@ -81,10 +100,12 @@ describe('/sponsorship-details', () => {
 		expect(resSend.callCount).to.equal(1);
 
 		expect(resSend.args[0]?.[0]).to.deep.equal({
-			bonus: 20,
-			donatedInLastYear: 220,
+			bonus: 10,
+			donatedInLastYear: 180,
+			donatedByMonth: [ 5, 5, 0, 5, 30, 5, 25, 5, 20, 5, 15, 60 ],
 		});
 
+		expect(_.sum(resSend.args[0]?.[0].donatedByMonth)).to.equal(180);
 		expect(readOne.callCount).to.equal(1);
 		expect(readOne.args[0]?.[0]).to.equal('user-id');
 	});
@@ -108,6 +129,7 @@ describe('/sponsorship-details', () => {
 		expect(resSend.args[0]?.[0]).to.deep.equal({
 			bonus: 0,
 			donatedInLastYear: 0,
+			donatedByMonth: [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
 		});
 
 		expect(readOne.callCount).to.equal(1);
@@ -151,6 +173,7 @@ describe('/sponsorship-details', () => {
 		expect(resSend.args[0]?.[0]).to.deep.equal({
 			bonus: 0,
 			donatedInLastYear: 0,
+			donatedByMonth: [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
 		});
 
 		expect(readOne.callCount).to.equal(1);
