@@ -3,7 +3,6 @@ import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import csvParser from 'csv-parser';
-import { Index } from 'flexsearch';
 import _ from 'lodash';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { FILENAME } from './actions/download-cities.js';
@@ -30,11 +29,10 @@ type CityCsvRow = {
 	modificationDate: string;
 };
 
-type CityData = {
-	geonameId: string;
+type CityInIndex = {
 	name: string;
 	country: string;
-	population: number;
+	searchValue: string;
 };
 
 type City = {
@@ -45,13 +43,7 @@ type City = {
 export class CitiesIndex {
 	public isInitialized = false;
 	private initializePromise: Promise<void> | null = null;
-	private indexOptions = {
-		tokenize: 'forward',
-		cache: true,
-	} as const;
-
-	private countryToIndex = new Map<string, Index>();
-	private idToCity = new Map<number, City>();
+	private citiesOfCountry = new Map<string, CityInIndex[]>();
 
 	constructor (private readonly context: EndpointExtensionContext) {}
 
@@ -64,39 +56,55 @@ export class CitiesIndex {
 		return this.initializePromise;
 	}
 
-	searchCities (countries: string[], query: string, limit: number): City[] {
-		const results: City[] = [];
-		results.push(...this.searchInCountryIndexes(countries, query, limit));
-		this.moveMatchesAtTheBeginningToTheTop(results, query);
-		return results;
+	searchCities (countries: string[], query: string, limit: number) {
+		const resultsByCountry: City[][] = [];
+
+		for (const country of countries) {
+			if (!this.citiesOfCountry.has(country)) {
+				continue;
+			}
+
+			const cities = this.citiesOfCountry.get(country)!;
+			const results: City[] = [];
+
+			for (let i = 0; i < cities.length; i++) {
+				if (cities[i]!.searchValue.startsWith(query)) {
+					results.push(cities[i]!);
+
+					if (results.length >= limit) {
+						break;
+					}
+				}
+			}
+
+			resultsByCountry.push(results);
+		}
+
+		const cities = _(resultsByCountry).unzip().flatten().filter(Boolean).take(limit).map(({ name, country }) => ({ name, country })).value();
+		return cities;
 	}
 
 	private async initCitiesIndex () {
 		const { logger } = this.context;
+		logger.info('Building cities index...');
 		const cities = await this.readCitiesCsvFile();
 		cities.sort((a, b) => b.population - a.population);
 
-		logger.info('Building cities index...');
-
 		for (const city of cities) {
-			const id = parseInt(city.geonameId, 10);
 			const name = normalizeCityName(city.name);
 
-			if (!this.countryToIndex.has(city.country)) {
-				this.countryToIndex.set(city.country, new Index(this.indexOptions));
+			if (!this.citiesOfCountry.has(city.country)) {
+				this.citiesOfCountry.set(city.country, []);
 			}
 
-			await this.countryToIndex.get(city.country)!.addAsync(id, name);
-			this.idToCity.set(id, { name, country: city.country });
+			this.citiesOfCountry.get(city.country)!.push({ searchValue: name.toLowerCase(), name, country: city.country });
 		}
 
 		this.isInitialized = true;
-
-		logger.info('The cities index was built successfully.');
 	}
 
-	private readCitiesCsvFile = async () => new Promise<CityData[]>((resolve, reject) => {
-		const cities: CityData[] = [];
+	private readCitiesCsvFile = async () => new Promise<(City & { population: number })[]>((resolve, reject) => {
+		const cities: (City & { population: number })[] = [];
 		const __dirname = dirname(fileURLToPath(import.meta.url));
 		const filePath = path.resolve(__dirname, `../data/${FILENAME}`);
 
@@ -106,42 +114,11 @@ export class CitiesIndex {
 				separator: '\t',
 			}))
 			.on('data', (city: CityCsvRow) => {
-				city.featureCode !== 'PPLX' && cities.push({ geonameId: city.geonameId, name: city.name, country: city.countryCode, population: parseInt(city.population, 10) || 0 });
+				city.featureCode !== 'PPLX' && cities.push({ name: city.name, country: city.countryCode, population: parseInt(city.population, 10) || 0 });
 			})
 			.on('end', () => resolve(cities))
 			.on('error', (err: Error) => reject(err));
 	});
-
-	private searchInCountryIndexes (countries: string[], query: string, limit: number) {
-		const resultsByCountry: City[][] = [];
-
-		for (const country of countries) {
-			if (!this.countryToIndex.has(country)) {
-				continue;
-			}
-
-			const index = this.countryToIndex.get(country)!;
-			const ids = index.search(query, { limit }) as number[];
-			resultsByCountry.push(ids.map(id => ({ name: this.idToCity.get(id)!.name, country: this.idToCity.get(id)!.country })));
-		}
-
-		const cities = _(resultsByCountry).unzip().flatten().filter(Boolean).take(limit).value();
-		return cities;
-	}
-
-	private moveMatchesAtTheBeginningToTheTop (results: City[], query: string) {
-		results.sort((a, b) => {
-			if (a.name.toLowerCase().startsWith(query) && !b.name.toLowerCase().startsWith(query)) {
-				return -1;
-			}
-
-			if (!a.name.toLowerCase().startsWith(query) && b.name.toLowerCase().startsWith(query)) {
-				return 1;
-			}
-
-			return 0;
-		});
-	}
 }
 
 let citiesIndex: CitiesIndex | null = null;

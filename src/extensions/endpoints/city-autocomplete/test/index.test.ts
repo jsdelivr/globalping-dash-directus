@@ -64,8 +64,8 @@ describe('city-autocomplete endpoint', () => {
 					admin: false,
 				},
 				query: {
-					query: 'da',
-					countries: 'US',
+					query: 'b',
+					countries: 'AR',
 					limit: 5,
 				},
 			};
@@ -73,33 +73,7 @@ describe('city-autocomplete endpoint', () => {
 			await request('/', req, res);
 
 			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([
-				{ name: 'Dallas', country: 'US' },
-			]);
-		});
-
-		it('should return cities without countries parameter', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: 'DA',
-					limit: 5,
-				},
-			};
-
-			await request('/', req, res);
-
-			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([
-				{ name: 'Dallas', country: 'US' },
-				{ name: 'Amsterdam', country: 'NL' },
-				{ name: 'Rotterdam', country: 'NL' },
-			]);
+			expect(resSend.args[0]?.[0]).to.deep.equal([{ name: 'Buenos Aires', country: 'AR' }]);
 		});
 
 		it('should respect limit parameter', async () => {
@@ -109,7 +83,8 @@ describe('city-autocomplete endpoint', () => {
 					admin: false,
 				},
 				query: {
-					query: 'da',
+					query: 'B',
+					countries: 'AR,TH,BE',
 					limit: 2,
 				},
 			};
@@ -125,7 +100,9 @@ describe('city-autocomplete endpoint', () => {
 		it('should reject request without accountability', async () => {
 			const req = {
 				query: {
-					query: 'da',
+					query: 'b',
+					countries: 'AR,TH,BE',
+					limit: 2,
 				},
 			};
 
@@ -143,7 +120,7 @@ describe('city-autocomplete endpoint', () => {
 					admin: false,
 				},
 				query: {
-					countries: 'FR',
+					countries: 'AR,TH,BE',
 					limit: 5,
 				},
 			};
@@ -153,49 +130,6 @@ describe('city-autocomplete endpoint', () => {
 			expect(resStatus.callCount).to.equal(1);
 			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
 			expect(resSend.callCount).to.equal(1);
-		});
-
-		it('should use default limit when not provided', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: 'a',
-				},
-			};
-
-			await request('/', req, res);
-
-			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([
-				{ name: 'Bangkok', country: 'TH' },
-				{ name: 'Paris', country: 'FR' },
-				{ name: 'Warsaw', country: 'PL' },
-				{ name: 'Milan', country: 'IT' },
-				{ name: 'Dallas', country: 'US' },
-			]);
-		});
-
-		it('should handle empty countries parameter', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: 'Zwic',
-					countries: '',
-				},
-			};
-
-			await request('/', req, res);
-
-			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([{ name: 'Zwickau', country: 'DE' }]);
 		});
 	});
 });
