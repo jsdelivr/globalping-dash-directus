@@ -46,11 +46,10 @@ export class CitiesIndex {
 	public isInitialized = false;
 	private initializePromise: Promise<void> | null = null;
 	private indexOptions = {
-		tokenize: 'full',
+		tokenize: 'forward',
 		cache: true,
 	} as const;
 
-	private globalIndex = new Index(this.indexOptions);
 	private countryToIndex = new Map<string, Index>();
 	private idToCity = new Map<number, City>();
 
@@ -67,15 +66,8 @@ export class CitiesIndex {
 
 	searchCities (countries: string[], query: string, limit: number): City[] {
 		const results: City[] = [];
-
-		if (countries.length === 0) {
-			results.push(...this.searchInGlobalIndex(query, limit));
-		} else {
-			results.push(...this.searchInCountryIndexes(countries, query, limit));
-		}
-
+		results.push(...this.searchInCountryIndexes(countries, query, limit));
 		this.moveMatchesAtTheBeginningToTheTop(results, query);
-
 		return results;
 	}
 
@@ -89,7 +81,6 @@ export class CitiesIndex {
 		for (const city of cities) {
 			const id = parseInt(city.geonameId, 10);
 			const name = normalizeCityName(city.name);
-			await this.globalIndex.addAsync(id, name);
 
 			if (!this.countryToIndex.has(city.country)) {
 				this.countryToIndex.set(city.country, new Index(this.indexOptions));
@@ -120,11 +111,6 @@ export class CitiesIndex {
 			.on('end', () => resolve(cities))
 			.on('error', (err: Error) => reject(err));
 	});
-
-	private searchInGlobalIndex (query: string, limit: number) {
-		const ids = this.globalIndex.search(query, { limit }) as number[];
-		return ids.map(id => ({ name: this.idToCity.get(id)!.name, country: this.idToCity.get(id)!.country }));
-	}
 
 	private searchInCountryIndexes (countries: string[], query: string, limit: number) {
 		const resultsByCountry: City[][] = [];
