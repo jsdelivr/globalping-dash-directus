@@ -60,11 +60,19 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	}
 };
 
-export const validateCustomLocation = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+export const updateCustomLocation = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	const { env } = context;
 
 	if (keys.length > 1) {
-		throw payloadError('Batch probe update is not supported.');
+		throw payloadError('Batch probe location update is not supported.');
+	}
+
+	if (Object.hasOwn(fields, 'country') && !fields.country) {
+		throw payloadError(`Country value can't be falsy.`);
+	}
+
+	if (Object.hasOwn(fields, 'state') && !fields.state) {
+		throw payloadError(`State value can't be falsy.`);
 	}
 
 	const [ probe ] = await getProbes(keys, context, accountability);
@@ -81,8 +89,23 @@ export const validateCustomLocation = async (fields: Fields, keys: string[], acc
 		throw payloadError('Invalid country value.');
 	}
 
-	const url = `http://api.geonames.org/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=${env.GEONAMES_USERNAME}&country=${fields.country || probe.country}&q=${fields.city || probe.city}`;
-	const response = await axios<{ totalResultsCount: number; geonames: City[] }>(url, {
+	const country = fields.country || probe.country;
+
+	if (fields.state && country !== 'US') {
+		throw payloadError('State changing is only allowed for US probes.');
+	}
+
+	const response = await axios<{ totalResultsCount: number; geonames: City[] }>('http://api.geonames.org/searchJSON', {
+		params: {
+			featureClass: 'P',
+			style: 'medium',
+			isNameRequired: 'true',
+			maxRows: '1',
+			username: env.GEONAMES_USERNAME,
+			country,
+			q: fields.city || probe.city,
+			adminCode1: fields.state,
+		},
 		timeout: 5000,
 	});
 
@@ -97,4 +120,6 @@ export const validateCustomLocation = async (fields: Fields, keys: string[], acc
 	geonamesCache.set(getKey(keys), city);
 
 	fields.city = city.toponymName;
+	fields.country = city.countryCode;
+	fields.state = city.countryCode === 'US' ? city.adminCode1 : null;
 };

@@ -64,8 +64,8 @@ describe('city-autocomplete endpoint', () => {
 					admin: false,
 				},
 				query: {
-					query: 'b',
-					countries: 'AR',
+					query: 'new',
+					countries: 'US',
 					limit: 5,
 				},
 			};
@@ -73,7 +73,7 @@ describe('city-autocomplete endpoint', () => {
 			await request('/', req, res);
 
 			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]?.[0]).to.deep.equal([{ name: 'Buenos Aires', country: 'AR' }]);
+			expect(resSend.args[0]?.[0]).to.deep.equal([{ country: 'US', name: 'New York', state: 'NY' }]);
 		});
 
 		it('should respect limit parameter', async () => {
@@ -94,7 +94,11 @@ describe('city-autocomplete endpoint', () => {
 			expect(resSend.callCount).to.equal(1);
 			const results = resSend.args[0]?.[0];
 			expect(Array.isArray(results)).to.equal(true);
-			expect(results.length).to.equal(2);
+
+			expect(results).to.deep.equal([
+				{ name: 'Buenos Aires', country: 'AR', state: null },
+				{ name: 'Bangkok', country: 'TH', state: null },
+			]);
 		});
 
 		it('should reject request without accountability', async () => {
