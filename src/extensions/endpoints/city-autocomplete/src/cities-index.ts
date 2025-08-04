@@ -70,7 +70,7 @@ export class CitiesIndex {
 			const results: City[] = [];
 
 			for (let i = 0; i < cities.length; i++) {
-				if (cities[i]!.searchValue.startsWith(query)) {
+				if (!query || cities[i]!.searchValue.startsWith(query)) {
 					results.push(cities[i]!);
 
 					if (results.length >= limit) {

@@ -18,7 +18,7 @@ const cityAutocompleteSchema = Joi.object<Request>({
 	}).required().unknown(true),
 	query: Joi.object({
 		countries: Joi.string().required(), // A comma separated list of countries
-		query: Joi.string().lowercase().required(),
+		query: Joi.string().lowercase().required().allow(''),
 		limit: Joi.number().default(5).max(10),
 	}).required(),
 }).unknown(true);
