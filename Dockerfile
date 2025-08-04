@@ -12,6 +12,7 @@ COPY package.json pnpm-*.yaml ./
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
 COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints/applications/
+COPY src/extensions/endpoints/city-autocomplete/package.json src/extensions/endpoints/city-autocomplete/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
 COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/metadata/
 COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
@@ -55,6 +56,8 @@ COPY --from=builder /builder/src/extensions/endpoints/adoption-code/dist/* /dire
 COPY --from=builder /builder/src/extensions/endpoints/adoption-code/package.json /directus/extensions/adoption-code/
 COPY --from=builder /builder/src/extensions/endpoints/applications/dist/* /directus/extensions/applications/dist/
 COPY --from=builder /builder/src/extensions/endpoints/applications/package.json /directus/extensions/applications/
+COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/dist/* /directus/extensions/city-autocomplete/dist/
+COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/package.json /directus/extensions/city-autocomplete/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/dist/* /directus/extensions/credits-timeline/dist/
 COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/package.json /directus/extensions/credits-timeline/
 COPY --from=builder /builder/src/extensions/endpoints/metadata/dist/* /directus/extensions/metadata/dist/
@@ -108,3 +111,4 @@ COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/dist/* /directus/extensions/sponsors-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/package.json /directus/extensions/sponsors-cron-handler/
 # END: EXTENSIONS-RUN-BLOCK
+COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/data/* /directus/extensions/city-autocomplete/data/

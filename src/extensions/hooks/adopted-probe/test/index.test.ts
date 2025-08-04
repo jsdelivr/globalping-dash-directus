@@ -114,7 +114,7 @@ describe('adopted-probe hook', () => {
 		expect(adoptedProbes.readMany.callCount).to.equal(1);
 		expect(adoptedProbes.readMany.args[0]).to.deep.equal([ [ '1' ] ]);
 		expect(nock.isDone()).to.equal(true);
-		expect(payload.city).to.equal('Marseille');
+		expect(payload).to.deep.equal({ city: 'Marseille', country: 'FR', state: null });
 
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
@@ -123,7 +123,6 @@ describe('adopted-probe hook', () => {
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
 			{
-				state: null,
 				stateName: null,
 				latitude: 43.3,
 				longitude: 5.38,
@@ -155,7 +154,7 @@ describe('adopted-probe hook', () => {
 			customLocation: null,
 		}]);
 
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=US&q=miami')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=US&q=miami&adminCode1=FL')
 			.reply(200, {
 				totalResultsCount: 54,
 				geonames: [
@@ -183,13 +182,13 @@ describe('adopted-probe hook', () => {
 			});
 
 		hook(events, context);
-		const payload = { city: 'miami' };
+		const payload = { city: 'miami', state: 'FL' };
 		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.readMany.callCount).to.equal(1);
 		expect(adoptedProbes.readMany.args[0]).to.deep.equal([ [ '1' ] ]);
 		expect(nock.isDone()).to.equal(true);
-		expect(payload.city).to.equal('Miami');
+		expect(payload).to.deep.equal({ city: 'Miami', country: 'US', state: 'FL' });
 
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
@@ -198,7 +197,6 @@ describe('adopted-probe hook', () => {
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
 			{
-				state: 'FL',
 				stateName: 'Florida',
 				countryName: 'United States',
 				continent: 'NA',

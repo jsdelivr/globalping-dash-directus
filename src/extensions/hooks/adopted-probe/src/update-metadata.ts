@@ -55,7 +55,6 @@ export const updateCustomLocationData = async (_fields: Fields, keys: string[], 
 	const longitude = Math.round(Number(city.lng) * 100) / 100;
 
 	await adoptedProbesService.updateMany(keys, {
-		state,
 		stateName,
 		latitude,
 		longitude,
