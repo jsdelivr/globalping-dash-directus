@@ -21,10 +21,16 @@ export const seed = async (knex) => {
 		.select('id')
 		.first();
 
-	const [ user, authCodeApp, clientCredentialsApp ] = await Promise.all([
+	const getDiscordApp = async () => knex('gp_apps')
+		.where({ name: 'Discord App' })
+		.select('id')
+		.first();
+
+	const [ user, authCodeApp, clientCredentialsApp, discordApp ] = await Promise.all([
 		getUser(),
 		getAuthCodeApp(),
 		getClientCredentialsApp(),
+		getDiscordApp(),
 	]);
 
 	await knex('gp_apps_approvals').insert([{
@@ -53,7 +59,7 @@ export const seed = async (knex) => {
 		date_created: '2025-02-22 10:57:21',
 		date_last_used: '2025-02-21',
 		date_updated: '2025-02-22 10:49:45',
-		expire: '2027-02-01',
+		expire: '2037-02-01',
 		origins: JSON.stringify([ 'https://www.jsdelivr.com', 'https://www.jsdelivr.com:10000' ]),
 		user_created: user.id,
 		user_updated: user.id,
@@ -63,7 +69,7 @@ export const seed = async (knex) => {
 		date_created: '2025-01-03 16:13:45',
 		date_last_used: null,
 		date_updated: null,
-		expire: '2025-07-02',
+		expire: '2035-07-02',
 		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
@@ -79,7 +85,7 @@ export const seed = async (knex) => {
 		date_created: '2025-01-03 16:13:45',
 		date_last_used: '2025-01-05',
 		date_updated: null,
-		expire: '2025-02-02',
+		expire: '2035-02-02',
 		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
@@ -95,7 +101,7 @@ export const seed = async (knex) => {
 		date_created: '2025-01-06 12:34:36',
 		date_last_used: null,
 		date_updated: null,
-		expire: '2026-01-01',
+		expire: '2036-01-01',
 		name: 'For Client Credentials App',
 		origins: '[]',
 		user_created: user.id,
@@ -111,7 +117,7 @@ export const seed = async (knex) => {
 		date_created: '2025-01-06 12:34:36',
 		date_last_used: '2025-01-06',
 		date_updated: null,
-		expire: '2025-02-05',
+		expire: '2035-02-05',
 		name: 'For Client Credentials App',
 		origins: '[]',
 		user_created: user.id,
@@ -124,18 +130,50 @@ export const seed = async (knex) => {
 	},
 	{
 		id: 7,
+		date_created: '2025-08-04 09:05:02',
+		date_last_used: null,
+		date_updated: null,
+		expire: '2036-07-30',
+		name: 'For Discord App',
+		origins: '[]',
+		user_created: null,
+		user_updated: null,
+		value: '5rIN4PlhULzeS6K9jWk5Etb96meoZtycckSYh73nAqw=', // token: qdu3mrhu5okck76jghfuxgzqgrne2eha
+		app_id: discordApp.id,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'refresh_token',
+		parent: null,
+	},
+	{
+		id: 8,
+		date_created: '2025-08-04 09:05:02',
+		date_last_used: null,
+		date_updated: null,
+		expire: '2035-09-03',
+		name: 'For Discord App',
+		origins: '[]',
+		user_created: null,
+		user_updated: null,
+		value: 'osDrcE6k1Qvz3HZaNizcIUdkmEEMmhnSzO5nsuuKd9k=', // token: t5cdpd4beghwt3cfwurrdqrtijkue7xw
+		app_id: discordApp.id,
+		scopes: JSON.stringify([ 'measurements' ]),
+		type: 'access_token',
+		parent: 7,
+	},
+	{
+		id: 9,
 		name: 'XYZ token',
 		value: '0u08dZaKMFihg+Bx+Tq+1PY96/MBb+s2KyW32Fu60pc=',
 		date_created: '2023-02-22 10:57:21',
 		date_last_used: '2024-02-21',
 		date_updated: '2023-02-23 10:49:45',
-		expire: '2025-02-01',
+		expire: '2035-02-01',
 		origins: JSON.stringify([ 'https://www.globalping.io' ]),
 		user_created: user.id,
 		user_updated: user.id,
 	},
 	{
-		id: 8,
+		id: 10,
 		name: 'Random token',
 		value: 'Jw2eWIZ+Ku5CuvBs/s/cgpIhShQONV52BG9mTJgfi1Y=',
 		date_created: '2024-03-15 14:30:00',
@@ -147,7 +185,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 9,
+		id: 11,
 		name: 'api-key-2024',
 		value: '8tV0wX1yZ3aB3cD5fG7hJ9kL2mN4pQ6rS8tV0wX1yZ3=',
 		date_created: '2024-03-21 09:15:00',
@@ -159,7 +197,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 10,
+		id: 12,
 		name: 'staging_access_token',
 		value: 'sT9uV1xY2z4bC4dE6gH8jK0lM3nO5qR7sT9uV1xY2z4=',
 		date_created: '2024-03-22 10:20:00',
@@ -171,7 +209,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 11,
+		id: 13,
 		name: 'dev-token-001',
 		value: 'tU0vW2xY3z5cD5eF7hI9kL1mN4oP6rS8tU0vW2xY3z5=',
 		date_created: '2024-03-23 11:25:00',
@@ -183,7 +221,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 12,
+		id: 14,
 		name: 'webhook_secret',
 		value: 'uV1wX3yZ4a6dE6fG8hJ0lM2nO5pQ7sT9uV1wX3yZ4a6=',
 		date_created: '2024-03-24 12:30:00',
@@ -195,7 +233,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 13,
+		id: 15,
 		name: 'ci-cd-token',
 		value: 'vW2xY4z5a7ceF7gH9iK1mN3oP6qR8tU0vW2xY4z5a7c=',
 		date_created: '2024-03-25 13:35:00',
@@ -207,7 +245,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 14,
+		id: 16,
 		name: 'backup_key',
 		value: 'V1wX3yZ5a6b8fG8hJ0kL2mN4pQ7sT9uV1wX3yZ5a6b8=',
 		date_created: '2024-03-26 14:40:00',
@@ -219,7 +257,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 15,
+		id: 17,
 		name: 'monitoring-token-2024',
 		value: 'W2xY4z6a7b9cgH9iK1lM3nO5qR8tU0vW2xY4z6a7b9c=',
 		date_created: '2024-03-27 15:45:00',
@@ -231,7 +269,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 16,
+		id: 18,
 		name: 'auth_token_p',
 		value: 'W2xY4z6a7b9chI0jK2lM4nP6qS8tU0vW2xY4z6a7b9c=',
 		date_created: '2024-03-28 16:50:00',
@@ -243,7 +281,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 17,
+		id: 19,
 		name: 'service-account-key',
 		value: 'W3xY5z7a8b0ciJ1kL3mN5oP7rS9tU1vW3xY5z7a8b0c=',
 		date_created: '2024-03-29 17:55:00',
@@ -255,7 +293,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 18,
+		id: 20,
 		name: 'integration_token',
 		value: 'X4yZ6a8b0c2djK2lM4nO6pQ8sT0uV2wX4yZ6a8b0c2d=',
 		date_created: '2024-03-30 18:00:00',
@@ -267,7 +305,7 @@ export const seed = async (knex) => {
 		user_updated: user.id,
 	},
 	{
-		id: 19,
+		id: 21,
 		name: 'deploy_key_2024',
 		value: 'X5yZ7a9b1c3ekL3mN5oP7qR9sT1uV3wX5yZ7a9b1c3e=',
 		date_created: '2024-03-31 19:05:00',
