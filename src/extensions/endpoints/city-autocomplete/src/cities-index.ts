@@ -2,41 +2,10 @@ import fs from 'node:fs';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
-import csvParser from 'csv-parser';
 import _ from 'lodash';
-import { normalizeCityName } from '../../../lib/src/normalize-city.js';
-import { FILENAME } from './actions/download-cities.js';
+import { FILENAME, type City } from './download-cities.js';
 
-type CityCsvRow = {
-	geonameId: string;
-	name: string;
-	asciiName: string;
-	alternateNames: string;
-	latitude: string;
-	longitude: string;
-	featureClass: string;
-	featureCode: string;
-	countryCode: string;
-	cc2: string;
-	admin1Code: string;
-	admin2Code: string;
-	admin3Code: string;
-	admin4Code: string;
-	population: string;
-	elevation: string;
-	dem: string;
-	timezone: string;
-	modificationDate: string;
-};
-
-type CityInIndex = {
-	name: string;
-	country: string;
-	state?: string;
-	searchValue: string;
-};
-
-type City = {
+type CityResponse = {
 	name: string;
 	country: string;
 	state?: string;
@@ -45,7 +14,7 @@ type City = {
 export class CitiesIndex {
 	public isInitialized = false;
 	private initializePromise: Promise<void> | null = null;
-	private citiesOfCountry = new Map<string, CityInIndex[]>();
+	private citiesOfCountries: Record<string, City[]> = {};
 
 	constructor (private readonly context: EndpointExtensionContext) {}
 
@@ -59,15 +28,15 @@ export class CitiesIndex {
 	}
 
 	searchCities (countries: string[], query: string, limit: number) {
-		const resultsByCountry: City[][] = [];
+		const resultsByCountry: CityResponse[][] = [];
 
 		for (const country of countries) {
-			if (!this.citiesOfCountry.has(country)) {
+			if (!this.citiesOfCountries[country]) {
 				continue;
 			}
 
-			const cities = this.citiesOfCountry.get(country)!;
-			const results: City[] = [];
+			const cities = this.citiesOfCountries[country];
+			const results: CityResponse[] = [];
 
 			for (let i = 0; i < cities.length; i++) {
 				if (!query || cities[i]!.searchValue.startsWith(query)) {
@@ -88,51 +57,14 @@ export class CitiesIndex {
 
 	private async initCitiesIndex () {
 		const { logger } = this.context;
-		logger.info('Building cities index...');
-		const cities = await this.readCitiesCsvFile();
-		cities.sort((a, b) => b.population - a.population);
-
-		for (const city of cities) {
-			const name = normalizeCityName(city.name);
-
-			if (!this.citiesOfCountry.has(city.country)) {
-				this.citiesOfCountry.set(city.country, []);
-			}
-
-			this.citiesOfCountry.get(city.country)!.push({
-				searchValue: name.toLowerCase(),
-				name,
-				country: city.country,
-				...city.state ? { state: city.state } : {},
-			});
-		}
-
-		this.isInitialized = true;
-	}
-
-	private readCitiesCsvFile = async () => new Promise<(City & { population: number })[]>((resolve, reject) => {
-		const cities: (City & { population: number })[] = [];
+		logger.info('Initializing cities index...');
 		const __dirname = dirname(fileURLToPath(import.meta.url));
 		const filePath = path.resolve(__dirname, `../data/${FILENAME}`);
-
-		fs.createReadStream(filePath)
-			.pipe(csvParser({
-				headers: [ 'geonameId', 'name', 'asciiName', 'alternateNames', 'latitude', 'longitude', 'featureClass', 'featureCode', 'countryCode', 'cc2', 'admin1Code', 'admin2Code', 'admin3Code', 'admin4Code', 'population', 'elevation', 'dem', 'timezone', 'modificationDate' ],
-				separator: '\t',
-			}))
-			.on('data', (city: CityCsvRow) => {
-				if (city.featureCode !== 'PPLX') {
-					cities.push({
-						name: city.name,
-						country: city.countryCode,
-						population: parseInt(city.population, 10) || 0,
-						...city.countryCode === 'US' ? { state: city.admin1Code } : {},
-					});
-				}
-			})
-			.on('end', () => resolve(cities))
-			.on('error', (err: Error) => reject(err));
-	});
+		const file = await fs.promises.readFile(filePath, 'utf-8');
+		this.citiesOfCountries = JSON.parse(file);
+		this.isInitialized = true;
+		logger.info('Cities index initialized');
+	}
 }
 
 let citiesIndex: CitiesIndex | null = null;
