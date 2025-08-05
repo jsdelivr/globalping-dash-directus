@@ -11,6 +11,7 @@ export default defineConfig([
 	{
 		ignores: [
 			'**/dist',
+			'**/data',
 			'/extensions',
 			'**/shims.d.ts',
 			'src/extensions/*/*/lib',

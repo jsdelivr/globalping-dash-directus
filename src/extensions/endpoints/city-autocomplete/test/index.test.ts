@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import type { Router } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
-import { downloadCitiesFile } from '../src/actions/download-cities.js';
+import { downloadCities, generateCitiesJsonFile } from '../src/download-cities.js';
 import endpoint from '../src/index.js';
 
 describe('city-autocomplete endpoint', () => {
@@ -43,7 +43,7 @@ describe('city-autocomplete endpoint', () => {
 		zip.addLocalFile(path.join(__dirname, 'cities500.txt'));
 		nock('https://download.geonames.org').get('/export/dump/cities500.zip').reply(200, zip.toBuffer());
 
-		await downloadCitiesFile();
+		await downloadCities().then(generateCitiesJsonFile);
 
 		(endpoint as any)(router, endpointContext);
 	});

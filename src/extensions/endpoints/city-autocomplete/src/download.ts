@@ -1,5 +1,6 @@
-import { downloadCitiesFile } from './actions/download-cities.js';
+import { downloadCities, generateCitiesJsonFile } from './download-cities.js';
 
-downloadCitiesFile()
-	.then(() => { console.log('Downloaded geonames cities file.'); })
+downloadCities()
+	.then(generateCitiesJsonFile)
+	.then(() => { console.log('Cities JSON file generated.'); })
 	.catch((err) => { throw err; });
