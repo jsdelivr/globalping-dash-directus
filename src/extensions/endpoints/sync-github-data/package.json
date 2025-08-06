@@ -31,11 +31,13 @@
 		"@types/mocha": "^10.0.7",
 		"@types/node": "^20.14.13",
 		"@types/sinon": "^17.0.3",
+		"@types/supertest": "^6.0.3",
 		"chai": "^5.1.1",
 		"express": "^4.19.2",
 		"mocha": "^10.7.0",
 		"nock": "^13.5.4",
 		"sinon": "^18.0.0",
+		"supertest": "^7.1.4",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.5.4"
 	},

@@ -34,19 +34,19 @@
 		"@types/mocha": "^10.0.7",
 		"@types/node": "^22.10.5",
 		"@types/sinon": "^17.0.3",
+		"@types/supertest": "^6.0.3",
 		"chai": "^5.1.1",
 		"express": "^4.19.2",
 		"knex": "^3.1.0",
 		"mocha": "^10.7.0",
 		"sinon": "^18.0.0",
+		"supertest": "^7.1.4",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.7.2"
 	},
 	"dependencies": {
 		"@directus/errors": "^0.3.3",
-		"@types/supertest": "^6.0.3",
 		"joi": "^17.13.3",
-		"lodash": "^4.17.21",
-		"supertest": "^7.1.4"
+		"lodash": "^4.17.21"
 	}
 }
