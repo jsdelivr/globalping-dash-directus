@@ -44,6 +44,8 @@
 	},
 	"dependencies": {
 		"@directus/errors": "^0.3.3",
-		"joi": "^17.13.3"
+		"@types/supertest": "^6.0.3",
+		"joi": "^17.13.3",
+		"supertest": "^7.1.4"
 	}
 }
