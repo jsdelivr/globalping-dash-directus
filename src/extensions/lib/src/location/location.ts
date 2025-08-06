@@ -36,12 +36,8 @@ export const getRegionByCountry = (country: string): string => {
 	return region;
 };
 
-export function getStateNameByIso (iso: string | null | undefined, soft?: true): string | null {
-	if (!iso && soft) {
-		return null;
-	}
-
-	const state = _.invert(states)[iso!];
+export function getStateNameByIso (iso: string): string {
+	const state = _.invert(states)[iso];
 
 	if (!state) {
 		throw new Error(`state not found ${iso}`);
