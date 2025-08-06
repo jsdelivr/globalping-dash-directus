@@ -103,7 +103,7 @@ export const updateCustomLocation = async (fields: Fields, keys: string[], accou
 			maxRows: '1',
 			username: env.GEONAMES_USERNAME,
 			country,
-			q: fields.city || probe.city,
+			name: fields.city || probe.city,
 			adminCode1: fields.state,
 		},
 		timeout: 5000,

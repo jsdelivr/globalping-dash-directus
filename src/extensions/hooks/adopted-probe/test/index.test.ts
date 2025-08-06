@@ -80,7 +80,7 @@ describe('adopted-probe hook', () => {
 			allowedCountries: [ 'FR' ],
 		}]);
 
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=FR&q=marsel')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=FR&name=marsel')
 			.reply(200, {
 				totalResultsCount: 5,
 				geonames: [
@@ -154,7 +154,7 @@ describe('adopted-probe hook', () => {
 			customLocation: null,
 		}]);
 
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=US&q=miami&adminCode1=FL')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=US&name=miami&adminCode1=FL')
 			.reply(200, {
 				totalResultsCount: 54,
 				geonames: [
@@ -394,7 +394,7 @@ describe('adopted-probe hook', () => {
 			customLocation: null,
 		}]);
 
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=FR&q=invalidcity')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&country=FR&name=invalidcity')
 			.reply(200, {
 				totalResultsCount: 0,
 				geonames: [],
