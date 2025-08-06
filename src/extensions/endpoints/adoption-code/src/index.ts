@@ -195,7 +195,7 @@ export default defineEndpoint((router, context) => {
 				throw error;
 			}
 		}
-	}));
+	}, context));
 
 	const verifyCodeSchema = Joi.object<Request>({
 		accountability: Joi.object({
@@ -256,7 +256,7 @@ export default defineEndpoint((router, context) => {
 			isIPv4Supported: probe.isIPv4Supported,
 			isIPv6Supported: probe.isIPv6Supported,
 		});
-	}));
+	}, context));
 
 	router.put('/adopt-by-token', asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
@@ -271,5 +271,5 @@ export default defineEndpoint((router, context) => {
 		await checkFirmwareVersions(adoptedProbe, user.id, context);
 
 		res.sendStatus(200);
-	}));
+	}, context));
 });

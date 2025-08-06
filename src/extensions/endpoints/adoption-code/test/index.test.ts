@@ -1,9 +1,10 @@
-import type { EndpointExtensionContext } from '@directus/extensions';
+import { type EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
-import type { Router } from 'express';
+import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
-import endpoint from '../src/index.js';
+import request from 'supertest';
+import endpoint, { type Request } from '../src/index.js';
 
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();
@@ -43,31 +44,18 @@ describe('adoption code endpoints', () => {
 			}),
 		},
 	} as unknown as EndpointExtensionContext;
-	const resSend = sinon.stub();
-	const resStatus = sinon.stub().returns({ send: resSend });
-	const resSendStatus = sinon.stub();
-	const res = { status: resStatus, send: resSend, sendStatus: resSendStatus };
 
-	const routes: Record<string, ((request: object, response: typeof res, next?: () => void) => Promise<void>)[]> = {};
-	const request = async (route: string, request: object, response: typeof res) => {
-		const handlers = routes[route];
+	const app = express();
+	app.use(express.json());
+	let accountability: { user: string; admin: boolean } | Record<string, never> = {};
+	app.use(((req: Request, _res: Response, next: NextFunction) => {
+		req.accountability = accountability as unknown as Request['accountability'];
+		next();
+	}) as NextFunction);
 
-		if (!handlers || handlers.length === 0) {
-			throw new Error('Handler for the route is not defined');
-		}
-
-		for (const handler of handlers) {
-			await handler(request, response, () => {});
-		}
-	};
-	const router = {
-		post: (route: string, ...handlers: ((request: object, response: typeof res) => Promise<void>)[]) => {
-			routes[route] = handlers;
-		},
-		put: (route: string, ...handlers: ((request: object, response: typeof res) => Promise<void>)[]) => {
-			routes[route] = handlers;
-		},
-	} as unknown as Router;
+	const router = express.Router();
+	endpoint(router, endpointContext);
+	app.use(router);
 
 	const defaultAdoptionCodeResponse = {
 		userId: null,
@@ -107,6 +95,7 @@ describe('adoption code endpoints', () => {
 
 	before(() => {
 		nock.disableNetConnect();
+		nock.enableNetConnect('127.0.0.1');
 	});
 
 	beforeEach(() => {
@@ -116,6 +105,11 @@ describe('adoption code endpoints', () => {
 		readOne.resolves(adoptedProbe);
 		createOne.resolves('generatedId');
 		updateOne.resolves('generatedId');
+
+		accountability = {
+			user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			admin: false,
+		};
 	});
 
 	after(() => {
@@ -124,128 +118,82 @@ describe('adoption code endpoints', () => {
 
 	describe('/adoption-code/send-code endpoint', () => {
 		it('should accept ip, generate code and send it to globalping api', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			};
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', req, res);
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(res.status).to.equal(200);
+			expect(res.text).to.equal('Code was sent to the probe.');
 		});
 
 		it('should accept full IPv6 ip, generate code and send it to globalping api', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '2a04:4e42:0200:0000:0000:0000:0000:0485',
-				},
-			};
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', req, res);
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '2a04:4e42:0200:0000:0000:0000:0000:0485',
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(res.status).to.equal(200);
+			expect(res.text).to.equal('Code was sent to the probe.');
 		});
 
 		it('should accept short IPv6 ip, generate code and send it to globalping api', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '2a04:4e42:200::485',
-				},
-			};
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', req, res);
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '2a04:4e42:200::485',
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(res.status).to.equal(200);
+			expect(res.text).to.equal('Code was sent to the probe.');
 		});
 
 		it('should reject non authorized requests', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				body: {
-					ip: '1.1.1.1',
-				},
-			};
+			accountability = {};
 
-			await request('/send-code', req, res);
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ '"accountability" is required' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('"accountability.user" is required');
 		});
 
 		it('should reject requests with another user', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'anotherUserId',
-					ip: '1.1.1.1',
-				},
-			};
+			const res = await request(app).post('/send-code').send({
+				userId: 'anotherUserId',
+				ip: '1.1.1.1',
+			});
 
-			await request('/send-code', req, res);
-
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'Allowed only for the current user or admin.' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('Allowed only for the current user or admin.');
 		});
 
 		it('should allow admin requests with another user', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: true,
-				},
-				body: {
-					userId: 'anotherUserId',
-					ip: '1.1.1.1',
-				},
+			accountability = {
+				user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				admin: true,
 			};
 
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
@@ -254,95 +202,55 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', req, res);
+			const res = await request(app).post('/send-code').send({
+				userId: 'anotherUserId',
+				ip: '1.1.1.1',
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(res.status).to.equal(200);
+			expect(res.text).to.equal('Code was sent to the probe.');
 		});
 
 		it('should reject without ip', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				},
-			};
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			});
 
-			await request('/send-code', req, res);
-
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ '"body.ip" is required' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('"body.ip" is required');
 		});
 
 		it('should reject without userId', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					ip: '1.1.1.1',
-				},
-			};
+			const res = await request(app).post('/send-code').send({
+				ip: '1.1.1.1',
+			});
 
-			await request('/send-code', req, res);
-
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ '"body.userId" is required' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('"body.userId" is required');
 		});
 
 		it('should reject with wrong ip', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.863',
-				},
-			};
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.863',
+			});
 
-			await request('/send-code', req, res);
-
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ '"body.ip" must be a valid ip address with a forbidden CIDR' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('"body.ip" must be a valid ip address with a forbidden CIDR');
 		});
 
 		it('should reject with duplicate ip', async () => {
-			endpoint(router, endpointContext);
-			const req = {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			};
-
 			sql.first.resolves({});
 
-			await request('/send-code', req, res);
+			const res = await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
-			expect(resSend.args[0]).to.deep.equal([ 'The probe with this IP address is already adopted' ]);
+
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('The probe with this IP address is already adopted');
 		});
 	});
 
@@ -358,7 +266,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should accept valid verification code', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -367,60 +274,45 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					ip: '1.1.1.1',
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(res.status).to.equal(200);
 
-			expect(resSend.args[1]).to.deep.equal([
-				{
-					id: 'generatedId',
-					name: 'probe-fr-paris-01',
-					ip: '1.1.1.1',
-					version: '0.26.0',
-					nodeVersion: '18.17.0',
-					hardwareDevice: 'v1',
-					hardwareDeviceFirmware: 'v2.0',
-					systemTags: [ 'datacenter-network' ],
-					status: 'ready',
-					city: 'Paris',
-					state: null,
-					stateName: null,
-					country: 'FR',
-					countryName: 'France',
-					continent: 'EU',
-					continentName: 'Europe',
-					region: 'Western Europe',
-					latitude: 48.85,
-					longitude: 2.35,
-					asn: 12876,
-					network: 'SCALEWAY S.A.S.',
-					lastSyncDate: new Date(),
-					isIPv4Supported: true,
-					isIPv6Supported: false,
-				},
-			]);
+			expect(res.body).to.deep.equal({
+				id: 'generatedId',
+				name: 'probe-fr-paris-01',
+				ip: '1.1.1.1',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
+				systemTags: [ 'datacenter-network' ],
+				status: 'ready',
+				city: 'Paris',
+				state: null,
+				stateName: null,
+				country: 'FR',
+				countryName: 'France',
+				continent: 'EU',
+				continentName: 'Europe',
+				region: 'Western Europe',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+				lastSyncDate: '1970-01-01T00:00:00.000Z',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
+			});
 
 			expect(createOne.callCount).to.equal(1);
 
@@ -455,38 +347,26 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should adopt already synced non-adopted probe', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					ip: '1.1.1.1',
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				ip: '1.1.1.1',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			});
 
 			sql.first.resolves({ id: 'existing-unassigned-probe-id' });
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
+			expect(res.status).to.equal(200);
 
 			expect(updateOne.callCount).to.equal(1);
 			expect(updateOne.args[0]![0]).to.equal('existing-unassigned-probe-id');
@@ -500,7 +380,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should accept valid verification code even if request to GP api failed', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -509,62 +388,47 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(504);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
 			readOne.resolves({ ...adoptedProbe, name: null });
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Request failed with status code 504' ]);
+			expect(res.status).to.equal(200);
 
-			expect(resSend.args[1]).to.deep.equal([
-				{
-					id: 'generatedId',
-					name: null,
-					ip: '1.1.1.1',
-					version: null,
-					nodeVersion: null,
-					hardwareDevice: null,
-					hardwareDeviceFirmware: null,
-					systemTags: [],
-					status: 'offline',
-					city: null,
-					state: null,
-					stateName: null,
-					country: null,
-					countryName: null,
-					continent: null,
-					continentName: null,
-					region: null,
-					latitude: null,
-					longitude: null,
-					asn: null,
-					network: null,
-					lastSyncDate: new Date(),
-					isIPv4Supported: false,
-					isIPv6Supported: false,
-				},
-			]);
+			expect(res.body).to.deep.equal({
+				id: 'generatedId',
+				name: null,
+				ip: '1.1.1.1',
+				version: null,
+				nodeVersion: null,
+				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
+				systemTags: [],
+				status: 'offline',
+				city: null,
+				state: null,
+				stateName: null,
+				country: null,
+				countryName: null,
+				continent: null,
+				continentName: null,
+				region: null,
+				latitude: null,
+				longitude: null,
+				asn: null,
+				network: null,
+				lastSyncDate: '1970-01-01T00:00:00.000Z',
+				isIPv4Supported: false,
+				isIPv6Supported: false,
+			});
 
 			expect(createOne.callCount).to.equal(1);
 
@@ -599,7 +463,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should accept valid verification code with spaces', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -608,60 +471,45 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code: ` ${[ ...code ].join(' ')} `,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code: ` ${[ ...code ].join(' ')} `,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
+			expect(res.status).to.equal(200);
 
-			expect(resSend.args[1]).to.deep.equal([
-				{
-					id: 'generatedId',
-					name: 'probe-fr-paris-01',
-					ip: '1.1.1.1',
-					version: '0.26.0',
-					nodeVersion: '18.17.0',
-					hardwareDevice: 'v1',
-					hardwareDeviceFirmware: 'v2.0',
-					systemTags: [ 'datacenter-network' ],
-					status: 'ready',
-					city: 'Paris',
-					state: null,
-					stateName: null,
-					country: 'FR',
-					countryName: 'France',
-					continent: 'EU',
-					continentName: 'Europe',
-					region: 'Western Europe',
-					latitude: 48.85,
-					longitude: 2.35,
-					asn: 12876,
-					network: 'SCALEWAY S.A.S.',
-					lastSyncDate: new Date(),
-					isIPv4Supported: true,
-					isIPv6Supported: false,
-				},
-			]);
+			expect(res.body).to.deep.equal({
+				id: 'generatedId',
+				name: 'probe-fr-paris-01',
+				ip: '1.1.1.1',
+				version: '0.26.0',
+				nodeVersion: '18.17.0',
+				hardwareDevice: 'v1',
+				hardwareDeviceFirmware: 'v2.0',
+				systemTags: [ 'datacenter-network' ],
+				status: 'ready',
+				city: 'Paris',
+				state: null,
+				stateName: null,
+				country: 'FR',
+				countryName: 'France',
+				continent: 'EU',
+				continentName: 'Europe',
+				region: 'Western Europe',
+				latitude: 48.85,
+				longitude: 2.35,
+				asn: 12876,
+				network: 'SCALEWAY S.A.S.',
+				lastSyncDate: '1970-01-01T00:00:00.000Z',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
+			});
 
 			expect(createOne.callCount).to.equal(1);
 
@@ -696,7 +544,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should reject non authorized requests', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -705,33 +552,25 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code,
-				},
-			}, res);
+			accountability = {};
+
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ '"accountability" is required' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.deep.equal('"accountability.user" is required');
 			expect(createOne.callCount).to.equal(0);
 		});
 
 		it('should reject another user requests', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -740,37 +579,28 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'anotherUserId',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'anotherUserId',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ 'Allowed only for the current user or admin.' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.deep.equal('Allowed only for the current user or admin.');
 			expect(createOne.callCount).to.equal(0);
 		});
 
 		it('should allow another user admin requests', async () => {
-			endpoint(router, endpointContext);
+			accountability = {
+				user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				admin: true,
+			};
+
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -779,147 +609,91 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: true,
-				},
-				body: {
-					userId: 'anotherUserId',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'anotherUserId',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: true,
-				},
-				body: {
-					userId: 'anotherUserId',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'anotherUserId',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
+			expect(res.status).to.equal(200);
 			expect(createOne.callCount).to.equal(1);
 		});
 
 		it('should reject without code', async () => {
-			endpoint(router, endpointContext);
-
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ '"body.code" is required' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.deep.equal('"body.code" is required');
 			expect(createOne.callCount).to.equal(0);
 		});
 
 		it('should reject without userId', async () => {
-			endpoint(router, endpointContext);
-
+			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
+				code = body.code;
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					ip: '1.1.1.1',
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ '"body.userId" is required' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.deep.equal('"body.userId" is required');
 			expect(createOne.callCount).to.equal(0);
 		});
 
 		it('should reject with wrong code', async () => {
-			endpoint(router, endpointContext);
-
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code: 'KLS67',
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code: 'KLS67',
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
-			expect(resSend.args[1]).to.deep.equal([ 'Invalid code' ]);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.deep.equal('Invalid code');
 			expect(createOne.callCount).to.equal(0);
 		});
 
 		it('should assign correct default name', async () => {
-			endpoint(router, endpointContext);
 			let code = '';
 
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
@@ -927,42 +701,26 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, defaultAdoptionCodeResponse);
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
 			readByQuery.resolves([{ id: 'otherProbeId' }]);
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
+			expect(res.status).to.equal(200);
 			expect(createOne.callCount).to.equal(1);
-
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
 		});
 
 		it('should send notification if firmware is outdated', async () => {
-			endpoint(router, { ...endpointContext, env: { ...endpointContext.env, TARGET_HW_DEVICE_FIRMWARE: 'v2.0' } });
 			let code = '';
-
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
@@ -972,35 +730,22 @@ describe('adoption code endpoints', () => {
 				hardwareDeviceFirmware: 'v1.9',
 			});
 
-			await request('/send-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					ip: '1.1.1.1',
-				},
-			}, res);
+			await request(app).post('/send-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				ip: '1.1.1.1',
+			});
 
 			readByQuery.resolves([{ id: 'otherProbeId' }]);
 
-			await request('/verify-code', {
-				accountability: {
-					user: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					admin: false,
-				},
-				body: {
-					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					code,
-				},
-			}, res);
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(resSend.callCount).to.equal(2);
+			expect(res.status).to.equal(200);
 			expect(createOne.callCount).to.equal(1);
 
-			expect(resSend.args[0]).to.deep.equal([ 'Code was sent to the probe.' ]);
 			expect(createOne.args[0]?.[0].name).to.deep.equal('probe-fr-paris-02');
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({
@@ -1041,15 +786,9 @@ describe('adoption code endpoints', () => {
 		};
 
 		it('should adopt unassigned probe', async () => {
-			endpoint(router, endpointContext);
+			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
 
-			await request('/adopt-by-token', {
-				headers: {
-					'x-api-key': 'system',
-				},
-				body: adoptionTokenRequest,
-			}, res);
-
+			expect(res.status).to.equal(200);
 
 			expect(createOne.callCount).to.equal(1);
 
@@ -1087,8 +826,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should adopt assigned probe', async () => {
-			endpoint(router, endpointContext);
-
 			sql.first.resolves({
 				id: 'assignedProbeId',
 				name: 'other-user-probe-01',
@@ -1096,13 +833,9 @@ describe('adoption code endpoints', () => {
 				userId: 'otherUserId',
 			});
 
-			await request('/adopt-by-token', {
-				headers: {
-					'x-api-key': 'system',
-				},
-				body: adoptionTokenRequest,
-			}, res);
+			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
 
+			expect(res.status).to.equal(200);
 
 			expect(createOne.callCount).to.equal(0);
 			expect(updateOne.callCount).to.equal(1);
@@ -1135,8 +868,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should adopt offline probe by asn/city', async () => {
-			endpoint(router, endpointContext);
-
 			sql.first.onFirstCall().resolves(null);
 
 			sql.first.resolves({
@@ -1145,12 +876,9 @@ describe('adoption code endpoints', () => {
 				uuid: 'offlineProbeUuid',
 			});
 
-			await request('/adopt-by-token', {
-				headers: {
-					'x-api-key': 'system',
-				},
-				body: adoptionTokenRequest,
-			}, res);
+			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+
+			expect(res.status).to.equal(200);
 
 
 			expect(createOne.callCount).to.equal(0);
@@ -1184,8 +912,6 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should do nothing if already assigned to that user', async () => {
-			endpoint(router, endpointContext);
-
 			sql.first.resolves({
 				id: 'assignedProbeId',
 				name: 'other-user-probe-01',
@@ -1193,12 +919,9 @@ describe('adoption code endpoints', () => {
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 			});
 
-			await request('/adopt-by-token', {
-				headers: {
-					'x-api-key': 'system',
-				},
-				body: adoptionTokenRequest,
-			}, res);
+			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+
+			expect(res.status).to.equal(200);
 
 
 			expect(createOne.callCount).to.equal(0);
@@ -1207,16 +930,12 @@ describe('adoption code endpoints', () => {
 		});
 
 		it('should reject without system token', async () => {
-			endpoint(router, endpointContext);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
-			await request('/adopt-by-token', {
-				headers: {},
-				body: adoptionTokenRequest,
-			}, res);
+			expect(res.status).to.equal(403);
 
 			expect(createOne.callCount).to.equal(0);
 			expect(notificationCreateOne.callCount).to.equal(0);
-			expect(resStatus.args[0]?.[0]).equal(403);
 		});
 	});
 });
