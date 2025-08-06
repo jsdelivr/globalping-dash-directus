@@ -48,22 +48,24 @@ describe('adoption code endpoints', () => {
 	const resSendStatus = sinon.stub();
 	const res = { status: resStatus, send: resSend, sendStatus: resSendStatus };
 
-	const routes: Record<string, (request: object, response: typeof res) => Promise<void>> = {};
-	const request = (route: string, request: object, response: typeof res) => {
-		const handler = routes[route];
+	const routes: Record<string, ((request: object, response: typeof res, next?: () => void) => Promise<void>)[]> = {};
+	const request = async (route: string, request: object, response: typeof res) => {
+		const handlers = routes[route];
 
-		if (!handler) {
+		if (!handlers || handlers.length === 0) {
 			throw new Error('Handler for the route is not defined');
 		}
 
-		return handler(request, response);
+		for (const handler of handlers) {
+			await handler(request, response, () => {});
+		}
 	};
 	const router = {
-		post: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
-			routes[route] = handler;
+		post: (route: string, ...handlers: ((request: object, response: typeof res) => Promise<void>)[]) => {
+			routes[route] = handlers;
 		},
-		put: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
-			routes[route] = handler;
+		put: (route: string, ...handlers: ((request: object, response: typeof res) => Promise<void>)[]) => {
+			routes[route] = handlers;
 		},
 	} as unknown as Router;
 
