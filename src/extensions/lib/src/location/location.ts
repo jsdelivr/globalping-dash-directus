@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { countries } from 'countries-list';
 import { continents } from './continents.js';
 import { regions } from './regions.js';
+import { states } from './states.js';
 
 export const getContinentByCountry = (country: string): string => {
 	const countryInfo = countries[country as keyof typeof countries];
@@ -34,3 +35,13 @@ export const getRegionByCountry = (country: string): string => {
 
 	return region;
 };
+
+export function getStateNameByIso (iso: string): string {
+	const state = _.invert(states)[iso];
+
+	if (!state) {
+		throw new Error(`state not found ${iso}`);
+	}
+
+	return state;
+}
