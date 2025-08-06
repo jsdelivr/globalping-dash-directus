@@ -123,13 +123,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^1.0.9
-        version: 1.0.9(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(vue@3.5.13(typescript@5.5.4))
+        version: 1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
       '@directus/extensions-sdk':
         specifier: 11.0.9
-        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
+        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
       '@directus/types':
         specifier: ^11.2.0
-        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.13(typescript@5.5.4))
+        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.4.27(typescript@5.5.4))
       '@types/chai':
         specifier: ^4.3.17
         version: 4.3.17
@@ -190,13 +190,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^1.0.9
-        version: 1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
+        version: 1.0.9(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(vue@3.5.13(typescript@5.5.4))
       '@directus/extensions-sdk':
         specifier: 11.0.9
-        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
+        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
       '@directus/types':
         specifier: ^11.2.0
-        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.4.27(typescript@5.5.4))
+        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.13(typescript@5.5.4))
       '@types/chai':
         specifier: ^4.3.17
         version: 4.3.17
@@ -245,12 +245,18 @@ importers:
       '@directus/errors':
         specifier: ^0.3.3
         version: 0.3.3
+      '@types/supertest':
+        specifier: ^6.0.3
+        version: 6.0.3
       joi:
         specifier: ^17.13.3
         version: 17.13.3
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      supertest:
+        specifier: ^7.1.4
+        version: 7.1.4
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.6
