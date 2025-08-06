@@ -145,6 +145,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/supertest':
+        specifier: ^6.0.3
+        version: 6.0.3
       chai:
         specifier: ^5.1.1
         version: 5.1.1
@@ -157,6 +160,9 @@ importers:
       sinon:
         specifier: ^18.0.0
         version: 18.0.0
+      supertest:
+        specifier: ^7.1.4
+        version: 7.1.4
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.14.13)(typescript@5.5.4)
