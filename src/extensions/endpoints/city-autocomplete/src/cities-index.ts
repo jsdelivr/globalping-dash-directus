@@ -3,6 +3,7 @@ import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
+import { getStateNameByIso } from '../../../lib/src/location/location.js';
 import { FILENAME, type City } from './download-cities.js';
 
 type CityResponse = {
@@ -51,7 +52,18 @@ export class CitiesIndex {
 			resultsByCountry.push(results);
 		}
 
-		const cities = _(resultsByCountry).unzip().flatten().filter(Boolean).take(limit).map(({ name, country, state }) => ({ name, country, state: state ?? null })).value();
+		const cities = _(resultsByCountry)
+			.unzip()
+			.flatten()
+			.filter(Boolean)
+			.take(limit)
+			.map(({ name, country, state }) => ({
+				name,
+				country,
+				state: state ?? null,
+				stateName: state ? getStateNameByIso(state) : null,
+			}))
+			.value();
 		return cities;
 	}
 
