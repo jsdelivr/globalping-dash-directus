@@ -112,7 +112,7 @@ export const updateCustomLocation = async (fields: Fields, keys: string[], accou
 	const cities = response.data.geonames;
 
 	if (cities.length === 0) {
-		throw payloadError('No valid cities found. Please check "city" and "country" values. Search algorithm can be checked here: https://www.geonames.org/advanced-search.html?featureClass=P');
+		throw payloadError('No matching cities found. Please check the "city" and "country" values, and try using the English version of the name.');
 	}
 
 	const city = cities[0]!;
