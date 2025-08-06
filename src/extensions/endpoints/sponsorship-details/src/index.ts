@@ -1,9 +1,11 @@
-import { createError, isDirectusError } from '@directus/errors';
+import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { getUserBonus } from '../../../lib/src/add-credits.js';
+import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
+import { validate } from '../../../lib/src/middlewares/validate.js';
 
 type User = {
 	external_identifier: string | null;
@@ -28,39 +30,29 @@ const sponsorshipDetailsSchema = Joi.object<Request>({
 }).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
 export default defineEndpoint((router, context) => {
-	const { logger, services, getSchema, database } = context;
+	const { services, getSchema, database } = context;
 
-	router.get('/', async (req, res) => {
-		try {
-			const { value, error } = sponsorshipDetailsSchema.validate(req);
+	router.get('/', validate(sponsorshipDetailsSchema), asyncWrapper(async (req, res) => {
+		const { value, error } = sponsorshipDetailsSchema.validate(req);
 
-			if (error) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-			}
-
-			const userId = value.query.userId;
-			const { UsersService } = services;
-
-			const usersService = new UsersService({
-				schema: await getSchema({ database }),
-				knex: database,
-			});
-			const user = await usersService.readOne(userId) as User;
-			const { bonus, dollarsInLastYear, dollarsByMonth } = await getUserBonus(user.external_identifier, 0, context);
-
-			res.send({
-				bonus,
-				donatedInLastYear: dollarsInLastYear,
-				donatedByMonth: dollarsByMonth,
-			});
-		} catch (error: unknown) {
-			logger.error(error);
-
-			if (isDirectusError(error)) {
-				res.status(error.status).send(error.message);
-			} else {
-				res.status(500).send('Internal Server Error');
-			}
+		if (error) {
+			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 		}
-	});
+
+		const userId = value.query.userId;
+		const { UsersService } = services;
+
+		const usersService = new UsersService({
+			schema: await getSchema({ database }),
+			knex: database,
+		});
+		const user = await usersService.readOne(userId) as User;
+		const { bonus, dollarsInLastYear, dollarsByMonth } = await getUserBonus(user.external_identifier, 0, context);
+
+		res.send({
+			bonus,
+			donatedInLastYear: dollarsInLastYear,
+			donatedByMonth: dollarsByMonth,
+		});
+	}, context));
 });
