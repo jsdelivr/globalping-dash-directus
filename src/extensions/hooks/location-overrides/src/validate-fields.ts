@@ -40,7 +40,7 @@ export const validateLocation = async (fields: Fields, context: HookExtensionCon
 			maxRows: 1,
 			username: env.GEONAMES_USERNAME,
 			country: fields.country,
-			q: fields.city,
+			name: fields.city,
 		},
 		timeout: 5000,
 	});
