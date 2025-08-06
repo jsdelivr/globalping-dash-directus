@@ -55,7 +55,7 @@ describe('gp_location_overrides hook', () => {
 	};
 
 	it('should fulfill values for city, country, state, lat and long for the saved item (create)', async () => {
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&name=marsel')
 			.reply(200, geonamesResponse);
 
 		hook(events, context);
@@ -73,7 +73,7 @@ describe('gp_location_overrides hook', () => {
 	});
 
 	it('should fulfill values for city, country, state, lat and long for the saved item (update)', async () => {
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&name=marsel')
 			.reply(200, geonamesResponse);
 
 		hook(events, context);
@@ -98,7 +98,7 @@ describe('gp_location_overrides hook', () => {
 	});
 
 	it('should throw if no cities was found', async () => {
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&name=marsel')
 			.reply(200, {
 				totalResultsCount: 0,
 				geonames: [],
@@ -111,7 +111,7 @@ describe('gp_location_overrides hook', () => {
 	});
 
 	it('should throw if invalid CIDR was provided', async () => {
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&q=marsel')
+		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&name=marsel')
 			.reply(200, geonamesResponse);
 
 		hook(events, context);

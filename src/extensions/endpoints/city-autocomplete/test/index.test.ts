@@ -84,6 +84,60 @@ describe('city-autocomplete endpoint', () => {
 			]);
 		});
 
+		it('should convert non-ascii characters to ascii', async () => {
+			const req = {
+				accountability: {
+					user: 'user-id',
+					admin: false,
+				},
+				query: {
+					query: 'Pécs',
+					countries: 'HU',
+					limit: 5,
+				},
+			};
+
+			await request('/', req, res);
+
+			expect(resSend.callCount).to.equal(1);
+
+			expect(resSend.args[0]?.[0]).to.deep.equal([
+				{
+					name: 'Pecs',
+					country: 'HU',
+					state: null,
+					stateName: null,
+				},
+			]);
+		});
+
+		it('should work with input in Chinese', async () => {
+			const req = {
+				accountability: {
+					user: 'user-id',
+					admin: false,
+				},
+				query: {
+					query: '北京市',
+					countries: 'CN',
+					limit: 5,
+				},
+			};
+
+			await request('/', req, res);
+
+			expect(resSend.callCount).to.equal(1);
+
+			expect(resSend.args[0]?.[0]).to.deep.equal([
+				{
+					name: 'Beijing',
+					country: 'CN',
+					state: null,
+					stateName: null,
+				},
+			]);
+		});
+
 		it('should respect limit parameter', async () => {
 			const req = {
 				accountability: {
