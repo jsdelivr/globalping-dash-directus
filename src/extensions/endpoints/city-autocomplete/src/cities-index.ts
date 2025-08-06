@@ -58,6 +58,7 @@ export class CitiesIndex {
 			.unzip()
 			.flatten()
 			.filter(Boolean)
+			.uniqWith((a, b) => a.name === b.name && a.state === b.state && a.country === b.country) // There may be multiple cities with the same name, but different states, but we can't difference between them at the moment, so we just show one.
 			.take(limit)
 			.map(({ name, country, state }) => ({
 				name,
