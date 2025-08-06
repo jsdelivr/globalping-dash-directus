@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { getStateNameByIso } from '../../../lib/src/location/location.js';
+import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { FILENAME, type City } from './download-cities.js';
 
 type CityResponse = {
@@ -30,6 +31,7 @@ export class CitiesIndex {
 
 	searchCities (countries: string[], query: string, limit: number) {
 		const resultsByCountry: CityResponse[][] = [];
+		const asciiQuery = normalizeCityName(query).toLowerCase().replace(/\b(?:city)\b|(?:shi)$/g, '');
 
 		for (const country of countries) {
 			if (!this.citiesOfCountries[country]) {
@@ -40,7 +42,7 @@ export class CitiesIndex {
 			const results: CityResponse[] = [];
 
 			for (let i = 0; i < cities.length; i++) {
-				if (!query || cities[i]!.searchValue.startsWith(query)) {
+				if (!asciiQuery || cities[i]!.searchValue.startsWith(asciiQuery)) {
 					results.push(cities[i]!);
 
 					if (results.length >= limit) {
@@ -64,6 +66,7 @@ export class CitiesIndex {
 				stateName: state ? getStateNameByIso(state) : null,
 			}))
 			.value();
+
 		return cities;
 	}
 
