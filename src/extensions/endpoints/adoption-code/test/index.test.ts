@@ -1,6 +1,6 @@
 import { type EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
-import express, { type NextFunction } from 'express';
+import express, { type NextFunction, type Response } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';

@@ -1,4 +1,3 @@
-import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
@@ -30,17 +29,11 @@ export default defineEndpoint((router, context) => {
 	citiesIndex.init().catch((err) => { throw err; });
 
 	router.get('/', validate(cityAutocompleteSchema), asyncWrapper(async (req, res) => {
-		const { value, error } = cityAutocompleteSchema.validate(req);
-
-		if (error) {
-			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-		}
-
 		if (!citiesIndex.isInitialized) {
 			await citiesIndex.init();
 		}
 
-		const { query, countries, limit } = value.query as unknown as { query: string; countries: string; limit: number };
+		const { query, countries, limit } = req.query as unknown as { query: string; countries: string; limit: number };
 		const countriesArray = countries.split(',').map(country => country.trim()).filter(Boolean);
 		const cities = citiesIndex.searchCities(countriesArray, query, limit);
 		res.send(cities);

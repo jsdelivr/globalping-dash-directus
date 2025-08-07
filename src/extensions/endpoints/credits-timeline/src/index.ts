@@ -1,4 +1,3 @@
-import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
@@ -37,13 +36,7 @@ export default defineEndpoint((router, context) => {
 	const { database } = context;
 
 	router.get('/', validate(creditsTimelineSchema), asyncWrapper(async (req, res) => {
-		const { value, error } = creditsTimelineSchema.validate(req, { convert: true });
-
-		if (error) {
-			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-		}
-
-		const query = value.query as unknown as { userId: string; offset: number; limit: number };
+		const query = req.query as unknown as { userId: string; offset: number; limit: number };
 
 		const changesSql = database.unionAll([
 			database('gp_credits_additions')

@@ -36,16 +36,11 @@ const syncGithubDataSchema = Joi.object<Request>({
 }).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context: EndpointExtensionContext) => {
-	router.post('/', validate(syncGithubDataSchema), asyncWrapper(async (req, res) => {
+	router.post('/', validate(syncGithubDataSchema), asyncWrapper(async (_req, res) => {
 		try {
-			const { value, error } = syncGithubDataSchema.validate(req);
-
-			if (error) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-			}
-
-			const requesterId = value.accountability.user;
-			const userId = value.body.userId;
+			const req = _req as Request;
+			const requesterId = req.accountability.user;
+			const userId = req.body.userId;
 
 			await rateLimiter.consume(requesterId, 1).catch(() => { throw new TooManyRequestsError(); });
 

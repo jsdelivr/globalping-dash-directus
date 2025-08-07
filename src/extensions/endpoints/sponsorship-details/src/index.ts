@@ -1,4 +1,3 @@
-import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
@@ -33,13 +32,7 @@ export default defineEndpoint((router, context) => {
 	const { services, getSchema, database } = context;
 
 	router.get('/', validate(sponsorshipDetailsSchema), asyncWrapper(async (req, res) => {
-		const { value, error } = sponsorshipDetailsSchema.validate(req);
-
-		if (error) {
-			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-		}
-
-		const userId = value.query.userId;
+		const userId = req.query.userId;
 		const { UsersService } = services;
 
 		const usersService = new UsersService({
