@@ -25,8 +25,12 @@ const cityAutocompleteSchema = Joi.object<Request>({
 }).unknown(true);
 
 export default defineEndpoint((router, context) => {
+	const { logger } = context;
 	const citiesIndex = getCitiesIndex(context);
-	citiesIndex.init().catch((err) => { throw err; });
+	citiesIndex.init().catch((err) => {
+		logger.error(err);
+		throw err;
+	});
 
 	router.get('/', validate(cityAutocompleteSchema), asyncWrapper(async (req, res) => {
 		if (!citiesIndex.isInitialized) {
