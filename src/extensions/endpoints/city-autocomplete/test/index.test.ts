@@ -3,9 +3,10 @@ import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import AdmZip from 'adm-zip';
 import { expect } from 'chai';
-import type { Router } from 'express';
+import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import request from 'supertest';
 import { downloadCities, generateCitiesJsonFile } from '../src/download-cities.js';
 import endpoint from '../src/index.js';
 
@@ -16,40 +17,38 @@ describe('city-autocomplete endpoint', () => {
 			info: console.log,
 		},
 	} as unknown as EndpointExtensionContext;
-	const resSend = sinon.stub();
-	const resStatus = sinon.stub().returns({ send: resSend });
-	const res = { status: resStatus, send: resSend };
 
-	const routes: Record<string, (request: object, response: typeof res) => Promise<void>> = {};
-	const request = (route: string, request: object, response: typeof res) => {
-		const handler = routes[route];
+	const app = express();
+	app.use(express.json());
+	let accountability: { user: string; admin: boolean } | Record<string, never> = {};
+	app.use(((req: any, _res: any, next: NextFunction) => {
+		req.accountability = accountability;
+		next();
+	}) as NextFunction);
 
-		if (!handler) {
-			throw new Error('Handler for the route is not defined');
-		}
-
-		return handler(request, response);
-	};
-	const router = {
-		get: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
-			routes[route] = handler;
-		},
-	} as unknown as Router;
+	const router = express.Router();
 
 	before(async () => {
 		nock.disableNetConnect();
+		nock.enableNetConnect('127.0.0.1');
 		const zip = new AdmZip();
 		const __dirname = dirname(fileURLToPath(import.meta.url));
 		zip.addLocalFile(path.join(__dirname, 'cities500.txt'));
 		nock('https://download.geonames.org').get('/export/dump/cities500.zip').reply(200, zip.toBuffer());
 
 		await downloadCities().then(generateCitiesJsonFile);
-
-		(endpoint as any)(router, endpointContext);
+		// @ts-expect-error Looks like @directus/extensions-sdk v12 adds wrong type.
+		endpoint(router, endpointContext);
+		app.use(router);
 	});
 
 	beforeEach(() => {
 		sinon.resetHistory();
+
+		accountability = {
+			user: 'user-id',
+			admin: false,
+		};
 	});
 
 	after(() => {
@@ -58,23 +57,15 @@ describe('city-autocomplete endpoint', () => {
 
 	describe('/city-autocomplete', () => {
 		it('should return cities filtered by countries', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: 'new',
-					countries: 'US',
-					limit: 5,
-				},
-			};
+			const res = await request(app).get('/').query({
+				query: 'new',
+				countries: 'US',
+				limit: 5,
+			});
 
-			await request('/', req, res);
+			expect(res.status).to.equal(200);
 
-			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([
+			expect(res.body).to.deep.equal([
 				{
 					name: 'New York',
 					country: 'US',
@@ -85,23 +76,15 @@ describe('city-autocomplete endpoint', () => {
 		});
 
 		it('should convert non-ascii characters to ascii', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: 'Pécs',
-					countries: 'HU',
-					limit: 5,
-				},
-			};
+			const res = await request(app).get('/').query({
+				query: 'Pécs',
+				countries: 'HU',
+				limit: 5,
+			});
 
-			await request('/', req, res);
+			expect(res.status).to.equal(200);
 
-			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([
+			expect(res.body).to.deep.equal([
 				{
 					name: 'Pecs',
 					country: 'HU',
@@ -112,23 +95,15 @@ describe('city-autocomplete endpoint', () => {
 		});
 
 		it('should work with input in Chinese', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: '北京市',
-					countries: 'CN',
-					limit: 5,
-				},
-			};
+			const res = await request(app).get('/').query({
+				query: '北京市',
+				countries: 'CN',
+				limit: 5,
+			});
 
-			await request('/', req, res);
+			expect(res.status).to.equal(200);
 
-			expect(resSend.callCount).to.equal(1);
-
-			expect(resSend.args[0]?.[0]).to.deep.equal([
+			expect(res.body).to.deep.equal([
 				{
 					name: 'Beijing',
 					country: 'CN',
@@ -139,22 +114,14 @@ describe('city-autocomplete endpoint', () => {
 		});
 
 		it('should respect limit parameter', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					query: 'B',
-					countries: 'AR,TH,BE',
-					limit: 2,
-				},
-			};
+			const res = await request(app).get('/').query({
+				query: 'B',
+				countries: 'AR,TH,BE',
+				limit: 2,
+			});
 
-			await request('/', req, res);
-
-			expect(resSend.callCount).to.equal(1);
-			const results = resSend.args[0]?.[0];
+			expect(res.status).to.equal(200);
+			const results = res.body;
 			expect(Array.isArray(results)).to.equal(true);
 
 			expect(results).to.deep.equal([
@@ -164,38 +131,24 @@ describe('city-autocomplete endpoint', () => {
 		});
 
 		it('should reject request without accountability', async () => {
-			const req = {
-				query: {
-					query: 'b',
-					countries: 'AR,TH,BE',
-					limit: 2,
-				},
-			};
+			accountability = {};
 
-			await request('/', req, res);
+			const res = await request(app).get('/').query({
+				query: 'b',
+				countries: 'AR,TH,BE',
+				limit: 2,
+			});
 
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
+			expect(res.status).to.equal(400);
 		});
 
 		it('should reject request without query parameter', async () => {
-			const req = {
-				accountability: {
-					user: 'user-id',
-					admin: false,
-				},
-				query: {
-					countries: 'AR,TH,BE',
-					limit: 5,
-				},
-			};
+			const res = await request(app).get('/').query({
+				countries: 'AR,TH,BE',
+				limit: 5,
+			});
 
-			await request('/', req, res);
-
-			expect(resStatus.callCount).to.equal(1);
-			expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-			expect(resSend.callCount).to.equal(1);
+			expect(res.status).to.equal(400);
 		});
 	});
 });

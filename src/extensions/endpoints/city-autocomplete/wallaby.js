@@ -7,7 +7,7 @@ export default function wallaby () {
 			'package.json',
 			'test/*.json',
 			'test/*.txt',
-			'data/**/*.csv',
+			'data/**/*',
 		],
 		tests: [
 			'test/**/*.test.ts',

@@ -1,11 +1,13 @@
-import { createError, isDirectusError } from '@directus/errors';
+import { createError } from '@directus/errors';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import axios from 'axios';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
+import { validate } from '../../../lib/src/middlewares/validate.js';
 import { syncGithubData } from './actions/sync-github-data.js';
 
 export type Request = ExpressRequest & {
@@ -34,18 +36,11 @@ const syncGithubDataSchema = Joi.object<Request>({
 }).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context: EndpointExtensionContext) => {
-	router.post('/', async (req, res) => {
-		const { logger } = context;
-
+	router.post('/', validate(syncGithubDataSchema), asyncWrapper(async (_req, res) => {
 		try {
-			const { value, error } = syncGithubDataSchema.validate(req);
-
-			if (error) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-			}
-
-			const requesterId = value.accountability.user;
-			const userId = value.body.userId;
+			const req = _req as Request;
+			const requesterId = req.accountability.user;
+			const userId = req.body.userId;
 
 			await rateLimiter.consume(requesterId, 1).catch(() => { throw new TooManyRequestsError(); });
 
@@ -53,15 +48,11 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 
 			res.send(result);
 		} catch (error: unknown) {
-			logger.error(error);
-
-			if (isDirectusError(error)) {
-				res.status(error.status).send(error.message);
-			} else if (axios.isAxiosError(error)) {
+			if (axios.isAxiosError(error)) {
 				res.status(400).send(error.message);
 			} else {
-				res.status(500).send('Internal Server Error');
+				throw error;
 			}
 		}
-	});
+	}, context));
 });

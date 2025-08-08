@@ -1,4 +1,4 @@
-import { createError, isDirectusError } from '@directus/errors';
+import { createError } from '@directus/errors';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import TTLCache from '@isaacs/ttlcache';
@@ -8,8 +8,10 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
+import { validate } from '../../../lib/src/middlewares/validate.js';
 import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
@@ -81,25 +83,20 @@ const sendCodeSchema = Joi.object<Request>({
 }).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
 export default defineEndpoint((router, context) => {
-	const { env, logger } = context;
-	router.post('/send-code', async (req, res) => {
+	const { env } = context;
+	router.post('/send-code', validate(sendCodeSchema), asyncWrapper(async (_req, res) => {
 		try {
-			const { value, error } = sendCodeSchema.validate(req);
-
-			if (error) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-			}
-
-			const userId = value.body.userId;
+			const req = _req as Request;
+			const userId = req.body.userId;
 			let ip: string;
 
 			try {
-				ip = ipaddr.parse(value.body.ip).toString();
+				ip = ipaddr.parse(req.body.ip).toString();
 			} catch {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe IP address format is wrong', 400))();
 			}
 
-			await rateLimiter.consume(value.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
+			await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
 
 			const adoptedProbe = await findAdoptedProbeByIp(ip, context as unknown as EndpointExtensionContext);
 
@@ -192,18 +189,13 @@ export default defineEndpoint((router, context) => {
 
 			res.send('Code was sent to the probe.');
 		} catch (error: unknown) {
-			logger.error(error);
-
-			if (isDirectusError(error)) {
-				res.status(error.status).send(error.message);
-			} else if (axios.isAxiosError(error)) {
-				const message = error.response?.status === 422 ? 'No matching probes found' : error.message;
-				res.status(400).send(message);
+			if (axios.isAxiosError(error) && error.response?.status === 422) {
+				throw new (createError('INVALID_PAYLOAD_ERROR', 'No matching probes found', 400))();
 			} else {
-				res.status(500).send('Internal Server Error');
+				throw error;
 			}
 		}
-	});
+	}, context));
 
 	const verifyCodeSchema = Joi.object<Request>({
 		accountability: Joi.object({
@@ -216,90 +208,68 @@ export default defineEndpoint((router, context) => {
 		}).required(),
 	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
 
-	router.post('/verify-code', async (request, res) => {
-		try {
-			const { value: req, error } = verifyCodeSchema.validate(request);
+	router.post('/verify-code', validate(verifyCodeSchema), asyncWrapper(async (_req, res) => {
+		const req = _req as Request;
 
-			if (error) {
-				throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
-			}
+		const userId = req.body.userId;
+		const userCode = req.body.code.replaceAll(' ', '');
 
-			const userId = req.body.userId;
-			const userCode = req.body.code.replaceAll(' ', '');
+		await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
 
-			await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
+		const value = probesToAdopt.get(userId);
 
-			const value = probesToAdopt.get(userId);
-
-			if (!value || value.code !== userCode) {
-				throw new InvalidCodeError();
-			}
-
-			const probe = value.probe;
-			const adoptedProbe = await createAdoptedProbe(userId, probe, context);
-
-			probesToAdopt.delete(userId);
-			await rateLimiter.delete(req.accountability.user);
-
-			await checkFirmwareVersions(adoptedProbe, userId, context);
-
-			res.send({
-				id: adoptedProbe.id,
-				name: adoptedProbe.name,
-				ip: probe.ip,
-				version: probe.version,
-				nodeVersion: probe.nodeVersion,
-				hardwareDevice: probe.hardwareDevice,
-				hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
-				systemTags: probe.systemTags,
-				status: probe.status,
-				city: probe.city,
-				state: probe.state,
-				stateName: probe.stateName,
-				country: probe.country,
-				countryName: probe.countryName,
-				continent: probe.continent,
-				continentName: probe.continentName,
-				region: probe.region,
-				latitude: probe.latitude,
-				longitude: probe.longitude,
-				asn: probe.asn,
-				network: probe.network,
-				lastSyncDate: new Date(),
-				isIPv4Supported: probe.isIPv4Supported,
-				isIPv6Supported: probe.isIPv6Supported,
-			});
-		} catch (error: unknown) {
-			logger.error(error);
-
-			if (isDirectusError(error)) {
-				res.status(error.status).send(error.message);
-			} else {
-				res.status(500).send('Internal Server Error');
-			}
+		if (!value || value.code !== userCode) {
+			throw new InvalidCodeError();
 		}
-	});
 
-	router.put('/adopt-by-token', async (request, res) => {
-		try {
-			if (request.headers['x-api-key'] !== env.GP_SYSTEM_KEY) {
-				throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
-			}
+		const probe = value.probe;
+		const adoptedProbe = await createAdoptedProbe(userId, probe, context);
 
-			const probe = request.body.probe as ProbeToAdopt;
-			const user = request.body.user as { id: string };
-			const adoptedProbe = await createAdoptedProbe(user.id, probe, context);
-			await checkFirmwareVersions(adoptedProbe, user.id, context);
+		probesToAdopt.delete(userId);
+		await rateLimiter.delete(req.accountability.user);
 
-			res.sendStatus(200);
-		} catch (error: unknown) {
-			logger.error(error);
+		await checkFirmwareVersions(adoptedProbe, userId, context);
 
-			if (isDirectusError(error)) {
-				res.status(error.status).send(error.message);
-			} else {
-				res.status(500).send('Internal Server Error');
-			}
+		res.send({
+			id: adoptedProbe.id,
+			name: adoptedProbe.name,
+			ip: probe.ip,
+			version: probe.version,
+			nodeVersion: probe.nodeVersion,
+			hardwareDevice: probe.hardwareDevice,
+			hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
+			systemTags: probe.systemTags,
+			status: probe.status,
+			city: probe.city,
+			state: probe.state,
+			stateName: probe.stateName,
+			country: probe.country,
+			countryName: probe.countryName,
+			continent: probe.continent,
+			continentName: probe.continentName,
+			region: probe.region,
+			latitude: probe.latitude,
+			longitude: probe.longitude,
+			asn: probe.asn,
+			network: probe.network,
+			lastSyncDate: new Date(),
+			isIPv4Supported: probe.isIPv4Supported,
+			isIPv6Supported: probe.isIPv6Supported,
+		});
+	}, context));
+
+	router.put('/adopt-by-token', asyncWrapper(async (_req, res) => {
+		const req = _req as Request;
+
+		if (req.headers['x-api-key'] !== env.GP_SYSTEM_KEY) {
+			throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
 		}
-	});
+
+		const probe = req.body.probe as ProbeToAdopt;
+		const user = req.body.user as { id: string };
+		const adoptedProbe = await createAdoptedProbe(user.id, probe, context);
+		await checkFirmwareVersions(adoptedProbe, user.id, context);
+
+		res.sendStatus(200);
+	}, context));
 });

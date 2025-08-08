@@ -1,8 +1,9 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
-import type { Router } from 'express';
+import express, { type NextFunction } from 'express';
 import _ from 'lodash';
 import * as sinon from 'sinon';
+import request from 'supertest';
 import endpoint from '../src/index.js';
 
 describe('/sponsorship-details', () => {
@@ -28,25 +29,19 @@ describe('/sponsorship-details', () => {
 		},
 	} as unknown as EndpointExtensionContext;
 
-	const resSend = sinon.stub();
-	const resStatus = sinon.stub().returns({ send: resSend });
-	const res = { status: resStatus, send: resSend };
+	const app = express();
+	app.use(express.json());
+	let accountability: { user: string; admin: boolean } | Record<string, never> | undefined = {};
+	app.use(((req: any, _res: any, next: NextFunction) => {
+		req.accountability = accountability;
+		next();
+	}) as NextFunction);
 
-	const routes: Record<string, (request: object, response: typeof res) => Promise<void>> = {};
-	const request = (route: string, request: object, response: typeof res) => {
-		const handler = routes[route];
+	const router = express.Router();
+	// @ts-expect-error Looks like @directus/extensions-sdk v12 adds wrong type.
+	endpoint(router, endpointContext);
+	app.use(router);
 
-		if (!handler) {
-			throw new Error('Handler for the route is not defined');
-		}
-
-		return handler(request, response);
-	};
-	const router = {
-		get: (route: string, handler: (request: object, response: typeof res) => Promise<void>) => {
-			routes[route] = handler;
-		},
-	} as unknown as Router;
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
@@ -57,6 +52,11 @@ describe('/sponsorship-details', () => {
 		readOne.resolves({
 			external_identifier: 'test-github-id',
 		});
+
+		accountability = {
+			user: 'user-id',
+			admin: false,
+		};
 	});
 
 	afterEach(() => {
@@ -64,17 +64,6 @@ describe('/sponsorship-details', () => {
 	});
 
 	it('should return sponsorship details for valid user request', async () => {
-		(endpoint as any)(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'user-id',
-				admin: false,
-			},
-			query: {
-				userId: 'user-id',
-			},
-		};
-
 		readByQuery.resolves([
 			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-08-04 02:00:00' },
 			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-09-03 02:00:00' },
@@ -95,38 +84,31 @@ describe('/sponsorship-details', () => {
 			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-07-10 02:00:00' },
 		]);
 
-		await request('/', req, res);
+		const res = await request(app).get('/').query({
+			userId: 'user-id',
+		});
 
-		expect(resSend.callCount).to.equal(1);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.args[0]?.[0]).to.deep.equal({
+		expect(res.body).to.deep.equal({
 			bonus: 10,
 			donatedInLastYear: 180,
 			donatedByMonth: [ 5, 5, 0, 5, 30, 5, 25, 5, 20, 5, 15, 60 ],
 		});
 
-		expect(_.sum(resSend.args[0]?.[0].donatedByMonth)).to.equal(180);
+		expect(_.sum(res.body.donatedByMonth)).to.equal(180);
 		expect(readOne.callCount).to.equal(1);
 		expect(readOne.args[0]?.[0]).to.equal('user-id');
 	});
 
 	it('should return empty details for non-sponsor user', async () => {
-		(endpoint as any)(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'user-id',
-				admin: false,
-			},
-			query: {
-				userId: 'user-id',
-			},
-		};
+		const res = await request(app).get('/').query({
+			userId: 'user-id',
+		});
 
-		await request('/', req, res);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.callCount).to.equal(1);
-
-		expect(resSend.args[0]?.[0]).to.deep.equal({
+		expect(res.body).to.deep.equal({
 			bonus: 0,
 			donatedInLastYear: 0,
 			donatedByMonth: [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -137,40 +119,27 @@ describe('/sponsorship-details', () => {
 	});
 
 	it('should reject user request for another user', async () => {
-		(endpoint as any)(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'user-id',
-				admin: false,
-			},
-			query: {
-				userId: 'another-user-id',
-			},
-		};
+		const res = await request(app).get('/').query({
+			userId: 'another-user-id',
+		});
 
-		await request('/', req, res);
-
-		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-		expect(resSend.args[0]).to.deep.equal([ 'Allowed only for the current user or admin.' ]);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Allowed only for the current user or admin.');
 	});
 
 	it('should accept admin request for another user', async () => {
-		(endpoint as any)(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'admin-id',
-				admin: true,
-			},
-			query: {
-				userId: 'another-user-id',
-			},
+		accountability = {
+			user: 'admin-id',
+			admin: true,
 		};
 
-		await request('/', req, res);
+		const res = await request(app).get('/').query({
+			userId: 'another-user-id',
+		});
 
-		expect(resSend.callCount).to.equal(1);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.args[0]?.[0]).to.deep.equal({
+		expect(res.body).to.deep.equal({
 			bonus: 0,
 			donatedInLastYear: 0,
 			donatedByMonth: [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -181,32 +150,20 @@ describe('/sponsorship-details', () => {
 	});
 
 	it('should reject request without accountability', async () => {
-		(endpoint as any)(router, endpointContext);
-		const req = {
-			query: {
-				userId: 'user-id',
-			},
-		};
+		accountability = undefined;
 
-		await request('/', req, res);
+		const res = await request(app).get('/').query({
+			userId: 'user-id',
+		});
 
-		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-		expect(resSend.args[0]).to.deep.equal([ '"accountability" is required' ]);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('"accountability" is required');
 	});
 
 	it('should reject request without userId', async () => {
-		(endpoint as any)(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'user-id',
-				admin: false,
-			},
-			query: {},
-		};
+		const res = await request(app).get('/').query({});
 
-		await request('/', req, res);
-
-		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-		expect(resSend.args[0]).to.deep.equal([ '"query.userId" is required' ]);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('"query.userId" is required');
 	});
 });

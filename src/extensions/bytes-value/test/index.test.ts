@@ -1,6 +1,7 @@
 import { expect } from 'chai';
-import type { Router } from 'express';
+import express, { type NextFunction } from 'express';
 import * as sinon from 'sinon';
+import request from 'supertest';
 import { WrongValueError } from '../../lib/src/bytes.js';
 import endpoint from '../src/generator/index.js';
 import hook from '../src/validator/index.js';
@@ -9,27 +10,17 @@ type FilterCallback = (payload: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;
 
 describe('/generator', () => {
-	const resSend = sinon.stub();
-	const next = sinon.stub();
-	const res = { send: resSend };
+	const app = express();
+	app.use(express.json());
+	let accountability: { user: string } | Record<string, never> = {};
+	app.use(((req: any, _res: any, next: NextFunction) => {
+		req.accountability = accountability;
+		next();
+	}) as NextFunction);
 
-	const routes: Record<string, (request: object, response: typeof res, next: () => void) => void> = {};
-	const request = (route: string, request: object, response: typeof res) => {
-		const handler = routes[route];
-
-		if (!handler) {
-			throw new Error('Handler for the route is not defined');
-		}
-
-		return handler(request, response, next);
-	};
-	const router = {
-		post: (route: string, handler: (request: object, response: typeof res) => void) => {
-			routes[route] = handler;
-		},
-	} as unknown as Router;
-
-	endpoint(router);
+	const router = express.Router();
+	endpoint(router, { logger: console.error } as any);
+	app.use(router);
 
 	const callbacks = {
 		filter: {} as Record<string, FilterCallback>,
@@ -47,18 +38,18 @@ describe('/generator', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+
+		accountability = {
+			user: 'requester-id',
+		};
 	});
 
 	describe('gp_tokens.items.create hook', () => {
 		it('should accept generated token on create', async () => {
-			const req = {
-				accountability: {
-					user: 'requester-id',
-				},
-			};
+			const res = await request(app).post('/').send({});
 
-			await request('/', req, res);
-			const token = resSend.args[0]?.[0].data;
+			expect(res.status).to.equal(200);
+			const token = res.body.data;
 			expect(token.length).to.equal(32);
 
 			const payload = {
@@ -72,14 +63,14 @@ describe('/generator', () => {
 		});
 
 		it('should reject non-authenticated user', async () => {
-			const req = {
-				accountability: {
-					user: '',
-				},
+			accountability = {
+				user: '',
 			};
 
-			await request('/', req, res);
-			expect(next.args[0]?.[0].message).to.deep.equal('"accountability.user" is not allowed to be empty');
+			const res = await request(app).post('/').send({});
+
+			expect(res.status).to.equal(400);
+			expect(res.text).to.equal('"accountability.user" is not allowed to be empty');
 		});
 
 		it('should reject wrong token on create', async () => {
@@ -105,14 +96,10 @@ describe('/generator', () => {
 		});
 
 		it('should accept generated token on edit', async () => {
-			const req = {
-				accountability: {
-					user: 'requester-id',
-				},
-			};
+			const res = await request(app).post('/').send({});
 
-			await request('/', req, res);
-			const token = resSend.args[0]?.[0].data;
+			expect(res.status).to.equal(200);
+			const token = res.body.data;
 
 			const payload = {
 				value: token,
@@ -139,17 +126,12 @@ describe('/generator', () => {
 
 	describe('gp_apps.items.create hook', () => {
 		it('should generate bigger amount of bytes', async () => {
-			const req = {
-				accountability: {
-					user: 'requester-id',
-				},
-				body: {
-					size: 'lg',
-				},
-			};
+			const res = await request(app).post('/').send({
+				size: 'lg',
+			});
 
-			await request('/', req, res);
-			const token = resSend.args[0]?.[0].data;
+			expect(res.status).to.equal(200);
+			const token = res.body.data;
 			expect(token.length).to.equal(48);
 
 			const payload = {
@@ -161,17 +143,12 @@ describe('/generator', () => {
 		});
 
 		it('should reject if there is a wrong value in array, then work when it is removed', async () => {
-			const req = {
-				accountability: {
-					user: 'requester-id',
-				},
-				body: {
-					size: 'lg',
-				},
-			};
+			const res = await request(app).post('/').send({
+				size: 'lg',
+			});
 
-			await request('/', req, res);
-			const token = resSend.args[0]?.[0].data;
+			expect(res.status).to.equal(200);
+			const token = res.body.data;
 			expect(token.length).to.equal(48);
 
 			let error = null;

@@ -1,8 +1,9 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
-import type { Router } from 'express';
+import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import request from 'supertest';
 import endpoint from '../src/index.js';
 
 describe('/sync-github-data endpoint', () => {
@@ -28,28 +29,22 @@ describe('/sync-github-data endpoint', () => {
 		database: {},
 		getSchema: sinon.stub().resolves({}),
 	} as unknown as EndpointExtensionContext;
-	const resSend = sinon.stub();
-	const resStatus = sinon.stub().returns({ send: resSend });
-	const res = { status: resStatus, send: resSend };
 
-	const routes: Record<string, (request: object, response: typeof res) => void> = {};
-	const request = (route: string, request: object, response: typeof res) => {
-		const handler = routes[route];
+	const app = express();
+	app.use(express.json());
+	let accountability: { user: string; admin: boolean } | Record<string, never> | undefined = {};
+	app.use(((req: any, _res: any, next: NextFunction) => {
+		req.accountability = accountability;
+		next();
+	}) as NextFunction);
 
-		if (!handler) {
-			throw new Error('Handler for the route is not defined');
-		}
-
-		return handler(request, response);
-	};
-	const router = {
-		post: (route: string, handler: (request: object, response: typeof res) => void) => {
-			routes[route] = handler;
-		},
-	} as unknown as Router;
+	const router = express.Router();
+	endpoint(router, endpointContext);
+	app.use(router);
 
 	before(() => {
 		nock.disableNetConnect();
+		nock.enableNetConnect('127.0.0.1');
 	});
 
 	beforeEach(() => {
@@ -63,6 +58,11 @@ describe('/sync-github-data endpoint', () => {
 			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
 		});
+
+		accountability = {
+			user: 'directus-id',
+			admin: false,
+		};
 	});
 
 	after(() => {
@@ -70,17 +70,6 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should sync GitHub data', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		nock('https://api.github.com').get('/user/github-id').reply(200, {
 			login: 'new-username',
 		});
@@ -89,15 +78,17 @@ describe('/sync-github-data endpoint', () => {
 			login: 'new-org',
 		}]);
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
 		expect(nock.isDone()).to.equal(true);
-		expect(resSend.callCount).to.equal(1);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.args[0]).to.deep.equal([{
+		expect(res.body).to.deep.equal({
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
-		}]);
+		});
 
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(1);
@@ -109,15 +100,9 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should work if requester is admin', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'admin-id',
-				admin: true,
-			},
-			body: {
-				userId: 'directus-id',
-			},
+		accountability = {
+			user: 'admin-id',
+			admin: true,
 		};
 
 		nock('https://api.github.com').get('/user/github-id').reply(200, {
@@ -128,15 +113,17 @@ describe('/sync-github-data endpoint', () => {
 			login: 'new-org',
 		}]);
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
 		expect(nock.isDone()).to.equal(true);
-		expect(resSend.callCount).to.equal(1);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.args[0]).to.deep.equal([{
+		expect(res.body).to.deep.equal({
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
-		}]);
+		});
 
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(1);
@@ -148,17 +135,6 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should work if current github data is null', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		nock('https://api.github.com').get('/user/github-id').reply(200, {
 			login: 'new-username',
 		});
@@ -173,15 +149,17 @@ describe('/sync-github-data endpoint', () => {
 			github_organizations: [],
 		});
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
 		expect(nock.isDone()).to.equal(true);
-		expect(resSend.callCount).to.equal(1);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.args[0]).to.deep.equal([{
+		expect(res.body).to.deep.equal({
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
-		}]);
+		});
 
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(1);
@@ -193,17 +171,6 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should retry with default github token if user token failed', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
 			.get('/user/github-id')
@@ -228,9 +195,12 @@ describe('/sync-github-data endpoint', () => {
 				login: 'new-org',
 			}]);
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
 		expect(nock.isDone()).to.equal(true);
+		expect(res.status).to.equal(200);
 	});
 
 	it('should use default github token if user token is null', async () => {
@@ -241,17 +211,6 @@ describe('/sync-github-data endpoint', () => {
 			github_oauth_token: null,
 		});
 
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer default-github-token')
 			.get('/user/github-id')
@@ -266,23 +225,15 @@ describe('/sync-github-data endpoint', () => {
 				login: 'new-org',
 			}]);
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
 		expect(nock.isDone()).to.equal(true);
+		expect(res.status).to.equal(200);
 	});
 
 	it('should not call update if data is the same', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		nock('https://api.github.com').get('/user/github-id').reply(200, {
 			login: 'old-username',
 		});
@@ -291,95 +242,59 @@ describe('/sync-github-data endpoint', () => {
 			login: 'old-org',
 		}]);
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
 		expect(nock.isDone()).to.equal(true);
-		expect(resSend.callCount).to.equal(1);
+		expect(res.status).to.equal(200);
 
-		expect(resSend.args[0]).to.deep.equal([{
+		expect(res.body).to.deep.equal({
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
-		}]);
+		});
 
 		expect(readOne.callCount).to.equal(1);
 		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should reject non authorized requests', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			body: {
-				userId: 'directus-id',
-			},
-		};
+		accountability = undefined;
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
-		expect(resStatus.callCount).to.equal(1);
-		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-		expect(resSend.callCount).to.equal(1);
-		expect(resSend.args[0]).to.deep.equal([ '"accountability" is required' ]);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('"accountability" is required');
 	});
 
 	it('should reject without userId', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {},
-		};
+		const res = await request(app).post('/').send({});
 
-		await request('/', req, res);
-
-		expect(resStatus.callCount).to.equal(1);
-		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-		expect(resSend.callCount).to.equal(1);
-		expect(resSend.args[0]).to.deep.equal([ '"body.userId" is required' ]);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('"body.userId" is required');
 	});
 
 	it('should handle not enough data error', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		readOne.resolves({});
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
-		expect(resStatus.callCount).to.equal(1);
-		expect(resStatus.args[0]).to.deep.equal([ 400 ]);
-		expect(resSend.callCount).to.equal(1);
-		expect(resSend.args[0]).to.deep.equal([ 'Not enough data to sync with GitHub' ]);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Not enough data to sync with GitHub');
 	});
 
 	it('should handle internal server error', async () => {
-		endpoint(router, endpointContext);
-		const req = {
-			accountability: {
-				user: 'directus-id',
-				admin: false,
-			},
-			body: {
-				userId: 'directus-id',
-			},
-		};
-
 		readOne.rejects(new Error('Internal Server Error'));
 
-		await request('/', req, res);
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
 
-		expect(resStatus.callCount).to.equal(1);
-		expect(resStatus.args[0]).to.deep.equal([ 500 ]);
-		expect(resSend.callCount).to.equal(1);
-		expect(resSend.args[0]).to.deep.equal([ 'Internal Server Error' ]);
+		expect(res.status).to.equal(500);
+		expect(res.text).to.equal('Internal Server Error');
 	});
 });

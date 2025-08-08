@@ -20,7 +20,7 @@ export class CitiesIndex {
 
 	constructor (private readonly context: EndpointExtensionContext) {}
 
-	async init () {
+	init () {
 		if (this.initializePromise) {
 			return this.initializePromise;
 		}
