@@ -4,9 +4,29 @@ import type { EventContext } from '@directus/types';
 import axios from 'axios';
 import Joi from 'joi';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
-import { type City, geonamesCache, getKey } from './geonames-cache.js';
 import { getProbes, getUser } from './repositories/directus.js';
 import type { Fields } from './index.js';
+
+export type City = {
+	lng: string;
+	geonameId: number;
+	countryCode: string;
+	name: string;
+	toponymName: string;
+	lat: string;
+	fcl: string;
+	fcode: string;
+	adminCode1: string;
+	countryId: string;
+	population: number;
+	fclName: string;
+	adminCodes1: {
+		ISO3166_2: string;
+	};
+	countryName: string;
+	fcodeName: string;
+	adminName1: string;
+};
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
@@ -60,7 +80,7 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	}
 };
 
-export const updateCustomLocation = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+export const patchCustomLocationAllowedFields = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext): Promise<City> => {
 	const { env } = context;
 
 	if (keys.length > 1) {
@@ -117,9 +137,10 @@ export const updateCustomLocation = async (fields: Fields, keys: string[], accou
 
 	const city = cities[0]!;
 	city.toponymName = normalizeCityName(city.toponymName);
-	geonamesCache.set(getKey(keys), city);
 
 	fields.city = city.toponymName;
 	fields.country = city.countryCode;
 	fields.state = city.countryCode === 'US' ? city.adminCode1 : null;
+
+	return city;
 };

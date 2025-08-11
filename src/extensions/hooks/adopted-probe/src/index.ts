@@ -1,7 +1,9 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
-import { resetCustomLocation, resetUserDefinedData, updateCustomLocationData, updateProbeName } from './update-metadata.js';
-import { updateCustomLocation, validateTags } from './validate-fields.js';
+import _ from 'lodash';
+import { updateProbeWithRootPermissions, updateProbeWithUserPermissions } from './repositories/directus.js';
+import { resetCustomLocation, patchCustomLocationRootFields, resetProbeName, resetUserDefinedData } from './update-with-root.js';
+import { patchCustomLocationAllowedFields, validateTags, type City } from './update-with-user.js';
 
 export type Probe = {
 	name: string | null;
@@ -28,22 +30,28 @@ export default defineHook(({ filter, action }, context) => {
 			throw new UserNotFoundError();
 		}
 
-		await Promise.all([
+		const isResettingLocation = Object.hasOwn(fields, 'city') && !fields.city;
+		const isUpdatingLocation = Boolean(fields.city || Object.hasOwn(fields, 'country') || Object.hasOwn(fields, 'state')) && !isResettingLocation;
+
+		const [ newLocation ] = await Promise.all([
+			isUpdatingLocation && patchCustomLocationAllowedFields(fields, keys, accountability, context),
 			(fields.tags && fields.tags.length > 0) && validateTags(fields, keys, accountability, context),
-			(fields.city || Object.hasOwn(fields, 'country') || Object.hasOwn(fields, 'state')) && updateCustomLocation(fields, keys, accountability, context),
-			(Object.hasOwn(fields, 'name') && !fields.name) && updateProbeName(fields, keys, accountability, context),
+			(Object.hasOwn(fields, 'name') && !fields.name) && resetProbeName(fields, keys, accountability, context),
 		]);
+		// updateProbeWithUserPermissions should go before updateProbeWithRootPermissions as it checks user permissions.
+		// `userId` can't be set to null here, as this will break the further Directus item update with no permissions.
+		await updateProbeWithUserPermissions(_.omit(fields, 'userId'), keys, accountability, context);
+
+		const rootFields: Partial<Probe> = {};
+		isUpdatingLocation && patchCustomLocationRootFields(rootFields, newLocation as City);
+		isResettingLocation && resetCustomLocation(rootFields);
+		// updateProbeWithRootPermissions should go after updateProbeWithUserPermissions as it updates all fields.
+		await updateProbeWithRootPermissions(rootFields, keys, context);
 	});
 
-	// State, latitude, longitude, customLocation are updated in action hook, because user operation doesn't have permissions to edit them.
 	action('gp_probes.items.update', async ({ keys, payload }) => {
 		const fields = payload as Fields;
-
-		if (fields.city) {
-			await updateCustomLocationData(fields, keys, context);
-		} else if (Object.hasOwn(fields, 'city') && !fields.city) {
-			await resetCustomLocation(fields, keys, context);
-		}
+		console.log('action fields', fields);
 
 		// In case of removing adoption, reset all user affected fields.
 		if (fields.userId === null) {

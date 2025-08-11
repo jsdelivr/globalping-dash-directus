@@ -1,6 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
-import type { Probe } from '../index.js';
+import _ from 'lodash';
+import type { Probe, Fields } from '../index.js';
 
 type User = {
 	github_username: string | null;
@@ -31,4 +32,35 @@ export const getUser = async (userId: string, accountability: EventContext['acco
 
 	const user = await itemsService.readOne(userId) as User | null;
 	return user;
+};
+
+export const updateProbeWithRootPermissions = async (fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+	if (_.isEmpty(fields)) { return; }
+
+	const { ItemsService } = services;
+
+	console.log('updateProbeWithRootPermissions', fields, keys);
+	const adoptedProbesService = new ItemsService('gp_probes', {
+		database,
+		schema: await getSchema(),
+	});
+
+	await adoptedProbesService.updateMany(keys, fields, { emitEvents: false });
+	console.log('updateProbeWithRootPermissions done');
+};
+
+export const updateProbeWithUserPermissions = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], { services, database, getSchema }: HookExtensionContext) => {
+	if (_.isEmpty(fields)) { return; }
+
+	const { ItemsService } = services;
+
+	console.log('updateProbeWithUserPermissions', fields, keys, accountability);
+	const adoptedProbesService = new ItemsService('gp_probes', {
+		database,
+		schema: await getSchema(),
+		accountability,
+	});
+
+	await adoptedProbesService.updateMany(keys, fields, { emitEvents: false });
+	console.log('updateProbeWithUserPermissions done');
 };

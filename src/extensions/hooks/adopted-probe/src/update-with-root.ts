@@ -1,19 +1,13 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
+import _ from 'lodash';
 import { getDefaultProbeName } from '../../../lib/src/default-probe-name.js';
 import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location/location.js';
-import { geonamesCache, getKey } from './geonames-cache.js';
+import type { City } from './update-with-user.js';
 import { UserNotFoundError, type Fields } from './index.js';
 
-export const resetCustomLocation = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
-	const { ItemsService } = services;
-
-	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
-		schema: await getSchema(),
-	});
-
-	await adoptedProbesService.updateMany(keys, {
+export const resetCustomLocation = (fields: Fields) => {
+	_.assign(fields, {
 		country: null,
 		countryName: null,
 		city: null,
@@ -25,25 +19,10 @@ export const resetCustomLocation = async (_fields: Fields, keys: string[], { ser
 		continentName: null,
 		region: null,
 		customLocation: null,
-	}, {
-		emitEvents: false,
 	});
 };
 
-export const updateCustomLocationData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
-	const { ItemsService } = services;
-
-	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
-		schema: await getSchema(),
-	});
-
-	const city = geonamesCache.get(getKey(keys));
-
-	if (!city) {
-		throw new Error('geonames result not found');
-	}
-
+export const patchCustomLocationRootFields = (fields: Fields, city: City) => {
 	const country = city.countryCode;
 	const countryName = city.countryName;
 	const state = city.countryCode === 'US' ? city.adminCode1 : null;
@@ -54,11 +33,11 @@ export const updateCustomLocationData = async (_fields: Fields, keys: string[], 
 	const latitude = Math.round(Number(city.lat) * 100) / 100;
 	const longitude = Math.round(Number(city.lng) * 100) / 100;
 
-	await adoptedProbesService.updateMany(keys, {
-		stateName,
+	_.assign(fields, {
+		countryName,
 		latitude,
 		longitude,
-		countryName,
+		stateName,
 		continent,
 		continentName,
 		region,
@@ -69,30 +48,10 @@ export const updateCustomLocationData = async (_fields: Fields, keys: string[], 
 			longitude,
 			state,
 		},
-	}, {
-		emitEvents: false,
 	});
 };
 
-export const resetUserDefinedData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
-	const { ItemsService } = services;
-
-	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
-		schema: await getSchema(),
-	});
-
-	await adoptedProbesService.updateMany(keys, {
-		name: null,
-		userId: null,
-		tags: [],
-		customLocation: null,
-	}, {
-		emitEvents: false,
-	});
-};
-
-export const updateProbeName = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+export const resetProbeName = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	const { services, database, getSchema } = context;
 	const { ItemsService } = services;
 
@@ -113,4 +72,22 @@ export const updateProbeName = async (fields: Fields, keys: string[], accountabi
 	const probe = await adoptedProbesService.readOne(keys[0]);
 	const name = await getDefaultProbeName(probe.userId, probe, context);
 	fields.name = name;
+};
+
+export const resetUserDefinedData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+	const { ItemsService } = services;
+
+	const adoptedProbesService = new ItemsService('gp_probes', {
+		database,
+		schema: await getSchema(),
+	});
+
+	await adoptedProbesService.updateMany(keys, {
+		name: null,
+		userId: null,
+		tags: [],
+		customLocation: null,
+	}, {
+		emitEvents: false,
+	});
 };
