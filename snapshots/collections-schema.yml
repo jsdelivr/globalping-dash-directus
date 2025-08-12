@@ -3699,7 +3699,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: 34
+      sort: 35
       special: null
       translations: null
       validation: null
@@ -3737,7 +3737,7 @@ fields:
       options: null
       readonly: false
       required: false
-      sort: null
+      sort: 36
       special:
         - cast-boolean
       translations: null
@@ -3796,6 +3796,45 @@ fields:
         - octet_length(replace(replace('v2.0','v',''),'.','')) >= 2 then
         substring_index(replace('v2.0','v',''),'.',-1) else '0' end,4,'0')) then
         1 else 0 end
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_probes
+    field: originalLocation
+    type: json
+    meta:
+      collection: gp_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: originalLocation
+      group: null
+      hidden: false
+      interface: input-code
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 34
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: originalLocation
+      table: gp_probes
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null

@@ -1,28 +1,35 @@
 import type { HookExtensionContext } from '@directus/extensions';
-import type { EventContext } from '@directus/types';
 import _ from 'lodash';
-import { getDefaultProbeName } from '../../../lib/src/default-probe-name.js';
-import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location/location.js';
-import type { City } from './update-with-user.js';
-import { UserNotFoundError, type Fields } from './index.js';
+import { getContinentByCountry, getContinentName, getRegionByCountry, getCountryByIso, getStateNameByIso } from '../../../lib/src/location/location.js';
+import { type City } from './update-with-user.js';
+import { type Fields, type Probe } from './index.js';
 
-export const resetCustomLocation = (fields: Fields) => {
+export const resetLocationFields = (fields: Fields, probe: Probe) => {
+	if (!probe.originalLocation) { return; }
+
+	const country = probe.originalLocation.country;
+	const state = probe.originalLocation.state;
+	const continent = getContinentByCountry(country);
+
 	_.assign(fields, {
-		country: null,
-		countryName: null,
-		city: null,
-		latitude: null,
-		longitude: null,
-		state: null,
-		stateName: null,
-		continent: null,
-		continentName: null,
-		region: null,
+		country,
+		countryName: getCountryByIso(country),
+		city: probe.originalLocation.city,
+		state,
+		stateName: state ? getStateNameByIso(state) : null,
+		continent,
+		continentName: getContinentName(continent),
+		region: getRegionByCountry(country),
+		latitude: probe.originalLocation.latitude,
+		longitude: probe.originalLocation.longitude,
+		originalLocation: null,
 		customLocation: null,
 	});
+
+	return fields;
 };
 
-export const patchCustomLocationRootFields = (fields: Fields, city: City) => {
+export const patchCustomLocationRootFields = (fields: Fields, city: City, originalProbe: Probe) => {
 	const country = city.countryCode;
 	const countryName = city.countryName;
 	const state = city.countryCode === 'US' ? city.adminCode1 : null;
@@ -41,6 +48,13 @@ export const patchCustomLocationRootFields = (fields: Fields, city: City) => {
 		continent,
 		continentName,
 		region,
+		originalLocation: originalProbe.originalLocation || {
+			country: originalProbe.country,
+			city: originalProbe.city,
+			latitude: originalProbe.latitude,
+			longitude: originalProbe.longitude,
+			state: originalProbe.state,
+		},
 		customLocation: {
 			country,
 			city: city.toponymName,
@@ -51,29 +65,6 @@ export const patchCustomLocationRootFields = (fields: Fields, city: City) => {
 	});
 };
 
-export const resetProbeName = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
-	const { ItemsService } = services;
-
-	if (!accountability || !accountability.user) {
-		throw new UserNotFoundError();
-	}
-
-	if (keys.length > 1) {
-		throw new Error('Batch name reset is not supported.');
-	}
-
-	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
-		schema: await getSchema(),
-		accountability,
-	});
-
-	const probe = await adoptedProbesService.readOne(keys[0]);
-	const name = await getDefaultProbeName(probe.userId, probe, context);
-	fields.name = name;
-};
-
 export const resetUserDefinedData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
@@ -82,12 +73,13 @@ export const resetUserDefinedData = async (_fields: Fields, keys: string[], { se
 		schema: await getSchema(),
 	});
 
-	await adoptedProbesService.updateMany(keys, {
+	const probes = await adoptedProbesService.readMany(keys) as Probe[];
+
+	await adoptedProbesService.updateBatch(probes.map(probe => ({
+		id: probe.id,
 		name: null,
 		userId: null,
 		tags: [],
-		customLocation: null,
-	}, {
-		emitEvents: false,
-	});
+		...resetLocationFields({}, probe),
+	})), { emitEvents: false });
 };

@@ -3,9 +3,10 @@ import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import axios from 'axios';
 import Joi from 'joi';
+import { getDefaultProbeName } from '../../../lib/src/default-probe-name.js';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { getProbes, getUser } from './repositories/directus.js';
-import type { Fields } from './index.js';
+import { type Fields, UserNotFoundError } from './index.js';
 
 export type City = {
 	lng: string;
@@ -35,13 +36,8 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 		return;
 	}
 
-	const currentProbes = await getProbes(keys, context);
-
-	if (!currentProbes || currentProbes.length === 0) {
-		throw payloadError('Adopted probes not found.');
-	}
-
-	const userId = currentProbes[0]?.userId;
+	const currentProbes = await getProbes(keys, context, accountability);
+	const userId = currentProbes[0]!.userId;
 
 	if (!userId) {
 		throw payloadError('User id not found.');
@@ -80,7 +76,7 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	}
 };
 
-export const patchCustomLocationAllowedFields = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext): Promise<City> => {
+export const patchCustomLocationAllowedFields = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	const { env } = context;
 
 	if (keys.length > 1) {
@@ -95,11 +91,8 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 		throw payloadError(`State value can't be falsy.`);
 	}
 
-	const [ probe ] = await getProbes(keys, context, accountability);
-
-	if (!probe) {
-		throw payloadError('Adopted probe not found.');
-	}
+	const probes = await getProbes(keys, context, accountability);
+	const probe = probes[0]!;
 
 	if (!probe.country || !probe.city || !probe.allowedCountries.length) {
 		throw payloadError('Required data missing. Wait for the probe data to be synced with globalping.');
@@ -142,5 +135,40 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 	fields.country = city.countryCode;
 	fields.state = city.countryCode === 'US' ? city.adminCode1 : null;
 
-	return city;
+	return { newLocation: city, originalProbe: probe };
+};
+
+export const resetProbeName = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+	if (!accountability || !accountability.user) {
+		throw new UserNotFoundError();
+	}
+
+	if (keys.length > 1) {
+		throw payloadError('Batch name reset is not supported.');
+	}
+
+	const probes = await getProbes([ keys[0]! ], context, accountability);
+	const probe = probes[0]!;
+
+	const name = await getDefaultProbeName(probe.userId!, probe, context);
+	fields.name = name;
+};
+
+export const resetCustomLocationAllowedFields = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
+	if (keys.length > 1) {
+		throw payloadError('Batch location reset is not supported.');
+	}
+
+	const probes = await getProbes(keys, context, accountability);
+	const probe = probes[0]!;
+
+	if (!probe.originalLocation) {
+		throw payloadError('Adopted probe is already reset.');
+	}
+
+	fields.country = probe.originalLocation.country;
+	fields.city = probe.originalLocation.city;
+	fields.state = probe.originalLocation.state;
+
+	return { originalProbe: probe };
 };
