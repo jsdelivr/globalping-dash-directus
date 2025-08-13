@@ -25,6 +25,7 @@ describe('adopted-probe hook', () => {
 	};
 	const adoptedProbes = {
 		updateMany: sinon.stub(),
+		updateBatch: sinon.stub(),
 		readMany: sinon.stub(),
 		readOne: sinon.stub(),
 		readByQuery: sinon.stub(),
@@ -118,18 +119,34 @@ describe('adopted-probe hook', () => {
 
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(adoptedProbes.updateMany.callCount).to.equal(1);
+		expect(adoptedProbes.updateMany.callCount).to.equal(2);
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
+			{ city: 'Marseille', country: 'FR', state: null },
+			{ emitEvents: false },
+		]);
+
+		expect(adoptedProbes.updateMany.args[1]).to.deep.equal([
+			[ '1' ],
 			{
-				stateName: null,
+				city: 'Marseille',
+				country: 'FR',
+				countryName: 'France',
 				latitude: 43.3,
 				longitude: 5.38,
-				countryName: 'France',
+				state: null,
+				stateName: null,
 				continent: 'EU',
 				continentName: 'Europe',
 				region: 'Western Europe',
+				originalLocation: {
+					country: 'FR',
+					city: 'Paris',
+					latitude: '48.85',
+					longitude: '2.35',
+					state: null,
+				},
 				customLocation: {
 					country: 'FR',
 					city: 'Marseille',
@@ -140,6 +157,12 @@ describe('adopted-probe hook', () => {
 			},
 			{ emitEvents: false },
 		]);
+
+		expect(payload).to.deep.equal({
+			city: 'Marseille',
+			country: 'FR',
+			state: null,
+		});
 	});
 
 	it('should additionally update state for the US cities', async () => {
@@ -192,18 +215,34 @@ describe('adopted-probe hook', () => {
 
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(adoptedProbes.updateMany.callCount).to.equal(1);
+		expect(adoptedProbes.updateMany.callCount).to.equal(2);
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
+			{ city: 'Miami', state: 'FL', country: 'US' },
+			{ emitEvents: false },
+		]);
+
+		expect(adoptedProbes.updateMany.args[1]).to.deep.equal([
+			[ '1' ],
 			{
-				stateName: 'Florida',
+				city: 'Miami',
+				country: 'US',
 				countryName: 'United States',
+				latitude: 25.77,
+				longitude: -80.19,
+				state: 'FL',
+				stateName: 'Florida',
 				continent: 'NA',
 				continentName: 'North America',
 				region: 'Northern America',
-				latitude: 25.77,
-				longitude: -80.19,
+				originalLocation: {
+					country: 'US',
+					city: 'Detroit',
+					latitude: '42.33',
+					longitude: '-83.05',
+					state: 'MI',
+				},
 				customLocation: {
 					country: 'US',
 					city: 'Miami',
@@ -214,23 +253,41 @@ describe('adopted-probe hook', () => {
 			},
 			{ emitEvents: false },
 		]);
+
+		expect(payload).to.deep.equal({
+			city: 'Miami',
+			country: 'US',
+			state: 'FL',
+		});
 	});
 
 	it('should reset city, lat and long of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
-			city: 'Paris',
-			state: null,
-			latitude: 48.85,
-			longitude: 2.35,
+			city: 'Marseille',
 			country: 'FR',
-			allowedCountries: [ 'FR' ],
+			countryName: 'France',
+			latitude: 43.3,
+			longitude: 5.38,
+			state: null,
+			stateName: null,
+			continent: 'EU',
+			continentName: 'Europe',
+			region: 'Western Europe',
+			allowedCountries: [ 'FR', 'US' ],
 			customLocation: {
-				city: 'Paris',
-				state: null,
-				latitude: 48.85,
-				longitude: 2.35,
 				country: 'FR',
+				city: 'Marseille',
+				latitude: 43.3,
+				longitude: 5.38,
+				state: null,
+			},
+			originalLocation: {
+				country: 'US',
+				city: 'Detroit',
+				latitude: 42.33,
+				longitude: -83.05,
+				state: 'MI',
 			},
 		}]);
 
@@ -240,36 +297,47 @@ describe('adopted-probe hook', () => {
 		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(adoptedProbes.updateMany.callCount).to.equal(1);
+		expect(adoptedProbes.updateMany.callCount).to.equal(2);
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
+			{ city: 'Detroit', country: 'US', state: 'MI' },
+			{ emitEvents: false },
+		]);
+
+		expect(adoptedProbes.updateMany.args[1]).to.deep.equal([
+			[ '1' ],
 			{
-				stateName: null,
-				countryName: null,
-				continent: null,
-				continentName: null,
-				region: null,
-				country: null,
-				city: null,
-				latitude: null,
-				longitude: null,
-				state: null,
+				city: 'Detroit',
+				country: 'US',
+				countryName: 'United States',
+				state: 'MI',
+				stateName: 'Michigan',
+				continent: 'NA',
+				continentName: 'North America',
+				region: 'Northern America',
+				latitude: 42.33,
+				longitude: -83.05,
+				originalLocation: null,
 				customLocation: null,
 			},
 			{ emitEvents: false },
 		]);
 
-		expect(payload.city).to.equal(null);
+		expect(payload).to.deep.equal({
+			city: 'Detroit',
+			country: 'US',
+			state: 'MI',
+		});
 	});
 
 	it('should set default name if falsy name is provided', async () => {
-		adoptedProbes.readOne.resolves({
+		adoptedProbes.readMany.resolves([{
 			id: 'id-1',
 			userId: 'user-id-value',
 			country: 'FR',
 			city: 'Paris',
-		});
+		}]);
 
 		adoptedProbes.readByQuery.resolves([{ id: 'id-1' }]);
 
@@ -349,7 +417,21 @@ describe('adopted-probe hook', () => {
 
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(adoptedProbes.updateMany.callCount).to.equal(0);
+		expect(adoptedProbes.updateMany.callCount).to.equal(1);
+
+		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
+			[ '1' ],
+			{ name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jsdelivr', value: 'mytag2' }] },
+			{ emitEvents: false },
+		]);
+
+		expect(payload).to.deep.equal({
+			name: 'My Probe',
+			tags: [
+				{ prefix: 'jimaek', value: 'mytag' },
+				{ prefix: 'jsdelivr', value: 'mytag2' },
+			],
+		});
 	});
 
 	it('should send valid error if probes not found', async () => {
@@ -359,7 +441,7 @@ describe('adopted-probe hook', () => {
 		const payload = { city: 'marsel' };
 		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
-		expect(err).to.deep.equal(payloadError('Adopted probe not found.'));
+		expect(err).to.deep.equal(payloadError('Adopted probes not found.'));
 	});
 
 	it('should send valid error if country is not defined', async () => {
@@ -409,6 +491,106 @@ describe('adopted-probe hook', () => {
 		expect(adoptedProbes.updateMany.callCount).to.equal(0);
 	});
 
+	describe('user reset', () => {
+		it('should should reset user data in case of userId: null', async () => {
+			adoptedProbes.readMany.resolves([{
+				id: 'probe-id',
+				userId: 'user-id',
+				city: 'Paris',
+				state: null,
+				latitude: '48.85',
+				longitude: '2.35',
+				country: 'FR',
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
+				originalLocation: null,
+			}]);
+
+			hook(events, context);
+			const payload = { userId: null };
+			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+			await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+
+			expect(adoptedProbes.updateBatch.callCount).to.equal(1);
+
+			expect(adoptedProbes.updateBatch.args[0]).to.deep.equal([
+				[
+					{
+						id: 'probe-id',
+						originalLocation: null,
+						customLocation: null,
+						name: null,
+						userId: null,
+						tags: [],
+					},
+				],
+				{ emitEvents: false },
+			]);
+
+			expect(payload).to.deep.equal({ userId: null });
+		});
+
+		it('should should reset user data in case of userId: null and custom location', async () => {
+			adoptedProbes.readMany.resolves([{
+				id: 'probe-id',
+				userId: 'user-id',
+				city: 'Paris',
+				state: null,
+				latitude: '48.85',
+				longitude: '2.35',
+				country: 'FR',
+				allowedCountries: [ 'FR', 'US' ],
+				customLocation: {
+					country: 'FR',
+					city: 'Paris',
+					latitude: '48.85',
+					longitude: '2.35',
+					state: null,
+				},
+				originalLocation: {
+					country: 'US',
+					city: 'Detroit',
+					latitude: '42.33',
+					longitude: '-83.05',
+					state: 'MI',
+				},
+			}]);
+
+			hook(events, context);
+			const payload = { userId: null };
+			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+			await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
+
+			expect(adoptedProbes.updateBatch.callCount).to.equal(1);
+
+			expect(adoptedProbes.updateBatch.args[0]).to.deep.equal([
+				[
+					{
+						id: 'probe-id',
+						city: 'Detroit',
+						country: 'US',
+						countryName: 'United States',
+						state: 'MI',
+						stateName: 'Michigan',
+						continent: 'NA',
+						continentName: 'North America',
+						region: 'Northern America',
+						latitude: '42.33',
+						longitude: '-83.05',
+						originalLocation: null,
+						customLocation: null,
+						name: null,
+						userId: null,
+						tags: [],
+					},
+				],
+				{ emitEvents: false },
+			]);
+
+			expect(payload).to.deep.equal({ userId: null });
+		});
+	});
+
 	describe('tags validation', () => {
 		before(() => {
 			adoptedProbes.readMany.resolves([{
@@ -449,7 +631,7 @@ describe('adopted-probe hook', () => {
 			const payload = { tags: [{ prefix: 'oldprefix', value: 'a' }] };
 
 			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
-
+			await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
 			expect(payload).to.deep.equal({ tags: [{ prefix: 'oldprefix', value: 'a' }] });
 		});

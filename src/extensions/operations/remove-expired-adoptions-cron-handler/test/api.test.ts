@@ -10,9 +10,10 @@ describe('Remove expired adoptions CRON handler', () => {
 	const itemsReadByQuery = sinon.stub();
 	const notificationsReadByQuery = sinon.stub();
 	const updateByQuery = sinon.stub();
+	const updateBatch = sinon.stub();
 	const createOne = sinon.stub();
 	const services = {
-		ItemsService: sinon.stub().returns({ readByQuery: itemsReadByQuery, updateByQuery }),
+		ItemsService: sinon.stub().returns({ readByQuery: itemsReadByQuery, updateByQuery, updateBatch }),
 		NotificationsService: sinon.stub().returns({ createOne, readByQuery: notificationsReadByQuery }),
 	};
 	const context = { database, getSchema, services } as any;
@@ -160,7 +161,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		itemsReadByQuery.onSecondCall().resolves([]);
 
-		updateByQuery.resolves([ 'probeId1' ]);
+		updateBatch.resolves([ 'probeId1' ]);
 
 		const result = await operationApi.handler({}, context);
 
@@ -176,13 +177,89 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 		]);
 
-		expect(updateByQuery.callCount).to.equal(1);
+		expect(updateBatch.callCount).to.equal(1);
 
-		expect(updateByQuery.args[0]).to.deep.equal([
-			{
-				filter: { id: { _in: [ 'probeId1' ] } },
+		expect(updateBatch.args[0]).to.deep.equal([
+			[
+				{
+					id: 'probeId1',
+					originalLocation: null,
+					customLocation: null,
+					name: null,
+					userId: null,
+					tags: [],
+				},
+			],
+			{ emitEvents: false },
+		]);
+
+		expect(result).to.deep.equal('Removed adoptions for probes: probeId1. Notified adoptions with ids: [].');
+	});
+
+	it('should delete adoption and reset custom location if probe is offline for >30 days', async () => {
+		itemsReadByQuery.onFirstCall().resolves([{
+			id: 'probeId1',
+			ip: '1.1.1.1',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-30).toISOString().split('T')[0],
+			customLocation: {
+				country: 'US',
+				city: 'Detroit',
+				latitude: '42.33',
+				longitude: '-83.05',
+				state: 'MI',
 			},
-			{ name: null, userId: null, tags: [], customLocation: null },
+			originalLocation: {
+				country: 'FR',
+				city: 'Paris',
+				latitude: '48.85',
+				longitude: '2.35',
+				state: null,
+			},
+		}]);
+
+		itemsReadByQuery.onSecondCall().resolves([]);
+
+		updateBatch.resolves([ 'probeId1' ]);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(createOne.callCount).to.equal(1);
+
+		expect(createOne.args[0]).to.deep.equal([
+			{
+				recipient: 'userId1',
+				subject: 'Your probe has been deleted',
+				message: 'Your probe with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
+				item: 'probeId1',
+				collection: 'gp_probes',
+			},
+		]);
+
+		expect(updateBatch.callCount).to.equal(1);
+
+		expect(updateBatch.args[0]).to.deep.equal([
+			[
+				{
+					id: 'probeId1',
+					city: 'Paris',
+					country: 'FR',
+					countryName: 'France',
+					state: null,
+					stateName: null,
+					continent: 'EU',
+					continentName: 'Europe',
+					region: 'Western Europe',
+					latitude: '48.85',
+					longitude: '2.35',
+					originalLocation: null,
+					customLocation: null,
+					name: null,
+					userId: null,
+					tags: [],
+				},
+			],
 			{ emitEvents: false },
 		]);
 
