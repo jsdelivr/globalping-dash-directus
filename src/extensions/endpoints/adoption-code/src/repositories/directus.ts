@@ -2,7 +2,7 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
 import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
-import type { AdoptedProbe, ProbeToAdopt } from '../index.js';
+import type { AdoptedProbe, ProbeToAdopt, Row } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
 	const { services, database, getSchema } = context;
@@ -43,11 +43,20 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		originalLocation: null,
 	};
 
-	const existingProbe = await database('gp_probes')
+	let existingProbe: AdoptedProbe | null = null;
+
+	const row = await database('gp_probes')
 		.where({ uuid: probe.uuid })
 		.orWhere({ ip: probe.ip })
 		.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ probe.ip ])
-		.first<AdoptedProbe>();
+		.first<Row>();
+
+	if (row) {
+		existingProbe = {
+			...row,
+			originalLocation: row.originalLocation ? JSON.parse(row.originalLocation) : null,
+		};
+	}
 
 	// Probe already assigned to the user.
 	if (existingProbe && existingProbe.userId === adoption.userId) {

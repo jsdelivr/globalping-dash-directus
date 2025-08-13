@@ -56,6 +56,10 @@ export type AdoptedProbe = ProbeToAdopt & {
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 };
 
+export type Row = AdoptedProbe & {
+	originalLocation: string;
+};
+
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
 
