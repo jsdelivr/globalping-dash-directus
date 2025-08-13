@@ -1,8 +1,9 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
+import { getResetLocationFields } from '../../../lib/src/reset-fields.js';
 import { updateProbeWithRootPermissions, updateProbeWithUserPermissions } from './repositories/directus.js';
-import { patchCustomLocationRootFields, resetUserDefinedData, resetLocationFields } from './update-with-root.js';
+import { patchCustomLocationRootFields, resetUserDefinedData } from './update-with-root.js';
 import { patchCustomLocationAllowedFields, resetProbeName, resetCustomLocationAllowedFields, validateTags } from './update-with-user.js';
 
 export type Probe = {
@@ -51,7 +52,7 @@ export default defineHook(({ filter, action }, context) => {
 
 		const rootFields: Partial<Probe> = {};
 		isUpdatingLocation && patchCustomLocationRootFields(rootFields, newLocation!, originalProbe!);
-		isResettingLocation && resetLocationFields(rootFields, originalProbeFromReset!);
+		isResettingLocation && _.assign(rootFields, getResetLocationFields(originalProbeFromReset!));
 		// updateProbeWithRootPermissions should be called only after updateProbeWithUserPermissions is finished as it checks user permissions.
 		await updateProbeWithRootPermissions(rootFields, keys, context);
 	});

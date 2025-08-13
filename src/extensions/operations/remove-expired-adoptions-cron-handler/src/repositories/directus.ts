@@ -1,6 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 import type { Notification } from '@directus/types';
 import Bluebird from 'bluebird';
+import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
@@ -112,11 +113,10 @@ export const removeAdoption = async (probes: AdoptedProbe[], { services, databas
 		});
 	});
 
-	const result = await probesService.updateByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }, {
-		name: null,
-		userId: null,
-		tags: [],
-		customLocation: null,
-	}, { emitEvents: false }) as string[];
+	const result = await probesService.updateBatch(probes.map(probe => ({
+		id: probe.id,
+		...getResetUserFields(probe),
+	})), { emitEvents: false });
+
 	return result;
 };

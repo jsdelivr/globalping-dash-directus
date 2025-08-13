@@ -663,13 +663,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^1.0.9
-        version: 1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
+        version: 1.0.9(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(vue@3.5.13(typescript@5.5.4))
       '@directus/extensions-sdk':
         specifier: 11.0.9
-        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
+        version: 11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.5.13(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.5.13(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)
       '@directus/types':
         specifier: ^11.2.0
-        version: 11.2.0(knex@3.1.0)(vue@3.4.27(typescript@5.5.4))
+        version: 11.2.0(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.13(typescript@5.5.4))
       '@types/chai':
         specifier: ^4.3.17
         version: 4.3.17
@@ -1197,6 +1197,9 @@ importers:
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
+      '@types/lodash':
+        specifier: ^4.17.18
+        version: 4.17.18
       express:
         specifier: ^4.19.2
         version: 4.19.2
@@ -7551,57 +7554,6 @@ snapshots:
       - typescript
       - vue-router
 
-  '@directus/extensions-sdk@11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)':
-    dependencies:
-      '@directus/composables': 10.1.15(vue@3.4.27(typescript@5.5.4))
-      '@directus/constants': 11.0.4
-      '@directus/extensions': 1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
-      '@directus/themes': 0.3.10(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
-      '@directus/types': 11.2.0(knex@3.1.0)(vue@3.4.27(typescript@5.5.4))
-      '@directus/utils': 11.0.10(vue@3.4.27(typescript@5.5.4))
-      '@rollup/plugin-commonjs': 25.0.8(rollup@3.29.4)
-      '@rollup/plugin-json': 6.1.0(rollup@3.29.4)
-      '@rollup/plugin-node-resolve': 15.2.3(rollup@3.29.4)
-      '@rollup/plugin-replace': 5.0.7(rollup@3.29.4)
-      '@rollup/plugin-terser': 0.4.4(rollup@3.29.4)
-      '@rollup/plugin-virtual': 3.0.2(rollup@3.29.4)
-      '@vitejs/plugin-vue': 4.6.2(vite@4.5.2(@types/node@20.14.13)(sass@1.77.8)(terser@5.31.3))(vue@3.4.27(typescript@5.5.4))
-      chalk: 5.3.0
-      commander: 10.0.1
-      esbuild: 0.17.19
-      execa: 7.2.0
-      fs-extra: 11.2.0
-      inquirer: 9.2.23
-      ora: 6.3.1
-      rollup: 3.29.4
-      rollup-plugin-esbuild: 5.0.0(esbuild@0.17.19)(rollup@3.29.4)
-      rollup-plugin-styles: 4.0.0(rollup@3.29.4)
-      vite: 4.5.2(@types/node@20.14.13)(sass@1.77.8)(terser@5.31.3)
-      vue: 3.4.27(typescript@5.5.4)
-    transitivePeerDependencies:
-      - '@types/node'
-      - '@unhead/vue'
-      - better-sqlite3
-      - debug
-      - knex
-      - less
-      - lightningcss
-      - mysql
-      - mysql2
-      - pg
-      - pg-native
-      - pinia
-      - pino
-      - sass
-      - sqlite3
-      - stylus
-      - sugarss
-      - supports-color
-      - tedious
-      - terser
-      - typescript
-      - vue-router
-
   '@directus/extensions-sdk@11.0.9(@types/node@20.14.13)(@unhead/vue@1.9.16(vue@3.4.35(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.35(typescript@5.5.4)))(sass@1.77.8)(terser@5.31.3)(typescript@5.5.4)':
     dependencies:
       '@directus/composables': 10.1.15(vue@3.4.27(typescript@5.5.4))
@@ -8242,31 +8194,6 @@ snapshots:
       - supports-color
       - tedious
 
-  '@directus/extensions@1.0.9(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(knex@3.1.0)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))':
-    dependencies:
-      '@directus/constants': 11.0.4
-      '@directus/themes': 0.3.10(@unhead/vue@1.9.16(vue@3.4.27(typescript@5.5.4)))(pinia@2.2.0(typescript@5.5.4)(vue@3.4.27(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))
-      '@directus/types': 11.2.0(knex@3.1.0)(vue@3.4.27(typescript@5.5.4))
-      '@directus/utils': 11.0.10(vue@3.4.27(typescript@5.5.4))
-      '@types/express': 4.17.21
-      fs-extra: 11.2.0
-      lodash-es: 4.17.21
-      zod: 3.23.8
-    optionalDependencies:
-      knex: 3.1.0
-      vue: 3.4.27(typescript@5.5.4)
-    transitivePeerDependencies:
-      - '@unhead/vue'
-      - better-sqlite3
-      - mysql
-      - mysql2
-      - pg
-      - pg-native
-      - pinia
-      - sqlite3
-      - supports-color
-      - tedious
-
   '@directus/extensions@1.0.9(@unhead/vue@1.9.16(vue@3.4.35(typescript@5.5.4)))(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.5.4)(vue@3.4.35(typescript@5.5.4)))(vue@3.4.27(typescript@5.5.4))':
     dependencies:
       '@directus/constants': 11.0.4
@@ -8738,19 +8665,6 @@ snapshots:
       - pg
       - pg-native
       - pinia
-      - sqlite3
-      - supports-color
-      - tedious
-
-  '@directus/schema@11.0.3':
-    dependencies:
-      knex: 3.1.0
-    transitivePeerDependencies:
-      - better-sqlite3
-      - mysql
-      - mysql2
-      - pg
-      - pg-native
       - sqlite3
       - supports-color
       - tedious
@@ -9237,24 +9151,6 @@ snapshots:
     optionalDependencies:
       knex: 3.1.0(mysql@2.18.1)
       vue: 3.5.13(typescript@5.8.3)
-    transitivePeerDependencies:
-      - better-sqlite3
-      - mysql
-      - mysql2
-      - pg
-      - pg-native
-      - sqlite3
-      - supports-color
-      - tedious
-
-  '@directus/types@11.2.0(knex@3.1.0)(vue@3.4.27(typescript@5.5.4))':
-    dependencies:
-      '@directus/constants': 11.0.4
-      '@directus/schema': 11.0.3
-      '@types/geojson': 7946.0.14
-    optionalDependencies:
-      knex: 3.1.0
-      vue: 3.4.27(typescript@5.5.4)
     transitivePeerDependencies:
       - better-sqlite3
       - mysql
@@ -11870,7 +11766,7 @@ snapshots:
 
   axios@1.7.2:
     dependencies:
-      follow-redirects: 1.15.6
+      follow-redirects: 1.15.6(debug@4.3.6)
       form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -11878,7 +11774,7 @@ snapshots:
 
   axios@1.7.3:
     dependencies:
-      follow-redirects: 1.15.6
+      follow-redirects: 1.15.6(debug@4.3.6)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -13179,8 +13075,6 @@ snapshots:
 
   flatted@3.3.1: {}
 
-  follow-redirects@1.15.6: {}
-
   follow-redirects@1.15.6(debug@4.3.6):
     optionalDependencies:
       debug: 4.3.6
@@ -13869,25 +13763,6 @@ snapshots:
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
-
-  knex@3.1.0:
-    dependencies:
-      colorette: 2.0.19
-      commander: 10.0.1
-      debug: 4.3.4
-      escalade: 3.1.2
-      esm: 3.2.25
-      get-package-type: 0.1.0
-      getopts: 2.3.0
-      interpret: 2.2.0
-      lodash: 4.17.21
-      pg-connection-string: 2.6.2
-      rechoir: 0.8.0
-      resolve-from: 5.0.0
-      tarn: 3.0.2
-      tildify: 2.0.0
-    transitivePeerDependencies:
-      - supports-color
 
   knex@3.1.0(mysql@2.18.1):
     dependencies:

@@ -1,6 +1,7 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
+import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
 import type { AdoptedProbe, ProbeToAdopt } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
@@ -39,6 +40,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
+		originalLocation: null,
 	};
 
 	const existingProbe = await database('gp_probes')
@@ -55,10 +57,9 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
 		const id = await itemsService.updateOne(existingProbe.id, {
+			...getResetUserFields(existingProbe),
 			name: adoption.name,
 			userId: adoption.userId,
-			tags: '[]',
-			customLocation: null,
 		}, { emitEvents: false });
 
 		await Promise.all([

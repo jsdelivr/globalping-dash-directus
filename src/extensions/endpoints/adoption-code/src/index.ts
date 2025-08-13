@@ -53,6 +53,7 @@ export type AdoptedProbe = ProbeToAdopt & {
 	id: string;
 	userId: string;
 	lastSyncDate: Date;
+	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 };
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);

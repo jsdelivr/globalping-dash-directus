@@ -1,33 +1,9 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
-import { getContinentByCountry, getContinentName, getRegionByCountry, getCountryByIso, getStateNameByIso } from '../../../lib/src/location/location.js';
+import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location/location.js';
+import { getResetUserFields } from '../../../lib/src/reset-fields.js';
 import { type City } from './update-with-user.js';
 import { type Fields, type Probe } from './index.js';
-
-export const resetLocationFields = (fields: Fields, probe: Probe) => {
-	if (!probe.originalLocation) { return; }
-
-	const country = probe.originalLocation.country;
-	const state = probe.originalLocation.state;
-	const continent = getContinentByCountry(country);
-
-	_.assign(fields, {
-		country,
-		countryName: getCountryByIso(country),
-		city: probe.originalLocation.city,
-		state,
-		stateName: state ? getStateNameByIso(state) : null,
-		continent,
-		continentName: getContinentName(continent),
-		region: getRegionByCountry(country),
-		latitude: probe.originalLocation.latitude,
-		longitude: probe.originalLocation.longitude,
-		originalLocation: null,
-		customLocation: null,
-	});
-
-	return fields;
-};
 
 export const patchCustomLocationRootFields = (fields: Fields, city: City, originalProbe: Probe) => {
 	const country = city.countryCode;
@@ -41,9 +17,12 @@ export const patchCustomLocationRootFields = (fields: Fields, city: City, origin
 	const longitude = Math.round(Number(city.lng) * 100) / 100;
 
 	_.assign(fields, {
+		city: city.toponymName,
+		country,
 		countryName,
 		latitude,
 		longitude,
+		state,
 		stateName,
 		continent,
 		continentName,
@@ -77,9 +56,6 @@ export const resetUserDefinedData = async (_fields: Fields, keys: string[], { se
 
 	await adoptedProbesService.updateBatch(probes.map(probe => ({
 		id: probe.id,
-		name: null,
-		userId: null,
-		tags: [],
-		...resetLocationFields({}, probe),
+		...getResetUserFields(probe),
 	})), { emitEvents: false });
 };
