@@ -1,15 +1,14 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
-import { getContinentByCountry, getContinentName, getRegionByCountry } from '../../../lib/src/location/location.js';
+import { getContinentByCountry, getContinentName, getCountryByIso, getRegionByCountry, getStateNameByIso } from '../../../lib/src/location/location.js';
 import { getResetUserFields } from '../../../lib/src/reset-fields.js';
 import { type City } from './update-with-user.js';
 import { type Fields, type Probe } from './index.js';
 
 export const patchCustomLocationRootFields = (fields: Fields, city: City, originalProbe: Probe) => {
 	const country = city.countryCode;
-	const countryName = city.countryName;
 	const state = city.countryCode === 'US' ? city.adminCode1 : null;
-	const stateName = city.countryCode === 'US' ? city.adminName1 : null;
+	const stateName = state ? getStateNameByIso(state) : null;
 	const continent = getContinentByCountry(country);
 	const continentName = getContinentName(continent);
 	const region = getRegionByCountry(country);
@@ -19,7 +18,7 @@ export const patchCustomLocationRootFields = (fields: Fields, city: City, origin
 	_.assign(fields, {
 		city: city.toponymName,
 		country,
-		countryName,
+		countryName: getCountryByIso(country),
 		latitude,
 		longitude,
 		state,
