@@ -87,10 +87,6 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 		throw payloadError(`Country value can't be falsy.`);
 	}
 
-	if (Object.hasOwn(fields, 'state') && !fields.state) {
-		throw payloadError(`State value can't be falsy.`);
-	}
-
 	const probes = await getProbes(keys, context, accountability);
 	const probe = probes[0]!;
 
@@ -117,7 +113,7 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 			username: env.GEONAMES_USERNAME,
 			country,
 			name: fields.city || probe.city,
-			adminCode1: fields.state,
+			...fields.state ? { adminCode1: fields.state } : {},
 		},
 		timeout: 5000,
 	});
