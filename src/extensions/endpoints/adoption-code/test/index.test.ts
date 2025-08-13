@@ -343,6 +343,7 @@ describe('adoption code endpoints', () => {
 				lastSyncDate: new Date(),
 				isIPv4Supported: true,
 				isIPv6Supported: false,
+				originalLocation: null,
 			});
 		});
 
@@ -358,7 +359,7 @@ describe('adoption code endpoints', () => {
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 			});
 
-			sql.first.resolves({ id: 'existing-unassigned-probe-id' });
+			sql.first.resolves({ id: 'existing-probe-id' });
 
 			const res = await request(app).post('/verify-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -369,13 +370,63 @@ describe('adoption code endpoints', () => {
 			expect(res.status).to.equal(200);
 
 			expect(updateOne.callCount).to.equal(1);
-			expect(updateOne.args[0]![0]).to.equal('existing-unassigned-probe-id');
+			expect(updateOne.args[0]![0]).to.equal('existing-probe-id');
 
 			expect(updateOne.args[0]![1]).to.deep.equal({
+				originalLocation: null,
+				customLocation: null,
 				name: 'probe-fr-paris-01',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				tags: '[]',
+				tags: [],
+			});
+		});
+
+		it('should adopt already synced adopted probe', async () => {
+			let code = '';
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				code = body.code;
+				return true;
+			}).reply(200, defaultAdoptionCodeResponse);
+
+			await request(app).post('/send-code').send({
+				ip: '1.1.1.1',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			});
+
+			sql.first.resolves({
+				id: 'existing-probe-id',
+				userId: 'anotherUser',
+				customLocation: JSON.stringify({ country: 'DE', city: 'Berlin', state: null, latitude: 52.52, longitude: 13.405 }),
+				originalLocation: JSON.stringify({ country: 'FR', city: 'Paris', state: null, latitude: 48.85, longitude: 2.35 }),
+			});
+
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
+
+			expect(nock.isDone()).to.equal(true);
+			expect(res.status).to.equal(200);
+
+			expect(updateOne.callCount).to.equal(1);
+			expect(updateOne.args[0]![0]).to.equal('existing-probe-id');
+
+			expect(updateOne.args[0]![1]).to.deep.equal({
+				city: 'Paris',
+				country: 'FR',
+				countryName: 'France',
+				state: null,
+				stateName: null,
+				continent: 'EU',
+				continentName: 'Europe',
+				region: 'Western Europe',
+				latitude: 48.85,
+				longitude: 2.35,
+				originalLocation: null,
 				customLocation: null,
+				name: 'probe-fr-paris-01',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				tags: [],
 			});
 		});
 
@@ -459,6 +510,7 @@ describe('adoption code endpoints', () => {
 				lastSyncDate: new Date(),
 				isIPv4Supported: false,
 				isIPv6Supported: false,
+				originalLocation: null,
 			});
 		});
 
@@ -540,6 +592,7 @@ describe('adoption code endpoints', () => {
 				lastSyncDate: new Date(),
 				isIPv4Supported: true,
 				isIPv6Supported: false,
+				originalLocation: null,
 			});
 		});
 
@@ -845,8 +898,9 @@ describe('adoption code endpoints', () => {
 				{
 					name: 'probe-fr-paris-01',
 					userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-					tags: '[]',
+					tags: [],
 					customLocation: null,
+					originalLocation: null,
 				},
 				{ emitEvents: false },
 			]);

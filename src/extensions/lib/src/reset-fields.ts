@@ -7,23 +7,13 @@ type Probe = {
 export const getResetLocationFields = (probe: Probe) => {
 	if (!probe.originalLocation) {
 		return {
-			city: null,
-			country: null,
-			countryName: null,
-			state: null,
-			stateName: null,
-			continent: null,
-			continentName: null,
-			region: null,
-			latitude: null,
-			longitude: null,
 			originalLocation: null,
 			customLocation: null,
 		};
 	}
 
 	const country = probe.originalLocation.country;
-	const state = probe.originalLocation.state;
+	const state = probe.originalLocation.state ?? null;
 	const continent = getContinentByCountry(country);
 
 	return {
