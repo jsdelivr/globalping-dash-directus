@@ -1,7 +1,8 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
-import type { AdoptedProbe, ProbeToAdopt } from '../index.js';
+import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
+import type { AdoptedProbe, ProbeToAdopt, Row } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext) => {
 	const { services, database, getSchema } = context;
@@ -39,13 +40,23 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
+		originalLocation: null,
 	};
 
-	const existingProbe = await database('gp_probes')
+	let existingProbe: AdoptedProbe | null = null;
+
+	const row = await database('gp_probes')
 		.where({ uuid: probe.uuid })
 		.orWhere({ ip: probe.ip })
 		.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ probe.ip ])
-		.first<AdoptedProbe>();
+		.first<Row>();
+
+	if (row) {
+		existingProbe = {
+			...row,
+			originalLocation: row.originalLocation ? JSON.parse(row.originalLocation) : null,
+		};
+	}
 
 	// Probe already assigned to the user.
 	if (existingProbe && existingProbe.userId === adoption.userId) {
@@ -55,10 +66,9 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
 		const id = await itemsService.updateOne(existingProbe.id, {
+			...getResetUserFields(existingProbe),
 			name: adoption.name,
 			userId: adoption.userId,
-			tags: '[]',
-			customLocation: null,
 		}, { emitEvents: false });
 
 		await Promise.all([

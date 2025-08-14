@@ -45,3 +45,13 @@ export function getStateNameByIso (iso: string): string {
 
 	return state;
 }
+
+export function getCountryByIso (iso: string): string {
+	const country = countries[iso as keyof typeof countries];
+
+	if (!country) {
+		throw new Error(`country not found ${iso}`);
+	}
+
+	return country.name;
+}
