@@ -3,9 +3,13 @@ import _ from 'lodash';
 import { getContinentByCountry, getContinentName, getCountryByIso, getRegionByCountry, getStateNameByIso } from '../../../lib/src/location/location.js';
 import { getResetUserFields } from '../../../lib/src/reset-fields.js';
 import { type City } from './update-with-user.js';
-import { type Fields, type Probe } from './index.js';
+import { type Fields, type Probe, payloadError } from './index.js';
 
-export const patchCustomLocationRootFields = (fields: Fields, city: City, originalProbe: Probe) => {
+export const patchCustomLocationRootFields = (fields: Fields, keys: string[], city: City, originalProbe: Probe) => {
+	if (keys.length > 1) {
+		throw payloadError('Batch probe location update is not supported.');
+	}
+
 	const country = city.countryCode;
 	const state = city.countryCode === 'US' ? city.adminCode1 : null;
 	const stateName = state ? getStateNameByIso(state) : null;

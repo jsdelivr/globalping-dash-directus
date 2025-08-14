@@ -1,8 +1,7 @@
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
-import hook from '../src/index.js';
-import { payloadError } from '../src/update-with-user.js';
+import hook, { payloadError } from '../src/index.js';
 
 type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
 type ActionCallback = (meta: any, context: any) => Promise<void>;

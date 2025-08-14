@@ -1,4 +1,3 @@
-import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import axios from 'axios';
@@ -6,7 +5,7 @@ import Joi from 'joi';
 import { getDefaultProbeName } from '../../../lib/src/default-probe-name.js';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { getProbes, getUser } from './repositories/directus.js';
-import { type Fields, UserNotFoundError } from './index.js';
+import { type Fields, UserNotFoundError, payloadError } from './index.js';
 
 export type City = {
 	lng: string;
@@ -28,8 +27,6 @@ export type City = {
 	fcodeName: string;
 	adminName1: string;
 };
-
-export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
 export const validateTags = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	if (!fields.tags) {
@@ -104,7 +101,7 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 		throw payloadError('State changing is only allowed for US probes.');
 	}
 
-	const response = await axios<{ totalResultsCount: number; geonames: City[] }>('http://api.geonames.org/searchJSON', {
+	const response = await axios<{ totalResultsCount?: number; geonames?: City[] }>('http://api.geonames.org/searchJSON', {
 		params: {
 			featureClass: 'P',
 			style: 'medium',
@@ -120,7 +117,7 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 
 	const cities = response.data.geonames;
 
-	if (cities.length === 0) {
+	if (!cities || cities.length === 0) {
 		throw payloadError('No matching cities found. Please check the "city" and "country" values, and try using the English version of the name.');
 	}
 

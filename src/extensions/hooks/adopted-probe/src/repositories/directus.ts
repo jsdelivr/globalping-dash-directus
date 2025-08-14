@@ -1,8 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import _ from 'lodash';
-import type { Probe, Fields } from '../index.js';
-import { payloadError } from '../update-with-user.js';
+import { payloadError, type Probe, type Fields } from '../index.js';
 
 type User = {
 	github_username: string | null;

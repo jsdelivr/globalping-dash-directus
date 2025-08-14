@@ -30,6 +30,8 @@ export type Fields = Partial<Probe>;
 
 export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 
+export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
+
 export default defineHook(({ filter, action }, context) => {
 	filter('gp_probes.items.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
@@ -51,7 +53,7 @@ export default defineHook(({ filter, action }, context) => {
 		await updateProbeWithUserPermissions(_.omit(fields, 'userId'), keys, accountability, context);
 
 		const rootFields: Partial<Probe> = {};
-		isUpdatingLocation && patchCustomLocationRootFields(rootFields, newLocation!, originalProbe!);
+		isUpdatingLocation && patchCustomLocationRootFields(rootFields, keys, newLocation!, originalProbe!);
 		isResettingLocation && _.assign(rootFields, getResetLocationFields(originalProbeFromReset!));
 		// updateProbeWithRootPermissions should be called only after updateProbeWithUserPermissions is finished as it checks user permissions.
 		await updateProbeWithRootPermissions(rootFields, keys, context);
