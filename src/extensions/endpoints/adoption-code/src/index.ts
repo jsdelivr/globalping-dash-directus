@@ -56,8 +56,8 @@ export type AdoptedProbe = ProbeToAdopt & {
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 };
 
-export type Row = AdoptedProbe & {
-	originalLocation: string;
+export type Row = Omit<AdoptedProbe, 'originalLocation'> & {
+	originalLocation: string | null;
 };
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
