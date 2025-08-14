@@ -109,7 +109,7 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/${githubId}/orgs`)
+				.get(`/user/orgs`)
 				.reply(200, [{ login: 'jsdelivr' }]);
 
 			hook(events, context);
@@ -131,7 +131,7 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/${githubId}/orgs`)
+				.get(`/user/orgs`)
 				.reply(200, [{ login: 'jsdelivr' }]);
 
 			hook(events, context);
@@ -152,7 +152,7 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/${githubId}/orgs`)
+				.get(`/user/orgs`)
 				.reply(401);
 
 			nock('https://api.github.com')

@@ -1,11 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
-import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
-
-type GithubOrgsResponse = {
-	login: string;
-}[];
+import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
 
 type User = {
 	id: string;
@@ -101,9 +97,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
-	const client = getGithubApiClient(user.github_oauth_token, context);
-	const orgsResponse = await client.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`);
-	const githubOrgs = orgsResponse.data.map(org => org.login);
+	const githubOrgs = await getGithubOrganizations(user, context);
 
 	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
 		await updateUser(user, { github_organizations: githubOrgs }, context);

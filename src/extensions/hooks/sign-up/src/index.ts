@@ -1,7 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import { generateBytes } from '../../../lib/src/bytes.js';
-import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
+import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
 
 export type User = {
 	provider: string;
@@ -18,10 +18,6 @@ export type User = {
 	adoption_token?: string;
 	default_prefix?: string;
 };
-
-type GithubOrgsResponse = {
-	login: string;
-}[];
 
 type CreditsAdditions = {
 	amount: number;
@@ -91,10 +87,7 @@ const fulfillFirstNameAndLastName = (user: User) => {
 };
 
 const fulfillOrganizations = async (userId: string, user: User, context: HookExtensionContext) => {
-	const client = getGithubApiClient(user.github_oauth_token, context);
-	const orgsResponse = await client.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`);
-	const githubOrgs = orgsResponse.data.map(org => org.login);
-
+	const githubOrgs = await getGithubOrganizations(user, context);
 	await updateUser(userId, { github_organizations: githubOrgs }, context);
 };
 
