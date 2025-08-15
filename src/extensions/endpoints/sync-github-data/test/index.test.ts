@@ -74,7 +74,7 @@ describe('/sync-github-data endpoint', () => {
 			login: 'new-username',
 		});
 
-		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+		nock('https://api.github.com').get('/user/orgs').reply(200, [{
 			login: 'new-org',
 		}]);
 
@@ -109,7 +109,7 @@ describe('/sync-github-data endpoint', () => {
 			login: 'new-username',
 		});
 
-		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+		nock('https://api.github.com').get('/user/orgs').reply(200, [{
 			login: 'new-org',
 		}]);
 
@@ -185,7 +185,7 @@ describe('/sync-github-data endpoint', () => {
 
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get('/user/github-id/orgs')
+			.get('/user/orgs')
 			.reply(401);
 
 		nock('https://api.github.com')
@@ -238,7 +238,7 @@ describe('/sync-github-data endpoint', () => {
 			login: 'old-username',
 		});
 
-		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
+		nock('https://api.github.com').get('/user/orgs').reply(200, [{
 			login: 'old-org',
 		}]);
 

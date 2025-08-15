@@ -1,8 +1,9 @@
 import { createError } from '@directus/errors';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
+import { getGithubOrganizations } from '../../../../lib/src/github-api-client.js';
 import { getDirectusUser, updateDirectusUser } from '../repositories/directus.js';
-import { getGithubOrgs, getGithubUsername } from '../repositories/github.js';
+import { getGithubUsername } from '../repositories/github.js';
 
 export type User = {
 	id: string;
@@ -25,7 +26,7 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 
 	const [ githubUsername, githubOrgs ] = await Promise.all([
 		getGithubUsername(user, context),
-		getGithubOrgs(user, context),
+		getGithubOrganizations(user, context),
 	]);
 
 	if (username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {

@@ -12,6 +12,6 @@ export default defineOperationApi({
 
 		const onlineIds = await checkOnlineStatus(context);
 
-		return onlineIds.length ? `Online probes ids: ${onlineIds.toString()}` : 'No online probes';
+		return onlineIds.length ? `Online probes count: ${onlineIds.length}` : 'No online probes';
 	},
 });

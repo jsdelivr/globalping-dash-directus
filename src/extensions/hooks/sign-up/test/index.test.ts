@@ -170,7 +170,7 @@ describe('Sign-up hook', () => {
 	it('action should fulfill organizations, credits', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/1834071/orgs`)
+			.get(`/user/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
 
 		creditsAdditionsService.readByQuery.resolves([{
