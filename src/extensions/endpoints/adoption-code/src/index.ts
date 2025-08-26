@@ -109,39 +109,6 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe with this IP address is already adopted', 400))();
 			}
 
-			const code = generateRandomCode();
-
-			// Allowing user to adopt the probe with default values, even if there was no response from GP API.
-			probesToAdopt.set(userId, {
-				code,
-				probe: {
-					ip,
-					altIps: [],
-					name: null,
-					uuid: null,
-					version: null,
-					nodeVersion: null,
-					hardwareDevice: null,
-					hardwareDeviceFirmware: null,
-					systemTags: [],
-					status: 'offline',
-					city: null,
-					state: null,
-					stateName: null,
-					country: null,
-					countryName: null,
-					continent: null,
-					continentName: null,
-					region: null,
-					latitude: null,
-					longitude: null,
-					asn: null,
-					network: null,
-					isIPv4Supported: false,
-					isIPv6Supported: false,
-				},
-			});
-
 			if (env.ENABLE_E2E_MOCKS === true) {
 				probesToAdopt.set(userId, {
 					code: '111111',
@@ -177,6 +144,7 @@ export default defineEndpoint((router, context) => {
 				return;
 			}
 
+			const code = generateRandomCode();
 			const { data: probe } = await axios.post<ProbeToAdopt>(`${env.GLOBALPING_URL}/adoption-code`, {
 				ip,
 				code,

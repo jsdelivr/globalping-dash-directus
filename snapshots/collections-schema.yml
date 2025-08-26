@@ -2406,7 +2406,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 27
       special: null
       translations: null
@@ -2421,7 +2421,7 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 0
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -2449,7 +2449,7 @@ fields:
         mins while dashboard picks up the city from Globalping.
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 7
       special: null
       translations: null
@@ -2464,7 +2464,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -2489,7 +2489,7 @@ fields:
         these steps: https://github.com/jsdelivr/globalping/issues/660
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 8
       special: null
       translations: null
@@ -2504,7 +2504,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -2724,7 +2724,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 25
       special: null
       translations: null
@@ -2739,7 +2739,7 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 5
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -2762,7 +2762,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 26
       special: null
       translations: null
@@ -2777,7 +2777,7 @@ fields:
       max_length: null
       numeric_precision: 10
       numeric_scale: 5
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -2840,7 +2840,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 28
       special: null
       translations: null
@@ -2855,7 +2855,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -3076,7 +3076,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 19
       special: null
       translations: null
@@ -3091,7 +3091,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: true
       is_primary_key: false
       is_generated: false
@@ -3114,7 +3114,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 20
       special: null
       translations: null
@@ -3129,7 +3129,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -3190,7 +3190,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 21
       special: null
       translations: null
@@ -3205,7 +3205,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -3508,7 +3508,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 9
       special: null
       translations: null
@@ -3523,7 +3523,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -3584,7 +3584,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 12
       special: null
       translations: null
@@ -3599,7 +3599,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -3622,7 +3622,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 13
       special: null
       translations: null
@@ -3637,7 +3637,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
@@ -3660,7 +3660,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 14
       special: null
       translations: null
@@ -3675,7 +3675,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false

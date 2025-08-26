@@ -65,6 +65,7 @@ export const seed = async (knex) => {
 		version: '0.28.0',
 		hardwareDevice: null,
 		hardwareDeviceFirmware: null,
+		nodeVersion: 'v20.18.0',
 		allowedCountries: JSON.stringify([ 'IT' ]),
 		customLocation: {
 			city: 'Naples',
@@ -106,6 +107,7 @@ export const seed = async (knex) => {
 		version: '0.28.0',
 		hardwareDevice: null,
 		hardwareDeviceFirmware: null,
+		nodeVersion: 'v20.18.0',
 		allowedCountries: JSON.stringify([ 'AR' ]),
 		customLocation: null,
 		originalLocation: null,
