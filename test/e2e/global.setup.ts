@@ -20,7 +20,7 @@ const getIsRunning = async (url: string) => {
 		if (err.stderr === 'Operation timed out') {
 			console.log(`Service at ${url} not running. Starting...`);
 		} else {
-			console.log(err);
+			throw err;
 		}
 
 		return false;

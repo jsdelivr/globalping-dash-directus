@@ -65,6 +65,7 @@ export const seed = async (knex) => {
 		version: '0.28.0',
 		hardwareDevice: null,
 		hardwareDeviceFirmware: null,
+		nodeVersion: 'v20.18.0',
 		allowedCountries: JSON.stringify([ 'IT' ]),
 		customLocation: {
 			city: 'Naples',
@@ -106,6 +107,7 @@ export const seed = async (knex) => {
 		version: '0.28.0',
 		hardwareDevice: null,
 		hardwareDeviceFirmware: null,
+		nodeVersion: 'v20.18.0',
 		allowedCountries: JSON.stringify([ 'AR' ]),
 		customLocation: null,
 		originalLocation: null,
@@ -356,7 +358,7 @@ export const seed = async (knex) => {
 		name: 'sao-paulo-probe-01',
 		network: 'BINARIO CLOUD SER DE COMPUTACAO E INFORMATICA LTDA',
 		onlineTimesToday: 28,
-		state: 'SP',
+		state: null,
 		status: 'ready',
 		tags: JSON.stringify([
 			{ value: 'datacenter--2355--4663', prefix: user.github_username },
@@ -376,7 +378,7 @@ export const seed = async (knex) => {
 		customLocation: {
 			city: 'Sao Paulo',
 			country: 'BR',
-			state: 'SP',
+			state: null,
 			latitude: -23.55,
 			longitude: -46.63,
 		},
@@ -412,7 +414,7 @@ export const seed = async (knex) => {
 		name: 'mumbai-probe-01',
 		network: 'Google LLC',
 		onlineTimesToday: 0,
-		state: 'MH',
+		state: null,
 		status: 'offline',
 		tags: JSON.stringify([]),
 		systemTags: JSON.stringify([ 'eyeball-network' ]),
@@ -2937,7 +2939,7 @@ export const seed = async (knex) => {
 		isIPv6Supported: 1,
 		allowedCountries: JSON.stringify([ 'CA' ]),
 		customLocation: {
-			city: 'Toronto', country: 'CA', state: 'ON', latitude: 43.65107, longitude: -79.347015,
+			city: 'Toronto', country: 'CA', state: null, latitude: 43.65107, longitude: -79.347015,
 		},
 		originalLocation: {
 			country: 'CA',
@@ -2979,7 +2981,7 @@ export const seed = async (knex) => {
 		isIPv6Supported: 1,
 		allowedCountries: JSON.stringify([ 'AU' ]),
 		customLocation: {
-			city: 'Sydney', country: 'AU', state: 'NSW', latitude: -33.8688, longitude: 151.2093,
+			city: 'Sydney', country: 'AU', state: null, latitude: -33.8688, longitude: 151.2093,
 		},
 		originalLocation: {
 			country: 'AU',
@@ -3021,7 +3023,7 @@ export const seed = async (knex) => {
 		isIPv6Supported: 1,
 		allowedCountries: JSON.stringify([ 'BR' ]),
 		customLocation: {
-			city: 'Sao Paulo', country: 'BR', state: 'SP', latitude: -23.5505, longitude: -46.6333,
+			city: 'Sao Paulo', country: 'BR', state: null, latitude: -23.5505, longitude: -46.6333,
 		},
 		originalLocation: {
 			country: 'BR',
@@ -3063,7 +3065,7 @@ export const seed = async (knex) => {
 		isIPv6Supported: 1,
 		allowedCountries: JSON.stringify([ 'IN' ]),
 		customLocation: {
-			city: 'Mumbai', country: 'IN', state: 'MH', latitude: 19.0760, longitude: 72.8777,
+			city: 'Mumbai', country: 'IN', state: null, latitude: 19.0760, longitude: 72.8777,
 		},
 		originalLocation: {
 			country: 'IN',

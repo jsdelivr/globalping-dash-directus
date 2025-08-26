@@ -26,25 +26,25 @@ export type ProbeToAdopt = {
 	ip: string;
 	altIps: string[];
 	name: string | null;
-	uuid: string | null;
-	version: string | null;
-	nodeVersion: string | null;
+	uuid: string;
+	version: string;
+	nodeVersion: string;
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	systemTags: string[];
 	status: string;
-	city: string | null;
+	city: string;
 	state: string | null;
 	stateName: string | null;
-	country: string | null;
-	countryName: string | null;
-	continent: string | null;
-	continentName: string | null;
-	region: string | null;
-	latitude: number | null;
-	longitude: number | null;
-	asn: number | null;
-	network: string | null;
+	country: string;
+	countryName: string;
+	continent: string;
+	continentName: string;
+	region: string;
+	latitude: number;
+	longitude: number;
+	asn: number;
+	network: string;
 	isIPv4Supported: boolean;
 	isIPv6Supported: boolean;
 };
@@ -109,39 +109,6 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe with this IP address is already adopted', 400))();
 			}
 
-			const code = generateRandomCode();
-
-			// Allowing user to adopt the probe with default values, even if there was no response from GP API.
-			probesToAdopt.set(userId, {
-				code,
-				probe: {
-					ip,
-					altIps: [],
-					name: null,
-					uuid: null,
-					version: null,
-					nodeVersion: null,
-					hardwareDevice: null,
-					hardwareDeviceFirmware: null,
-					systemTags: [],
-					status: 'offline',
-					city: null,
-					state: null,
-					stateName: null,
-					country: null,
-					countryName: null,
-					continent: null,
-					continentName: null,
-					region: null,
-					latitude: null,
-					longitude: null,
-					asn: null,
-					network: null,
-					isIPv4Supported: false,
-					isIPv6Supported: false,
-				},
-			});
-
 			if (env.ENABLE_E2E_MOCKS === true) {
 				probesToAdopt.set(userId, {
 					code: '111111',
@@ -151,7 +118,7 @@ export default defineEndpoint((router, context) => {
 						name: null,
 						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
 						version: '0.28.0',
-						nodeVersion: null,
+						nodeVersion: 'v22.16.0',
 						hardwareDevice: null,
 						hardwareDeviceFirmware: null,
 						systemTags: [],
@@ -177,6 +144,7 @@ export default defineEndpoint((router, context) => {
 				return;
 			}
 
+			const code = generateRandomCode();
 			const { data: probe } = await axios.post<ProbeToAdopt>(`${env.GLOBALPING_URL}/adoption-code`, {
 				ip,
 				code,

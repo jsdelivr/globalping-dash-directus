@@ -2,9 +2,9 @@ import type { ApiExtensionContext } from '@directus/extensions';
 
 type Probe = {
 	id?: string;
-	country?: string | null;
-	city?: string | null;
-	name?: string | null;
+	name: string | null;
+	country: string;
+	city: string;
 };
 
 const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: ApiExtensionContext) => {
@@ -21,10 +21,6 @@ const findAdoptedProbes = async (filter: Record<string, unknown>, { services, ge
 };
 
 export const getDefaultProbeName = async (userId: string, probe: Probe, context: ApiExtensionContext) => {
-	if (!probe.country || !probe.city) {
-		return null;
-	}
-
 	const prefix = `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}`;
 
 	const currentProbes = await findAdoptedProbes({
