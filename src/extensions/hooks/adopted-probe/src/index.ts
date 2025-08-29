@@ -9,19 +9,19 @@ import { patchCustomLocationAllowedFields, resetProbeName, resetCustomLocationAl
 export type Probe = {
 	id: string;
 	name: string | null;
-	city: string | null;
+	city: string;
 	state: string | null;
 	stateName: string | null;
-	latitude: string | null;
-	longitude: string | null;
-	country: string | null;
-	countryName: string | null;
-	continent: string | null;
-	continentName: string | null;
-	region: string | null;
+	latitude: string;
+	longitude: string;
+	country: string;
+	countryName: string;
+	continent: string;
+	continentName: string;
+	region: string;
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 	customLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
-	tags: { value: string; prefix: string }[] | null;
+	tags: { value: string; prefix: string }[];
 	userId: string | null;
 	allowedCountries: string[];
 };

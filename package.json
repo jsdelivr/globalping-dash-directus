@@ -10,6 +10,7 @@
 		"bluebird": "^3.7.2",
 		"config": "^4.0.0",
 		"config-mapper-env": "^3.0.1",
+		"countries-list": "^3.1.1",
 		"knex": "^3.1.0",
 		"lodash": "^4.17.21",
 		"mysql": "^2.18.1"

@@ -26,25 +26,25 @@ export type ProbeToAdopt = {
 	ip: string;
 	altIps: string[];
 	name: string | null;
-	uuid: string | null;
-	version: string | null;
-	nodeVersion: string | null;
+	uuid: string;
+	version: string;
+	nodeVersion: string;
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
 	systemTags: string[];
 	status: string;
-	city: string | null;
+	city: string;
 	state: string | null;
 	stateName: string | null;
-	country: string | null;
-	countryName: string | null;
-	continent: string | null;
-	continentName: string | null;
-	region: string | null;
-	latitude: number | null;
-	longitude: number | null;
-	asn: number | null;
-	network: string | null;
+	country: string;
+	countryName: string;
+	continent: string;
+	continentName: string;
+	region: string;
+	latitude: number;
+	longitude: number;
+	asn: number;
+	network: string;
 	isIPv4Supported: boolean;
 	isIPv6Supported: boolean;
 };
@@ -118,7 +118,7 @@ export default defineEndpoint((router, context) => {
 						name: null,
 						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
 						version: '0.28.0',
-						nodeVersion: null,
+						nodeVersion: 'v22.16.0',
 						hardwareDevice: null,
 						hardwareDeviceFirmware: null,
 						systemTags: [],
