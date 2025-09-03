@@ -430,7 +430,7 @@ describe('adoption code endpoints', () => {
 			});
 		});
 
-		it('should accept valid verification code even if request to GP api failed', async () => {
+		it.only('should not accept valid verification code if request to GP api failed', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -452,66 +452,8 @@ describe('adoption code endpoints', () => {
 			});
 
 			expect(nock.isDone()).to.equal(true);
-			expect(res.status).to.equal(200);
-
-			expect(res.body).to.deep.equal({
-				id: 'generatedId',
-				name: null,
-				ip: '1.1.1.1',
-				version: null,
-				nodeVersion: null,
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				systemTags: [],
-				status: 'offline',
-				city: null,
-				state: null,
-				stateName: null,
-				country: null,
-				countryName: null,
-				continent: null,
-				continentName: null,
-				region: null,
-				latitude: null,
-				longitude: null,
-				asn: null,
-				network: null,
-				lastSyncDate: '1970-01-01T00:00:00.000Z',
-				isIPv4Supported: false,
-				isIPv6Supported: false,
-			});
-
-			expect(createOne.callCount).to.equal(1);
-
-			expect(createOne.args[0]?.[0]).to.deep.equal({
-				ip: '1.1.1.1',
-				altIps: [],
-				name: null,
-				uuid: null,
-				version: null,
-				nodeVersion: null,
-				hardwareDevice: null,
-				hardwareDeviceFirmware: null,
-				systemTags: [],
-				status: 'offline',
-				city: null,
-				state: null,
-				stateName: null,
-				country: null,
-				countryName: null,
-				continent: null,
-				continentName: null,
-				region: null,
-				latitude: null,
-				longitude: null,
-				asn: null,
-				network: null,
-				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
-				lastSyncDate: new Date(),
-				isIPv4Supported: false,
-				isIPv6Supported: false,
-				originalLocation: null,
-			});
+			expect(res.status).to.equal(400);
+			expect(createOne.callCount).to.equal(0);
 		});
 
 		it('should accept valid verification code with spaces', async () => {
