@@ -69,7 +69,7 @@ describe('adoption code endpoints', () => {
 		isIPv4Supported: true,
 		isIPv6Supported: false,
 		version: '0.26.0',
-		nodeVersion: '18.17.0',
+		nodeVersion: 'v22.16.0',
 		hardwareDevice: 'v1',
 		hardwareDeviceFirmware: 'v2.0',
 		city: 'Paris',
@@ -292,7 +292,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				ip: '1.1.1.1',
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				systemTags: [ 'datacenter-network' ],
@@ -322,7 +322,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				systemTags: [ 'datacenter-network' ],
@@ -430,7 +430,7 @@ describe('adoption code endpoints', () => {
 			});
 		});
 
-		it.only('should not accept valid verification code if request to GP api failed', async () => {
+		it('should not accept valid verification code if request to GP api failed', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -483,7 +483,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				ip: '1.1.1.1',
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				systemTags: [ 'datacenter-network' ],
@@ -513,7 +513,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				systemTags: [ 'datacenter-network' ],
@@ -765,7 +765,7 @@ describe('adoption code endpoints', () => {
 				isIPv4Supported: true,
 				isIPv6Supported: false,
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				city: 'Paris',
@@ -793,7 +793,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				systemTags: [ 'datacenter-network' ],
@@ -887,7 +887,7 @@ describe('adoption code endpoints', () => {
 				altIps: [],
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				version: '0.26.0',
-				nodeVersion: '18.17.0',
+				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
 				systemTags: [ 'datacenter-network' ],
