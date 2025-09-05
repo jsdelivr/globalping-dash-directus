@@ -9,4 +9,9 @@ function get_token {
 
 token=$(get_token)
 
+if [ -z "$token" ] || [ "$token" == "null" ]; then
+    echo "Error: Obtained token is empty: '$token'. Please check ADMIN_EMAIL and ADMIN_PASSWORD values in .env file."
+    exit 1
+fi
+
 perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
