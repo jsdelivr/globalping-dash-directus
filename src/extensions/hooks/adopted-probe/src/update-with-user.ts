@@ -156,7 +156,11 @@ export const resetCustomLocationAllowedFields = async (fields: Fields, keys: str
 	const probe = probes[0]!;
 
 	if (!probe.originalLocation) {
-		throw payloadError(`Location reset is not available. Either the probe already has original location or it was offline for too long.`);
+		fields.country = probe.country;
+		fields.city = probe.city;
+		fields.state = probe.state;
+
+		return { originalProbe: probe };
 	}
 
 	fields.country = probe.originalLocation.country;
