@@ -407,6 +407,41 @@ describe('adoption code endpoints', () => {
 			});
 		});
 
+		it('should prefer data from DB over data from GP api', async () => {
+			let code = '';
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				code = body.code;
+				return true;
+			}).reply(200, { ...adoptionCodeGPApiResponse, city: 'Marseille' });
+
+			await request(app).post('/send-code').send({
+				ip: '1.1.1.1',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			});
+
+			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null });
+
+			const res = await request(app).post('/verify-code').send({
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				code,
+			});
+
+			expect(nock.isDone()).to.equal(true);
+			expect(res.status).to.equal(200);
+			expect(res.body.city).to.equal('Paris');
+
+			expect(updateOne.callCount).to.equal(1);
+			expect(updateOne.args[0]![0]).to.equal('existing-probe-id');
+
+			expect(updateOne.args[0]![1]).to.deep.equal({
+				originalLocation: null,
+				customLocation: null,
+				name: 'probe-fr-paris-01',
+				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+				tags: [],
+			});
+		});
+
 		it('should adopt already synced adopted probe', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
