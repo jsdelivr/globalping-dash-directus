@@ -4,7 +4,7 @@ import express, { type NextFunction, type Response } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import endpoint, { type Request } from '../src/index.js';
+import endpoint, { type AdoptedProbe, type ProbeToAdopt, type Row, type Request } from '../src/index.js';
 
 describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();
@@ -57,45 +57,69 @@ describe('adoption code endpoints', () => {
 	endpoint(router, endpointContext);
 	app.use(router);
 
-	const defaultAdoptionCodeResponse = {
-		userId: null,
-		ip: '1.1.1.1',
-		name: null,
-		altIps: [],
-		uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
-		tags: [],
-		systemTags: [ 'datacenter-network' ],
-		status: 'ready',
-		isIPv4Supported: true,
-		isIPv6Supported: false,
-		version: '0.26.0',
-		nodeVersion: 'v22.16.0',
-		hardwareDevice: 'v1',
-		hardwareDeviceFirmware: 'v2.0',
-		city: 'Paris',
-		state: null,
-		stateName: null,
-		country: 'FR',
-		countryName: 'France',
-		continent: 'EU',
-		continentName: 'Europe',
-		region: 'Western Europe',
-		latitude: 48.85,
-		longitude: 2.35,
-		asn: 12876,
-		network: 'SCALEWAY S.A.S.',
-		customLocation: null,
-	};
-
-	const adoptedProbe = {
-		id: 'generatedId',
-		name: 'probe-fr-paris-01',
-		isOutdated: false,
-	};
+	let adoptionCodeGPApiResponse: ProbeToAdopt;
+	let adoptedProbe: AdoptedProbe;
+	let row: Row;
+	let sandbox: sinon.SinonSandbox;
 
 	before(() => {
+		sandbox = sinon.createSandbox({ useFakeTimers: true });
 		nock.disableNetConnect();
 		nock.enableNetConnect('127.0.0.1');
+
+		adoptionCodeGPApiResponse = {
+			userId: null,
+			ip: '1.1.1.1',
+			name: null,
+			altIps: [],
+			uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+			tags: [],
+			systemTags: [ 'datacenter-network' ],
+			status: 'ready',
+			isIPv4Supported: true,
+			isIPv6Supported: false,
+			version: '0.26.0',
+			nodeVersion: 'v22.16.0',
+			hardwareDevice: 'v1',
+			hardwareDeviceFirmware: 'v2.0',
+			city: 'Paris',
+			state: null,
+			stateName: null,
+			country: 'FR',
+			countryName: 'France',
+			continent: 'EU',
+			continentName: 'Europe',
+			region: 'Western Europe',
+			latitude: 48.85,
+			longitude: 2.35,
+			asn: 12876,
+			network: 'SCALEWAY S.A.S.',
+			customLocation: null,
+			originalLocation: null,
+			allowedCountries: [ 'FR' ],
+		};
+
+		adoptedProbe = {
+			...adoptionCodeGPApiResponse,
+			userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
+			id: 'generatedId',
+			name: 'probe-fr-paris-01',
+			lastSyncDate: new Date(),
+			isOutdated: false,
+		};
+
+		row = {
+			...adoptedProbe,
+			tags: JSON.stringify(adoptedProbe.tags),
+			altIps: JSON.stringify(adoptedProbe.altIps),
+			systemTags: JSON.stringify(adoptedProbe.systemTags),
+			allowedCountries: JSON.stringify(adoptedProbe.allowedCountries),
+			originalLocation: JSON.stringify(adoptedProbe.originalLocation),
+			customLocation: JSON.stringify(adoptedProbe.customLocation),
+			isOutdated: adoptedProbe.isOutdated ? 1 : 0,
+			isIPv4Supported: adoptedProbe.isIPv4Supported ? 1 : 0,
+			isIPv6Supported: adoptedProbe.isIPv6Supported ? 1 : 0,
+		};
 	});
 
 	beforeEach(() => {
@@ -113,6 +137,7 @@ describe('adoption code endpoints', () => {
 	});
 
 	after(() => {
+		sandbox.restore();
 		nock.cleanAll();
 	});
 
@@ -122,7 +147,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -139,7 +164,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -156,7 +181,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('2a04:4e42:200::485');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -200,7 +225,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
 				userId: 'anotherUserId',
@@ -255,16 +280,6 @@ describe('adoption code endpoints', () => {
 	});
 
 	describe('/adoption-code/verify-code endpoint', () => {
-		let sandbox: sinon.SinonSandbox;
-
-		beforeEach(() => {
-			sandbox = sinon.createSandbox({ useFakeTimers: true });
-		});
-
-		afterEach(() => {
-			sandbox.restore();
-		});
-
 		it('should accept valid verification code', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
@@ -272,7 +287,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -289,14 +304,18 @@ describe('adoption code endpoints', () => {
 
 			expect(res.body).to.deep.equal({
 				id: 'generatedId',
-				name: 'probe-fr-paris-01',
 				ip: '1.1.1.1',
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				altIps: [],
+				name: 'probe-fr-paris-01',
 				version: '0.26.0',
 				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
+				tags: [],
 				systemTags: [ 'datacenter-network' ],
 				status: 'ready',
+				allowedCountries: [ 'FR' ],
 				city: 'Paris',
 				state: null,
 				stateName: null,
@@ -312,6 +331,10 @@ describe('adoption code endpoints', () => {
 				lastSyncDate: '1970-01-01T00:00:00.000Z',
 				isIPv4Supported: true,
 				isIPv6Supported: false,
+				isOutdated: false,
+				originalLocation: null,
+				customLocation: null,
+
 			});
 
 			expect(createOne.callCount).to.equal(1);
@@ -344,6 +367,9 @@ describe('adoption code endpoints', () => {
 				isIPv4Supported: true,
 				isIPv6Supported: false,
 				originalLocation: null,
+				tags: [],
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
 			});
 		});
 
@@ -352,14 +378,14 @@ describe('adoption code endpoints', () => {
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				ip: '1.1.1.1',
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
 			});
 
-			sql.first.resolves({ id: 'existing-probe-id' });
+			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null });
 
 			const res = await request(app).post('/verify-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -386,7 +412,7 @@ describe('adoption code endpoints', () => {
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				ip: '1.1.1.1',
@@ -394,6 +420,7 @@ describe('adoption code endpoints', () => {
 			});
 
 			sql.first.resolves({
+				...row,
 				id: 'existing-probe-id',
 				userId: 'anotherUser',
 				customLocation: JSON.stringify({ country: 'DE', city: 'Berlin', state: null, latitude: 52.52, longitude: 13.405 }),
@@ -463,7 +490,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -480,14 +507,18 @@ describe('adoption code endpoints', () => {
 
 			expect(res.body).to.deep.equal({
 				id: 'generatedId',
-				name: 'probe-fr-paris-01',
 				ip: '1.1.1.1',
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				altIps: [],
+				name: 'probe-fr-paris-01',
 				version: '0.26.0',
 				nodeVersion: 'v22.16.0',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v2.0',
+				tags: [],
 				systemTags: [ 'datacenter-network' ],
 				status: 'ready',
+				allowedCountries: [ 'FR' ],
 				city: 'Paris',
 				state: null,
 				stateName: null,
@@ -503,6 +534,9 @@ describe('adoption code endpoints', () => {
 				lastSyncDate: '1970-01-01T00:00:00.000Z',
 				isIPv4Supported: true,
 				isIPv6Supported: false,
+				isOutdated: false,
+				originalLocation: null,
+				customLocation: null,
 			});
 
 			expect(createOne.callCount).to.equal(1);
@@ -535,6 +569,9 @@ describe('adoption code endpoints', () => {
 				isIPv4Supported: true,
 				isIPv6Supported: false,
 				originalLocation: null,
+				tags: [],
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
 			});
 		});
 
@@ -545,7 +582,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -572,7 +609,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -602,7 +639,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'anotherUserId',
@@ -624,7 +661,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -648,7 +685,7 @@ describe('adoption code endpoints', () => {
 				expect(body.code.length).to.equal(6);
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -670,7 +707,7 @@ describe('adoption code endpoints', () => {
 				expect(body.ip).to.equal('1.1.1.1');
 				expect(body.code.length).to.equal(6);
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -694,7 +731,7 @@ describe('adoption code endpoints', () => {
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				code = body.code;
 				return true;
-			}).reply(200, defaultAdoptionCodeResponse);
+			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
 				userId: 'f3115997-31d1-4cf5-8b41-0617a99c5706',
@@ -720,7 +757,7 @@ describe('adoption code endpoints', () => {
 				code = body.code;
 				return true;
 			}).reply(200, {
-				...defaultAdoptionCodeResponse,
+				...adoptionCodeGPApiResponse,
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 				hardwareDeviceFirmware: 'v1.9',
 			});
@@ -822,6 +859,7 @@ describe('adoption code endpoints', () => {
 
 		it('should adopt assigned probe', async () => {
 			sql.first.resolves({
+				...row,
 				id: 'assignedProbeId',
 				name: 'other-user-probe-01',
 				ip: '1.1.1.1',
@@ -909,6 +947,7 @@ describe('adoption code endpoints', () => {
 
 		it('should do nothing if already assigned to that user', async () => {
 			sql.first.resolves({
+				...row,
 				id: 'assignedProbeId',
 				name: 'other-user-probe-01',
 				ip: '1.1.1.1',
