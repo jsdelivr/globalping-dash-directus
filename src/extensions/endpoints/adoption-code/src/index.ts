@@ -14,6 +14,8 @@ import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
+type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
+
 export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
@@ -25,12 +27,14 @@ export type Request = ExpressRequest & {
 export type ProbeToAdopt = {
 	ip: string;
 	altIps: string[];
-	name: string | null;
+	name: null;
 	uuid: string;
 	version: string;
 	nodeVersion: string;
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
+	userId: null;
+	tags: string[];
 	systemTags: string[];
 	status: string;
 	city: string;
@@ -47,18 +51,32 @@ export type ProbeToAdopt = {
 	network: string;
 	isIPv4Supported: boolean;
 	isIPv6Supported: boolean;
+	allowedCountries: string[];
+	originalLocation: null;
+	customLocation: null;
 };
 
-export type AdoptedProbe = ProbeToAdopt & {
+export type AdoptedProbe = Override<ProbeToAdopt, {
 	id: string;
 	userId: string;
+	name: string | null;
 	lastSyncDate: Date;
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
-};
+	customLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
+	isOutdated: boolean;
+}>;
 
-export type Row = Omit<AdoptedProbe, 'originalLocation'> & {
+export type Row = Override<AdoptedProbe, {
+	tags: string;
+	altIps: string;
+	systemTags: string;
+	allowedCountries: string;
+	isIPv4Supported: number;
+	isIPv6Supported: number;
 	originalLocation: string | null;
-};
+	customLocation: string | null;
+	isOutdated: number;
+}>;
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
@@ -115,14 +133,17 @@ export default defineEndpoint((router, context) => {
 					probe: {
 						ip,
 						altIps: [],
-						name: null,
 						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
+						name: null,
+						userId: null,
 						version: '0.28.0',
 						nodeVersion: 'v22.16.0',
 						hardwareDevice: null,
 						hardwareDeviceFirmware: null,
+						tags: [],
 						systemTags: [],
 						status: 'offline',
+						allowedCountries: [ 'BF' ],
 						city: 'Ouagadougou',
 						state: null,
 						stateName: null,
@@ -137,6 +158,8 @@ export default defineEndpoint((router, context) => {
 						network: 'e2e network provider',
 						isIPv4Supported: true,
 						isIPv6Supported: false,
+						customLocation: null,
+						originalLocation: null,
 					},
 				});
 
@@ -205,29 +228,36 @@ export default defineEndpoint((router, context) => {
 
 		res.send({
 			id: adoptedProbe.id,
+			ip: adoptedProbe.ip,
+			uuid: adoptedProbe.uuid,
+			altIps: adoptedProbe.altIps,
 			name: adoptedProbe.name,
-			ip: probe.ip,
-			version: probe.version,
-			nodeVersion: probe.nodeVersion,
-			hardwareDevice: probe.hardwareDevice,
-			hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
-			systemTags: probe.systemTags,
-			status: probe.status,
-			city: probe.city,
-			state: probe.state,
-			stateName: probe.stateName,
-			country: probe.country,
-			countryName: probe.countryName,
-			continent: probe.continent,
-			continentName: probe.continentName,
-			region: probe.region,
-			latitude: probe.latitude,
-			longitude: probe.longitude,
-			asn: probe.asn,
-			network: probe.network,
-			lastSyncDate: new Date(),
-			isIPv4Supported: probe.isIPv4Supported,
-			isIPv6Supported: probe.isIPv6Supported,
+			version: adoptedProbe.version,
+			nodeVersion: adoptedProbe.nodeVersion,
+			hardwareDevice: adoptedProbe.hardwareDevice,
+			hardwareDeviceFirmware: adoptedProbe.hardwareDeviceFirmware,
+			tags: adoptedProbe.tags,
+			systemTags: adoptedProbe.systemTags,
+			status: adoptedProbe.status,
+			allowedCountries: adoptedProbe.allowedCountries,
+			city: adoptedProbe.city,
+			state: adoptedProbe.state,
+			stateName: adoptedProbe.stateName,
+			country: adoptedProbe.country,
+			countryName: adoptedProbe.countryName,
+			continent: adoptedProbe.continent,
+			continentName: adoptedProbe.continentName,
+			region: adoptedProbe.region,
+			latitude: adoptedProbe.latitude,
+			longitude: adoptedProbe.longitude,
+			asn: adoptedProbe.asn,
+			network: adoptedProbe.network,
+			lastSyncDate: adoptedProbe.lastSyncDate,
+			isIPv4Supported: adoptedProbe.isIPv4Supported,
+			isIPv6Supported: adoptedProbe.isIPv6Supported,
+			isOutdated: adoptedProbe.isOutdated,
+			originalLocation: adoptedProbe.originalLocation,
+			customLocation: adoptedProbe.customLocation,
 		});
 	}, context));
 

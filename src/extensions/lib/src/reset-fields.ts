@@ -36,5 +36,5 @@ export const getResetUserFields = (probe: Probe) => ({
 	...getResetLocationFields(probe),
 	name: null,
 	userId: null,
-	tags: [],
+	tags: [] as string[],
 });

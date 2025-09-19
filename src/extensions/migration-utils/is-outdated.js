@@ -14,7 +14,7 @@ export const updateIsOutdatedColumn = async (knex) => {
 	// 1. nodeVersion is not null and it is less than TARGET_NODE_VERSION
 	// 2. hardwareDevice is not null and hardwareDeviceFirmware is null
 	// 3. hardwareDevice is not null and hardwareDeviceFirmware is less than TARGET_HW_DEVICE_FIRMWARE
-	// Vesrions are converted (e.g. v20.13.0 => 002000130000, v2.0 => 000200000000) then compared as strings.
+	// Versions are converted (e.g. v20.13.0 => 002000130000, v2.0 => 000200000000) then compared as strings.
 	await knex.raw(`
 		ALTER TABLE gp_probes ADD COLUMN isOutdated BOOLEAN GENERATED ALWAYS AS (
 			CASE
