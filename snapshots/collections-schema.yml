@@ -3722,84 +3722,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_probes
-    field: isOutdated
-    type: boolean
-    meta:
-      collection: gp_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: isOutdated
-      group: null
-      hidden: false
-      interface: null
-      note: null
-      options: null
-      readonly: false
-      required: false
-      sort: 36
-      special:
-        - cast-boolean
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: isOutdated
-      table: gp_probes
-      data_type: boolean
-      default_value: null
-      max_length: null
-      numeric_precision: 3
-      numeric_scale: 0
-      is_nullable: true
-      is_unique: false
-      is_primary_key: false
-      is_generated: true
-      generation_expression: >-
-        case when `nodeVersion` is not null and
-        concat(lpad(substring_index(replace(`nodeVersion`,'v',''),'.',1),4,'0'),lpad(case
-        when octet_length(replace(`nodeVersion`,'v','')) -
-        octet_length(replace(replace(`nodeVersion`,'v',''),'.','')) >= 1 then
-        substring_index(substring_index(replace(`nodeVersion`,'v',''),'.',2),'.',-1)
-        else '0' end,4,'0'),lpad(case when
-        octet_length(replace(`nodeVersion`,'v','')) -
-        octet_length(replace(replace(`nodeVersion`,'v',''),'.','')) >= 2 then
-        substring_index(replace(`nodeVersion`,'v',''),'.',-1) else '0'
-        end,4,'0')) <
-        concat(lpad(substring_index(replace('v20.13.0','v',''),'.',1),4,'0'),lpad(case
-        when octet_length(replace('v20.13.0','v','')) -
-        octet_length(replace(replace('v20.13.0','v',''),'.','')) >= 1 then
-        substring_index(substring_index(replace('v20.13.0','v',''),'.',2),'.',-1)
-        else '0' end,4,'0'),lpad(case when
-        octet_length(replace('v20.13.0','v','')) -
-        octet_length(replace(replace('v20.13.0','v',''),'.','')) >= 2 then
-        substring_index(replace('v20.13.0','v',''),'.',-1) else '0' end,4,'0'))
-        then 1 when `hardwareDevice` is not null and `hardwareDeviceFirmware` is
-        null then 1 when `hardwareDevice` is not null and
-        concat(lpad(substring_index(replace(`hardwareDeviceFirmware`,'v',''),'.',1),4,'0'),lpad(case
-        when octet_length(replace(`hardwareDeviceFirmware`,'v','')) -
-        octet_length(replace(replace(`hardwareDeviceFirmware`,'v',''),'.',''))
-        >= 1 then
-        substring_index(substring_index(replace(`hardwareDeviceFirmware`,'v',''),'.',2),'.',-1)
-        else '0' end,4,'0'),lpad(case when
-        octet_length(replace(`hardwareDeviceFirmware`,'v','')) -
-        octet_length(replace(replace(`hardwareDeviceFirmware`,'v',''),'.',''))
-        >= 2 then
-        substring_index(replace(`hardwareDeviceFirmware`,'v',''),'.',-1) else
-        '0' end,4,'0')) <
-        concat(lpad(substring_index(replace('v2.0','v',''),'.',1),4,'0'),lpad(case
-        when octet_length(replace('v2.0','v','')) -
-        octet_length(replace(replace('v2.0','v',''),'.','')) >= 1 then
-        substring_index(substring_index(replace('v2.0','v',''),'.',2),'.',-1)
-        else '0' end,4,'0'),lpad(case when octet_length(replace('v2.0','v',''))
-        - octet_length(replace(replace('v2.0','v',''),'.','')) >= 2 then
-        substring_index(replace('v2.0','v',''),'.',-1) else '0' end,4,'0')) then
-        1 else 0 end
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: gp_probes
     field: originalLocation
     type: json
     meta:
@@ -3831,6 +3753,45 @@ fields:
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
+      is_unique: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_probes
+    field: isOutdated
+    type: boolean
+    meta:
+      collection: gp_probes
+      conditions: null
+      display: null
+      display_options: null
+      field: isOutdated
+      group: null
+      hidden: false
+      interface: boolean
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 36
+      special:
+        - cast-boolean
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: isOutdated
+      table: gp_probes
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: 3
+      numeric_scale: 0
+      is_nullable: false
       is_unique: false
       is_primary_key: false
       is_generated: false
