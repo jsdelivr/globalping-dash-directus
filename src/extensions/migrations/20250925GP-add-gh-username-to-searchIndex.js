@@ -1,11 +1,7 @@
 export async function up (knex) {
 	await knex.transaction(async (trx) => {
-		await trx.raw(`DROP FUNCTION IF EXISTS generate_search_index`);
-		await trx.raw(`DROP TRIGGER IF EXISTS gp_probes_searchIndex_before_insert`);
-		await trx.raw(`DROP TRIGGER IF EXISTS gp_probes_searchIndex_before_update`);
-
 		await trx.raw(`
-			CREATE FUNCTION generate_search_index(
+			CREATE OR ALTER FUNCTION generate_search_index(
 			    userId VARCHAR(255),
 				name VARCHAR(255),
 				city VARCHAR(255),
@@ -74,7 +70,7 @@ export async function up (knex) {
 		`);
 
 		await trx.raw(`
-			CREATE TRIGGER gp_probes_searchIndex_before_insert
+			CREATE OR ALTER TRIGGER gp_probes_searchIndex_before_insert
 			BEFORE INSERT ON gp_probes
 			FOR EACH ROW
 			BEGIN
@@ -98,7 +94,7 @@ export async function up (knex) {
 		`);
 
 		await trx.raw(`
-			CREATE TRIGGER gp_probes_searchIndex_before_update
+			CREATE OR ALTER TRIGGER gp_probes_searchIndex_before_update
 			BEFORE UPDATE ON gp_probes
 			FOR EACH ROW
 			BEGIN
