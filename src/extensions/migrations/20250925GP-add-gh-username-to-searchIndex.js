@@ -48,10 +48,10 @@ export async function up (knex) {
 				
 				IF userId IS NOT NULL THEN
 					SELECT CONCAT('u-', github_username)
+					INTO githubUsername
 					FROM directus_users
 					WHERE id = userId
-					LIMIT 1
-					INTO githubUsername;
+					LIMIT 1;
 				END IF;
 
 				RETURN LOWER(CONCAT_WS('\n',
