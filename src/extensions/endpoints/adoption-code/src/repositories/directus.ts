@@ -23,7 +23,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	const name = await getDefaultProbeName(userId, existingProbe || probe, context);
 
-	const adoption: Omit<AdoptedProbe, 'id' | 'isOutdated'> = {
+	const adoption: Omit<AdoptedProbe, 'id' | 'isOutdated' | 'originalLocation' | 'customLocation'> = {
 		ip: probe.ip,
 		altIps: probe.altIps,
 		name,
@@ -50,32 +50,29 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
-		originalLocation: null,
-		tags: probe.tags,
+		tags: [],
 		allowedCountries: probe.allowedCountries,
-		customLocation: probe.customLocation,
 	};
 
-	// Probe already assigned to the user.
+	// Probe is already assigned to the user.
 	if (existingProbe && existingProbe.userId === adoption.userId) {
-		return existingProbe;
+		await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
+		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
-		const newFields = {
+		await itemsService.updateOne(existingProbe.id, {
 			...getResetUserFields(existingProbe),
-			name,
-			userId: adoption.userId,
-		};
-		const id = await itemsService.updateOne(existingProbe.id, newFields, { emitEvents: false });
+			...adoption,
+		}, { emitEvents: false });
 
 		await Promise.all([
-			sendNotificationProbeAdopted({ ...adoption, id }, context),
+			sendNotificationProbeAdopted({ ...adoption, id: existingProbe.id }, context),
 			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe, context),
 		]);
 
-		return { ...existingProbe, ...newFields };
+		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
@@ -90,16 +87,14 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		.first<Row>();
 
 	if (probeByAsn) {
-		const newFields = _.omit(adoption, 'name');
-		await itemsService.updateOne(probeByAsn.id, newFields, { emitEvents: false });
-		return { ...parseRow(probeByAsn), ...newFields };
+		await itemsService.updateOne(probeByAsn.id, _.omit(adoption, 'name'), { emitEvents: false });
+		return await itemsService.readOne(probeByAsn.id) as AdoptedProbe;
 	}
 
 	// Probe not exists.
 	const id = await itemsService.createOne(adoption, { emitEvents: false });
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
-	const adoptedProbe = await itemsService.readOne(id);
-	return adoptedProbe;
+	return await itemsService.readOne(id) as AdoptedProbe;
 };
 
 export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExtensionContext) => {
