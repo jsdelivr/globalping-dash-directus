@@ -107,9 +107,9 @@ const defaultProbe = {
 	customLocation: null,
 };
 
-const addProbeWithoutUser = async () => {
-	await sql('gp_probes').insert(defaultProbe);
-	return defaultProbe;
+const addProbeWithoutUser = async (probeFields: Partial<typeof defaultProbe> = {}) => {
+	await sql('gp_probes').insert({ ...defaultProbe, ...probeFields });
+	return { ...defaultProbe, ...probeFields };
 };
 
 const addProbeWithUser = async (user2: User) => {
@@ -117,6 +117,8 @@ const addProbeWithUser = async (user2: User) => {
 		...defaultProbe,
 		userId: user2.id,
 	});
+
+	return { ...defaultProbe, userId: user2.id };
 };
 
 const addOfflineProbeWithSameAsn = async (user: User) => {
@@ -230,3 +232,85 @@ test('Probe adoption by code fails if probe is already adopted', async ({ page, 
 	await page.getByLabel('Send adoption code').click();
 	await expect(page.getByText('The probe with this IP address is already adopted').first()).toBeVisible();
 });
+
+test('Adoption of a probe adopted by another user', async ({ page, user, user2 }) => {
+	const probe = await addProbeWithUser(user2);
+	await page.goto('/probes');
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await page.getByRole('button', { name: 'Software probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
+
+	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
+		probe: _.omit(probe, 'id'),
+		user: { id: user.id },
+	}, {
+		headers: {
+			'X-Api-Key': 'system',
+		},
+	});
+
+	await page.getByRole('button', { name: 'Finish' }).click();
+	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(sql('gp_probes').where({ userId: user2.id }).select()).resolves.toMatchObject([]);
+});
+
+test('Adoption of a probe with different data in SQL and API', async ({ page, user }) => {
+	const probe = await addProbeWithoutUser({ nodeVersion: 'v16.0.0' });
+	await page.goto('/probes');
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await page.getByRole('button', { name: 'Software probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
+
+	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
+		probe: {
+			..._.omit(probe, 'id'),
+			city: 'Bobo Dioulasso',
+			latitude: 11.17,
+			longitude: -1.27,
+			nodeVersion: 'v22.16.0',
+		},
+		user: { id: user.id },
+	}, {
+		headers: {
+			'X-Api-Key': 'system',
+		},
+	});
+
+	await page.getByRole('button', { name: 'Finish' }).click();
+	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('Ouagadougou').first()).toBeVisible();
+	await page.getByRole('button', { name: 'Notifications' }).click();
+	await expect(page.getByText('New probe adopted').first()).toBeVisible();
+	await expect(page.getByText('outdated software').first()).not.toBeVisible();
+});
+
+test('Adoption of a probe with old node version', async ({ page, user }) => {
+	const probe = await addProbeWithoutUser({ nodeVersion: 'v16.0.0' });
+	await page.goto('/probes');
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await page.getByRole('button', { name: 'Software probe' }).click();
+	await page.getByRole('button', { name: 'Next step' }).click();
+
+	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
+		probe: {
+			..._.omit(probe, 'id'),
+			city: 'Bobo Dioulasso',
+			latitude: 11.17,
+			longitude: -1.27,
+			nodeVersion: 'v16.0.0',
+		},
+		user: { id: user.id },
+	}, {
+		headers: {
+			'X-Api-Key': 'system',
+		},
+	});
+
+	await page.getByRole('button', { name: 'Finish' }).click();
+	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('Ouagadougou').first()).toBeVisible();
+	await page.getByRole('button', { name: 'Notifications' }).click();
+	await expect(page.getByText('New probe adopted').first()).toBeVisible();
+	await expect(page.getByText('outdated software').first()).toBeVisible();
+});
+
