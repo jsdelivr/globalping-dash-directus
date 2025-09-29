@@ -1,8 +1,7 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import _ from 'lodash';
 import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
 import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
-import type { AdoptedProbe, ProbeToAdopt, Row } from '../index.js';
+import type { AdoptedProbe, Override, ProbeToAdopt, Row } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
 	const { services, database, getSchema } = context;
@@ -21,12 +20,11 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	if (row) { existingProbe = parseRow(row); }
 
-	const name = await getDefaultProbeName(userId, existingProbe || probe, context);
-
-	const adoption: Omit<AdoptedProbe, 'id' | 'isOutdated'> = {
+	// Latest metadata info comes from the API, so `probe` object is preffered over `existingProbe`.
+	const metadata = {
+		lastSyncDate: new Date(),
 		ip: probe.ip,
 		altIps: probe.altIps,
-		name,
 		uuid: probe.uuid,
 		version: probe.version,
 		nodeVersion: probe.nodeVersion,
@@ -34,72 +32,79 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
 		systemTags: probe.systemTags,
 		status: probe.status,
-		city: probe.city,
-		state: probe.state,
-		stateName: probe.stateName,
-		country: probe.country,
-		countryName: probe.countryName,
-		continent: probe.continent,
-		continentName: probe.continentName,
-		region: probe.region,
-		latitude: probe.latitude,
-		longitude: probe.longitude,
-		asn: probe.asn,
-		network: probe.network,
-		userId,
-		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
-		originalLocation: null,
-		tags: probe.tags,
-		allowedCountries: probe.allowedCountries,
-		customLocation: probe.customLocation,
+		asn: probe.asn,
+		network: probe.network,
 	};
 
-	// Probe already assigned to the user.
-	if (existingProbe && existingProbe.userId === adoption.userId) {
-		return existingProbe;
+	// Latest location info comes from SQL (e.g. probe with a custom location, not synced with the API yet), so `existingProbe` is preffered.
+	const location = {
+		allowedCountries: existingProbe?.allowedCountries || probe.allowedCountries,
+		city: existingProbe?.city || probe.city,
+		state: existingProbe?.state || probe.state,
+		stateName: existingProbe?.stateName || probe.stateName,
+		country: existingProbe?.country || probe.country,
+		countryName: existingProbe?.countryName || probe.countryName,
+		continent: existingProbe?.continent || probe.continent,
+		continentName: existingProbe?.continentName || probe.continentName,
+		region: existingProbe?.region || probe.region,
+		latitude: existingProbe?.latitude || probe.latitude,
+		longitude: existingProbe?.longitude || probe.longitude,
+	};
+
+	// Probe is already assigned to the user.
+	if (existingProbe && existingProbe.userId === userId) {
+		await itemsService.updateOne(existingProbe.id, metadata, { emitEvents: false });
+		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
-		const newFields = {
+		const adoption: Override<ProbeToAdopt, { userId: string; name: string | null }> = {
+			...metadata,
+			...location,
 			...getResetUserFields(existingProbe),
-			name,
-			userId: adoption.userId,
+			userId,
 		};
-		const id = await itemsService.updateOne(existingProbe.id, newFields, { emitEvents: false });
+		adoption.name = await getDefaultProbeName(userId, adoption, context);
 
 		await Promise.all([
-			sendNotificationProbeAdopted({ ...adoption, id }, context),
+			itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false }),
+			sendNotificationProbeAdopted({ ...adoption, id: existingProbe.id }, context),
 			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe, context),
 		]);
 
-		return { ...existingProbe, ...newFields };
+		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
 	const probeByAsn = await database('gp_probes')
 		.orderByRaw(`gp_probes.lastSyncDate DESC, gp_probes.id DESC`)
 		.where({
-			userId: adoption.userId,
+			userId,
 			status: 'offline',
-			asn: adoption.asn,
-			city: adoption.city,
+			asn: probe.asn,
+			city: probe.city,
 		})
 		.first<Row>();
 
 	if (probeByAsn) {
-		const newFields = _.omit(adoption, 'name');
-		await itemsService.updateOne(probeByAsn.id, newFields, { emitEvents: false });
-		return { ...parseRow(probeByAsn), ...newFields };
+		await itemsService.updateOne(probeByAsn.id, {
+			...metadata,
+			...location,
+			userId,
+		}, { emitEvents: false });
+
+		return await itemsService.readOne(probeByAsn.id) as AdoptedProbe;
 	}
 
 	// Probe not exists.
+	const name = await getDefaultProbeName(userId, location, context);
+	const adoption = { ...metadata, ...location, userId, name };
 	const id = await itemsService.createOne(adoption, { emitEvents: false });
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
-	const adoptedProbe = await itemsService.readOne(id);
-	return adoptedProbe;
+	return await itemsService.readOne(id) as AdoptedProbe;
 };
 
 export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExtensionContext) => {
