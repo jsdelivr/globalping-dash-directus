@@ -23,10 +23,14 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	const name = await getDefaultProbeName(userId, existingProbe || probe, context);
 
-	const adoption: Omit<AdoptedProbe, 'id' | 'isOutdated' | 'originalLocation' | 'customLocation'> = {
+	const adoption: Omit<AdoptedProbe, 'id' | 'tags' | 'isOutdated' | 'originalLocation' | 'customLocation'> = {
+		// Generated fields.
+		name,
+		userId,
+		lastSyncDate: new Date(),
+		// Latest metadata info comes from the API, so `probe` object is preffered.
 		ip: probe.ip,
 		altIps: probe.altIps,
-		name,
 		uuid: probe.uuid,
 		version: probe.version,
 		nodeVersion: probe.nodeVersion,
@@ -34,24 +38,22 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
 		systemTags: probe.systemTags,
 		status: probe.status,
-		city: probe.city,
-		state: probe.state,
-		stateName: probe.stateName,
-		country: probe.country,
-		countryName: probe.countryName,
-		continent: probe.continent,
-		continentName: probe.continentName,
-		region: probe.region,
-		latitude: probe.latitude,
-		longitude: probe.longitude,
-		asn: probe.asn,
-		network: probe.network,
-		userId,
-		lastSyncDate: new Date(),
 		isIPv4Supported: probe.isIPv4Supported,
 		isIPv6Supported: probe.isIPv6Supported,
-		tags: [],
-		allowedCountries: probe.allowedCountries,
+		asn: probe.asn,
+		network: probe.network,
+		// Latest location info comes from SQL (e.g. probe with a custom location, not synced with the API yet), so `existingProbe` is preffered.
+		allowedCountries: existingProbe?.allowedCountries || probe.allowedCountries,
+		city: existingProbe?.city || probe.city,
+		state: existingProbe?.state || probe.state,
+		stateName: existingProbe?.stateName || probe.stateName,
+		country: existingProbe?.country || probe.country,
+		countryName: existingProbe?.countryName || probe.countryName,
+		continent: existingProbe?.continent || probe.continent,
+		continentName: existingProbe?.continentName || probe.continentName,
+		region: existingProbe?.region || probe.region,
+		latitude: existingProbe?.latitude || probe.latitude,
+		longitude: existingProbe?.longitude || probe.longitude,
 	};
 
 	// Probe is already assigned to the user.
