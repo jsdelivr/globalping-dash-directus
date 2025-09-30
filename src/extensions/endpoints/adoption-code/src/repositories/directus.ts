@@ -69,9 +69,8 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		};
 		adoption.name = await getDefaultProbeName(userId, adoption, context);
 
-		await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
-
 		await Promise.all([
+			itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false }),
 			sendNotificationProbeAdopted({ ...adoption, id: existingProbe.id }, context),
 			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe, context),
 		]);
