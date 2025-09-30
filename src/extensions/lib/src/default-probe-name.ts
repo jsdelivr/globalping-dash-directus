@@ -20,7 +20,7 @@ const findAdoptedProbes = async (filter: Record<string, unknown>, { services, ge
 	return probes;
 };
 
-export const getDefaultProbeName = async (userId: string, probe: Probe, context: ApiExtensionContext) => {
+export const getDefaultProbeName = async (userId: string, probe: { id?: string; country: string; city: string }, context: ApiExtensionContext) => {
 	const prefix = `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}`;
 
 	const currentProbes = await findAdoptedProbes({

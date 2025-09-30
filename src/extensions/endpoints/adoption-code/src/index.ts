@@ -14,7 +14,7 @@ import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
-type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
+export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
 
 export type Request = ExpressRequest & {
 	accountability: {

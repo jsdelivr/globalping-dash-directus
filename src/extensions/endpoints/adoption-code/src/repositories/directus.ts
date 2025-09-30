@@ -1,8 +1,7 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import _ from 'lodash';
 import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
 import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
-import type { AdoptedProbe, ProbeToAdopt, Row } from '../index.js';
+import type { AdoptedProbe, Override, ProbeToAdopt, Row } from '../index.js';
 
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
 	const { services, database, getSchema } = context;
@@ -21,14 +20,9 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	if (row) { existingProbe = parseRow(row); }
 
-	const name = await getDefaultProbeName(userId, existingProbe || probe, context);
-
-	const adoption: Omit<AdoptedProbe, 'id' | 'tags' | 'isOutdated' | 'originalLocation' | 'customLocation'> = {
-		// Generated fields.
-		name,
-		userId,
+	// Latest metadata info comes from the API, so `probe` object is preffered over `existingProbe`.
+	const metadata = {
 		lastSyncDate: new Date(),
-		// Latest metadata info comes from the API, so `probe` object is preffered.
 		ip: probe.ip,
 		altIps: probe.altIps,
 		uuid: probe.uuid,
@@ -42,7 +36,10 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		isIPv6Supported: probe.isIPv6Supported,
 		asn: probe.asn,
 		network: probe.network,
-		// Latest location info comes from SQL (e.g. probe with a custom location, not synced with the API yet), so `existingProbe` is preffered.
+	};
+
+	// Latest location info comes from SQL (e.g. probe with a custom location, not synced with the API yet), so `existingProbe` is preffered.
+	const location = {
 		allowedCountries: existingProbe?.allowedCountries || probe.allowedCountries,
 		city: existingProbe?.city || probe.city,
 		state: existingProbe?.state || probe.state,
@@ -57,17 +54,22 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	};
 
 	// Probe is already assigned to the user.
-	if (existingProbe && existingProbe.userId === adoption.userId) {
-		await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
+	if (existingProbe && existingProbe.userId === userId) {
+		await itemsService.updateOne(existingProbe.id, metadata, { emitEvents: false });
 		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
-		await itemsService.updateOne(existingProbe.id, {
+		const adoption: Override<ProbeToAdopt, { userId: string; name: string | null }> = {
+			...metadata,
+			...location,
 			...getResetUserFields(existingProbe),
-			...adoption,
-		}, { emitEvents: false });
+			userId,
+		};
+		adoption.name = await getDefaultProbeName(userId, adoption, context);
+
+		await itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false });
 
 		await Promise.all([
 			sendNotificationProbeAdopted({ ...adoption, id: existingProbe.id }, context),
@@ -81,19 +83,26 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	const probeByAsn = await database('gp_probes')
 		.orderByRaw(`gp_probes.lastSyncDate DESC, gp_probes.id DESC`)
 		.where({
-			userId: adoption.userId,
+			userId,
 			status: 'offline',
-			asn: adoption.asn,
-			city: adoption.city,
+			asn: probe.asn,
+			city: probe.city,
 		})
 		.first<Row>();
 
 	if (probeByAsn) {
-		await itemsService.updateOne(probeByAsn.id, _.omit(adoption, 'name'), { emitEvents: false });
+		await itemsService.updateOne(probeByAsn.id, {
+			...metadata,
+			...location,
+			userId,
+		}, { emitEvents: false });
+
 		return await itemsService.readOne(probeByAsn.id) as AdoptedProbe;
 	}
 
 	// Probe not exists.
+	const name = await getDefaultProbeName(userId, location, context);
+	const adoption = { ...metadata, ...location, userId, name };
 	const id = await itemsService.createOne(adoption, { emitEvents: false });
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	return await itemsService.readOne(id) as AdoptedProbe;
