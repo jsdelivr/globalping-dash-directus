@@ -82,7 +82,7 @@ export const notifyAdoptions = async (probes: AdoptedProbe[], { services, databa
 	return probes.map(probe => probe.id);
 };
 
-export const deleteProbes = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const deleteAdoptions = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService, ItemsService } = services;
 
 	const notificationsService = new NotificationsService({
@@ -111,8 +111,18 @@ export const deleteProbes = async (probes: AdoptedProbe[], { services, database,
 		deletedAdoptionsIds = await probesService.deleteByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }, { emitEvents: false }) as string[];
 	}
 
-	// Deleting unassigned offline probes.
-	const deletedProbesIds = await probesService.deleteByQuery({ filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000) } } }, { emitEvents: false }) as string[];
 
-	return [ ...deletedAdoptionsIds, ...deletedProbesIds ];
+	return deletedAdoptionsIds;
+};
+
+export const deleteProbes = async ({ services, database, getSchema }: OperationContext): Promise<string[]> => {
+	const { ItemsService } = services;
+
+	const probesService = new ItemsService('gp_probes', {
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	const deletedProbesIds = await probesService.deleteByQuery({ filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000) } } }, { emitEvents: false }) as string[];
+	return deletedProbesIds;
 };

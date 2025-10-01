@@ -71,7 +71,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 		]);
 
-		expect(result).to.deep.equal('Removed probes: []. Notified adoptions with ids: probeId1, probeId2.');
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: probeId1, probeId2.');
 	});
 
 	it('should not notify user if probe is offline for <2 days', async () => {
@@ -89,7 +89,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.callCount).to.equal(0);
 
-		expect(result).to.deep.equal('Removed probes: []. Notified adoptions with ids: [].');
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: [].');
 	});
 
 	it('should not create duplicated notifications for the same offline period', async () => {
@@ -112,7 +112,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.callCount).to.equal(0);
 
-		expect(result).to.deep.equal('Removed probes: []. Notified adoptions with ids: [].');
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: [].');
 	});
 
 	it('should create notification for the new offline period', async () => {
@@ -146,7 +146,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 		]);
 
-		expect(result).to.deep.equal('Removed probes: []. Notified adoptions with ids: probeId1.');
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: probeId1.');
 	});
 
 	it('should delete adoption if probe is offline for >30 days', async () => {
@@ -192,7 +192,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			{ emitEvents: false },
 		]);
 
-		expect(result).to.deep.equal('Removed probes: probeId1. Notified adoptions with ids: [].');
+		expect(result).to.deep.equal('Removed adopted probes: probeId1. Removed unassigned probes: []. Notified adoptions with ids: [].');
 	});
 
 	it('should delete adoption if probe is offline for >30 days', async () => {
@@ -239,7 +239,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			{ emitEvents: false },
 		]);
 
-		expect(result).to.deep.equal('Removed probes: probeId1, unassignedProbeId2. Notified adoptions with ids: [].');
+		expect(result).to.deep.equal('Removed adopted probes: probeId1. Removed unassigned probes: unassignedProbeId2. Notified adoptions with ids: [].');
 	});
 
 	it('should not delete adoption if probe is offline for <30 days', async () => {
