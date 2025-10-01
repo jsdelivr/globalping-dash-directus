@@ -187,7 +187,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(deleteByQuery.args[1]).to.deep.equal([
 			{
-				filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+				filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, userId: { _null: true } },
 			},
 			{ emitEvents: false },
 		]);
@@ -195,7 +195,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		expect(result).to.deep.equal('Removed adopted probes: probeId1. Removed unassigned probes: []. Notified adoptions with ids: [].');
 	});
 
-	it('should delete adoption if probe is offline for >30 days', async () => {
+	it('should delete unassigned probe if it is offline for >30 days', async () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
@@ -234,7 +234,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(deleteByQuery.args[1]).to.deep.equal([
 			{
-				filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+				filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, userId: { _null: true } },
 			},
 			{ emitEvents: false },
 		]);
@@ -264,6 +264,7 @@ describe('Remove expired adoptions CRON handler', () => {
 				filter: {
 					status: 'offline',
 					lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+					userId: { _null: true },
 				},
 			},
 			{ emitEvents: false },

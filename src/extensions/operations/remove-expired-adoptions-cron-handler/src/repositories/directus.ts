@@ -123,6 +123,12 @@ export const deleteProbes = async ({ services, database, getSchema }: OperationC
 		knex: database,
 	});
 
-	const deletedProbesIds = await probesService.deleteByQuery({ filter: { status: 'offline', lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000) } } }, { emitEvents: false }) as string[];
+	const deletedProbesIds = await probesService.deleteByQuery({
+		filter: {
+			status: 'offline',
+			lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000) },
+			userId: { _null: true },
+		},
+	}, { emitEvents: false }) as string[];
 	return deletedProbesIds;
 };
