@@ -2,6 +2,7 @@ import { getContinentByCountry, getContinentName, getRegionByCountry, getCountry
 
 type Probe = {
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
+	systemTags: string[];
 };
 
 export const getResetLocationFields = (probe: Probe) => {
@@ -37,4 +38,5 @@ export const getResetUserFields = (probe: Probe) => ({
 	name: null,
 	userId: null,
 	tags: [] as string[],
+	systemTags: probe.systemTags.filter(tag => !tag.startsWith('u-')),
 });
