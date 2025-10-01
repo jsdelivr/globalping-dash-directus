@@ -503,6 +503,7 @@ describe('adopted-probe hook', () => {
 				allowedCountries: [ 'FR' ],
 				customLocation: null,
 				originalLocation: null,
+				systemTags: [ 'u-username', 'eyeball-network' ],
 			}]);
 
 			hook(events, context);
@@ -521,6 +522,7 @@ describe('adopted-probe hook', () => {
 						name: null,
 						userId: null,
 						tags: [],
+						systemTags: [ 'eyeball-network' ],
 					},
 				],
 				{ emitEvents: false },
@@ -529,7 +531,7 @@ describe('adopted-probe hook', () => {
 			expect(payload).to.deep.equal({ userId: null });
 		});
 
-		it('should should reset user data in case of userId: null and custom location', async () => {
+		it('should reset user data in case of userId: null and custom location', async () => {
 			adoptedProbes.readMany.resolves([{
 				id: 'probe-id',
 				userId: 'user-id',
@@ -539,6 +541,7 @@ describe('adopted-probe hook', () => {
 				longitude: '2.35',
 				country: 'FR',
 				allowedCountries: [ 'FR', 'US' ],
+				systemTags: [ 'u-username' ],
 				customLocation: {
 					country: 'FR',
 					city: 'Paris',
@@ -581,6 +584,7 @@ describe('adopted-probe hook', () => {
 						name: null,
 						userId: null,
 						tags: [],
+						systemTags: [],
 					},
 				],
 				{ emitEvents: false },

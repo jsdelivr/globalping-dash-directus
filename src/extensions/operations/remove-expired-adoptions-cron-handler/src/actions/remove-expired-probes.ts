@@ -1,29 +1,31 @@
 
 import type { OperationContext } from '@directus/extensions';
-import { getOfflineAdoptions, getExistingNotifications, notifyProbes, removeAdoption } from '../repositories/directus.js';
+import { getOfflineAdoptions, getExistingNotifications, notifyAdoptions, deleteAdoptions, deleteProbes } from '../repositories/directus.js';
 import type { AdoptedProbe } from '../types.js';
 
 export const NOTIFY_AFTER_DAYS = 2;
 export const REMOVE_AFTER_DAYS = 30;
 
 
-export const removeExpiredAdoptions = async (context: OperationContext): Promise<{ notifiedIds: string[]; removedIds: string[] }> => {
+export const removeExpiredAdoptions = async (context: OperationContext): Promise<{ notifiedIds: string[]; removedAdoptionsIds: string[]; removedProbesIds: string[] }> => {
 	const offlineAdoptedProbes = await getOfflineAdoptions(context);
-	const probesToNotify = [];
-	const probesToRemoveAdoption = [];
+	const adoptionsToNotify = [];
+	const adoptionsToDelete = [];
 
 	for (const probe of offlineAdoptedProbes) {
 		if (isExpired(probe.lastSyncDate, REMOVE_AFTER_DAYS)) {
-			probesToRemoveAdoption.push(probe);
+			adoptionsToDelete.push(probe);
 		} else if (isExpired(probe.lastSyncDate, NOTIFY_AFTER_DAYS)) {
-			probesToNotify.push(probe);
+			adoptionsToNotify.push(probe);
 		}
 	}
 
-	const probesWithoutNotifications = await excludeAlreadyNotifiedProbes(probesToNotify, context);
-	const notifiedIds = await notifyProbes(probesWithoutNotifications, context);
-	const removedIds = await removeAdoption(probesToRemoveAdoption, context);
-	return { notifiedIds, removedIds };
+	const probesWithoutNotifications = await excludeAlreadyNotifiedProbes(adoptionsToNotify, context);
+	const notifiedIds = await notifyAdoptions(probesWithoutNotifications, context);
+	const removedAdoptionsIds = await deleteAdoptions(adoptionsToDelete, context);
+	// Deleting unassigned offline probes.
+	const removedProbesIds = await deleteProbes(context);
+	return { notifiedIds, removedAdoptionsIds, removedProbesIds };
 };
 
 const excludeAlreadyNotifiedProbes = async (probes: AdoptedProbe[], context: OperationContext) => {
