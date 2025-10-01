@@ -6,4 +6,5 @@ export type AdoptedProbe = {
 	status: string;
 	lastSyncDate: Date;
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
+	systemTags: string[];
 };

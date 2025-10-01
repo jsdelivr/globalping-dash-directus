@@ -22,6 +22,7 @@ export type Probe = {
 	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 	customLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 	tags: { value: string; prefix: string }[];
+	systemTags: string[];
 	userId: string | null;
 	allowedCountries: string[];
 };

@@ -1,7 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import type { Notification } from '@directus/types';
 import Bluebird from 'bluebird';
-import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
@@ -54,7 +53,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 	return result;
 };
 
-export const notifyProbes = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const notifyAdoptions = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService } = services;
 
 	if (!probes.length) {
@@ -83,12 +82,8 @@ export const notifyProbes = async (probes: AdoptedProbe[], { services, database,
 	return probes.map(probe => probe.id);
 };
 
-export const removeAdoption = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const deleteAdoptions = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService, ItemsService } = services;
-
-	if (!probes.length) {
-		return [];
-	}
 
 	const notificationsService = new NotificationsService({
 		schema: await getSchema({ database }),
@@ -101,9 +96,6 @@ export const removeAdoption = async (probes: AdoptedProbe[], { services, databas
 	});
 
 	await Bluebird.map(probes, async (probe) => {
-		const dateOfExpiration = new Date(probe.lastSyncDate);
-		dateOfExpiration.setDate(dateOfExpiration.getDate() + REMOVE_AFTER_DAYS);
-
 		await notificationsService.createOne({
 			recipient: probe.userId,
 			subject: 'Your probe has been deleted',
@@ -113,10 +105,30 @@ export const removeAdoption = async (probes: AdoptedProbe[], { services, databas
 		});
 	});
 
-	const result = await probesService.updateBatch(probes.map(probe => ({
-		id: probe.id,
-		...getResetUserFields(probe),
-	})), { emitEvents: false });
+	let deletedAdoptionsIds: string[] = [];
 
-	return result;
+	if (probes.length) {
+		deletedAdoptionsIds = await probesService.deleteByQuery({ filter: { id: { _in: probes.map(probe => probe.id) } } }, { emitEvents: false }) as string[];
+	}
+
+
+	return deletedAdoptionsIds;
+};
+
+export const deleteProbes = async ({ services, database, getSchema }: OperationContext): Promise<string[]> => {
+	const { ItemsService } = services;
+
+	const probesService = new ItemsService('gp_probes', {
+		schema: await getSchema({ database }),
+		knex: database,
+	});
+
+	const deletedProbesIds = await probesService.deleteByQuery({
+		filter: {
+			status: 'offline',
+			lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000) },
+			userId: { _null: true },
+		},
+	}, { emitEvents: false }) as string[];
+	return deletedProbesIds;
 };
