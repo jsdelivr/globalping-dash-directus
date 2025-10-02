@@ -6,6 +6,11 @@ import { validateDefaultPrefix } from './validate-fields.js';
 
 export type Fields = Partial<DirectusUser>;
 
+type Revision = {
+	data: DirectusUser;
+	delta: DirectusUser;
+};
+
 export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 
 export const deleteUserIdToGithubId = new TTLCache<string, string>({ ttl: 60 * 1000 });
@@ -28,5 +33,27 @@ export default defineHook(({ filter, action }, context) => {
 		const userIds = (payload.keys as string[]) || [];
 		const githubIds = userIds.map(id => deleteUserIdToGithubId.get(id)).filter(Boolean) as string[];
 		await deleteCreditsAdditions(githubIds, accountability, context);
+	});
+
+	action('users.read', (query) => {
+		const payload = query.payload as DirectusUser[];
+		payload.forEach((item) => {
+			if (item.github_oauth_token) {
+				item.github_oauth_token = '********';
+			}
+		});
+	});
+
+	action('revisions.read', (query) => {
+		const payload = query.payload as Revision[];
+		payload.forEach((item) => {
+			if (item.data?.github_oauth_token) {
+				item.data.github_oauth_token = '********';
+			}
+
+			if (item.delta?.github_oauth_token) {
+				item.delta.github_oauth_token = '********';
+			}
+		});
 	});
 });
