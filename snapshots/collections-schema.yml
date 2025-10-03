@@ -555,7 +555,7 @@ fields:
       display_options: null
       field: github_oauth_token
       group: null
-      hidden: false
+      hidden: true
       interface: input
       note: null
       options: null
