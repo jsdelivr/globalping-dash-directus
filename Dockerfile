@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Temp corepack fix: https://github.com/nodejs/corepack/issues/612
 RUN corepack install -g pnpm@9.15.2
@@ -46,7 +46,7 @@ RUN pnpm install
 COPY src src
 RUN pnpm -r build
 
-FROM directus/directus:11.1.1
+FROM directus/directus:11.12.0
 
 # Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
