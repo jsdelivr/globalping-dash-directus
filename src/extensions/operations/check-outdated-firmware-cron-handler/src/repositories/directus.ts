@@ -12,12 +12,11 @@ export type AdoptedProbe = {
 	isOutdated: boolean;
 };
 
-export const getAlreadyNotifiedProbes = async ({ env, services, database, getSchema }: OperationContext) => {
+export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const notificationsService = new ItemsService('directus_notifications', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const existingNotifications: { item: string }[] = await notificationsService.readByQuery({

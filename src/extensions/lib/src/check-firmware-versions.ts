@@ -25,12 +25,11 @@ export const checkFirmwareVersions = async (probe: ProbeInfo, userId: string, co
 	return null;
 };
 
-const sendNotificationToSoftwareProbe = async (probe: ProbeInfo, userId: string, { services, getSchema, database, env }: ApiExtensionContext) => {
+const sendNotificationToSoftwareProbe = async (probe: ProbeInfo, userId: string, { services, getSchema, env }: ApiExtensionContext) => {
 	const { NotificationsService } = services;
 
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await notificationsService.createOne({
@@ -46,12 +45,11 @@ const sendNotificationToSoftwareProbe = async (probe: ProbeInfo, userId: string,
 	return probe.id;
 };
 
-const sendNotificationToHardwareProbe = async (probe: ProbeInfo, userId: string, { services, getSchema, database, env }: ApiExtensionContext) => {
+const sendNotificationToHardwareProbe = async (probe: ProbeInfo, userId: string, { services, getSchema, env }: ApiExtensionContext) => {
 	const { NotificationsService } = services;
 
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await notificationsService.createOne({

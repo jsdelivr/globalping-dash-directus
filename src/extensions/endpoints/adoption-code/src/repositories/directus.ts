@@ -6,8 +6,7 @@ import type { AdoptedProbe, Override, ProbeToAdopt, Row } from '../index.js';
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
 	const { services, database, getSchema } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	let existingProbe: AdoptedProbe | null = null;
@@ -139,11 +138,10 @@ type NotificationInfo = {
 	ip: string;
 };
 
-const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { services, database, getSchema }: EndpointExtensionContext) => {
+const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { services, getSchema }: EndpointExtensionContext) => {
 	const { NotificationsService } = services;
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await notificationsService.createOne({
@@ -153,11 +151,10 @@ const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { servic
 	});
 };
 
-const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, { services, database, getSchema }: EndpointExtensionContext) => {
+const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, { services, getSchema }: EndpointExtensionContext) => {
 	const { NotificationsService } = services;
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await notificationsService.createOne({

@@ -8,10 +8,9 @@ type Probe = {
 	city: string;
 };
 
-const findAdoptedProbes = async (filter: Filter, { services, getSchema, database }: ApiExtensionContext) => {
+const findAdoptedProbes = async (filter: Filter, { services, getSchema }: ApiExtensionContext) => {
 	const itemsService = new services.ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const probes = await itemsService.readByQuery({

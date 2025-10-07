@@ -13,12 +13,11 @@ type User = {
 	external_identifier: string;
 };
 
-export const getAdoptedProbes = async ({ services, database, getSchema }: OperationContext) => {
+export const getAdoptedProbes = async ({ services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const itemsService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const result = await itemsService.readByQuery({
@@ -31,7 +30,7 @@ export const getAdoptedProbes = async ({ services, database, getSchema }: Operat
 	return result;
 };
 
-export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services, database, getSchema, env }: OperationContext) => {
+export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services, getSchema, env }: OperationContext) => {
 	if (!env.CREDITS_PER_ADOPTED_PROBE_DAY) {
 		throw new Error('CREDITS_PER_ADOPTED_PROBE_DAY was not provided');
 	}
@@ -43,13 +42,11 @@ export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services,
 	const { ItemsService } = services;
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const usersService = new ItemsService('directus_users', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const users = await usersService.readMany(adoptedProbes.map(({ userId }) => userId)) as User[];
@@ -70,12 +67,11 @@ export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services,
 	return result;
 };
 
-export const resetOnlineTimes = async ({ services, database, getSchema }: OperationContext) => {
+export const resetOnlineTimes = async ({ services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const itemsService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await itemsService.updateByQuery({}, { onlineTimesToday: 0 }, { emitEvents: false });

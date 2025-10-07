@@ -30,8 +30,7 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 	const maxCreditsBonus = parseInt(env.MAX_CREDITS_BONUS, 10);
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const additionsInLastYear = await creditsAdditionsService.readByQuery({
@@ -53,12 +52,11 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 };
 
 export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, context: ApiExtensionContext) => {
-	const { services, database, getSchema, env } = context;
+	const { services, getSchema, env } = context;
 	const { ItemsService } = services;
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const githubId = redirectGithubId(github_id);

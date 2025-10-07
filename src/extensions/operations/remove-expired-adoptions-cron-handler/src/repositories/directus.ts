@@ -6,12 +6,11 @@ import type { AdoptedProbe } from '../types.js';
 
 const OFFLINE_PROBE_NOTIFICATIION_TYPE = 'offline_probe';
 
-export const getOfflineAdoptions = async ({ services, database, getSchema }: OperationContext): Promise<AdoptedProbe[]> => {
+export const getOfflineAdoptions = async ({ services, getSchema }: OperationContext): Promise<AdoptedProbe[]> => {
 	const { ItemsService } = services;
 
 	const probesService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const rows: (Omit<AdoptedProbe, 'lastSyncDate'> & { lastSyncDate: string })[] = await probesService.readByQuery({
@@ -27,7 +26,7 @@ export const getOfflineAdoptions = async ({ services, database, getSchema }: Ope
 	}));
 };
 
-export const getExistingNotifications = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<Notification[]> => {
+export const getExistingNotifications = async (probes: AdoptedProbe[], { services, getSchema }: OperationContext): Promise<Notification[]> => {
 	const { ItemsService } = services;
 
 	if (!probes.length) {
@@ -35,8 +34,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 	}
 
 	const notificationsService = new ItemsService('directus_notifications', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const result = await notificationsService.readByQuery({
@@ -53,7 +51,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 	return result;
 };
 
-export const notifyAdoptions = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const notifyAdoptions = async (probes: AdoptedProbe[], { services, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService } = services;
 
 	if (!probes.length) {
@@ -61,8 +59,7 @@ export const notifyAdoptions = async (probes: AdoptedProbe[], { services, databa
 	}
 
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await Bluebird.map(probes, async (probe) => {
@@ -82,17 +79,15 @@ export const notifyAdoptions = async (probes: AdoptedProbe[], { services, databa
 	return probes.map(probe => probe.id);
 };
 
-export const deleteAdoptions = async (probes: AdoptedProbe[], { services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSchema }: OperationContext): Promise<string[]> => {
 	const { NotificationsService, ItemsService } = services;
 
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const probesService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await Bluebird.map(probes, async (probe) => {
@@ -115,12 +110,11 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], { services, databa
 	return deletedAdoptionsIds;
 };
 
-export const deleteProbes = async ({ services, database, getSchema }: OperationContext): Promise<string[]> => {
+export const deleteProbes = async ({ services, getSchema }: OperationContext): Promise<string[]> => {
 	const { ItemsService } = services;
 
 	const probesService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const deletedProbesIds = await probesService.deleteByQuery({
