@@ -24,9 +24,9 @@
 		"link": "directus-extension link"
 	},
 	"devDependencies": {
-		"@directus/extensions": "^1.0.9",
-		"@directus/extensions-sdk": "11.0.9",
-		"@directus/types": "^11.2.0",
+		"@directus/extensions": "^3.0.11",
+		"@directus/extensions-sdk": "16.0.2",
+		"@directus/types": "^13.2.3",
 		"@types/node": "^22.13.14",
 		"typescript": "^5.8.3"
 	},

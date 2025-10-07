@@ -24,14 +24,14 @@
 		"link": "directus-extension link"
 	},
 	"devDependencies": {
-		"@directus/extensions-sdk": "12.1.4",
-		"@directus/types": "^11.2.0",
+		"@directus/extensions-sdk": "16.0.2",
+		"@directus/types": "^13.2.3",
 		"@types/express": "^4.17.21",
 		"@types/node": "^22.13.14",
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
-		"@directus/errors": "^0.3.3",
+		"@directus/errors": "^2.0.4",
 		"express": "^4.21.2",
 		"joi": "^18.0.1"
 	}
