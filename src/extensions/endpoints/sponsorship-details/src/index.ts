@@ -32,7 +32,7 @@ export default defineEndpoint((router, context) => {
 	const { services, getSchema, database } = context;
 
 	router.get('/', validate(sponsorshipDetailsSchema), asyncWrapper(async (req, res) => {
-		const userId = req.query.userId;
+		const userId = req.query.userId as string;
 		const { UsersService } = services;
 
 		const usersService = new UsersService({

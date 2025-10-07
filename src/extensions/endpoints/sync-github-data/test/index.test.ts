@@ -39,7 +39,7 @@ describe('/sync-github-data endpoint', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	endpoint(router, endpointContext);
+	(endpoint as any)(router, endpointContext);
 	app.use(router);
 
 	before(() => {

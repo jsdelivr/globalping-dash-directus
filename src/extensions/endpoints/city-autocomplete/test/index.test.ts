@@ -37,8 +37,7 @@ describe('city-autocomplete endpoint', () => {
 		nock('https://download.geonames.org').get('/export/dump/cities500.zip').reply(200, zip.toBuffer());
 
 		await downloadCities().then(generateCitiesJsonFile);
-		// @ts-expect-error Looks like @directus/extensions-sdk v12 adds wrong type.
-		endpoint(router, endpointContext);
+		(endpoint as any)(router, endpointContext);
 		app.use(router);
 	});
 
