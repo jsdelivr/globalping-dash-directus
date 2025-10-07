@@ -33,15 +33,15 @@
 		"@types/express": "^4.17.21",
 		"@types/markdown-it": "^14.1.2",
 		"@types/mocha": "^10.0.7",
-		"@types/node": "^22.1.0",
+		"@types/node": "^22.13.14",
 		"@types/sanitize-html": "^2.11.0",
-		"@types/sinon": "^17.0.3",
+		"@types/sinon": "^17.0.4",
 		"chai": "^5.1.1",
-		"express": "^4.19.2",
+		"express": "^4.21.2",
 		"mocha": "^10.7.0",
-		"sinon": "^18.0.0",
+		"sinon": "^18.0.1",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.5.4"
+		"typescript": "^5.8.3"
 	},
 	"dependencies": {
 		"markdown-it": "^14.1.0",

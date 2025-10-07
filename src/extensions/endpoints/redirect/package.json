@@ -27,8 +27,8 @@
 		"@directus/extensions": "^1.0.9",
 		"@directus/extensions-sdk": "11.0.9",
 		"@directus/types": "^11.2.0",
-		"@types/node": "^20.14.13",
-		"typescript": "^5.5.4"
+		"@types/node": "^22.13.14",
+		"typescript": "^5.8.3"
 	},
 	"dependencies": {
 		"handlebars": "^4.7.8"
