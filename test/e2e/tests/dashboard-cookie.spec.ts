@@ -32,6 +32,7 @@ test('Dashboard cookie format', async ({ page, user }) => {
 
 	expect(typeof payload.id).toBe('string');
 	expect(payload.id).toBe(user.id);
+	expect(typeof payload.github_username).toBe('string');
 	expect(payload.github_username).toBe(user.github_username);
 
 	expect(typeof payload.role).toBe('string');
