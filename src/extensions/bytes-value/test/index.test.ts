@@ -1,3 +1,4 @@
+import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import express, { type NextFunction } from 'express';
 import * as sinon from 'sinon';
@@ -19,7 +20,7 @@ describe('/generator', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	endpoint(router, { logger: console.error } as any);
+	(endpoint as any)(router, { logger: console.error } as any);
 	app.use(router);
 
 	const callbacks = {
@@ -34,7 +35,7 @@ describe('/generator', () => {
 			callbacks.action[name] = cb;
 		},
 	} as any;
-	hook(events);
+	hook(events, {} as HookExtensionContext);
 
 	beforeEach(() => {
 		sinon.resetHistory();

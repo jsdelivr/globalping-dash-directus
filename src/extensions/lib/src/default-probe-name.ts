@@ -1,4 +1,5 @@
 import type { ApiExtensionContext } from '@directus/extensions';
+import type { Filter } from '@directus/types';
 
 type Probe = {
 	id?: string;
@@ -7,7 +8,7 @@ type Probe = {
 	city: string;
 };
 
-const findAdoptedProbes = async (filter: Record<string, unknown>, { services, getSchema, database }: ApiExtensionContext) => {
+const findAdoptedProbes = async (filter: Filter, { services, getSchema, database }: ApiExtensionContext) => {
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: await getSchema({ database }),
 		knex: database,
@@ -24,9 +25,9 @@ export const getDefaultProbeName = async (userId: string, probe: { id?: string; 
 	const prefix = `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}`;
 
 	const currentProbes = await findAdoptedProbes({
-		userId,
-		country: probe.country,
-		city: probe.city,
+		userId: { _eq: userId },
+		country: { _eq: probe.country },
+		city: { _eq: probe.city },
 	}, context);
 	const otherProbes = currentProbes.filter(({ id }) => id !== probe.id);
 

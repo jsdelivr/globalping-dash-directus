@@ -102,7 +102,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	// Probe not exists.
 	const name = await getDefaultProbeName(userId, location, context);
 	const adoption = { ...metadata, ...location, userId, name };
-	const id = await itemsService.createOne(adoption, { emitEvents: false });
+	const id = await itemsService.createOne(adoption, { emitEvents: false }) as string;
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	return await itemsService.readOne(id) as AdoptedProbe;
 };
