@@ -20,7 +20,7 @@ type AddCreditsData = {
 	meta: { amountInDollars: number };
 };
 
-export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, database, getSchema, env }: ApiExtensionContext) => {
+export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, getSchema, env }: ApiExtensionContext) => {
 	const { ItemsService } = services;
 
 	if (!env.CREDITS_BONUS_PER_100_DOLLARS || !env.MAX_CREDITS_BONUS) {

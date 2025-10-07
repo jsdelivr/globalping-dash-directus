@@ -19,7 +19,7 @@ describe('Remove banned users CRON handler', () => {
 	const services = {
 		ItemsService: sinon.stub().returns({ readByQuery }),
 		UsersService: sinon.stub().returns({ deleteOne }),
-	};
+	} as any;
 
 	before(() => {
 		nock.disableNetConnect();

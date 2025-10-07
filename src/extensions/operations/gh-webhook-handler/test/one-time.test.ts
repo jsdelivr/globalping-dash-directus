@@ -20,7 +20,7 @@ describe('GitHub webhook one-time handler', () => {
 	const readByQuery = sinon.stub().resolves([]);
 	const services = {
 		ItemsService: sinon.stub().returns({ createOne, readByQuery }),
-	};
+	} as any;
 
 	beforeEach(() => {
 		sinon.resetHistory();

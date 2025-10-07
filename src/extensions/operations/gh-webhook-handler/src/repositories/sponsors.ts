@@ -30,7 +30,7 @@ export const addSponsor = async ({ github_login, github_id, monthly_amount, last
 
 		await usersService.updateByQuery({
 			filter: {
-				external_identifier: github_id,
+				external_identifier: { _eq: github_id },
 				user_type: { _neq: 'special' },
 			},
 		}, {
@@ -62,6 +62,6 @@ export const updateSponsor = async ({ github_id, monthly_amount }: UpdateItemDat
 		schema: await getSchema(),
 	});
 
-	const result = await sponsorsService.updateByQuery({ filter: { github_id } }, { monthly_amount });
-	return result;
+	const result = await sponsorsService.updateByQuery({ filter: { github_id: { _eq: github_id } } }, { monthly_amount });
+	return result.toString();
 };

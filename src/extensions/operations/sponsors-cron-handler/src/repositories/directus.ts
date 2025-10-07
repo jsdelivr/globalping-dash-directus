@@ -28,7 +28,7 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 
 		await usersService.updateByQuery({
 			filter: {
-				external_identifier: githubSponsor.githubId,
+				external_identifier: { _eq: githubSponsor.githubId },
 				user_type: { _neq: 'special' },
 			},
 		}, {
@@ -75,7 +75,7 @@ export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { 
 
 		await usersService.updateByQuery({
 			filter: {
-				external_identifier: directusSponsor.github_id,
+				external_identifier: { _eq: directusSponsor.github_id },
 				user_type: { _neq: 'special' },
 			},
 		}, {

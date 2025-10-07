@@ -1,3 +1,4 @@
+import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import defineHook from '../src/index.js';
@@ -21,7 +22,7 @@ describe('notifications-format hooks', () => {
 		},
 	} as any;
 
-	defineHook(events);
+	defineHook(events, {} as HookExtensionContext);
 
 	beforeEach(() => {
 		sinon.resetHistory();

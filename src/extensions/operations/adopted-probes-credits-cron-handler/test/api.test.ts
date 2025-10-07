@@ -20,7 +20,7 @@ describe('Adopted probes status cron handler', () => {
 	const updateByQuery = sinon.stub();
 	const services = {
 		ItemsService: sinon.stub().returns({ readByQuery, readMany, createMany, updateByQuery }),
-	};
+	} as unknown as OperationContext['services'];
 	let sandbox: sinon.SinonSandbox;
 
 
