@@ -26,7 +26,6 @@ export default defineHook(({ filter }, context) => {
 
 	filter('gp_location_overrides.items.update', async (payload) => {
 		const fields = payload as Fields;
-		// @ts-expect-error TODO: find why this errors.
 		const optionalFields = _.remove(Object.keys(fields), field => field === 'ip_range' || field === 'city');
 
 		if (fields.ip_range) {

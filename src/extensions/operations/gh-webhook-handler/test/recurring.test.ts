@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import _ from 'lodash';
 import * as sinon from 'sinon';
 import operationApi from '../src/api.js';
-import recurringSponsorshipCreated from './recurring-sponsorship-created.json' assert { type: 'json' };
-import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' assert { type: 'json' };
+import recurringSponsorshipCreated from './recurring-sponsorship-created.json' with { type: 'json' };
+import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' with { type: 'json' };
 
 describe('GitHub webhook recurring handler', () => {
 	const database = {
