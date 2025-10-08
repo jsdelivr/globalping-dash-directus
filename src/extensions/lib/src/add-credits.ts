@@ -37,7 +37,7 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 		filter: {
 			github_id: { _eq: githubId },
 			reason: { _in: [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ] },
-			date_created: { _gte: new Date(Date.now() - 367 * 24 * 60 * 60 * 1000).toString() },
+			date_created: { _gte: new Date(Date.now() - 367 * 24 * 60 * 60 * 1000).toISOString() },
 		},
 		sort: [ 'date_created' ], // Additions should be sorted for getDollarsByMonth().
 		fields: [ 'meta', 'date_created' ],

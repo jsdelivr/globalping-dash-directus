@@ -187,7 +187,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(deleteByQuery.args[1]).to.deep.equal([
 			{
-				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toString() }, userId: { _null: true } },
+				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }, userId: { _null: true } },
 			},
 			{ emitEvents: false },
 		]);
@@ -234,7 +234,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(deleteByQuery.args[1]).to.deep.equal([
 			{
-				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toString() }, userId: { _null: true } },
+				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }, userId: { _null: true } },
 			},
 			{ emitEvents: false },
 		]);
@@ -263,7 +263,7 @@ describe('Remove expired adoptions CRON handler', () => {
 			{
 				filter: {
 					status: { _eq: 'offline' },
-					lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toString() },
+					lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
 					userId: { _null: true },
 				},
 			},

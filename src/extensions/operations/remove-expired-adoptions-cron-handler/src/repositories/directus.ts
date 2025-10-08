@@ -44,7 +44,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 			item: {
 				_in: probes.map(probe => probe.id),
 			},
-			timestamp: { _gte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toString() },
+			timestamp: { _gte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString() },
 		},
 	});
 
@@ -120,7 +120,7 @@ export const deleteProbes = async ({ services, getSchema }: OperationContext): P
 	const deletedProbesIds = await probesService.deleteByQuery({
 		filter: {
 			status: { _eq: 'offline' },
-			lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toString() },
+			lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString() },
 			userId: { _null: true },
 		},
 	}, { emitEvents: false }) as string[];
