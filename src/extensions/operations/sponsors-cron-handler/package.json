@@ -29,8 +29,7 @@
 		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"dependencies": {
-		"@octokit/graphql": "^9.0.2",
-		"node-fetch": "^3.3.2"
+		"@octokit/graphql": "^9.0.2"
 	},
 	"devDependencies": {
 		"@directus/extensions": "^3.0.11",
@@ -42,7 +41,7 @@
 		"@types/sinon": "^17.0.4",
 		"chai": "^6.2.0",
 		"mocha": "^11.7.4",
-		"nock": "^13.5.6",
+		"nock": "^14.0.10",
 		"sinon": "^18.0.1",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3",
