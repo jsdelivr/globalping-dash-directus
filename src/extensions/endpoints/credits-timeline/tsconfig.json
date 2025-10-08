@@ -4,7 +4,7 @@
 		"lib": [
 			"ES2023"
 		],
-		"moduleResolution": "node",
+		"moduleResolution": "NodeNext",
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"esModuleInterop": true,
@@ -24,7 +24,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
 		"isolatedModules": true,
-		"module": "ESNext"
+		"module": "NodeNext"
 	},
 	"include": [
 		"./src/**/*.ts",

@@ -4,8 +4,8 @@
 		"lib": [
 			"ES2023"
 		],
-		"moduleResolution": "node",
-		"module": "ESNext",
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"esModuleInterop": true,
