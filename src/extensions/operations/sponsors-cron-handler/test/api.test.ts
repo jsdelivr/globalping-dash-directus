@@ -56,7 +56,11 @@ describe('Sponsors cron handler', () => {
 
 	before(() => {
 		nock.disableNetConnect();
-		sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
+
+		sinon.useFakeTimers({
+			now: new Date('2023-09-19T00:00:00.000Z'),
+			toFake: [ 'Date' ],
+		});
 	});
 
 	beforeEach(() => {

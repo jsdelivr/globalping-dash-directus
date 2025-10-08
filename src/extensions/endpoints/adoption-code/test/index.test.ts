@@ -7,7 +7,11 @@ import request from 'supertest';
 import endpoint, { type AdoptedProbe, type ProbeToAdopt, type Row, type Request } from '../src/index.js';
 
 describe('adoption code endpoints', () => {
-	const sandbox = sinon.createSandbox({ useFakeTimers: true });
+	const sandbox = sinon.createSandbox({
+		useFakeTimers: {
+			toFake: [ 'Date' ],
+		},
+	});
 	const createOne = sinon.stub();
 	const updateOne = sinon.stub();
 	const readByQuery = sinon.stub();

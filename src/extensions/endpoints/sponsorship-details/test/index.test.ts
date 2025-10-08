@@ -45,7 +45,14 @@ describe('/sponsorship-details', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
-		sandbox = sinon.createSandbox({ useFakeTimers: { now: new Date('2025-07-15') } });
+
+		sandbox = sinon.createSandbox({
+			useFakeTimers: {
+				now: new Date('2025-07-15'),
+				toFake: [ 'Date' ],
+			},
+		});
+
 		readByQuery.resolves([]);
 
 		readOne.resolves({
