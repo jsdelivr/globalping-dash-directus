@@ -20,7 +20,7 @@ type AddCreditsData = {
 	meta: { amountInDollars: number };
 };
 
-export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, database, getSchema, env }: ApiExtensionContext) => {
+export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, getSchema, env }: ApiExtensionContext) => {
 	const { ItemsService } = services;
 
 	if (!env.CREDITS_BONUS_PER_100_DOLLARS || !env.MAX_CREDITS_BONUS) {
@@ -30,15 +30,14 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 	const maxCreditsBonus = parseInt(env.MAX_CREDITS_BONUS, 10);
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const additionsInLastYear = await creditsAdditionsService.readByQuery({
 		filter: {
 			github_id: { _eq: githubId },
 			reason: { _in: [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ] },
-			date_created: { _gte: new Date(Date.now() - 367 * 24 * 60 * 60 * 1000) },
+			date_created: { _gte: new Date(Date.now() - 367 * 24 * 60 * 60 * 1000).toISOString() },
 		},
 		sort: [ 'date_created' ], // Additions should be sorted for getDollarsByMonth().
 		fields: [ 'meta', 'date_created' ],
@@ -53,12 +52,11 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 };
 
 export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, context: ApiExtensionContext) => {
-	const { services, database, getSchema, env } = context;
+	const { services, getSchema, env } = context;
 	const { ItemsService } = services;
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const githubId = redirectGithubId(github_id);

@@ -38,8 +38,7 @@ describe('/applications endpoint', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	// @ts-expect-error Looks like @directus/extensions-sdk v12 adds wrong type.
-	endpoint(router, endpointContext);
+	(endpoint as any)(router, endpointContext);
 	app.use(router);
 
 	beforeEach(() => {

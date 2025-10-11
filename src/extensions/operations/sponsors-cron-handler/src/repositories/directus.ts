@@ -1,12 +1,11 @@
 import type { OperationContext } from '@directus/extensions';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
-export const getDirectusSponsors = async ({ services, database, getSchema }: OperationContext): Promise<DirectusSponsor[]> => {
+export const getDirectusSponsors = async ({ services, getSchema }: OperationContext): Promise<DirectusSponsor[]> => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const result = await sponsorsService.readByQuery({}) as DirectusSponsor[];
@@ -18,18 +17,18 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 
 	const result = await database.transaction(async (trx) => {
 		const sponsorsService = new ItemsService('sponsors', {
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		const usersService = new UsersService({
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		await usersService.updateByQuery({
 			filter: {
-				external_identifier: githubSponsor.githubId,
+				external_identifier: { _eq: githubSponsor.githubId },
 				user_type: { _neq: 'special' },
 			},
 		}, {
@@ -49,12 +48,11 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 	return result;
 };
 
-export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSponsor>, { services, database, getSchema }: OperationContext) => {
+export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSponsor>, { services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const result = await sponsorsService.updateOne(id, data);
@@ -66,18 +64,18 @@ export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { 
 
 	const result = await database.transaction(async (trx) => {
 		const sponsorsService = new ItemsService('sponsors', {
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		const usersService = new UsersService({
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		await usersService.updateByQuery({
 			filter: {
-				external_identifier: directusSponsor.github_id,
+				external_identifier: { _eq: directusSponsor.github_id },
 				user_type: { _neq: 'special' },
 			},
 		}, {

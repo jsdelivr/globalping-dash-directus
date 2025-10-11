@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import operationApi from '../src/api.js';
-import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' assert { type: 'json' };
+import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' with { type: 'json' };
 
 describe('GitHub webhook one-time handler', () => {
 	const database = {} as OperationContext['database'];
@@ -20,7 +20,7 @@ describe('GitHub webhook one-time handler', () => {
 	const readByQuery = sinon.stub().resolves([]);
 	const services = {
 		ItemsService: sinon.stub().returns({ createOne, readByQuery }),
-	};
+	} as any;
 
 	beforeEach(() => {
 		sinon.resetHistory();

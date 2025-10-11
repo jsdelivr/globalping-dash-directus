@@ -19,18 +19,18 @@ export const addSponsor = async ({ github_login, github_id, monthly_amount, last
 
 	const result = await database.transaction(async (trx) => {
 		const sponsorsService = new ItemsService('sponsors', {
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		const usersService = new UsersService({
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		await usersService.updateByQuery({
 			filter: {
-				external_identifier: github_id,
+				external_identifier: { _eq: github_id },
 				user_type: { _neq: 'special' },
 			},
 		}, {
@@ -55,14 +55,13 @@ type UpdateItemData = {
 	monthly_amount: number;
 };
 
-export const updateSponsor = async ({ github_id, monthly_amount }: UpdateItemData, { services, database, getSchema }: Context) => {
+export const updateSponsor = async ({ github_id, monthly_amount }: UpdateItemData, { services, getSchema }: Context) => {
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
-	const result = await sponsorsService.updateByQuery({ filter: { github_id } }, { monthly_amount });
-	return result;
+	const result = await sponsorsService.updateByQuery({ filter: { github_id: { _eq: github_id } } }, { monthly_amount });
+	return result.toString();
 };

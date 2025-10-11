@@ -18,7 +18,7 @@ describe('Probes status cron handler', () => {
 	const updateBatch = sinon.stub();
 	const services = {
 		ItemsService: sinon.stub().returns({ readByQuery, updateBatch }),
-	};
+	} as any;
 	let sandbox: sinon.SinonSandbox;
 
 
@@ -49,14 +49,12 @@ describe('Probes status cron handler', () => {
 
 		expect(services.ItemsService.args[0]).deep.equal([ 'gp_probes', {
 			schema: {},
-			knex: {},
 		}]);
 
 		expect(readByQuery.args[0]).to.deep.equal([{}]);
 
 		expect(services.ItemsService.args[1]).to.deep.equal([ 'gp_probes', {
 			schema: {},
-			knex: {},
 		}]);
 
 		expect(updateBatch.args[0]).to.deep.equal([ [{ id: '1', onlineTimesToday: 1 }], { emitEvents: false }]);
@@ -77,7 +75,6 @@ describe('Probes status cron handler', () => {
 
 		expect(services.ItemsService.args[0]).deep.equal([ 'gp_probes', {
 			schema: {},
-			knex: {},
 		}]);
 
 		expect(readByQuery.args[0]).to.deep.equal([{}]);
@@ -100,7 +97,6 @@ describe('Probes status cron handler', () => {
 
 		expect(services.ItemsService.args[0]).deep.equal([ 'gp_probes', {
 			schema: {},
-			knex: {},
 		}]);
 
 		expect(readByQuery.args[0]).to.deep.equal([{}]);

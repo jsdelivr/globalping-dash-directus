@@ -29,15 +29,14 @@ const sponsorshipDetailsSchema = Joi.object<Request>({
 }).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
 export default defineEndpoint((router, context) => {
-	const { services, getSchema, database } = context;
+	const { services, getSchema } = context;
 
 	router.get('/', validate(sponsorshipDetailsSchema), asyncWrapper(async (req, res) => {
-		const userId = req.query.userId;
+		const userId = req.query.userId as string;
 		const { UsersService } = services;
 
 		const usersService = new UsersService({
-			schema: await getSchema({ database }),
-			knex: database,
+			schema: await getSchema(),
 		});
 		const user = await usersService.readOne(userId) as User;
 		const { bonus, dollarsInLastYear, dollarsByMonth } = await getUserBonus(user.external_identifier, 0, context);

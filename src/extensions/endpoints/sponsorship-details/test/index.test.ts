@@ -38,15 +38,21 @@ describe('/sponsorship-details', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	// @ts-expect-error Looks like @directus/extensions-sdk v12 adds wrong type.
-	endpoint(router, endpointContext);
+	(endpoint as any)(router, endpointContext);
 	app.use(router);
 
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
 		sinon.resetHistory();
-		sandbox = sinon.createSandbox({ useFakeTimers: { now: new Date('2025-07-15') } });
+
+		sandbox = sinon.createSandbox({
+			useFakeTimers: {
+				now: new Date('2025-07-15'),
+				toFake: [ 'Date' ],
+			},
+		});
+
 		readByQuery.resolves([]);
 
 		readOne.resolves({

@@ -1,6 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
 import { graphql } from '@octokit/graphql';
-import nodeFetch from 'node-fetch';
 import type { GithubSponsor } from '../types.js';
 
 type GithubResponse = {
@@ -70,9 +69,6 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 				Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
 			},
 			after: cursor,
-			request: {
-				fetch: process.env.NODE_ENV === 'test' ? nodeFetch : globalThis.fetch, // Using node-fetch for tests and native fetch in prod as nock doesn't support native fetch right now.
-			},
 		});
 
 		const pageInfo = response.organization.sponsorshipsAsMaintainer.pageInfo;

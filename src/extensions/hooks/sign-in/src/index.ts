@@ -55,12 +55,11 @@ export default defineHook(({ action, filter }, context) => {
 
 	filter('auth.jwt', async (payload: AuthPayload, meta) => {
 		const userId = meta.user;
-		const { services, database, getSchema } = context;
+		const { services, getSchema } = context;
 		const { ItemsService } = services;
 
 		const itemsService = new ItemsService('directus_users', {
-			schema: await getSchema({ database }),
-			knex: database,
+			schema: await getSchema(),
 		});
 
 		const user = await itemsService.readOne(userId) as User | undefined;
@@ -75,7 +74,7 @@ export default defineHook(({ action, filter }, context) => {
 });
 
 const syncGithubData = async (userId: string, provider: string, context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
+	const { services, getSchema } = context;
 	const { ItemsService } = services;
 
 	if (provider !== 'github') {
@@ -83,8 +82,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 	}
 
 	const itemsService = new ItemsService('directus_users', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const user = await itemsService.readOne(userId) as User | undefined;
@@ -105,12 +103,11 @@ const syncGitHubOrganizations = async (user: User, context: HookExtensionContext
 };
 
 const updateUser = async (user: User, updateObject: Partial<User>, context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
+	const { services, getSchema } = context;
 	const { UsersService } = services;
 
 	const usersService = new UsersService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 	await usersService.updateOne(user.id, updateObject);
 };

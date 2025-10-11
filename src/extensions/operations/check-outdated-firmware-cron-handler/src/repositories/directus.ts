@@ -1,4 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
+import type { Notification } from '@directus/types';
 import { OUTDATED_FIRMWARE_NOTIFICATION_TYPE, OUTDATED_SOFTWARE_NOTIFICATION_TYPE } from '../../../../lib/src/check-firmware-versions.js';
 
 export type AdoptedProbe = {
@@ -12,25 +13,24 @@ export type AdoptedProbe = {
 	isOutdated: boolean;
 };
 
-export const getAlreadyNotifiedProbes = async ({ env, services, database, getSchema }: OperationContext) => {
+export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
-	const notificationsService = new ItemsService('directus_notifications', {
-		schema: await getSchema({ database }),
-		knex: database,
+	const notificationsService = new ItemsService<Notification>('directus_notifications', {
+		schema: await getSchema(),
 	});
 
-	const existingNotifications: { item: string }[] = await notificationsService.readByQuery({
+	const existingNotifications = await notificationsService.readByQuery({
 		fields: [ 'item' ],
 		filter: {
 			_or: [
 				{
-					type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
-					secondary_type: env.TARGET_NODE_VERSION,
+					type: { _eq: OUTDATED_SOFTWARE_NOTIFICATION_TYPE },
+					secondary_type: { _eq: env.TARGET_NODE_VERSION },
 				},
 				{
-					type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
-					secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
+					type: { _eq: OUTDATED_FIRMWARE_NOTIFICATION_TYPE },
+					secondary_type: { _eq: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}` },
 				},
 			],
 		},

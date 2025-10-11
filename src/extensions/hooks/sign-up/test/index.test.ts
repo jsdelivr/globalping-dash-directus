@@ -201,7 +201,9 @@ describe('Sign-up hook', () => {
 		expect(creditsAdditionsService.updateByQuery.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.updateByQuery.args[0]).to.deep.equal([
-			{ filter: { github_id: '1834071', consumed: false } },
+			{
+				filter: { github_id: { _eq: '1834071' }, consumed: { _eq: false } },
+			},
 			{ consumed: true },
 		]);
 

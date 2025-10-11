@@ -29,7 +29,7 @@ describe('Adopted probes status cron handler', () => {
 	const services = {
 		ItemsService: sinon.stub().returns({ readByQuery }),
 		NotificationsService: sinon.stub().returns({ createOne }),
-	};
+	} as unknown as OperationContext['services'];
 
 
 	beforeEach(() => {

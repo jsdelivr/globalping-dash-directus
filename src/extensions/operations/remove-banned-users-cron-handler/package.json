@@ -29,23 +29,23 @@
 		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
-		"@directus/extensions": "^1.0.9",
-		"@directus/extensions-sdk": "11.0.9",
-		"@directus/types": "^11.2.0",
-		"@types/chai": "^4.3.17",
-		"@types/mocha": "^10.0.7",
-		"@types/node": "^20.14.13",
-		"@types/sinon": "^17.0.3",
-		"chai": "^5.1.1",
-		"mocha": "^10.7.0",
-		"nock": "^13.5.4",
-		"sinon": "^18.0.0",
+		"@directus/extensions": "^3.0.11",
+		"@directus/extensions-sdk": "16.0.2",
+		"@directus/types": "^13.2.3",
+		"@types/chai": "^5.2.2",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^22.13.14",
+		"@types/sinon": "^17.0.4",
+		"chai": "^6.2.0",
+		"mocha": "^11.7.4",
+		"nock": "^14.0.10",
+		"sinon": "^21.0.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^5.5.4",
-		"vue": "^3.4.35"
+		"typescript": "^5.8.3",
+		"vue": "^3.5.18"
 	},
 	"dependencies": {
-		"axios": "^1.7.3",
+		"axios": "^1.12.2",
 		"axios-retry": "^4.5.0",
 		"bluebird": "^3.7.2"
 	}

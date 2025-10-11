@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import _ from 'lodash';
 import * as sinon from 'sinon';
 import operationApi from '../src/api.js';
-import recurringSponsorshipCreated from './recurring-sponsorship-created.json' assert { type: 'json' };
-import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' assert { type: 'json' };
+import recurringSponsorshipCreated from './recurring-sponsorship-created.json' with { type: 'json' };
+import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' with { type: 'json' };
 
 describe('GitHub webhook recurring handler', () => {
 	const database = {
@@ -44,7 +44,7 @@ describe('GitHub webhook recurring handler', () => {
 					throw new Error('Collection name wasn\'t provided');
 			}
 		}),
-	};
+	} as unknown as OperationContext['services'];
 
 	before(() => {
 		sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
@@ -96,7 +96,7 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
 			{
-				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
 			{ user_type: 'sponsor' },
 		]);
@@ -120,7 +120,7 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(sponsorsService.updateByQuery.args[0]).to.deep.equal([{
 			filter: {
-				github_id: '2',
+				github_id: { _eq: '2' },
 			},
 		}, {
 			monthly_amount: 15,
@@ -161,7 +161,7 @@ describe('GitHub webhook recurring handler', () => {
 
 		expect(sponsorsService.updateByQuery.args[0]).to.deep.equal([{
 			filter: {
-				github_id: '2',
+				github_id: { _eq: '2' },
 			},
 		}, {
 			monthly_amount: 5,

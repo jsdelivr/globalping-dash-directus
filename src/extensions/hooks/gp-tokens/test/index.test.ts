@@ -1,3 +1,4 @@
+import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
@@ -19,7 +20,7 @@ describe('token hooks', () => {
 		},
 	} as any;
 
-	hook(events);
+	hook(events, {} as HookExtensionContext);
 
 	beforeEach(() => {
 		sinon.resetHistory();

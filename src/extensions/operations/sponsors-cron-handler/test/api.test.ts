@@ -41,7 +41,6 @@ describe('Sponsors cron handler', () => {
 		updateByQuery: sinon.stub(),
 	};
 	const services = {
-		// ItemsService: sinon.stub().returns({ createOne, readByQuery, updateOne, deleteOne }),
 		ItemsService: sinon.stub().callsFake((collection) => {
 			switch (collection) {
 				case 'sponsors':
@@ -53,11 +52,15 @@ describe('Sponsors cron handler', () => {
 			}
 		}),
 		UsersService: sinon.stub().returns(usersService),
-	};
+	} as any;
 
 	before(() => {
 		nock.disableNetConnect();
-		sinon.useFakeTimers(new Date('2023-09-19T00:00:00.000Z'));
+
+		sinon.useFakeTimers({
+			now: new Date('2023-09-19T00:00:00.000Z'),
+			toFake: [ 'Date' ],
+		});
 	});
 
 	beforeEach(() => {
@@ -213,7 +216,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
 			{
-				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
 			{ user_type: 'member' },
 		]);
@@ -268,7 +271,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
 			{
-				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
 			{ user_type: 'member' },
 		]);
@@ -323,7 +326,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
 			{
-				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
 			{ user_type: 'member' },
 		]);
@@ -439,7 +442,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
 			{
-				filter: { external_identifier: '2', user_type: { _neq: 'special' } },
+				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
 			{ user_type: 'sponsor' },
 		]);
@@ -535,7 +538,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
 			{
-				filter: { external_identifier: '3', user_type: { _neq: 'special' } },
+				filter: { external_identifier: { _eq: '3' }, user_type: { _neq: 'special' } },
 			},
 			{ user_type: 'sponsor' },
 		]);

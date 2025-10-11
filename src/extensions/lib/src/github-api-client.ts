@@ -1,6 +1,6 @@
 import type { ApiExtensionContext } from '@directus/extensions';
 import axios from 'axios';
-import axiosRetry from 'axios-retry';
+import axiosRetry, { type AxiosRetry } from 'axios-retry';
 
 type User = {
 	external_identifier: string | null;
@@ -28,7 +28,7 @@ export const getGithubApiClient = (userToken: string | null, context: ApiExtensi
 		},
 	});
 
-	axiosRetry(client, {
+	(axiosRetry as unknown as AxiosRetry)(client, {
 		retries: 1,
 		retryCondition: (error) => {
 			return error.response?.status === 401 || error.response?.status === 403;

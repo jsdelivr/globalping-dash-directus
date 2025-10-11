@@ -8,11 +8,10 @@ type User = {
 	github_organizations: string[];
 };
 
-export const getProbes = async (keys: string[], { services, database, getSchema }: HookExtensionContext, accountability: EventContext['accountability']) => {
+export const getProbes = async (keys: string[], { services, getSchema }: HookExtensionContext, accountability: EventContext['accountability']) => {
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
 		schema: await getSchema(),
 		accountability,
 	});
@@ -26,11 +25,10 @@ export const getProbes = async (keys: string[], { services, database, getSchema 
 	return probes;
 };
 
-export const getUser = async (userId: string, accountability: EventContext['accountability'], { services, database, getSchema }: HookExtensionContext) => {
+export const getUser = async (userId: string, accountability: EventContext['accountability'], { services, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 	const itemsService = new ItemsService('directus_users', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 		accountability,
 	});
 
@@ -38,13 +36,12 @@ export const getUser = async (userId: string, accountability: EventContext['acco
 	return user;
 };
 
-export const updateProbeWithUserPermissions = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], { services, database, getSchema }: HookExtensionContext) => {
+export const updateProbeWithUserPermissions = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], { services, getSchema }: HookExtensionContext) => {
 	if (_.isEmpty(fields)) { return; }
 
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
 		schema: await getSchema(),
 		accountability,
 	});
@@ -52,13 +49,12 @@ export const updateProbeWithUserPermissions = async (fields: Fields, keys: strin
 	await adoptedProbesService.updateMany(keys, fields, { emitEvents: false });
 };
 
-export const updateProbeWithRootPermissions = async (fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const updateProbeWithRootPermissions = async (fields: Fields, keys: string[], { services, getSchema }: HookExtensionContext) => {
 	if (_.isEmpty(fields)) { return; }
 
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
 		schema: await getSchema(),
 	});
 

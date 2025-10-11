@@ -18,10 +18,10 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 		provider: 'default',
 		email_notifications: 0,
 		github_organizations: JSON.stringify([ `Scrubs${suffix}` ]),
-		github_username: `elliotreid${suffix}`,
+		github_username: `elliot${suffix}`,
 		user_type: 'sponsor',
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
-		default_prefix: `elliotreid${suffix}`,
+		default_prefix: `elliot${suffix}`,
 	};
 };
 

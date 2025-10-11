@@ -10,13 +10,12 @@ export type DirectusUser = {
 	github_oauth_token: string | null;
 };
 
-export const getDirectusUsers = async (userIds: string[], accountability: Accountability | null, { services, database, getSchema }: HookExtensionContext): Promise<DirectusUser[]> => {
+export const getDirectusUsers = async (userIds: string[], accountability: Accountability | null, { services, getSchema }: HookExtensionContext): Promise<DirectusUser[]> => {
 	const { ItemsService } = services;
 
 	const usersService = new ItemsService('directus_users', {
-		schema: await getSchema({ database }),
+		schema: await getSchema(),
 		accountability,
-		knex: database,
 	});
 
 	const users = await usersService.readByQuery({
@@ -27,16 +26,15 @@ export const getDirectusUsers = async (userIds: string[], accountability: Accoun
 	return users;
 };
 
-export const deleteCreditsAdditions = async (githubIds: string[], accountability: Accountability | null, { services, database, getSchema }: HookExtensionContext) => {
+export const deleteCreditsAdditions = async (githubIds: string[], accountability: Accountability | null, { services, getSchema }: HookExtensionContext) => {
 	if (githubIds.length === 0) {
 		return;
 	}
 
 	const { ItemsService } = services;
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema({ database }),
+		schema: await getSchema(),
 		accountability,
-		knex: database,
 	});
 
 	await creditsAdditionsService.deleteByQuery({ filter: { github_id: { _in: githubIds } } });

@@ -92,12 +92,11 @@ const fulfillOrganizations = async (userId: string, user: User, context: HookExt
 };
 
 const updateUser = async (userId: string, updateObject: Partial<User>, context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
+	const { services, getSchema } = context;
 	const { UsersService } = services;
 
 	const usersService = new UsersService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 	await usersService.updateOne(userId, updateObject);
 };
@@ -108,19 +107,19 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 
 	await database.transaction(async (trx) => {
 		const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		const creditsService = new ItemsService('gp_credits', {
-			schema: await getSchema({ database }),
+			schema: await getSchema(),
 			knex: trx,
 		});
 
 		const creditsAdditions = await creditsAdditionsService.readByQuery({
 			filter: {
-				github_id: user.external_identifier,
-				consumed: false,
+				github_id: { _eq: user.external_identifier },
+				consumed: { _eq: false },
 			},
 		}) as CreditsAdditions[];
 
@@ -133,8 +132,8 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 		await Promise.all([
 			creditsAdditionsService.updateByQuery({
 				filter: {
-					github_id: user.external_identifier,
-					consumed: false,
+					github_id: { _eq: user.external_identifier },
+					consumed: { _eq: false },
 				},
 			}, { consumed: true }),
 			creditsService.createOne({ amount: sum, user_id: userId }),
@@ -143,15 +142,14 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 };
 
 const fulfillUserType = async (userId: string, user: User, context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
+	const { services, getSchema } = context;
 	const { ItemsService } = services;
 
 	const sponsorsService = new ItemsService('sponsors', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
-	const sponsors = await sponsorsService.readByQuery({ filter: { github_id: user.external_identifier } });
+	const sponsors = await sponsorsService.readByQuery({ filter: { github_id: { _eq: user.external_identifier } } });
 
 	if (sponsors.length > 0) {
 		await updateUser(userId, { user_type: 'sponsor' }, context);
@@ -159,12 +157,11 @@ const fulfillUserType = async (userId: string, user: User, context: HookExtensio
 };
 
 const sendWelcomeNotification = async (userId: string, _user: User, context: HookExtensionContext) => {
-	const { services, database, getSchema } = context;
+	const { services, getSchema } = context;
 	const { NotificationsService } = services;
 
 	const notificationsService = new NotificationsService({
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	await notificationsService.createOne({

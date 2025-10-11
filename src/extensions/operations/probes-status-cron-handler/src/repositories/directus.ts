@@ -6,19 +6,18 @@ export type Probe = {
 	onlineTimesToday: number;
 };
 
-export const getProbes = async ({ services, database, getSchema }: OperationContext) => {
+export const getProbes = async ({ services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
 	const itemsService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const result = await itemsService.readByQuery({}) as Probe[];
 	return result;
 };
 
-export const increaseOnlineTimes = async (probes: Probe[], { services, database, getSchema }: OperationContext) => {
+export const increaseOnlineTimes = async (probes: Probe[], { services, getSchema }: OperationContext) => {
 	if (probes.length === 0) {
 		return [];
 	}
@@ -26,8 +25,7 @@ export const increaseOnlineTimes = async (probes: Probe[], { services, database,
 	const { ItemsService } = services;
 
 	const itemsService = new ItemsService('gp_probes', {
-		schema: await getSchema({ database }),
-		knex: database,
+		schema: await getSchema(),
 	});
 
 	const updatedIds = await itemsService.updateBatch(probes.map(({ id, onlineTimesToday }) => ({

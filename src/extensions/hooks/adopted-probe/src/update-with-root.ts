@@ -47,11 +47,10 @@ export const patchCustomLocationRootFields = (fields: Fields, keys: string[], ci
 	});
 };
 
-export const resetUserDefinedData = async (_fields: Fields, keys: string[], { services, database, getSchema }: HookExtensionContext) => {
+export const resetUserDefinedData = async (_fields: Fields, keys: string[], { services, getSchema }: HookExtensionContext) => {
 	const { ItemsService } = services;
 
 	const adoptedProbesService = new ItemsService('gp_probes', {
-		database,
 		schema: await getSchema(),
 	});
 

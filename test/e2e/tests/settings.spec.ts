@@ -9,7 +9,7 @@ test('Settings page', async ({ page }) => {
 	await page.getByLabel('Apply settings').click();
 
 	await page.getByLabel('Last Name').fill('Reid-Dorian');
-	await page.getByLabel('elliotreid').click();
+	await page.getByLabel('elliot').click();
 	await page.locator('#defaultPrefix_1').getByText('Scrubs').click();
 	await page.getByLabel('Regenerate').click();
 	await page.getByLabel('Apply settings').click();
