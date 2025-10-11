@@ -236,5 +236,26 @@ describe('Sign-in hook', () => {
 			expect(itemsService.readOne.callCount).to.equal(1);
 			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-github-username' ]);
 		});
+
+		it('should add user_type to payload', async () => {
+			const payload = { id: '123' };
+			const meta = { user: 'user-with-user-type' };
+
+			itemsService.readOne.resolves({
+				id: 'user-id',
+				user_type: 'member',
+			});
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
+			expect(result).to.deep.equal({
+				...payload,
+				user_type: 'member',
+			});
+
+			expect(itemsService.readOne.callCount).to.equal(1);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-user-type' ]);
+		});
 	});
 });
