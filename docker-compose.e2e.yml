@@ -24,6 +24,6 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env.e2e
+      - .env.docker.e2e
     ports:
       - "18055:8055"
