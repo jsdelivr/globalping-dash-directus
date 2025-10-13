@@ -96,6 +96,7 @@ export default defineEndpoint((router, context) => {
 						database.raw('NULL as meta'),
 					)
 					.where('gp_credits_additions.reason', 'adopted_probe')
+					.groupBy('gp_credits_additions.reason')
 					.groupByRaw('DATE(gp_credits_additions.date_created)'));
 			}
 
