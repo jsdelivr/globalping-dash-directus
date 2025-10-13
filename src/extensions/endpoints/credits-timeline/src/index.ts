@@ -44,23 +44,21 @@ const creditsTimelineSchema = Joi.object<Request>({
 	}).required(),
 }).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
-const getAdditionReasonsFromQuery = (reason: string[]) => {
+const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
 	const fullReasons: Record<string, string[]> = {
 		'sponsorship': [ 'one_time_sponsorship', 'recurring_sponsorship', 'tier_changed' ],
 		'adopted-probes': [ ],	// adopted probes are handled separately
 	};
 
-	const queryReasons: string[] = [];
-
-	reason.forEach((r) => {
-		if (fullReasons[r]) {
-			queryReasons.push(...fullReasons[r]);
+	return reasonsInQuery.reduce<string[]>((allReasons, reason) => {
+		if (fullReasons[reason]) {
+			allReasons.push(...fullReasons[reason]);
 		} else {
-			queryReasons.push(r);
+			allReasons.push(reason);
 		}
-	});
 
-	return queryReasons;
+		return allReasons;
+	}, []);
 };
 
 export default defineEndpoint((router, context) => {
@@ -70,10 +68,10 @@ export default defineEndpoint((router, context) => {
 		const query = req.query as unknown as { userId: string; offset: number; limit: number; reason: string | string[]; type: string | string[] };
 		const sqlQueries = [];
 
-		const queriedTypes = Array.isArray(query.type) ? query.type : [ query.type ];
-		const queriedReasons = Array.isArray(query.reason) ? query.reason : [ query.reason ];
+		const typesInQuery = Array.isArray(query.type) ? query.type : [ query.type ];
+		const reasonsInQuery = Array.isArray(query.reason) ? query.reason : [ query.reason ];
 
-		if (queriedTypes.includes('deductions')) {
+		if (typesInQuery.includes('deductions')) {
 			sqlQueries.push(database('gp_credits_deductions')
 				.modify(q => query.userId === 'all' ? q : q.where('user_id', query.userId))
 				.select(
@@ -86,8 +84,8 @@ export default defineEndpoint((router, context) => {
 				));
 		}
 
-		if (queriedTypes.includes('additions')) {
-			if (queriedReasons.includes('adopted-probes')) {
+		if (typesInQuery.includes('additions')) {
+			if (reasonsInQuery.includes('adopted-probes')) {
 				sqlQueries.push(database('gp_credits_additions')
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
 					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
@@ -103,7 +101,7 @@ export default defineEndpoint((router, context) => {
 					.groupByRaw('DATE(gp_credits_additions.date_created)'));
 			}
 
-			const additionReasons = getAdditionReasonsFromQuery(queriedReasons);
+			const additionReasons = getAdditionReasonsFromQuery(reasonsInQuery);
 
 			if (additionReasons.length) {
 				sqlQueries.push(database('gp_credits_additions')
