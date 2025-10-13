@@ -11,8 +11,8 @@ To run this project, you need to have the following dependencies installed:
 
 You can run the project by following these steps:
 
-1. Copy `.env.example` to `.env`
-2. Copy `.env.development.example` to the `.env.development`
+1. Copy `.env.scripts.development.example` to `.env.scripts.development`
+2. Copy `.env.docker.development.example` to the `.env.docker.development`
 3. Register a [new OAuth app](https://github.com/settings/applications/new) on GitHub with values:
 
     Application name: Globalping dash directus local
@@ -23,7 +23,7 @@ You can run the project by following these steps:
 
     Enable Device Flow: disabled
 5. Generate a new client secret for the app.
-4. Add app id and generated secret to `AUTH_GITHUB_CLIENT_ID` and `AUTH_GITHUB_CLIENT_SECRET` in `.env.development`
+4. Add app id and generated secret to `AUTH_GITHUB_CLIENT_ID` and `AUTH_GITHUB_CLIENT_SECRET` in `.env.docker.development`
 5. `pnpm i`
 6. `docker compose up --build -d`
 7. `corepack enable`
@@ -52,8 +52,8 @@ pnpm run seed
 
 ## Prod first deploy
 
-1. copy `.env.example` to `.env` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
-2. copy `.env.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
+1. copy `.env.scripts.development.example` to `.env.scripts.production` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
+2. copy `.env.docker.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
 3. run the remote container.
 4. `pnpm run schema:apply`
 5. `pnpm run migrate:production`
@@ -64,8 +64,8 @@ pnpm run seed
 
 ### Prod updates
 
-1. fulfill all empty `.env` values, make sure ADMIN_ACCESS_TOKEN has your access token
-2. if there are changes in `.env.production.example` copy them to the env vars of the container
+1. fulfill all empty `.env.scripts.production` values, make sure ADMIN_ACCESS_TOKEN has your access token
+2. if there are changes in `.env.docker.production.example` copy them to the env vars of the container
 3. `pnpm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
 4. `pnpm run migrate:production`
 5. stop prev container, run new container
