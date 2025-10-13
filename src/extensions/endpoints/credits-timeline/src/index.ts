@@ -117,6 +117,11 @@ export default defineEndpoint((router, context) => {
 			}
 		}
 
+		if (sqlQueries.length === 0) {
+			res.send({ count: 0, changes: [] });
+			return;
+		}
+
 		const changesSql = database.unionAll(sqlQueries);
 
 		const countSql = database.from(changesSql.clone().as('changes')).select(database.raw('count(*) over () as count')).first() as Promise<{ count: number } | undefined>;
