@@ -75,7 +75,6 @@ export default defineEndpoint((router, context) => {
 			sqlQueries.push(database('gp_credits_deductions')
 				.modify(q => query.userId === 'all' ? q : q.where('user_id', query.userId))
 				.select(
-					'id',
 					database.raw('"deduction" as type'),
 					database.raw('DATE_FORMAT(date, "%Y-%m-%d") as date_created'),
 					'amount',
@@ -90,7 +89,6 @@ export default defineEndpoint((router, context) => {
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
 					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
 					.select(
-						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
 						database.raw('DATE_FORMAT(gp_credits_additions.date_created, "%Y-%m-%d") as date_created'),
 						database.raw('SUM(gp_credits_additions.amount) as amount'),
@@ -108,7 +106,6 @@ export default defineEndpoint((router, context) => {
 					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
 					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
 					.select(
-						'gp_credits_additions.id',
 						database.raw('"addition" as type'),
 						database.raw('DATE_FORMAT(gp_credits_additions.date_created, "%Y-%m-%d") as date_created'),
 						'gp_credits_additions.amount',

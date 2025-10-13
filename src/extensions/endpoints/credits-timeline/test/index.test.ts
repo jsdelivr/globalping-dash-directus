@@ -56,7 +56,6 @@ describe('/credits-timeline endpoint', () => {
 		firstStub.resolves({ count: 1 });
 
 		offsetStub.resolves([{
-			id: '1',
 			type: 'addition',
 			date_created: '2025-04-10 02:00:00',
 			amount: 2000,
@@ -74,7 +73,6 @@ describe('/credits-timeline endpoint', () => {
 		expect(res.body).to.deep.equal({
 			changes: [
 				{
-					id: '1',
 					type: 'addition',
 					date_created: '2025-04-10 02:00:00',
 					amount: 2000,
