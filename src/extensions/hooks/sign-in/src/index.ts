@@ -9,6 +9,7 @@ type User = {
 	github_username: string | null;
 	github_organizations: string[];
 	github_oauth_token: string | null;
+	user_type: string;
 };
 
 type AuthPayload = {
@@ -17,6 +18,7 @@ type AuthPayload = {
 	app_access: boolean;
 	admin_access: boolean;
 	github_username?: string;
+	user_type?: string;
 	session: string;
 };
 
@@ -64,11 +66,14 @@ export default defineHook(({ action, filter }, context) => {
 
 		const user = await itemsService.readOne(userId) as User | undefined;
 
-		if (!user || !user.github_username) {
-			return payload;
+		if (user?.user_type) {
+			payload.user_type = user.user_type;
 		}
 
-		payload.github_username = user.github_username;
+		if (user?.github_username) {
+			payload.github_username = user.github_username;
+		}
+
 		return payload;
 	});
 });

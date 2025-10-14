@@ -17,6 +17,6 @@ fi
 
 # Install dependencies and build
 pnpm install --ignore-workspace
-dotenv -e ../../../.env -- pnpm build
+dotenv -e ../../../.env.scripts.e2e -- pnpm build
 
 cd ../../../
