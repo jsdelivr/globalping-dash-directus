@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source .env
-
 set -e
 
 function confirm {
@@ -30,11 +28,6 @@ function get_token {
   echo "$token"
 }
 
-if [[ ("$DIRECTUS_URL" != *"localhost"* && "$DIRECTUS_URL" != *"127.0.0.1"*) || ("$DB_HOST" != "localhost" && "$DB_HOST" != "127.0.0.1") ]]; then
-	echo "Either DIRECTUS_URL or DB_HOST is not 'localhost' or '127.0.0.1'."
-	exit 1
-fi
-
 if [ "$1" = "development" ]; then
   compose_file="docker-compose.yml"
 elif [ "$1" = "e2e" ]; then
@@ -45,6 +38,13 @@ else
 fi
 echo "Compose file $compose_file is used."
 
+source ".env.scripts.$1"
+
+if [[ ("$DIRECTUS_URL" != *"localhost"* && "$DIRECTUS_URL" != *"127.0.0.1"*) || ("$DB_HOST" != "localhost" && "$DB_HOST" != "127.0.0.1") ]]; then
+	echo "Either DIRECTUS_URL or DB_HOST is not 'localhost' or '127.0.0.1'."
+	exit 1
+fi
+
 ./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
 
 token=$(get_token)
@@ -54,17 +54,17 @@ if [ -z "$token" ] || [ "$token" == "null" ]; then
     exit 1
 fi
 
-perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" .env
+perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" ".env.scripts.$1"
 
-pnpm run schema:apply
+pnpm run schema:apply:$1
 
 pnpm run migrate:$1
 
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
-perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" ".env.$1"
+perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" ".env.docker.$1"
 
-pnpm run seed
+pnpm run seed:$1
 
 docker compose --file "$compose_file" stop directus
 

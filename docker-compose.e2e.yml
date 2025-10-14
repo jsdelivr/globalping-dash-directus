@@ -8,7 +8,7 @@ services:
       - MARIADB_PASSWORD=password
       - MARIADB_ROOT_PASSWORD=root
     ports:
-      - "13306:3306"
+      - "23306:3306"
     volumes:
       - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
@@ -24,6 +24,6 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env.e2e
+      - .env.docker.e2e
     ports:
-      - "18055:8055"
+      - "28055:8055"

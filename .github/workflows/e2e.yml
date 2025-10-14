@@ -18,9 +18,6 @@ jobs:
           node-version: 22.x
       - name: Install dependencies
         run: |
-          : # Temp corepack fix: https://github.com/nodejs/corepack/issues/612
-          corepack install -g pnpm@9.15.2
-
           corepack enable
           pnpm install
       - name: Install Playwright browsers
@@ -28,8 +25,8 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: Generate env files
         run: |
-          cp .env.e2e.example .env.e2e
-          cp .env.example .env
+          cp .env.docker.e2e.example .env.docker.e2e
+          cp .env.scripts.e2e.example .env.scripts.e2e
       - name: Build docker compose
         run: |
           pnpm run test:e2e:build:directus

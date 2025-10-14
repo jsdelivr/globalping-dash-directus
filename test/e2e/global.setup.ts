@@ -46,7 +46,7 @@ const startDashboard = async () => {
 		name: 'e2e-dash',
 		script: DASH_INDEX_FILE_PATH,
 		env: {
-			PORT: '13010',
+			PORT: '23010',
 		},
 	});
 
