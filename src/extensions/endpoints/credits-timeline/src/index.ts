@@ -64,7 +64,7 @@ const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
 export default defineEndpoint((router, context) => {
 	const { database } = context;
 
-	router.get('/', queryParser, validate(creditsTimelineSchema), asyncWrapper(async (req, res) => {
+	router.get('/', queryParser({ keys: [ 'reason', 'type' ] }), validate(creditsTimelineSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as { userId: string; offset: number; limit: number; reason: string | string[]; type: string | string[] };
 		const sqlQueries = [];
 

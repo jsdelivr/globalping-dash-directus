@@ -1,7 +1,11 @@
 import type { Request, Response, NextFunction } from 'express';
 
-export const queryParser = (req: Request, _res: Response, next: NextFunction) => {
-	for (const key of Object.keys(req.query)) {
+interface QueryParserOptions {
+	keys: string[];
+}
+
+export const queryParser = (options: QueryParserOptions) => (req: Request, _res: Response, next: NextFunction) => {
+	for (const key of options.keys) {
 		if (typeof req.query[key] !== 'string') {
 			continue;
 		}
