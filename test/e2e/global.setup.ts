@@ -2,6 +2,7 @@ import pm2, { StartOptions } from 'pm2';
 import { execa } from 'execa';
 import { test as setup } from '@playwright/test';
 import { promisify } from 'util';
+import waitOn from 'wait-on';
 
 const DIRECTUS_URL = process.env.DIRECTUS_URL!;
 const DASH_URL = process.env.DASH_URL!;
@@ -9,15 +10,16 @@ const DASH_INDEX_FILE_PATH = process.env.DASH_INDEX_FILE_PATH!;
 
 const pm2Start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
-const waitFor = (url: string, timeout = 30) => execa({ stdout: 'inherit' })`./scripts/wait-for.sh -t ${timeout} ${url}`;
+const waitFor = (url: string, timeout = 30000) => waitOn({ resources: [ url ], timeout });
+
 
 const getIsRunning = async (url: string) => {
 	try {
-		await waitFor(url, 2);
+		await waitFor(url, 2000);
 		console.log(`Service at ${url} is already running.`);
 		return true;
 	} catch (err) {
-		if (err.stderr === 'Operation timed out') {
+		if (err.message.includes('Timed out')) {
 			console.log(`Service at ${url} not running. Starting...`);
 		} else {
 			throw err;

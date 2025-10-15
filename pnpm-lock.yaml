@@ -32,6 +32,9 @@ importers:
       mysql:
         specifier: ^2.18.1
         version: 2.18.1
+      wait-on:
+        specifier: ^9.0.1
+        version: 9.0.1
     devDependencies:
       '@martin-kolarik/eslint-config':
         specifier: ^8.0.4
@@ -5677,6 +5680,11 @@ packages:
       typescript:
         optional: true
 
+  wait-on@9.0.1:
+    resolution: {integrity: sha512-noeCAI+XbqWMXY23sKril0BSURhuLYarkVXwJv1uUWwoojZJE7pmX3vJ7kh7SZaNgPGzfsCSQIZM/AGvu0Q9pA==}
+    engines: {node: '>=20.0.0'}
+    hasBin: true
+
   which-boxed-primitive@1.1.1:
     resolution: {integrity: sha512-TbX3mj8n0odCBFVlY8AxkqcHASw3L60jIuF8jFP78az3C2YhmGvqbHBpAjTRH2/xqYunrJ9g1jSyjCjpoWzIAA==}
     engines: {node: '>= 0.4'}
@@ -10414,6 +10422,16 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
     optional: true
+
+  wait-on@9.0.1:
+    dependencies:
+      axios: 1.12.2
+      joi: 18.0.1
+      lodash: 4.17.21
+      minimist: 1.2.8
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
 
   which-boxed-primitive@1.1.1:
     dependencies:

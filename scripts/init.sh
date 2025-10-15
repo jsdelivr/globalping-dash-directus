@@ -45,7 +45,7 @@ if [[ ("$DIRECTUS_URL" != *"localhost"* && "$DIRECTUS_URL" != *"127.0.0.1"*) || 
 	exit 1
 fi
 
-./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
+npx wait-on -t 30s -l "$DIRECTUS_URL/admin/login"
 
 token=$(get_token)
 
@@ -70,6 +70,6 @@ docker compose --file "$compose_file" stop directus
 
 docker compose --file "$compose_file" up -d directus
 
-./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
+npx wait-on -t 30s -l "$DIRECTUS_URL/admin/login"
 
 echo "Finished"
