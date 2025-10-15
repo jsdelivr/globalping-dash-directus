@@ -2,29 +2,14 @@
 
 set -e
 
-function confirm {
-    local message="$1"
-    echo -e "$message Continue? [Y/n]"
-    read confirm
-
-    if [ "$confirm" == "n" ] || [ "$confirm" == "N" ]; then
-        echo "Aborting script..."
-        exit 1
-    elif [ -z "$confirm" ] || [ "$confirm" == "y" ] || [ "$confirm" == "Y" ]; then
-        confirm="y"
-    else
-        echo "Invalid input. Aborting script..."
-        exit 1
-    fi
-}
-
 if ! command -v jq >/dev/null; then
     echo "Error: jq is not installed. Please install jq to continue."
     exit 1
 fi
 
 function get_token {
-  local token=$(curl -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' $DIRECTUS_URL/auth/login | jq -r '.data.access_token')
+  local response=$(curl --fail --retry 5 -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' $DIRECTUS_URL/auth/login)
+  local token=$(echo "$response" | jq -r '.data.access_token')
   echo "$token"
 }
 
