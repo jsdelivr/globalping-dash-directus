@@ -1,4 +1,4 @@
-# Globalping dashboard directus
+# 1Globalping dashboard directus
 
 The backend part of the [Globalping dashboard](https://github.com/jsdelivr/globalping-dash).
 

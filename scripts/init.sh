@@ -24,7 +24,7 @@ if ! command -v jq >/dev/null; then
 fi
 
 function get_token {
-  local token=$(curl -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' $DIRECTUS_URL/auth/login | jq -r '.data.access_token')
+  local token=$(curl -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' $DIRECTUS_URL/auth/login)
   echo "$token"
 }
 
@@ -47,7 +47,13 @@ fi
 
 ./scripts/wait-for.sh -t 30 $DIRECTUS_URL/admin/login
 
-token=$(get_token)
+echo "ADMIN_EMAIL: $ADMIN_EMAIL"
+echo "ADMIN_PASSWORD: $ADMIN_PASSWORD"
+
+response=$(get_token)
+echo "get_token response: $response"
+token=$(echo "$response" | jq -r '.data.access_token')
+echo "get_token token: $token"
 
 if [ -z "$token" ] || [ "$token" == "null" ]; then
     echo "Error: Obtained token is empty: '$token'. Please check ADMIN_EMAIL and ADMIN_PASSWORD values in .env file."
