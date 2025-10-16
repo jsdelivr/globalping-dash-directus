@@ -1,3 +1,5 @@
+#!/bin/bash
+
 source .env.scripts.development
 
 set -e
