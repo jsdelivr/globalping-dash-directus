@@ -29,7 +29,7 @@ type GithubResponse = {
 const query = `
 	query GetOrgSponsors($after: String) {
 		organization(login: "jsdelivr") {
-			sponsorshipsAsMaintainer(first: 100, after: $after) {
+			sponsorshipsAsMaintainer(includePrivate: true, first: 100, after: $after) {
 				pageInfo {
 					hasNextPage
 					endCursor
