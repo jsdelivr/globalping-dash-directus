@@ -1,17 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
-import { addCredits } from '../../../../lib/src/add-credits.js';
+import { getFullMonthsSince, addRecurringCredits } from '../../../../lib/src/add-credits.js';
 import { deleteDirectusSponsor, updateDirectusSponsor } from '../repositories/directus.js';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
-
-const is30DaysAgo = (dateString: string) => {
-	const inputDate = new Date(dateString);
-	const currentDate = new Date();
-
-	const timeDifference = currentDate.getTime() - inputDate.getTime();
-	const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
-
-	return daysDifference >= 30;
-};
 
 type HandleSponsorData = {
 	directusSponsor: DirectusSponsor;
@@ -41,17 +31,18 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 		await updateDirectusSponsor(directusSponsor.id, { monthly_amount: githubSponsor.monthlyAmount }, context);
 	}
 
-	const shouldCreditsBeAdded = is30DaysAgo(directusSponsor.last_earning_date);
+	const monthsPassed = getFullMonthsSince(new Date(directusSponsor.last_earning_date));
 
-	if (shouldCreditsBeAdded) {
+	if (monthsPassed >= 1) {
 		await updateDirectusSponsor(directusSponsor.id, { last_earning_date: new Date().toISOString() }, context);
-		const { creditsId, githubId } = await addCredits({
-			github_id: githubSponsor.githubId,
-			amount: githubSponsor.monthlyAmount,
-			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: githubSponsor.monthlyAmount },
+
+		const { creditsId } = await addRecurringCredits({
+			githubId: githubSponsor.githubId,
+			monthlyAmount: githubSponsor.monthlyAmount,
+			monthsToAward: monthsPassed,
 		}, context);
-		return `Credits item with id: ${creditsId} for user with github id: ${githubId} created. Recurring sponsorship handled.`;
+
+		return `Credits item with id: ${creditsId} for user with github id: ${githubSponsor.githubId} created. Recurring sponsorship handled for ${monthsPassed} month(s).`;
 	}
 
 	return null;

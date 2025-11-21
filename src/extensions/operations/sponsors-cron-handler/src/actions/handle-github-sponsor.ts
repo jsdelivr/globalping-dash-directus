@@ -1,5 +1,5 @@
-
 import type { OperationContext } from '@directus/extensions';
+import { addRecurringCredits, getFullMonthsSince } from '../../../../lib/src/add-credits.js';
 import { createDirectusSponsor } from '../repositories/directus.js';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
@@ -14,7 +14,17 @@ export const handleGithubSponsor = async ({ githubSponsor, directusSponsors }: H
 
 	if (!directusSponsor && githubSponsor.isActive && !githubSponsor.isOneTimePayment) {
 		await createDirectusSponsor(githubSponsor, context);
-		return `Sponsor with github id: ${id} not found on directus sponsors list. Sponsor added to directus.`;
+
+		const monthsPassed = githubSponsor.tierSelectedAt ? getFullMonthsSince(githubSponsor.tierSelectedAt) : 0;
+		const monthsToAward = monthsPassed + 1;
+
+		const { creditsId } = await addRecurringCredits({
+			githubId: githubSponsor.githubId,
+			monthlyAmount: githubSponsor.monthlyAmount,
+			monthsToAward,
+		}, context);
+
+		return `Sponsor with github id: ${id} not found on directus sponsors list. Sponsor added to directus. Credits item with id: ${creditsId} created. Recurring sponsorship handled for ${monthsToAward} month(s).`;
 	}
 
 	return null;

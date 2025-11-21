@@ -17,7 +17,13 @@ type AddCreditsData = {
 	github_id: string;
 	amount: number;
 	reason: 'recurring_sponsorship' | 'one_time_sponsorship' | 'tier_changed';
-	meta: { amountInDollars: number };
+	meta: { amountInDollars: number; monthsCovered?: number };
+};
+
+type AddRecurringCreditsData = {
+	githubId: string;
+	monthlyAmount: number;
+	monthsToAward: number;
 };
 
 export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, getSchema, env }: ApiExtensionContext) => {
@@ -70,6 +76,19 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 	return { creditsId, githubId };
 };
 
+export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAward }: AddRecurringCreditsData, context: ApiExtensionContext) => {
+	const totalAmount = monthlyAmount * monthsToAward;
+
+	const { creditsId } = await addCredits({
+		github_id: githubId,
+		amount: totalAmount,
+		reason: 'recurring_sponsorship',
+		meta: { amountInDollars: totalAmount, monthsCovered: monthsToAward },
+	}, context);
+
+	return { creditsId, totalAmount };
+};
+
 export const redirectGithubId = (githubId: string) => {
 	return SOURCE_ID_TO_TARGET_ID[githubId] || githubId;
 };
@@ -108,4 +127,14 @@ const getDollarsByMonth = (additions: CreditsAddition[]) => {
 	}
 
 	return breakdown;
+};
+
+export const getFullMonthsSince = (date: Date): number => {
+	const inputDate = new Date(date);
+	const currentDate = new Date();
+
+	const timeDifference = currentDate.getTime() - inputDate.getTime();
+	const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+
+	return Math.floor(daysDifference / 30);
 };
