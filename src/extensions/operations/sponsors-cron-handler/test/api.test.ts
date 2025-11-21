@@ -2,6 +2,7 @@ import type { OperationContext } from '@directus/extensions';
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import { getFullMonthsSinceWithAdvance } from '../../../lib/src/add-credits.js';
 import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
@@ -54,10 +55,12 @@ describe('Sponsors cron handler', () => {
 		UsersService: sinon.stub().returns(usersService),
 	} as any;
 
+	let clock: sinon.SinonFakeTimers;
+
 	before(() => {
 		nock.disableNetConnect();
 
-		sinon.useFakeTimers({
+		clock = sinon.useFakeTimers({
 			now: new Date('2023-09-19T00:00:00.000Z'),
 			toFake: [ 'Date' ],
 		});
@@ -72,7 +75,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-08-15T08:19:00Z',
+			last_earning_date: '2023-08-15T08:19:00.000Z',
 		}]);
 	});
 
@@ -168,7 +171,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-09-15 08:19:00',
+			last_earning_date: '2023-09-15T08:19:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -596,7 +599,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-07-10T08:19:00Z',
+			last_earning_date: '2023-07-10T08:19:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -654,5 +657,24 @@ describe('Sponsors cron handler', () => {
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);
+	});
+
+	it('getFullMonthsSinceWithAdvance handles Jan 30/31 anchor correctly across shorter months', () => {
+		const originalTime = new Date();
+		clock.setSystemTime(new Date('2023-02-28Z'));
+
+		try {
+			expect(getFullMonthsSinceWithAdvance(new Date('2023-01-30T00:00:00.000Z'))).to.deep.equal({
+				monthsPassed: 1,
+				advancedDate: new Date('2023-02-28T00:00:00.000Z'),
+			});
+
+			expect(getFullMonthsSinceWithAdvance(new Date('2023-01-31T00:00:00.000Z'))).to.deep.equal({
+				monthsPassed: 1,
+				advancedDate: new Date('2023-02-28T00:00:00.000Z'),
+			});
+		} finally {
+			clock.setSystemTime(originalTime);
+		}
 	});
 });

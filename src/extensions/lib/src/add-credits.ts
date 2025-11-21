@@ -1,4 +1,5 @@
 import type { ApiExtensionContext } from '@directus/extensions';
+import * as dayjs from 'dayjs';
 
 export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 	// For example:
@@ -132,25 +133,25 @@ const getDollarsByMonth = (additions: CreditsAddition[]) => {
 export const getFullMonthsSinceWithAdvance = (date: Date): { monthsPassed: number; advancedDate: Date } => {
 	// Billing is on the same day-of-month as the tier selection date.
 	// Count how many full calendar months (same day-of-month) have elapsed.
-	const start = new Date(date);
-	const now = new Date();
+	const start = dayjs(date);
+	const now = dayjs();
 
 	if (now <= start) {
-		return { monthsPassed: 0, advancedDate: start };
+		return { monthsPassed: 0, advancedDate: date };
 	}
 
-	let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-	const anchor = new Date(start);
-	anchor.setMonth(start.getMonth() + months);
 
-	// If we went too far because start day is > current day of the current month, go one month back.
+	let months = now.diff(start, 'month');
+	const anchor = start.add(months, 'month');
+
+	// Probably shouldn't happen with dayjs...
 	if (now < anchor) {
 		months--;
-		anchor.setMonth(anchor.getMonth() - 1);
+		anchor.subtract(1, 'month');
 	}
 
 	return {
 		monthsPassed: months < 0 ? 0 : months,
-		advancedDate: anchor,
+		advancedDate: months < 0 ? date : anchor.toDate(),
 	};
 };

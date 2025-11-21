@@ -1196,6 +1196,9 @@ importers:
       countries-list:
         specifier: ^3.1.1
         version: 3.1.1
+      dayjs:
+        specifier: ^1.11.19
+        version: 1.11.19
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -3339,6 +3342,9 @@ packages:
 
   dayjs@1.11.15:
     resolution: {integrity: sha512-MC+DfnSWiM9APs7fpiurHGCoeIx0Gdl6QZBy+5lu8MbYKN5FZEXqOgrundfibdfhGZ15o9hzmZ2xJjZnbvgKXQ==}
+
+  dayjs@1.11.19:
+    resolution: {integrity: sha512-t5EcLVS6QPBNqM2z8fakk/NKel+Xzshgt8FFKAn+qwlD1pzZWxh0nVCrvFK7ZDb6XucZeF9z8C7CBWTRIVApAw==}
 
   dayjs@1.8.36:
     resolution: {integrity: sha512-3VmRXEtw7RZKAf+4Tv1Ym9AGeo8r8+CjDi26x+7SYQil1UqtqdaokhzoEJohqlzt0m5kacJSDhJQkG/LWhpRBw==}
@@ -7817,6 +7823,8 @@ snapshots:
   date-fns@4.1.0: {}
 
   dayjs@1.11.15: {}
+
+  dayjs@1.11.19: {}
 
   dayjs@1.8.36: {}
 
