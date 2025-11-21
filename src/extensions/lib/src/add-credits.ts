@@ -1,5 +1,5 @@
 import type { ApiExtensionContext } from '@directus/extensions';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 	// For example:
@@ -133,6 +133,7 @@ const getDollarsByMonth = (additions: CreditsAddition[]) => {
 export const getFullMonthsSinceWithAdvance = (date: Date): { monthsPassed: number; advancedDate: Date } => {
 	// Billing is on the same day-of-month as the tier selection date.
 	// Count how many full calendar months (same day-of-month) have elapsed.
+	// Days 29-31 get permanently collapsed to 28 in February. That's an acceptable simplification for now.
 	const start = dayjs(date);
 	const now = dayjs();
 
@@ -140,15 +141,8 @@ export const getFullMonthsSinceWithAdvance = (date: Date): { monthsPassed: numbe
 		return { monthsPassed: 0, advancedDate: date };
 	}
 
-
-	let months = now.diff(start, 'month');
+	const months = now.diff(start, 'month');
 	const anchor = start.add(months, 'month');
-
-	// Probably shouldn't happen with dayjs...
-	if (now < anchor) {
-		months--;
-		anchor.subtract(1, 'month');
-	}
 
 	return {
 		monthsPassed: months < 0 ? 0 : months,
