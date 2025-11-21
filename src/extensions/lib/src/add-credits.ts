@@ -84,7 +84,7 @@ export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAwa
 		github_id: githubId,
 		amount: totalAmount,
 		reason: 'recurring_sponsorship',
-		meta: { amountInDollars: totalAmount, monthsCovered: monthsToAward },
+		meta: { amountInDollars: monthlyAmount, monthsCovered: monthsToAward },
 	}, context);
 
 	return { creditsId, totalAmount };
