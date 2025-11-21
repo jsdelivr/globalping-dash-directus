@@ -20,6 +20,7 @@ type GithubResponse = {
 					tier: {
 						monthlyPriceInDollars: number;
 					};
+					tierSelectedAt: string;
 				};
 			}[];
 		};
@@ -48,6 +49,7 @@ const query = `
 						}
 						isActive
 						isOneTimePayment
+						tierSelectedAt
 						tier {
 							monthlyPriceInDollars
 						}
@@ -80,6 +82,7 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 			isActive: node.isActive,
 			isOneTimePayment: node.isOneTimePayment,
 			monthlyAmount: node.tier.monthlyPriceInDollars,
+			tierSelectedAt: new Date(node.tierSelectedAt),
 		}));
 
 		nodes.push(...newNodes);

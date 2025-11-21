@@ -12,4 +12,5 @@ export type GithubSponsor = {
 	isActive: boolean;
 	monthlyAmount: number;
 	isOneTimePayment: boolean;
+	tierSelectedAt: Date;
 };

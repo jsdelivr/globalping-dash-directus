@@ -17,7 +17,7 @@ type AddCreditsData = {
 	github_id: string;
 	amount: number;
 	reason: 'recurring_sponsorship' | 'one_time_sponsorship' | 'tier_changed';
-	meta: { amountInDollars: number };
+	meta: { amountInDollars: number; monthsCovered?: number };
 };
 
 export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, getSchema, env }: ApiExtensionContext) => {
