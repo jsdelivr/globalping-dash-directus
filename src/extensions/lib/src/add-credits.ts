@@ -129,12 +129,28 @@ const getDollarsByMonth = (additions: CreditsAddition[]) => {
 	return breakdown;
 };
 
-export const getFullMonthsSince = (date: Date): number => {
-	const inputDate = new Date(date);
-	const currentDate = new Date();
+export const getFullMonthsSinceWithAdvance = (date: Date): { monthsPassed: number; advancedDate: Date } => {
+	// Billing is on the same day-of-month as the tier selection date.
+	// Count how many full calendar months (same day-of-month) have elapsed.
+	const start = new Date(date);
+	const now = new Date();
 
-	const timeDifference = currentDate.getTime() - inputDate.getTime();
-	const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+	if (now <= start) {
+		return { monthsPassed: 0, advancedDate: start };
+	}
 
-	return Math.floor(daysDifference / 30);
+	let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+	const anchor = new Date(start);
+	anchor.setMonth(start.getMonth() + months);
+
+	// If we went too far because start day is > current day of the current month, go one month back.
+	if (now < anchor) {
+		months--;
+		anchor.setMonth(anchor.getMonth() - 1);
+	}
+
+	return {
+		monthsPassed: months < 0 ? 0 : months,
+		advancedDate: anchor,
+	};
 };

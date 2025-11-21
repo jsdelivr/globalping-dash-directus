@@ -1,5 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
-import { getFullMonthsSince, addRecurringCredits } from '../../../../lib/src/add-credits.js';
+import { getFullMonthsSinceWithAdvance, addRecurringCredits } from '../../../../lib/src/add-credits.js';
 import { deleteDirectusSponsor, updateDirectusSponsor } from '../repositories/directus.js';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
@@ -31,10 +31,10 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 		await updateDirectusSponsor(directusSponsor.id, { monthly_amount: githubSponsor.monthlyAmount }, context);
 	}
 
-	const monthsPassed = getFullMonthsSince(new Date(directusSponsor.last_earning_date));
+	const { monthsPassed, advancedDate } = getFullMonthsSinceWithAdvance(new Date(directusSponsor.last_earning_date));
 
 	if (monthsPassed >= 1) {
-		await updateDirectusSponsor(directusSponsor.id, { last_earning_date: new Date().toISOString() }, context);
+		await updateDirectusSponsor(directusSponsor.id, { last_earning_date: advancedDate.toISOString() }, context);
 
 		const { creditsId } = await addRecurringCredits({
 			githubId: githubSponsor.githubId,

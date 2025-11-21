@@ -27,7 +27,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-08-15 08:19:00',
+			last_earning_date: '2023-08-15T08:19:00Z',
 		}]),
 		createOne: sinon.stub().resolves(1),
 		updateOne: sinon.stub().resolves(1),
@@ -72,7 +72,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-08-15 08:19:00',
+			last_earning_date: '2023-08-15T08:19:00Z',
 		}]);
 	});
 
@@ -118,7 +118,7 @@ describe('Sponsors cron handler', () => {
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
 		expect(sponsorsService.updateOne.callCount).to.equal(1);
-		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
+		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-15T08:19:00.000Z' }]);
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -373,7 +373,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(sponsorsService.updateOne.callCount).to.equal(2);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
-		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
+		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-15T08:19:00.000Z' }]);
 
 		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
 
@@ -441,7 +441,7 @@ describe('Sponsors cron handler', () => {
 		expect(sponsorsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			github_login: 'monalisa',
-			last_earning_date: '2023-09-19T00:00:00.000Z',
+			last_earning_date: '2023-09-01T00:00:00.000Z',
 			monthly_amount: 10,
 		}]);
 
@@ -596,12 +596,14 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-07-10 08:19:00',
+			last_earning_date: '2023-07-10T08:19:00Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(sponsorsService.updateOne.callCount).to.equal(1);
+		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-10T08:19:00.000Z' }]);
+
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
@@ -640,6 +642,8 @@ describe('Sponsors cron handler', () => {
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(sponsorsService.createOne.callCount).to.equal(1);
+		expect(sponsorsService.createOne.firstCall.args[0]).to.deep.include({ last_earning_date: '2023-09-06T00:00:00.000Z' });
+
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
