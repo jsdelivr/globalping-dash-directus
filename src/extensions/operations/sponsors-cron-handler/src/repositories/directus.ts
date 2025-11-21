@@ -12,7 +12,7 @@ export const getDirectusSponsors = async ({ services, getSchema }: OperationCont
 	return result;
 };
 
-export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { services, database, getSchema }: OperationContext) => {
+export const createDirectusSponsor = async (githubSponsor: GithubSponsor, lastEarningDate: Date, { services, database, getSchema }: OperationContext) => {
 	const { ItemsService, UsersService } = services;
 
 	const result = await database.transaction(async (trx) => {
@@ -39,7 +39,7 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, { serv
 			github_login: githubSponsor.githubLogin,
 			github_id: githubSponsor.githubId,
 			monthly_amount: githubSponsor.monthlyAmount,
-			last_earning_date: new Date().toISOString(),
+			last_earning_date: lastEarningDate.toISOString(),
 		});
 
 		return result;

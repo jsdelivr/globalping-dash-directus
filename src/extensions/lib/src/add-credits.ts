@@ -1,4 +1,5 @@
 import type { ApiExtensionContext } from '@directus/extensions';
+import dayjs from 'dayjs';
 
 export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 	// For example:
@@ -83,7 +84,7 @@ export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAwa
 		github_id: githubId,
 		amount: totalAmount,
 		reason: 'recurring_sponsorship',
-		meta: { amountInDollars: totalAmount, monthsCovered: monthsToAward },
+		meta: { amountInDollars: monthlyAmount, monthsCovered: monthsToAward },
 	}, context);
 
 	return { creditsId, totalAmount };
@@ -129,12 +130,22 @@ const getDollarsByMonth = (additions: CreditsAddition[]) => {
 	return breakdown;
 };
 
-export const getFullMonthsSince = (date: Date): number => {
-	const inputDate = new Date(date);
-	const currentDate = new Date();
+export const getFullMonthsSinceWithAdvance = (date: Date): { monthsPassed: number; advancedDate: Date } => {
+	// Billing is on the same day-of-month as the tier selection date.
+	// Count how many full calendar months (same day-of-month) have elapsed.
+	// Days 29-31 get permanently collapsed to 28 in February. That's an acceptable simplification for now.
+	const start = dayjs(date);
+	const now = dayjs();
 
-	const timeDifference = currentDate.getTime() - inputDate.getTime();
-	const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+	if (now <= start) {
+		return { monthsPassed: 0, advancedDate: date };
+	}
 
-	return Math.floor(daysDifference / 30);
+	const months = now.diff(start, 'month');
+	const anchor = start.add(months, 'month');
+
+	return {
+		monthsPassed: months < 0 ? 0 : months,
+		advancedDate: months < 0 ? date : anchor.toDate(),
+	};
 };

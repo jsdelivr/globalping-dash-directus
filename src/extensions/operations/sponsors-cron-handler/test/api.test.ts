@@ -2,6 +2,7 @@ import type { OperationContext } from '@directus/extensions';
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import { getFullMonthsSinceWithAdvance } from '../../../lib/src/add-credits.js';
 import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
@@ -27,7 +28,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-08-15 08:19:00',
+			last_earning_date: '2023-08-15T08:19:00Z',
 		}]),
 		createOne: sinon.stub().resolves(1),
 		updateOne: sinon.stub().resolves(1),
@@ -54,10 +55,12 @@ describe('Sponsors cron handler', () => {
 		UsersService: sinon.stub().returns(usersService),
 	} as any;
 
+	let clock: sinon.SinonFakeTimers;
+
 	before(() => {
 		nock.disableNetConnect();
 
-		sinon.useFakeTimers({
+		clock = sinon.useFakeTimers({
 			now: new Date('2023-09-19T00:00:00.000Z'),
 			toFake: [ 'Date' ],
 		});
@@ -72,7 +75,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-08-15 08:19:00',
+			last_earning_date: '2023-08-15T08:19:00.000Z',
 		}]);
 	});
 
@@ -118,7 +121,7 @@ describe('Sponsors cron handler', () => {
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 
 		expect(sponsorsService.updateOne.callCount).to.equal(1);
-		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
+		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-15T08:19:00.000Z' }]);
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -168,7 +171,7 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-09-15 08:19:00',
+			last_earning_date: '2023-09-15T08:19:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -373,7 +376,7 @@ describe('Sponsors cron handler', () => {
 
 		expect(sponsorsService.updateOne.callCount).to.equal(2);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
-		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-19T00:00:00.000Z' }]);
+		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-15T08:19:00.000Z' }]);
 
 		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
 
@@ -441,7 +444,7 @@ describe('Sponsors cron handler', () => {
 		expect(sponsorsService.createOne.args[0]).to.deep.equal([{
 			github_id: '2',
 			github_login: 'monalisa',
-			last_earning_date: '2023-09-19T00:00:00.000Z',
+			last_earning_date: '2023-09-01T00:00:00.000Z',
 			monthly_amount: 10,
 		}]);
 
@@ -596,19 +599,21 @@ describe('Sponsors cron handler', () => {
 			github_login: 'monalisa',
 			github_id: '2',
 			monthly_amount: 10,
-			last_earning_date: '2023-07-10 08:19:00',
+			last_earning_date: '2023-07-10T08:19:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(sponsorsService.updateOne.callCount).to.equal(1);
+		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { last_earning_date: '2023-09-10T08:19:00.000Z' }]);
+
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			amount: 200000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 20, monthsCovered: 2, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 2, bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 2 month(s).' ]);
@@ -640,15 +645,36 @@ describe('Sponsors cron handler', () => {
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 		expect(sponsorsService.createOne.callCount).to.equal(1);
+		expect(sponsorsService.createOne.firstCall.args[0]).to.deep.include({ last_earning_date: '2023-09-06T00:00:00.000Z' });
+
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
 			github_id: '3',
 			reason: 'recurring_sponsorship',
 			amount: 300000,
-			meta: { amountInDollars: 30, monthsCovered: 3, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 3, bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);
+	});
+
+	it('getFullMonthsSinceWithAdvance handles Jan 30/31 anchor correctly across shorter months', () => {
+		const originalTime = new Date();
+		clock.setSystemTime(new Date('2023-02-28Z'));
+
+		try {
+			expect(getFullMonthsSinceWithAdvance(new Date('2023-01-30T00:00:00.000Z'))).to.deep.equal({
+				monthsPassed: 1,
+				advancedDate: new Date('2023-02-28T00:00:00.000Z'),
+			});
+
+			expect(getFullMonthsSinceWithAdvance(new Date('2023-01-31T00:00:00.000Z'))).to.deep.equal({
+				monthsPassed: 1,
+				advancedDate: new Date('2023-02-28T00:00:00.000Z'),
+			});
+		} finally {
+			clock.setSystemTime(originalTime);
+		}
 	});
 });
