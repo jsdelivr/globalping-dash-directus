@@ -80,7 +80,7 @@ describe('Sponsors cron handler', () => {
 		nock.cleanAll();
 	});
 
-	it('should add credits to recurring sponsors with last_earning_date > 30 days', async () => {
+	it('should add credits to recurring sponsors with last_earning_date > 30 days (1 month)', async () => {
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -97,6 +97,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: false,
+								tierSelectedAt: '2023-08-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 10,
 								},
@@ -127,11 +128,12 @@ describe('Sponsors cron handler', () => {
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 10,
+				monthsCovered: 1,
 				bonus: 5,
 			},
 		}]);
 
-		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.' ]);
+		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 1 month(s).' ]);
 	});
 
 	it('should not add credits to recurring sponsors with last_earning_date < 30 days', async () => {
@@ -241,6 +243,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: false,
 								isOneTimePayment: false,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 10,
 								},
@@ -296,6 +299,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: true,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 10,
 								},
@@ -351,6 +355,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: false,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 15,
 								},
@@ -380,16 +385,17 @@ describe('Sponsors cron handler', () => {
 			reason: 'recurring_sponsorship',
 			meta: {
 				amountInDollars: 15,
+				monthsCovered: 1,
 				bonus: 0,
 			},
 		}]);
 
 		expect(usersService.updateByQuery.callCount).to.equal(0);
 
-		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.' ]);
+		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 1 month(s).' ]);
 	});
 
-	it('should add missing recurring sponsors to the directus', async () => {
+	it('should add missing recurring sponsors to the directus and award initial credits (1 month)', async () => {
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -406,6 +412,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: false,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 10,
 								},
@@ -420,7 +427,7 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
+		expect(services.ItemsService.callCount).to.equal(4);
 
 		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
@@ -447,7 +454,19 @@ describe('Sponsors cron handler', () => {
 			{ user_type: 'sponsor' },
 		]);
 
-		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus.' ]);
+		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('gp_credits_additions');
+		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
+
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+
+		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
+			amount: 100000,
+			github_id: '2',
+			reason: 'recurring_sponsorship',
+			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0 },
+		}]);
+
+		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 1 month(s).' ]);
 	});
 
 	it('should not add non-recurring sponsors to the directus', async () => {
@@ -467,6 +486,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: true,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 10,
 								},
@@ -509,6 +529,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: false,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 10,
 								},
@@ -521,6 +542,7 @@ describe('Sponsors cron handler', () => {
 								},
 								isActive: true,
 								isOneTimePayment: false,
+								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
 									monthlyPriceInDollars: 3,
 								},
@@ -544,8 +566,89 @@ describe('Sponsors cron handler', () => {
 		]);
 
 		expect(result).to.deep.equal([
-			'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled.',
-			'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus.',
+			'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 1 month(s).',
+			'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 1 month(s).',
 		]);
+	});
+
+	it('should add credits for multiple months for existing sponsors (2 months catch-up)', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: { hasNextPage: false, endCursor: 'NQ' },
+						edges: [{
+							node: {
+								sponsorEntity: { login: 'monalisa', databaseId: 2 },
+								isActive: true,
+								isOneTimePayment: false,
+								tierSelectedAt: '2023-07-01T00:00:00.000Z',
+								tier: { monthlyPriceInDollars: 10 },
+							},
+						}],
+					},
+				},
+			},
+		});
+
+		sponsorsService.readByQuery.resolves([{
+			id: 1,
+			github_login: 'monalisa',
+			github_id: '2',
+			monthly_amount: 10,
+			last_earning_date: '2023-07-10 08:19:00',
+		}]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(sponsorsService.updateOne.callCount).to.equal(1);
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+
+		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
+			amount: 200000,
+			github_id: '2',
+			reason: 'recurring_sponsorship',
+			meta: { amountInDollars: 20, monthsCovered: 2, bonus: 0 },
+		}]);
+
+		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 2 month(s).' ]);
+	});
+
+	it('should award multiple months on new sponsor based on tierSelectedAt (3 months)', async () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: { hasNextPage: false, endCursor: 'NQ' },
+						edges: [{
+							node: {
+								sponsorEntity: { login: 'vangogh', databaseId: 3 },
+								isActive: true,
+								isOneTimePayment: false,
+								tierSelectedAt: '2023-07-06T00:00:00.000Z',
+								tier: { monthlyPriceInDollars: 10 },
+							},
+						}],
+					},
+				},
+			},
+		});
+
+		sponsorsService.readByQuery.resolves([]);
+		creditsAdditionsService.readByQuery.resolves([]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(sponsorsService.createOne.callCount).to.equal(1);
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+
+		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
+			github_id: '3',
+			reason: 'recurring_sponsorship',
+			amount: 300000,
+			meta: { amountInDollars: 30, monthsCovered: 3, bonus: 0 },
+		}]);
+
+		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);
 	});
 });
