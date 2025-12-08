@@ -25,6 +25,7 @@ const sponsorshipDetailsSchema = Joi.object<Request>({
 	}).required().unknown(true),
 	query: Joi.object({
 		userId: Joi.string().required(),
+		to: Joi.string().optional(),
 	}).required(),
 }).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
@@ -33,13 +34,14 @@ export default defineEndpoint((router, context) => {
 
 	router.get('/', validate(sponsorshipDetailsSchema), asyncWrapper(async (req, res) => {
 		const userId = req.query.userId as string;
+		const endDate = Date.parse(req.query.to as string) ? new Date(req.query.to as string) : new Date();
 		const { UsersService } = services;
 
 		const usersService = new UsersService({
 			schema: await getSchema(),
 		});
 		const user = await usersService.readOne(userId) as User;
-		const { bonus, dollarsInLastYear, dollarsByMonth } = await getUserBonus(user.external_identifier, 0, context);
+		const { bonus, dollarsInLastYear, dollarsByMonth } = await getUserBonus(user.external_identifier, 0, context, endDate);
 
 		res.send({
 			bonus,

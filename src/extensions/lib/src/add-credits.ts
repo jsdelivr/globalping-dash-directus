@@ -27,7 +27,12 @@ type AddRecurringCreditsData = {
 	monthsToAward: number;
 };
 
-export const getUserBonus = async (githubId: string | null, incomingAmountInDollars: number, { services, getSchema, env }: ApiExtensionContext) => {
+export const getUserBonus = async (
+	githubId: string | null,
+	incomingAmountInDollars: number,
+	{ services, getSchema, env }: ApiExtensionContext,
+	endDate?: Date,
+) => {
 	const { ItemsService } = services;
 
 	if (!env.CREDITS_BONUS_PER_100_DOLLARS || !env.MAX_CREDITS_BONUS) {
@@ -35,6 +40,10 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 	}
 
 	const maxCreditsBonus = parseInt(env.MAX_CREDITS_BONUS, 10);
+
+	const end = endDate ?? new Date();
+	const start = new Date(end);
+	start.setFullYear(start.getFullYear() - 1);
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 		schema: await getSchema(),
@@ -44,13 +53,15 @@ export const getUserBonus = async (githubId: string | null, incomingAmountInDoll
 		filter: {
 			github_id: { _eq: githubId },
 			reason: { _in: [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ] },
-			date_created: { _gte: new Date(Date.now() - 367 * 24 * 60 * 60 * 1000).toISOString() },
+			date_created: {
+				_between: [ start.toISOString(), end.toISOString() ],
+			},
 		},
 		sort: [ 'date_created' ], // Additions should be sorted for getDollarsByMonth().
 		fields: [ 'meta', 'date_created' ],
 	}) as CreditsAddition[];
 
-	const dollarsByMonth = getDollarsByMonth(additionsInLastYear);
+	const dollarsByMonth = getDollarsByMonth(additionsInLastYear, end);
 	const dollarsInLastYear = additionsInLastYear.reduce((sum, { meta }) => sum + (meta.amountInDollars ?? 0), 0);
 	const calculatedBonus = Math.floor((dollarsInLastYear + incomingAmountInDollars) / 100) * parseInt(env.CREDITS_BONUS_PER_100_DOLLARS, 10);
 	const bonus = calculatedBonus <= maxCreditsBonus ? calculatedBonus : maxCreditsBonus;
@@ -94,9 +105,9 @@ export const redirectGithubId = (githubId: string) => {
 	return SOURCE_ID_TO_TARGET_ID[githubId] || githubId;
 };
 
-const getPrevious12Dates = () => {
+const getPrevious12Dates = (endDate?: Date) => {
 	const dates: Date[] = [];
-	const date = new Date();
+	const date = endDate ? new Date(endDate) : new Date();
 	const startDay = date.getDate();
 	dates.push(new Date(date));
 
@@ -111,9 +122,9 @@ const getPrevious12Dates = () => {
 	return dates.reverse();
 };
 
-const getDollarsByMonth = (additions: CreditsAddition[]) => {
+const getDollarsByMonth = (additions: CreditsAddition[], endDate?: Date) => {
 	const breakdown: number[] = [];
-	const previous12Dates = getPrevious12Dates();
+	const previous12Dates = getPrevious12Dates(endDate);
 	let additionIndex = 0;
 
 	for (const date of previous12Dates) {
