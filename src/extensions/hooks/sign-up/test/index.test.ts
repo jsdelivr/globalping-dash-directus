@@ -139,7 +139,7 @@ describe('Sign-up hook', () => {
 
 		expect(payload.date_created).to.be.a('string');
 		const parsedTimestamp = Date.parse(payload.date_created as string);
-		expect(parsedTimestamp).to.not.equal(NaN);
+		expect(Number.isNaN(parsedTimestamp)).to.equal(false);
 		expect((parsedTimestamp - Date.now()) / 1000).to.be.lessThan(10);
 	});
 
