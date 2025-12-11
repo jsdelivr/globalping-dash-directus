@@ -140,7 +140,7 @@ describe('Sign-up hook', () => {
 		expect(payload.date_created).to.be.a('string');
 		const parsedTimestamp = Date.parse(payload.date_created as string);
 		expect(Number.isNaN(parsedTimestamp)).to.equal(false);
-		expect((parsedTimestamp - Date.now()) / 1000).to.be.lessThan(10);
+		expect((Date.now() - parsedTimestamp) / 1000).to.be.lessThan(10);
 	});
 
 	it('filter should use gh login as first_name if name is not provided', async () => {
