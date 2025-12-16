@@ -592,6 +592,45 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: directus_users
+    field: date_created
+    type: timestamp
+    meta:
+      collection: directus_users
+      conditions: null
+      display: null
+      display_options: null
+      field: date_created
+      group: null
+      hidden: false
+      interface: datetime
+      note: null
+      options: {}
+      readonly: true
+      required: false
+      sort: null
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: date_created
+      table: directus_users
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: gp_apps
     field: id
     type: uuid

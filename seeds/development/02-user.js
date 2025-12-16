@@ -33,6 +33,7 @@ export const seed = async (knex) => {
 			adoption_token: 'HwuHxzK9ewaFjhWcFR0m3zPTuqyITyql',
 			default_prefix: 'john',
 			public_probes: true,
+			date_created: new Date('2023-06-01T00:00:00.000Z'),
 		}]);
 
 		console.log('Mock power user created. email: user@example.com password: user');

@@ -32,6 +32,7 @@ export const seed = async (knex) => {
 			token: 'dgx4jbUG7q7FmJF4zGFHtPyov2h3vIoB',
 			adoption_token: 'y5blwmhcwlxlc4asuagxp2lv3vuqeve7',
 			default_prefix: 'turk',
+			date_created: new Date(),
 		}]);
 
 		console.log('Mock new user created. email: newuser@example.com password: newuser');
