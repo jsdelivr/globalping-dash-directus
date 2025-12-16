@@ -39,7 +39,7 @@ You can run the project by following these steps:
 These commands should be enough in most cases:
 
 ```
-pnpm run schema:apply
+pnpm run schema:apply:development
 pnpm run migrate:development
 docker compose up --build -d
 ```
@@ -55,7 +55,7 @@ pnpm run seed
 1. copy `.env.scripts.development.example` to `.env.scripts.production` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
 2. copy `.env.docker.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
 3. run the remote container.
-4. `pnpm run schema:apply`
+4. `pnpm run schema:apply:production`
 5. `pnpm run migrate:production`
 6. get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
 7. restart the container
@@ -66,7 +66,7 @@ pnpm run seed
 
 1. fulfill all empty `.env.scripts.production` values, make sure ADMIN_ACCESS_TOKEN has your access token
 2. if there are changes in `.env.docker.production.example` copy them to the env vars of the container
-3. `pnpm run schema:apply`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
+3. `pnpm run schema:apply:production`. Restart is required after updating the schema (https://github.com/directus/directus/issues/17117)
 4. `pnpm run migrate:production`
 5. stop prev container, run new container
 
