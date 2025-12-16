@@ -120,7 +120,7 @@ test('Credits page', async ({ page }) => {
 	await page.goto('/credits');
 	await expect(page.locator('h1')).toHaveText('Credits');
 	await expect(page.getByTestId('total-credits')).toHaveText('10,450');
-	await expect(page.getByTestId('generated-credits')).toHaveText('11,450');
+	await expect(page.getByTestId('gained-credits')).toHaveText('11,450');
 	await expect(page.getByTestId('spent-credits')).toHaveText('7,000');
 	await expect(page.getByTestId('estimated-credits')).toHaveText('150');
 	await expect(page.locator('tbody')).toContainText('-1,000');
