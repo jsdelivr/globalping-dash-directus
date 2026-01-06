@@ -27,17 +27,6 @@ type CreditsAdditions = {
 };
 
 export default defineHook(({ filter, action }, context) => {
-	// For users without emails, Directus sets `email` to `undefined`, instead of removing that field.
-	// That throws on validation here: https://github.com/directus/directus/blob/2991169f82ad5d0c461e82e7fdcb268ef737896c/api/src/services/users.ts#L164-L165
-	// Issue should be fixed by Directus, but as a temp solution we are removing that field manually.
-	filter('auth.create', async (payload) => {
-		const user = payload as User;
-
-		if (!user.email) {
-			delete user.email;
-		}
-	});
-
 	filter('users.create', async (payload) => {
 		const user = payload as User;
 
