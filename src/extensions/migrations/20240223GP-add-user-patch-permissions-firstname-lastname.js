@@ -7,8 +7,12 @@ const FIELDS_TO_REMOVE = [];
 const FIELDS_TO_ADD = [ 'first_name', 'last_name', 'email' ];
 
 async function getUserPolicyId () {
-	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
-	const response = await fetch(URL).then((response) => {
+	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}`;
+	const response = await fetch(URL, {
+		headers: {
+			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
+		},
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
@@ -19,8 +23,12 @@ async function getUserPolicyId () {
 }
 
 async function getUserPermissions (policyId) {
-	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${COLLECTION_NAME}&filter[policy][_eq]=${policyId}&access_token=${ADMIN_ACCESS_TOKEN}`;
-	const response = await fetch(URL).then((response) => {
+	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${COLLECTION_NAME}&filter[policy][_eq]=${policyId}`;
+	const response = await fetch(URL, {
+		headers: {
+			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
+		},
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
@@ -35,7 +43,7 @@ async function getUserPermissions (policyId) {
 }
 
 async function patchUpdatePermissions (updatePermissions) {
-	const URL = `${DIRECTUS_URL}/permissions/${updatePermissions.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions/${updatePermissions.id}`;
 	const filteredFields = updatePermissions.fields.filter(field => !FIELDS_TO_REMOVE.includes(field));
 
 	const response = await fetch(URL, {
@@ -49,6 +57,7 @@ async function patchUpdatePermissions (updatePermissions) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -61,7 +70,7 @@ async function patchUpdatePermissions (updatePermissions) {
 }
 
 async function postDeletePermission (policyId) {
-	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions`;
 
 	const response = await fetch(URL, {
 		method: 'POST',
@@ -81,6 +90,7 @@ async function postDeletePermission (policyId) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
