@@ -21,12 +21,13 @@ export async function removeDeletePermissions (permissionsObj) {
 		throw new Error(`Permissions ID is missing. This may happen when there are multiple rows for the same permission type.`);
 	}
 
-	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}`;
 
 	const response = await fetch(URL, {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -48,7 +49,7 @@ export async function allowResettingUserId (permissionsObj) {
 		throw new Error(`Permissions ID is missing. This may happen when there are multiple rows for the same permission type.`);
 	}
 
-	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}`;
 
 	const response = await fetch(URL, {
 		method: 'PATCH',
@@ -70,6 +71,7 @@ export async function allowResettingUserId (permissionsObj) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {

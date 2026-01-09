@@ -3,8 +3,12 @@ const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 const USER_POLICY_NAME = 'User';
 
 async function getUserPolicyId () {
-	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
-	const response = await fetch(URL).then((response) => {
+	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}`;
+	const response = await fetch(URL, {
+		headers: {
+			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
+		},
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
@@ -16,8 +20,12 @@ async function getUserPolicyId () {
 
 export async function getUserPermissions (collectionName) {
 	const policyId = await getUserPolicyId();
-	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${collectionName}&filter[policy][_eq]=${policyId}&access_token=${ADMIN_ACCESS_TOKEN}`;
-	const response = await fetch(URL).then((response) => {
+	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${collectionName}&filter[policy][_eq]=${policyId}`;
+	const response = await fetch(URL, {
+		headers: {
+			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
+		},
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
@@ -44,7 +52,7 @@ export async function editPermissions (permissionsObj, fieldsToAdd = [], fieldsT
 		throw new Error(`Permissions ID is missing. This may happen when there are multiple rows for the same permission type.`);
 	}
 
-	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}`;
 	const filteredFields = permissionsObj.fields.filter(field => !fieldsToRemove.includes(field));
 
 	const response = await fetch(URL, {
@@ -58,6 +66,7 @@ export async function editPermissions (permissionsObj, fieldsToAdd = [], fieldsT
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {

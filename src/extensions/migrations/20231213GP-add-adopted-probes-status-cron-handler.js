@@ -4,7 +4,7 @@ const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 export const FLOW_ID = '284f22f9-0233-44ee-a9e1-503e9a2e3830'; // Flow id needs to be a uuid, as Directus throws otherwise. This is a random value.
 
 async function createFlow () {
-	const URL = `${DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/flows`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -20,6 +20,7 @@ async function createFlow () {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -32,7 +33,7 @@ async function createFlow () {
 }
 
 async function createOperation () {
-	const URL = `${DIRECTUS_URL}/operations?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/operations`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -46,6 +47,7 @@ async function createOperation () {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -58,7 +60,7 @@ async function createOperation () {
 }
 
 async function assignOperationToFlow (operationId) {
-	const URL = `${DIRECTUS_URL}/flows/${FLOW_ID}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/flows/${FLOW_ID}`;
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({
@@ -66,6 +68,7 @@ async function assignOperationToFlow (operationId) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {

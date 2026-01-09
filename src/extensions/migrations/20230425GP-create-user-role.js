@@ -6,7 +6,7 @@ if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN) {
 }
 
 async function createRole () {
-	const URL = `${DIRECTUS_URL}/roles?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/roles`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -15,6 +15,7 @@ async function createRole () {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -27,7 +28,7 @@ async function createRole () {
 }
 
 async function createPolicy () {
-	const URL = `${DIRECTUS_URL}/policies?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/policies`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -38,6 +39,7 @@ async function createPolicy () {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -50,7 +52,7 @@ async function createPolicy () {
 }
 
 async function assignPolicyToRole (role, policy) {
-	const URL = `${DIRECTUS_URL}/roles/${role.id}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/roles/${role.id}`;
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({
@@ -67,6 +69,7 @@ async function assignPolicyToRole (role, policy) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -79,7 +82,7 @@ async function assignPolicyToRole (role, policy) {
 }
 
 async function createPermissions (policyId) {
-	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify([
@@ -152,6 +155,7 @@ async function createPermissions (policyId) {
 		]),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {

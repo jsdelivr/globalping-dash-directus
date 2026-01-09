@@ -2,7 +2,7 @@ const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 
 async function updateCssRules () {
-	const URL = `${DIRECTUS_URL}/settings?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/settings`;
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({
@@ -10,6 +10,7 @@ async function updateCssRules () {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
