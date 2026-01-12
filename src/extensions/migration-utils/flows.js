@@ -6,7 +6,7 @@ if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN) {
 }
 
 export async function createFlow (flowId, config) {
-	const URL = `${DIRECTUS_URL}/flows?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/flows`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -17,6 +17,7 @@ export async function createFlow (flowId, config) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -29,7 +30,7 @@ export async function createFlow (flowId, config) {
 }
 
 export async function createOperation (flowId, config) {
-	const URL = `${DIRECTUS_URL}/operations?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/operations`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify({
@@ -41,6 +42,7 @@ export async function createOperation (flowId, config) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
@@ -53,7 +55,7 @@ export async function createOperation (flowId, config) {
 }
 
 export async function assignOperationToFlow (flowId, operationId) {
-	const URL = `${DIRECTUS_URL}/flows/${flowId}?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/flows/${flowId}`;
 	const response = await fetch(URL, {
 		method: 'PATCH',
 		body: JSON.stringify({
@@ -61,6 +63,7 @@ export async function assignOperationToFlow (flowId, operationId) {
 		}),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {

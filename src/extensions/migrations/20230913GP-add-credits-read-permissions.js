@@ -3,8 +3,12 @@ const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 const USER_POLICY_NAME = 'User';
 
 async function getUserPolicyId () {
-	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}&access_token=${ADMIN_ACCESS_TOKEN}`;
-	const response = await fetch(URL).then((response) => {
+	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}`;
+	const response = await fetch(URL, {
+		headers: {
+			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
+		},
+	}).then((response) => {
 		if (!response.ok) {
 			throw new Error(`Fetch request failed. Status: ${response.status}`);
 		}
@@ -15,7 +19,7 @@ async function getUserPolicyId () {
 }
 
 async function createPermissions (policyId) {
-	const URL = `${DIRECTUS_URL}/permissions?access_token=${ADMIN_ACCESS_TOKEN}`;
+	const URL = `${DIRECTUS_URL}/permissions`;
 	const response = await fetch(URL, {
 		method: 'POST',
 		body: JSON.stringify([
@@ -43,6 +47,7 @@ async function createPermissions (policyId) {
 		]),
 		headers: {
 			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
 		},
 	}).then((response) => {
 		if (!response.ok) {
