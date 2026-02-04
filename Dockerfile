@@ -18,6 +18,7 @@ COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/met
 COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
 COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/endpoints/sponsorship-details/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
+COPY src/extensions/endpoints/unadopted-probes/package.json src/extensions/endpoints/unadopted-probes/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
 COPY src/extensions/hooks/gp-tokens/package.json src/extensions/hooks/gp-tokens/
@@ -68,6 +69,8 @@ COPY --from=builder /builder/src/extensions/endpoints/sponsorship-details/dist/*
 COPY --from=builder /builder/src/extensions/endpoints/sponsorship-details/package.json /directus/extensions/sponsorship-details/
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/dist/* /directus/extensions/sync-github-data/dist/
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/package.json /directus/extensions/sync-github-data/
+COPY --from=builder /builder/src/extensions/endpoints/unadopted-probes/dist/* /directus/extensions/unadopted-probes/dist/
+COPY --from=builder /builder/src/extensions/endpoints/unadopted-probes/package.json /directus/extensions/unadopted-probes/
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus/extensions/adopted-probe/dist/
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/package.json /directus/extensions/adopted-probe/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/dist/* /directus/extensions/directus-users/dist/
