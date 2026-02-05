@@ -1,6 +1,6 @@
 {
 	"name": "unadopted-probes",
-	"description": "Please enter a description for your extension",
+	"description": "The endpoint exposes information about unadopted hardware probes and enables their adoption via their unique token.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
