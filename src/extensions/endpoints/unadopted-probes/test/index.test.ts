@@ -5,10 +5,10 @@ import * as sinon from 'sinon';
 import request from 'supertest';
 import endpoint from '../src/index.js';
 
-describe('local-adoption endpoint', () => {
+describe('unadopted-probes endpoint', () => {
 	const sandbox = sinon.createSandbox();
 
-	const dbStub = {
+	const knexQueryBuilder = {
 		where: sandbox.stub(),
 		whereNull: sandbox.stub(),
 		whereNotNull: sandbox.stub(),
@@ -17,15 +17,25 @@ describe('local-adoption endpoint', () => {
 		whereRaw: sandbox.stub(),
 		first: sandbox.stub(),
 		then: sandbox.stub(),
+		transacting: sandbox.stub(),
+		forUpdate: sandbox.stub(),
 	};
 
-	// make the dbStub chainable
-	dbStub.where.returns(dbStub);
-	dbStub.whereNull.returns(dbStub);
-	dbStub.whereNotNull.returns(dbStub);
-	dbStub.select.returns(dbStub);
-	dbStub.orWhereRaw.returns(dbStub);
-	dbStub.whereRaw.returns(dbStub);
+	// make the knexQueryBuilder chainable
+	knexQueryBuilder.where.returns(knexQueryBuilder);
+	knexQueryBuilder.whereNull.returns(knexQueryBuilder);
+	knexQueryBuilder.whereNotNull.returns(knexQueryBuilder);
+	knexQueryBuilder.select.returns(knexQueryBuilder);
+	knexQueryBuilder.orWhereRaw.returns(knexQueryBuilder);
+	knexQueryBuilder.whereRaw.returns(knexQueryBuilder);
+	knexQueryBuilder.transacting.returns(knexQueryBuilder);
+	knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
+
+	const databaseStub = sandbox.stub().returns(knexQueryBuilder);
+
+	(databaseStub as any).transaction = sandbox.stub().callsFake(async (callback: any) => {
+		return callback(knexQueryBuilder);
+	});
 
 	const updateOne = sandbox.stub();
 	const readOne = sandbox.stub();
@@ -35,7 +45,7 @@ describe('local-adoption endpoint', () => {
 		logger: {
 			error: console.error,
 		},
-		database: () => dbStub,
+		database: databaseStub,
 		getSchema,
 		services: {
 			ItemsService: sandbox.stub().callsFake(() => {
@@ -64,11 +74,6 @@ describe('local-adoption endpoint', () => {
 		next();
 	}) as NextFunction);
 
-	app.use(((req: any, _res: Response, next: NextFunction) => {
-		req.accountability = accountability;
-		next();
-	}) as NextFunction);
-
 	const router = express.Router();
 	(endpoint as any)(router, endpointContext);
 	app.use(router);
@@ -92,8 +97,8 @@ describe('local-adoption endpoint', () => {
 		sandbox.resetHistory();
 		simulateIpFailure = false;
 
-		dbStub.first.resolves(probeData);
-		dbStub.then.yields([ probeData ]);
+		knexQueryBuilder.first.resolves(probeData);
+		knexQueryBuilder.then.yields([ probeData ]);
 
 		updateOne.resolves('probe-1');
 		readOne.resolves({ ...probeData, userId: 'user-id' });
@@ -119,13 +124,13 @@ describe('local-adoption endpoint', () => {
 
 			expect(res.body).to.deep.equal([ '192.168.1.50', '192.168.1.51' ]);
 
-			expect(dbStub.whereNull.calledWith('userId')).to.equal(true);
-			expect(dbStub.whereNotNull.calledWith('localAdoptionServer')).to.equal(true);
-			expect(dbStub.where.calledWith('status', 'ready')).to.equal(true);
+			expect(knexQueryBuilder.whereNull.calledWith('userId')).to.equal(true);
+			expect(knexQueryBuilder.whereNotNull.calledWith('localAdoptionServer')).to.equal(true);
+			expect(knexQueryBuilder.where.calledWith('status', 'ready')).to.equal(true);
 		});
 
 		it('should return empty array if no probes match', async () => {
-			dbStub.then.yields([]);
+			knexQueryBuilder.then.yields([]);
 
 			const res = await request(app)
 				.get('/')
@@ -154,17 +159,17 @@ describe('local-adoption endpoint', () => {
 			expect(res.status).to.equal(200);
 			expect(res.body).to.deep.equal(probeData);
 
-			expect(dbStub.select.calledWith('country', 'city', 'network', 'ip')).to.equal(true);
-			expect(dbStub.first.called).to.equal(true);
+			expect(knexQueryBuilder.select.calledWith('country', 'city', 'network', 'ip')).to.equal(true);
+			expect(knexQueryBuilder.first.called).to.equal(true);
 
-			expect(dbStub.whereRaw.calledWith(
+			expect(knexQueryBuilder.whereRaw.calledWith(
 				'JSON_VALUE(localAdoptionServer, "$.token") = ?',
 				[ 'valid-token-123' ],
 			)).to.equal(true);
 		});
 
 		it('should 404 if probe not found', async () => {
-			dbStub.first.resolves(undefined);
+			knexQueryBuilder.first.resolves(undefined);
 
 			const res = await request(app)
 				.get('/invalid-token')
@@ -187,13 +192,13 @@ describe('local-adoption endpoint', () => {
 			expect(res.status).to.equal(200);
 			expect(res.body).to.deep.include({ id: 'probe-1', userId: 'user-id' });
 
-			expect(dbStub.first.called).to.equal(true);
+			expect(knexQueryBuilder.first.called).to.equal(true);
 			expect(updateOne.calledWith('probe-1', { userId: 'user-id' }, { emitEvents: false })).to.equal(true);
 			expect(readOne.calledWith('probe-1')).to.equal(true);
 		});
 
 		it('should 404 if probe not found via token', async () => {
-			dbStub.first.resolves(undefined);
+			knexQueryBuilder.first.resolves(undefined);
 
 			const res = await request(app)
 				.post('/adopt')

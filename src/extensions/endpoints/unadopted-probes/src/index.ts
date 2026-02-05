@@ -82,30 +82,36 @@ export default defineEndpoint((router, context) => {
 		const req = eReq as Request;
 		const clientIp = getClientIp(req);
 
-		const probe = await database('gp_probes')
-			.whereNull('userId')
-			.whereNotNull('localAdoptionServer')
-			.where('status', 'ready')
-			.where((query) => {
-				query.where('ip', clientIp)
-					.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
-			})
-			.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
-			.first();
+		const updatedProbe = await database.transaction(async (trx) => {
+			const probe = await database('gp_probes')
+				.transacting(trx)
+				.forUpdate()
+				.whereNull('userId')
+				.whereNotNull('localAdoptionServer')
+				.where('status', 'ready')
+				.where((query) => {
+					query.where('ip', clientIp)
+						.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
+				})
+				.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
+				.first();
 
-		if (!probe) {
-			throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
-		}
+			if (!probe) {
+				throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
+			}
 
-		const probesService = new services.ItemsService('gp_probes', {
-			schema: await getSchema(),
+			const probesService = new services.ItemsService('gp_probes', {
+				schema: await getSchema(),
+				accountability: req.accountability,
+				knex: trx,
+			});
+
+			await probesService.updateOne(probe.id, {
+				userId: req.accountability.user,
+			}, { emitEvents: false });
+
+			return probesService.readOne(probe.id);
 		});
-
-		await probesService.updateOne(probe.id, {
-			userId: req.accountability.user,
-		}, { emitEvents: false });
-
-		const updatedProbe = await probesService.readOne(probe.id);
 
 		res.json(updatedProbe);
 	}, context));
