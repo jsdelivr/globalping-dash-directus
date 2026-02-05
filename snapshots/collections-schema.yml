@@ -1820,7 +1820,9 @@ fields:
       group: null
       hidden: false
       interface: input-code
-      note: null
+      note: >-
+        The comment field is shown to users in dash. Start with a capital
+        letter.
       options:
         lineNumber: false
       readonly: false
