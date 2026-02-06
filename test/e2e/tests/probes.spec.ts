@@ -201,6 +201,8 @@ test('Hardware probe adoption', async ({ page }) => {
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Hardware probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
+	await page.waitForTimeout(5000);
+	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
 	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
@@ -214,6 +216,8 @@ test('Probe adoption of non-synced probe', async ({ page }) => {
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Hardware probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
+	await page.waitForTimeout(5000);
+	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
 	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
@@ -228,6 +232,8 @@ test('Probe adoption by code fails if probe is already adopted', async ({ page, 
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Hardware probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
+	await page.waitForTimeout(5000);
+	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
 	await expect(page.getByText('The probe with this IP address is already adopted').first()).toBeVisible();
