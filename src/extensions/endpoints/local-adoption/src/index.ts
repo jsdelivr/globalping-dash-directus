@@ -102,7 +102,6 @@ export default defineEndpoint((router, context) => {
 
 			const probesService = new services.ItemsService('gp_probes', {
 				schema: await getSchema(),
-				accountability: req.accountability,
 				knex: trx,
 			});
 
