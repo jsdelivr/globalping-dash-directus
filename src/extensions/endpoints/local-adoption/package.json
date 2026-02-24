@@ -1,5 +1,5 @@
 {
-	"name": "unadopted-probes",
+	"name": "local-adoption",
 	"description": "The endpoint exposes information about unadopted hardware probes and enables their adoption via their unique token.",
 	"icon": "extension",
 	"version": "1.0.0",

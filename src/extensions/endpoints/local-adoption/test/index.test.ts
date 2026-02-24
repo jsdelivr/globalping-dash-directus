@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import request from 'supertest';
 import endpoint from '../src/index.js';
 
-describe('unadopted-probes endpoint', () => {
+describe('local-adoption endpoint', () => {
 	const sandbox = sinon.createSandbox();
 
 	const knexQueryBuilder = {
