@@ -1,4 +1,5 @@
 export async function up (knex) {
+	await knex.raw(`DROP INDEX IF EXISTS gp_probes_localadoptionserver_index ON gp_probes;`);
 	await knex.raw(`ALTER TABLE gp_probes ADD INDEX gp_probes_localadoptionserver_index (localAdoptionServer(10));`);
 
 	console.log('Index gp_probes_localadoptionserver_index added');
