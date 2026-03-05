@@ -159,7 +159,7 @@ const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, 
 
 	await notificationsService.createOne({
 		recipient: existingProbe.userId,
-		subject: 'Probe unassigned',
+		subject: 'Probe reassigned',
 		message: `Your probe ${existingProbe.name ? `**${existingProbe.name}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
 	});
 };
