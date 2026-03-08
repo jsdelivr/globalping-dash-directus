@@ -42,6 +42,13 @@ export default defineHook(({ filter, action }, context) => {
 
 		const { type, recipient } = value as { type: NotificationKey; recipient: string };
 
+		const notification = notificationTypes[type];
+
+		// Skip all checks for one-time notifications.
+		if (notification.skipChecks) {
+			return payload;
+		}
+
 		const usersService = new UsersService({
 			schema: await getSchema(),
 		});
@@ -105,7 +112,9 @@ export default defineHook(({ filter, action }, context) => {
 
 		let shouldSendEmail: boolean;
 
-		if (userEmailEnabled === null) {
+		if (notification.skipChecks) {
+			shouldSendEmail = true;
+		} else if (userEmailEnabled === null) {
 			shouldSendEmail = true;
 		} else if (typeof userEmailEnabled === 'boolean') {
 			shouldSendEmail = userEmailEnabled;
