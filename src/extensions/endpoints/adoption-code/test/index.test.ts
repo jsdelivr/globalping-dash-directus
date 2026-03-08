@@ -929,6 +929,7 @@ describe('adoption code endpoints', () => {
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({
 				recipient: 'first-user-id',
+				type: 'probe_adopted',
 				subject: 'New probe adopted',
 				message: 'A new probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});

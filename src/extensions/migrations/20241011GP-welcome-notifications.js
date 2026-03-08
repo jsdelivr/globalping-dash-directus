@@ -3,6 +3,7 @@ export async function up (knex) {
 
 	const notifications = users.map(user => ({
 		recipient: user.id,
+		type: 'welcome',
 		subject: 'Welcome to Globalping 🎉',
 		message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
 	}));

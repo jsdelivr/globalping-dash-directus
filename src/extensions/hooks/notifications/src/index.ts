@@ -23,7 +23,7 @@ const UserNotFoundError = createError('NOT_FOUND', 'User for notification not fo
 const CancelNotificationError = createError('CANCELLED', 'Notification cancelled by user preferences.', 204);
 
 const notificationPayloadSchema = Joi.object({
-	type: Joi.string().valid(notificationTypeKeys).required(),
+	type: Joi.string().valid(...notificationTypeKeys).required(),
 	recipient: Joi.string().required(),
 }).unknown(true);
 
@@ -126,15 +126,14 @@ export default defineHook(({ filter, action }, context) => {
 			return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const mailService = new MailService({
 			schema: await getSchema(),
 		});
 
-		// await mailService.send({
-		// 	to: user.email,
-		// 	subject: payload.subject,
-		// 	text: payload.message,
-		// });
+		await mailService.send({
+			to: user.email,
+			subject: payload.subject,
+			text: payload.message ?? '',
+		});
 	});
 });

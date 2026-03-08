@@ -9,7 +9,7 @@ export const payloadError = (message: string) => new (createError('INVALID_PAYLO
 
 const userSchema = Joi.object({
 	notification_preferences: Joi.object().pattern(
-		Joi.string().valid(notificationTypeKeys),
+		Joi.string().valid(...notificationTypeKeys),
 		Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().required(),
