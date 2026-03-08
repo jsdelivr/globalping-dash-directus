@@ -39,5 +39,9 @@
 		"sinon": "^21.0.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@directus/errors": "^2.2.0",
+		"joi": "^18.0.1"
 	}
 }

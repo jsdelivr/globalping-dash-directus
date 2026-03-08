@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import TTLCache from '@isaacs/ttlcache';
 import { getDirectusUsers, deleteCreditsAdditions, type DirectusUser } from './repositories/directus.js';
-import { validateDefaultPrefix } from './validate-fields.js';
+import { joiValidateUser, validateDefaultPrefix } from './validate-fields.js';
 
 export type Fields = Partial<DirectusUser>;
 
@@ -18,6 +18,8 @@ export const deleteUserIdToGithubId = new TTLCache<string, string>({ ttl: 60 * 1
 export default defineHook(({ filter, action }, context) => {
 	filter('users.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
+
+		joiValidateUser(fields);
 
 		if (fields.default_prefix) {
 			await validateDefaultPrefix(fields.default_prefix, keys, accountability, context);
