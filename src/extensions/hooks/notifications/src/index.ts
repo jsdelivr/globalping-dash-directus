@@ -6,10 +6,18 @@ import { notificationTypes } from '../../../lib/src/notification-types.js';
 type NotificationKey = keyof typeof notificationTypes;
 
 type User = {
+	email?: string | null;
 	notification_preferences: Partial<Record<NotificationKey, {
 		enabled: boolean;
-		sendByEmail: boolean;
+		emailEnabled: boolean;
 	}>> | null;
+};
+
+type NotificationPayload = {
+	type: NotificationKey;
+	recipient: string;
+	subject: string;
+	message?: string;
 };
 
 const UserNotFoundError = createError('NOT_FOUND', 'User for notification not found.', 404);
@@ -21,11 +29,11 @@ const notificationPayloadSchema = Joi.object({
 	recipient: Joi.string().required(),
 }).unknown(true);
 
-export default defineHook(({ filter }, context) => {
+export default defineHook(({ filter, action }, context) => {
 	const { services, getSchema } = context;
-	const { UsersService } = services;
+	const { UsersService, MailService } = services;
 
-	filter('notifications.create', async (payload: { type?: string; recipient?: string }) => {
+	filter('notifications.create', async (payload: NotificationPayload) => {
 		const { error, value } = notificationPayloadSchema.validate(payload);
 
 		if (error) {
@@ -47,20 +55,19 @@ export default defineHook(({ filter }, context) => {
 		const notificationPreferences = user.notification_preferences ?? {};
 
 		const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-		const defaultEnabled = notificationTypes[type].defaultEnabled;
-		const userHasDisabledTypes = (Object.keys(notificationPreferences || {}) as Array<NotificationKey>)
-			.some(key => notificationPreferences[key]!.enabled && notificationTypes[key].defaultEnabled);
+		const userHasDisabledTypes = (Object.keys(notificationPreferences) as Array<NotificationKey>)
+			.some(key => !notificationPreferences[key]!.enabled);
 
 		let shouldSend: boolean;
 
 		if (user.notification_preferences === null) {
-			shouldSend = defaultEnabled;
+			shouldSend = true;
 		} else if (typeof userEnabled === 'boolean') {
 			shouldSend = userEnabled;
 		} else if (userHasDisabledTypes) {
 			shouldSend = false;
 		} else {
-			shouldSend = defaultEnabled;
+			shouldSend = true;
 		}
 
 		if (!shouldSend) {
@@ -68,5 +75,59 @@ export default defineHook(({ filter }, context) => {
 		}
 
 		return payload;
+	});
+
+	action('notifications.create', async (meta) => {
+		const payload = meta.payload as NotificationPayload;
+		const recipient = payload.recipient;
+		const type = payload.type;
+		const notification = notificationTypes[type];
+
+		if (!notification.allowEmail) {
+			return;
+		}
+
+		const usersService = new UsersService({
+			schema: await getSchema(),
+		});
+
+		const user = await usersService.readOne(recipient);
+
+		if (!user?.email) {
+			return;
+		}
+
+		const notificationPreferences = user.notification_preferences ?? {};
+
+		const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
+		const userHasDisabledEmailTypes = (Object.keys(notificationPreferences) as Array<NotificationKey>)
+			.some(key => !notificationPreferences[key]!.emailEnabled);
+
+		let shouldSendEmail: boolean;
+
+		if (userEmailEnabled === null) {
+			shouldSendEmail = true;
+		} else if (typeof userEmailEnabled === 'boolean') {
+			shouldSendEmail = userEmailEnabled;
+		} else if (userHasDisabledEmailTypes) {
+			shouldSendEmail = false;
+		} else {
+			shouldSendEmail = true;
+		}
+
+		if (!shouldSendEmail) {
+			return;
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const mailService = new MailService({
+			schema: await getSchema(),
+		});
+
+		// await mailService.send({
+		// 	to: user.email,
+		// 	subject: payload.subject,
+		// 	text: payload.message,
+		// });
 	});
 });
