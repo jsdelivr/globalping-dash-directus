@@ -1,20 +1,18 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { notificationTypes } from '../../../lib/src/notification-types.js';
-
-type NotificationKey = keyof typeof notificationTypes;
+import { type NotificationTypeKey, notificationTypeKeys, getNotificationType } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email?: string | null;
-	notification_preferences: Partial<Record<NotificationKey, {
+	notification_preferences: Partial<Record<NotificationTypeKey, {
 		enabled: boolean;
 		emailEnabled: boolean;
 	}>> | null;
 };
 
 type NotificationPayload = {
-	type: NotificationKey;
+	type: NotificationTypeKey;
 	recipient: string;
 	subject: string;
 	message?: string;
@@ -25,7 +23,7 @@ const UserNotFoundError = createError('NOT_FOUND', 'User for notification not fo
 const CancelNotificationError = createError('CANCELLED', 'Notification cancelled by user preferences.', 204);
 
 const notificationPayloadSchema = Joi.object({
-	type: Joi.string().valid(...Object.keys(notificationTypes)).required(),
+	type: Joi.string().valid(notificationTypeKeys).required(),
 	recipient: Joi.string().required(),
 }).unknown(true);
 
@@ -40,9 +38,9 @@ export default defineHook(({ filter, action }, context) => {
 			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 		}
 
-		const { type, recipient } = value as { type: NotificationKey; recipient: string };
+		const { type, recipient } = value as { type: NotificationTypeKey; recipient: string };
 
-		const notification = notificationTypes[type];
+		const notification = getNotificationType(type);
 
 		// Skip all checks for one-time notifications.
 		if (notification.skipChecks) {
@@ -62,7 +60,7 @@ export default defineHook(({ filter, action }, context) => {
 		const notificationPreferences = user.notification_preferences ?? {};
 
 		const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-		const userHasDisabledTypes = (Object.keys(notificationPreferences) as Array<NotificationKey>)
+		const userHasDisabledTypes = (Object.keys(notificationPreferences) as Array<NotificationTypeKey>)
 			.some(key => !notificationPreferences[key]!.enabled);
 
 		let shouldSend: boolean;
@@ -88,7 +86,7 @@ export default defineHook(({ filter, action }, context) => {
 		const payload = meta.payload as NotificationPayload;
 		const recipient = payload.recipient;
 		const type = payload.type;
-		const notification = notificationTypes[type];
+		const notification = getNotificationType(type);
 
 		if (!notification.allowEmail) {
 			return;
@@ -107,14 +105,14 @@ export default defineHook(({ filter, action }, context) => {
 		const notificationPreferences = user.notification_preferences ?? {};
 
 		const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
-		const userHasDisabledEmailTypes = (Object.keys(notificationPreferences) as Array<NotificationKey>)
+		const userHasDisabledEmailTypes = (Object.keys(notificationPreferences) as Array<NotificationTypeKey>)
 			.some(key => !notificationPreferences[key]!.emailEnabled);
 
 		let shouldSendEmail: boolean;
 
 		if (notification.skipChecks) {
 			shouldSendEmail = true;
-		} else if (userEmailEnabled === null) {
+		} else if (user.notification_preferences === null) {
 			shouldSendEmail = true;
 		} else if (typeof userEmailEnabled === 'boolean') {
 			shouldSendEmail = userEmailEnabled;

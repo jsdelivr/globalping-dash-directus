@@ -132,13 +132,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.11
-        version: 3.0.11(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))
+        version: 3.0.11(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
       '@directus/extensions-sdk':
         specifier: 16.0.2
-        version: 16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.24(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       '@directus/types':
         specifier: ^13.2.3
-        version: 13.2.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))
+        version: 13.2.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
       '@types/chai':
         specifier: ^5.2.2
         version: 5.2.2
@@ -208,13 +208,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.11
-        version: 3.0.11(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
+        version: 3.0.11(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))
       '@directus/extensions-sdk':
         specifier: 16.0.2
-        version: 16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.24(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       '@directus/types':
         specifier: ^13.2.3
-        version: 13.2.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
+        version: 13.2.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))
       '@types/chai':
         specifier: ^5.2.2
         version: 5.2.2
@@ -928,6 +928,13 @@ importers:
         version: 5.8.3
 
   src/extensions/hooks/notifications:
+    dependencies:
+      '@directus/errors':
+        specifier: ^2.2.0
+        version: 2.2.0
+      joi:
+        specifier: ^18.0.1
+        version: 18.0.1
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.11
@@ -1885,6 +1892,9 @@ packages:
   '@directus/errors@2.0.4':
     resolution: {integrity: sha512-A0LOEQuq2YpB1yMmN2faFs+zN9+GBh13XkRmf5SH6bKV1zSYMEXj/G0cdc3DIvQMji3gEIxwk1f3mc92jbmTHA==}
 
+  '@directus/errors@2.2.0':
+    resolution: {integrity: sha512-KT7rpUO9qqYyVijkJW72r9A2+ud3OWXYb+PmF4PobitprL0dBnvhaUm7wq/Eu59Ke+Uy/DH1I4iv+l2LV6+eEw==}
+
   '@directus/extensions-sdk@16.0.2':
     resolution: {integrity: sha512-T7VjLxr4yq3VNj0Cku5slPfnnEUeSU07TW0RNxE1KBgg8/Cry6ayGvfqT0ozCpQ7GIwWdvb1UD1Zb5rkUJd+2A==}
     engines: {node: '>=20.19.0'}
@@ -1940,6 +1950,9 @@ packages:
 
   '@directus/storage@12.0.2':
     resolution: {integrity: sha512-gWz/6Ip0b6xcCg1sMcKJqtFD9t6y1PKwuBEUu7vhLZR19JB32CQBb9RC/kx+JjuD88+pt5bdHOh2VWsMzG3SrA==}
+
+  '@directus/storage@12.0.3':
+    resolution: {integrity: sha512-LgMrBnxfLC5vtkPhFYfBcnXGeFRrdBOQzLEqnk6j5UPnmDABGe2WuY+PCq1qWm3YbZSt/gJq9I6mcTcjCoKtTw==}
 
   '@directus/system-data@3.3.0':
     resolution: {integrity: sha512-dDoG/lMHly2hivOE73CPndCREuuzB7E84zBFgmmcLsR9UowC0nrohaeJ2U3s3//XwzU+VTkDR7O1n3s8B0xOgg==}
@@ -7414,6 +7427,11 @@ snapshots:
       '@directus/storage': 12.0.2
       ms: 2.1.3
 
+  '@directus/errors@2.2.0':
+    dependencies:
+      '@directus/storage': 12.0.3
+      ms: 2.1.3
+
   '@directus/extensions-sdk@16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)':
     dependencies:
       '@directus/composables': 11.2.3(vue@3.5.18(typescript@5.8.3))
@@ -7853,6 +7871,8 @@ snapshots:
       - tedious
 
   '@directus/storage@12.0.2': {}
+
+  '@directus/storage@12.0.3': {}
 
   '@directus/system-data@3.3.0': {}
 
