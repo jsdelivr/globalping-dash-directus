@@ -29,7 +29,7 @@ const notificationPayloadSchema = Joi.object({
 
 export default defineHook(({ filter, action }, context) => {
 	const { services, getSchema } = context;
-	const { UsersService, MailService } = services;
+	const { UsersService } = services;
 
 	filter('notifications.create', async (payload: NotificationPayload) => {
 		const { error, value } = notificationPayloadSchema.validate(payload);
@@ -126,14 +126,20 @@ export default defineHook(({ filter, action }, context) => {
 			return;
 		}
 
-		const mailService = new MailService({
-			schema: await getSchema(),
-		});
+		const message = payload.message;
 
-		await mailService.send({
-			to: user.email,
-			subject: payload.subject,
-			text: payload.message ?? '',
-		});
+		if (message === undefined) {
+			throw new (createError('INVALID_PAYLOAD_ERROR', '"message" is required', 400))();
+		}
+
+		// const mailService = new MailService({
+		// 	schema: await getSchema(),
+		// });
+
+		// await mailService.send({
+		// 	to: user.email,
+		// 	subject: payload.subject,
+		// 	text: message,
+		// });
 	});
 });
