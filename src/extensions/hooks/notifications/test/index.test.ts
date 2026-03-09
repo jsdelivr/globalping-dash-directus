@@ -1,4 +1,3 @@
-import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
@@ -23,7 +22,7 @@ describe('notifications hooks', () => {
 		action: (name: string, cb: ActionCallback) => { callbacks.action[name] = cb; },
 	} as any;
 
-	hook(events, { services: { UsersService, MailService }, getSchema } as unknown as HookExtensionContext);
+	hook(events, { services: { UsersService, MailService }, getSchema } as any);
 
 	beforeEach(() => {
 		sinon.resetHistory();
