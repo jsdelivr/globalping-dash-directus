@@ -79,18 +79,23 @@ describe('local-adoption endpoint', () => {
 	app.use(router);
 
 	const clientIp = '192.168.1.10';
-	const probeData = {
-		id: 'probe-1',
+
+	const reducedProbeData = {
 		country: 'US',
 		city: 'New York',
 		network: 'Local LAN',
-		ip: clientIp,
-		altIps: JSON.stringify([]),
 		localAdoptionServer: JSON.stringify({
 			token: 'valid-token-123',
 			ips: [ '192.168.1.50', '192.168.1.51' ],
 		}),
+	};
+
+	const probeData = {
+		id: 'probe-1',
+		ip: clientIp,
+		altIps: JSON.stringify([]),
 		status: 'ready',
+		...reducedProbeData,
 	};
 
 	beforeEach(() => {
@@ -98,7 +103,7 @@ describe('local-adoption endpoint', () => {
 		simulateIpFailure = false;
 
 		knexQueryBuilder.first.resolves(probeData);
-		knexQueryBuilder.then.yields([ probeData ]);
+		knexQueryBuilder.then.yields([{ ...reducedProbeData, publicIp: clientIp }]);
 
 		updateOne.resolves('probe-1');
 		readOne.resolves({ ...probeData, userId: 'user-id' });
@@ -122,7 +127,15 @@ describe('local-adoption endpoint', () => {
 			expect(res.status).to.equal(200);
 			expect(res.header['cache-control']).to.equal('no-store, private');
 
-			expect(res.body).to.deep.equal([ '192.168.1.50', '192.168.1.51' ]);
+			expect(res.body).to.deep.equal([
+				{
+					country: 'US',
+					city: 'New York',
+					network: 'Local LAN',
+					publicIp: clientIp,
+					localIps: [ '192.168.1.50', '192.168.1.51' ],
+				},
+			]);
 
 			expect(knexQueryBuilder.whereNull.calledWith('userId')).to.equal(true);
 			expect(knexQueryBuilder.whereNotNull.calledWith('localAdoptionServer')).to.equal(true);
@@ -147,36 +160,6 @@ describe('local-adoption endpoint', () => {
 
 			expect(res.status).to.equal(400);
 			expect(res.text).to.equal('Client IP could not be determined.');
-		});
-	});
-
-	describe('GET /:token', () => {
-		it('should return probe details if token matches', async () => {
-			const res = await request(app)
-				.get('/valid-token-123')
-				.set('X-Forwarded-For', clientIp);
-
-			expect(res.status).to.equal(200);
-			expect(res.body).to.deep.equal(probeData);
-
-			expect(knexQueryBuilder.select.calledWith('country', 'city', 'network', 'ip')).to.equal(true);
-			expect(knexQueryBuilder.first.called).to.equal(true);
-
-			expect(knexQueryBuilder.whereRaw.calledWith(
-				'JSON_VALUE(localAdoptionServer, "$.token") = ?',
-				[ 'valid-token-123' ],
-			)).to.equal(true);
-		});
-
-		it('should 404 if probe not found', async () => {
-			knexQueryBuilder.first.resolves(undefined);
-
-			const res = await request(app)
-				.get('/invalid-token')
-				.set('X-Forwarded-For', clientIp);
-
-			expect(res.status).to.equal(404);
-			expect(res.text).to.equal('Probe not found or not available for adoption.');
 		});
 	});
 

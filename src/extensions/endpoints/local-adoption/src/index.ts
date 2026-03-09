@@ -37,6 +37,7 @@ export default defineEndpoint((router, context) => {
 		const clientIp = getClientIp(req);
 
 		const unadoptedProbes = await database('gp_probes')
+			.select('country', 'city', 'network', 'ip as publicIp', 'localAdoptionServer')
 			.whereNull('userId')
 			.whereNotNull('localAdoptionServer')
 			.where('status', 'ready')
@@ -46,36 +47,12 @@ export default defineEndpoint((router, context) => {
 			});
 
 		unadoptedProbes.forEach((probe) => {
-			probe.localAdoptionServer = JSON.parse(probe.localAdoptionServer);
+			probe.localIps = JSON.parse(probe.localAdoptionServer)?.ips || [];
+			delete probe.localAdoptionServer;
 		});
 
-		const ips = unadoptedProbes.flatMap(probe => probe.localAdoptionServer.ips);
-
 		res.set('Cache-Control', 'no-store, private');
-		res.send(ips);
-	}, context));
-
-	router.get('/:token', asyncWrapper(async (req, res) => {
-		const { token } = req.params;
-		const clientIp = getClientIp(req);
-
-		const probe = await database('gp_probes')
-			.select('country', 'city', 'network', 'ip')
-			.whereNull('userId')
-			.whereNotNull('localAdoptionServer')
-			.where('status', 'ready')
-			.where((query) => {
-				query.where('ip', clientIp)
-					.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
-			})
-			.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ token ])
-			.first();
-
-		if (!probe) {
-			throw new (createError('NOT_FOUND', 'Probe not found or not available for adoption.', 404))();
-		}
-
-		res.json(probe);
+		res.send(unadoptedProbes);
 	}, context));
 
 	router.post('/adopt', validate(adoptLocalProbeSchema), asyncWrapper(async (eReq: ExpressRequest, res) => {
