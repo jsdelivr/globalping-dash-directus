@@ -1,7 +1,7 @@
 name: globalping-dash-directus
 services:
   mariadb:
-    image: mariadb:10.11.5
+    image: mariadb:11.8.6
     environment:
       - MARIADB_DATABASE=dashboard-globalping
       - MARIADB_USER=directus
