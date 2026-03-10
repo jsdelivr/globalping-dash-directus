@@ -2,14 +2,14 @@ import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import Joi from 'joi';
-import { notificationTypeKeys } from '../../../lib/src/notification-types.js';
+import { configurableNotificationTypes } from '../../../lib/src/notification-types.js';
 import { getDirectusUsers } from './repositories/directus.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
 const userSchema = Joi.object({
 	notification_preferences: Joi.object().pattern(
-		Joi.string().valid(...notificationTypeKeys),
+		Joi.string().valid(...configurableNotificationTypes),
 		Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().required(),
