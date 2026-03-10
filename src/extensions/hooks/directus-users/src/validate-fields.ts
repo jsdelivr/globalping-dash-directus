@@ -13,6 +13,7 @@ const userSchema = Joi.object({
 		Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().required(),
+			parameter: Joi.number().strict().min(0).max(1_000_000_000).optional(),
 		}),
 	).allow(null).optional(),
 }).unknown(true);
