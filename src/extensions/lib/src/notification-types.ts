@@ -12,7 +12,7 @@ const notificationTypes = {
 		skipChecks: true,
 		allowEmail: false,
 		hasParameter: false,
-		description: 'Welcome to Globalping!',
+		description: 'Welcome to Globalping message.',
 	},
 	probe_adopted: {
 		skipChecks: false,
