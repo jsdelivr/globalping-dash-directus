@@ -17,7 +17,7 @@ const notificationTypes = {
 		allowEmail: true,
 		description: 'Probe was adopted.',
 	},
-	probe_reassigned: {
+	probe_unassigned: {
 		skipChecks: false,
 		allowEmail: true,
 		description: 'Probe was reassigned to another user.',

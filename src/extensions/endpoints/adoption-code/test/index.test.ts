@@ -15,6 +15,7 @@ describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();
 	const updateOne = sinon.stub();
 	const readByQuery = sinon.stub();
+	const readRolesByQuery = sinon.stub();
 	const readOne = sinon.stub();
 	const notificationCreateOne = sinon.stub();
 	const sql = {
@@ -43,7 +44,11 @@ describe('adoption code endpoints', () => {
 			TARGET_NODE_VERSION: 'v22.16.0',
 		},
 		services: {
-			ItemsService: sinon.stub().callsFake(() => {
+			ItemsService: sinon.stub().callsFake((collection: string) => {
+				if (collection === 'directus_roles') {
+					return { readByQuery: readRolesByQuery };
+				}
+
 				return { createOne, updateOne, readByQuery, readOne };
 			}),
 			NotificationsService: sinon.stub().callsFake(() => {
@@ -54,7 +59,7 @@ describe('adoption code endpoints', () => {
 
 	const app = express();
 	app.use(express.json());
-	let accountability: { user: string; admin: boolean } | Record<string, never> = {};
+	let accountability: { user: string; admin: boolean; role?: string } | Record<string, never> = {};
 	app.use(((req: Request, _res: Response, next: NextFunction) => {
 		req.accountability = accountability as unknown as Request['accountability'];
 		next();
@@ -126,6 +131,7 @@ describe('adoption code endpoints', () => {
 		sinon.resetHistory();
 		sql.first.reset();
 		readByQuery.resolves([]);
+		readRolesByQuery.resolves([{ id: 'system-role-id' }]);
 		readOne.resolves(adoptedProbe);
 		createOne.resolves('generatedId');
 		updateOne.resolves('generatedId');
@@ -947,6 +953,14 @@ describe('adoption code endpoints', () => {
 	});
 
 	describe('/adoption-code/adopt-by-token endpoint', () => {
+		beforeEach(() => {
+			accountability = {
+				user: 'system',
+				admin: false,
+				role: 'system-role-id',
+			};
+		});
+
 		const adoptionTokenRequest = {
 			probe: {
 				userId: null,
@@ -982,7 +996,7 @@ describe('adoption code endpoints', () => {
 		};
 
 		it('should adopt unassigned probe', async () => {
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1049,7 +1063,7 @@ describe('adoption code endpoints', () => {
 				originalLocation: JSON.stringify({ country: 'FR', city: 'Paris', state: null, latitude: 48.85, longitude: 2.35 }),
 			});
 
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1124,7 +1138,7 @@ describe('adoption code endpoints', () => {
 				hardwareDeviceFirmware: 'v1.6',
 			});
 
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1173,7 +1187,7 @@ describe('adoption code endpoints', () => {
 				hardwareDeviceFirmware: 'v2.1',
 			});
 
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1205,7 +1219,13 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
-		it('should reject without system token', async () => {
+		it('should reject without system user', async () => {
+			accountability = {
+				user: 'first-user-id',
+				admin: false,
+				role: 'another-role-id',
+			};
+
 			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(403);

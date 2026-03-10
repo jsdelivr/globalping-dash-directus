@@ -3,6 +3,37 @@ import { getDefaultProbeName } from '../../../../lib/src/default-probe-name.js';
 import { getResetUserFields } from '../../../../lib/src/reset-fields.js';
 import type { AdoptedProbe, Override, ProbeToAdopt, Row } from '../index.js';
 
+const SYSTEM_ROLE_NAME = 'System';
+let cachedSystemRoleId: string | null = null;
+
+export const getSystemRoleId = async (context: EndpointExtensionContext) => {
+	if (cachedSystemRoleId) {
+		return cachedSystemRoleId;
+	}
+
+	const itemsService = new context.services.ItemsService('directus_roles', {
+		schema: await context.getSchema(),
+	});
+	const roles = await itemsService.readByQuery({
+		filter: {
+			name: {
+				_eq: SYSTEM_ROLE_NAME,
+			},
+		},
+		limit: 1,
+		fields: [ 'id' ],
+	}) as Array<{ id: string }>;
+
+	const roleId = roles?.[0]?.id;
+
+	if (!roleId) {
+		throw new Error(`Role "${SYSTEM_ROLE_NAME}" not found.`);
+	}
+
+	cachedSystemRoleId = roleId;
+	return roleId;
+};
+
 export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
 	const { services, database, getSchema } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
@@ -160,8 +191,8 @@ const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, 
 
 	await notificationsService.createOne({
 		recipient: existingProbe.userId,
-		type: 'probe_reassigned',
-		subject: 'Probe reassigned',
+		type: 'probe_unassigned',
+		subject: 'Probe unassigned',
 		message: `Your probe ${existingProbe.name ? `**${existingProbe.name}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
 	});
 };

@@ -12,7 +12,7 @@ import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
-import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
+import { createAdoptedProbe, findAdoptedProbeByIp, getSystemRoleId } from './repositories/directus.js';
 
 export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
 
@@ -20,6 +20,7 @@ export type Request = ExpressRequest & {
 	accountability: {
 		user: string;
 		admin: boolean;
+		role: string;
 	};
 	schema: object;
 };
@@ -263,8 +264,9 @@ export default defineEndpoint((router, context) => {
 
 	router.put('/adopt-by-token', asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
+		const systemRoleId = await getSystemRoleId(context as EndpointExtensionContext);
 
-		if (req.headers['x-api-key'] !== env.GP_SYSTEM_KEY) {
+		if (req.accountability?.role !== systemRoleId) {
 			throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
 		}
 
