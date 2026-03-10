@@ -62,7 +62,9 @@ const notificationTypes = {
 
 export const allNotificationTypes = Object.keys(notificationTypes);
 
-export const configurableNotificationTypes = Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.skipChecks).map(([ key ]) => key);
+export const configurableNotifications = Object.fromEntries(Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.skipChecks));
+
+export const configurableNotificationTypes = Object.keys(configurableNotifications);
 
 export const getNotificationType = (key: NotificationTypeKey): NotificationType => {
 	const notificationType = notificationTypes[key];

@@ -1,5 +1,6 @@
 import { defineEndpoint } from '@directus/extensions-sdk';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
+import { configurableNotifications } from '../../../lib/src/notification-types.js';
 
 export default defineEndpoint((router, context) => {
 	const { env } = context;
@@ -13,5 +14,9 @@ export default defineEndpoint((router, context) => {
 			creditsBonusPer100Dollars: env.CREDITS_BONUS_PER_100_DOLLARS,
 			maxCreditsBonus: env.MAX_CREDITS_BONUS,
 		});
+	}, context));
+
+	router.get('/notification-types', asyncWrapper(async (_req, res) => {
+		res.send(configurableNotifications);
 	}, context));
 });
