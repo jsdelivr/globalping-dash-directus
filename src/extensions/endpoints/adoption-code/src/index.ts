@@ -10,9 +10,10 @@ import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
+import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
-import { createAdoptedProbe, findAdoptedProbeByIp, getSystemRoleId } from './repositories/directus.js';
+import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
 
@@ -264,9 +265,8 @@ export default defineEndpoint((router, context) => {
 
 	router.put('/adopt-by-token', asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
-		const systemRoleId = await getSystemRoleId(context as EndpointExtensionContext);
 
-		if (req.accountability?.role !== systemRoleId) {
+		if (req.accountability?.user !== SYSTEM_USER_ID) {
 			throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
 		}
 

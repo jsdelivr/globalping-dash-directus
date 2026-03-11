@@ -44,7 +44,7 @@ export const seed = async (knex) => {
 			timestamp: relativeDayUtc(-10),
 			status: 'inbox',
 			type: 'welcome',
-			subject: 'Welcome to Globalping 🎉',
+			subject: 'Welcome to Globalping!',
 			message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
 		},
 		// your probe has been reassigned message

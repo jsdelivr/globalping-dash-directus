@@ -1,13 +1,11 @@
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
+const DIRECTUS_SYSTEM_TOKEN = process.env.DIRECTUS_SYSTEM_TOKEN;
 
-const POLICY_NAME = 'System';
-const ROLE_NAME = 'System';
-const USER_FIRST_NAME = 'system';
-const USER_TOKEN = 'directusSystemToken';
+const SYSTEM_USER_ID = 'f3249755-8b2b-43e6-878e-d5387afe1a24';
 
-if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN) {
-	throw new Error(`DIRECTUS_URL and ADMIN_ACCESS_TOKEN must be set. Actual values: DIRECTUS_URL: ${DIRECTUS_URL}, ADMIN_ACCESS_TOKEN: ${ADMIN_ACCESS_TOKEN}`);
+if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN || !DIRECTUS_SYSTEM_TOKEN) {
+	throw new Error(`DIRECTUS_URL, ADMIN_ACCESS_TOKEN and DIRECTUS_SYSTEM_TOKEN must be set. Actual values: DIRECTUS_URL: ${DIRECTUS_URL}.`);
 }
 
 async function directusRequest (path, method = 'GET', body) {
@@ -32,7 +30,7 @@ async function directusRequest (path, method = 'GET', body) {
 
 async function createPolicy () {
 	return directusRequest('/policies', 'POST', {
-		name: POLICY_NAME,
+		name: 'System',
 		icon: 'robot_2',
 		admin_access: false,
 		app_access: false,
@@ -41,7 +39,7 @@ async function createPolicy () {
 
 async function createRole () {
 	return directusRequest('/roles', 'POST', {
-		name: ROLE_NAME,
+		name: 'System',
 		icon: 'robot_2',
 	});
 }
@@ -76,11 +74,12 @@ async function createNotificationsPermission (policyId) {
 
 async function createUser (roleId) {
 	return directusRequest('/users', 'POST', {
-		first_name: USER_FIRST_NAME,
-		default_prefix: USER_FIRST_NAME,
+		id: SYSTEM_USER_ID,
+		first_name: 'system',
+		default_prefix: 'system',
 		status: 'active',
 		role: roleId,
-		token: USER_TOKEN,
+		token: DIRECTUS_SYSTEM_TOKEN,
 	});
 }
 
@@ -90,7 +89,7 @@ export async function up () {
 	await assignPolicyToRole(role.id, policy.id);
 	await createNotificationsPermission(policy.id);
 	await createUser(role.id);
-	console.log(`Created ${USER_FIRST_NAME} user with role policy for notifications create.`);
+	console.log(`Created system user with role policy for notifications create.`);
 }
 
 export async function down () {
