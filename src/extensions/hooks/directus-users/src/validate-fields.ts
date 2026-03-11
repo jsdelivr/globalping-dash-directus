@@ -12,7 +12,7 @@ const userSchema = Joi.object({
 		Joi.string().valid(...configurableNotificationTypes),
 		Joi.object({
 			enabled: Joi.boolean().required(),
-			emailEnabled: Joi.boolean().required(),
+			emailEnabled: Joi.boolean().optional(),
 			parameter: Joi.number().strict().min(0).max(1_000_000_000).optional(),
 		}),
 	).allow(null).optional(),

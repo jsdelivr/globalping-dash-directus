@@ -4,11 +4,11 @@ export async function up (knex) {
 			UPDATE directus_notifications
 			SET type = CASE
 				WHEN subject = 'Your probe''s location has changed' THEN 'probe_location_changed'
-				WHEN subject = 'Your probe''s location has changed back' THEN 'probe_location_changed'
-				WHEN subject = 'Your probe has been deleted' THEN 'probe_deleted'
+				WHEN subject = 'Your probe''s location has changed back' THEN 'probe_location_changed_back'
+				WHEN subject = 'Your probe has been deleted' THEN 'probe_unassigned'
 				WHEN subject = 'Your probe is running an outdated firmware' THEN 'outdated_firmware'
 				WHEN subject = 'New probe adopted' THEN 'probe_adopted'
-				WHEN subject = 'Probe unassigned' THEN 'probe_reassigned'
+				WHEN subject = 'Probe unassigned' THEN 'probe_unassigned'
 				WHEN subject = 'Your hardware probe is running an outdated firmware' THEN 'outdated_firmware'
 				WHEN subject = 'Your probe container is running an outdated software' THEN 'outdated_software'
 			END

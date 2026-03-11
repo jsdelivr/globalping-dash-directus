@@ -24,7 +24,7 @@ const notificationTypes = {
 		skipChecks: false,
 		allowEmail: false,
 		hasParameter: false,
-		description: 'Probe was reassigned to another user.',
+		description: 'Probe was unassigned.',
 	},
 	outdated_software: { // Also controls 'outdated_firmware'.
 		skipChecks: false,
@@ -33,12 +33,6 @@ const notificationTypes = {
 		description: 'Probe has an outdated software.',
 	},
 	outdated_firmware: 'outdated_software',
-	probe_deleted: {
-		skipChecks: false,
-		allowEmail: false,
-		hasParameter: false,
-		description: 'Probe was unassigned.',
-	},
 	offline_probe: {
 		skipChecks: false,
 		allowEmail: false,
@@ -56,7 +50,7 @@ const notificationTypes = {
 		skipChecks: false,
 		allowEmail: false,
 		hasParameter: true,
-		description: 'Get notification when your credits are low.',
+		description: 'Credits are getting low.',
 	},
 };
 

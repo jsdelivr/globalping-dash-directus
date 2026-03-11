@@ -7,7 +7,7 @@ type User = {
 	email?: string | null;
 	notification_preferences: Partial<Record<NotificationTypeKey, {
 		enabled: boolean;
-		emailEnabled: boolean;
+		emailEnabled?: boolean;
 	}>> | null;
 };
 
@@ -95,7 +95,7 @@ export default defineHook(({ filter, action }, context) => {
 			schema: await getSchema(),
 		});
 
-		const user = await usersService.readOne(recipient);
+		const user = await usersService.readOne(recipient) as User | null;
 
 		if (!user?.email) {
 			return;
