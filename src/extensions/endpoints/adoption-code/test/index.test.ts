@@ -15,7 +15,6 @@ describe('adoption code endpoints', () => {
 	const createOne = sinon.stub();
 	const updateOne = sinon.stub();
 	const readByQuery = sinon.stub();
-	const readRolesByQuery = sinon.stub();
 	const readOne = sinon.stub();
 	const notificationCreateOne = sinon.stub();
 	const sql = {
@@ -44,11 +43,7 @@ describe('adoption code endpoints', () => {
 			TARGET_NODE_VERSION: 'v22.16.0',
 		},
 		services: {
-			ItemsService: sinon.stub().callsFake((collection: string) => {
-				if (collection === 'directus_roles') {
-					return { readByQuery: readRolesByQuery };
-				}
-
+			ItemsService: sinon.stub().callsFake(() => {
 				return { createOne, updateOne, readByQuery, readOne };
 			}),
 			NotificationsService: sinon.stub().callsFake(() => {
@@ -131,7 +126,6 @@ describe('adoption code endpoints', () => {
 		sinon.resetHistory();
 		sql.first.reset();
 		readByQuery.resolves([]);
-		readRolesByQuery.resolves([{ id: 'system-role-id' }]);
 		readOne.resolves(adoptedProbe);
 		createOne.resolves('generatedId');
 		updateOne.resolves('generatedId');
@@ -955,7 +949,7 @@ describe('adoption code endpoints', () => {
 	describe('/adoption-code/adopt-by-token endpoint', () => {
 		beforeEach(() => {
 			accountability = {
-				user: 'system',
+				user: 'f3249755-8b2b-43e6-878e-d5387afe1a24',
 				admin: false,
 				role: 'system-role-id',
 			};

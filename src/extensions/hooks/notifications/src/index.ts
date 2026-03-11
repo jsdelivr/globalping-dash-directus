@@ -42,7 +42,6 @@ export default defineHook(({ filter, action }, context) => {
 
 		const notification = getNotificationType(type);
 
-		// Skip all checks for one-time notifications.
 		if (notification.skipChecks) {
 			return payload;
 		}

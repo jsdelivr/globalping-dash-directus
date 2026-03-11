@@ -18,7 +18,7 @@ import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directu
 export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
 
 export type Request = ExpressRequest & {
-	accountability: {
+	accountability?: {
 		user: string;
 		admin: boolean;
 		role: string;
@@ -121,7 +121,7 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe IP address format is wrong', 400))();
 			}
 
-			await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
+			await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
 
 			const adoptedProbe = await findAdoptedProbeByIp(ip, context as unknown as EndpointExtensionContext);
 
@@ -212,7 +212,7 @@ export default defineEndpoint((router, context) => {
 		const userId = req.body.userId;
 		const userCode = req.body.code.replaceAll(' ', '');
 
-		await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
+		await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
 
 		const value = probesToAdopt.get(userId);
 
@@ -224,7 +224,7 @@ export default defineEndpoint((router, context) => {
 		const adoptedProbe = await createAdoptedProbe(userId, probe, context);
 
 		probesToAdopt.delete(userId);
-		await rateLimiter.delete(req.accountability.user);
+		await rateLimiter.delete(req.accountability?.user ?? '');
 
 		await checkFirmwareVersions(adoptedProbe, userId, context);
 

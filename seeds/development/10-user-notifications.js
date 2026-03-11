@@ -53,8 +53,8 @@ export const seed = async (knex) => {
 				recipient: user.id,
 				timestamp: relativeDayUtc(-index),
 				status: index % 2 ? 'archived' : 'inbox',
-				type: 'probe_reassigned',
-				subject: 'Probe reassigned',
+				type: 'probe_unassigned',
+				subject: 'Probe unassigned',
 				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
 			}
 		)),
