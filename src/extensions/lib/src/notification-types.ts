@@ -1,7 +1,7 @@
 export type NotificationTypeKey = keyof typeof notificationTypes;
 
 export type NotificationType = {
-	skipChecks: boolean;
+	ignorePreferences: boolean;
 	allowEmail: boolean;
 	hasParameter: boolean;
 	description: string;
@@ -9,45 +9,45 @@ export type NotificationType = {
 
 const notificationTypes = {
 	welcome: {
-		skipChecks: true,
+		ignorePreferences: true,
 		allowEmail: false,
 		hasParameter: false,
 		description: 'Welcome to Globalping message.',
 	},
 	probe_adopted: {
-		skipChecks: false,
+		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: false,
 		description: 'Probe was adopted.',
 	},
 	probe_unassigned: {
-		skipChecks: false,
-		allowEmail: false,
+		ignorePreferences: false,
+		allowEmail: true,
 		hasParameter: false,
 		description: 'Probe was unassigned.',
 	},
 	outdated_software: { // Also controls 'outdated_firmware'.
-		skipChecks: false,
+		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: false,
 		description: 'Probe has an outdated software.',
 	},
 	outdated_firmware: 'outdated_software',
 	offline_probe: {
-		skipChecks: false,
+		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: false,
 		description: 'Probe went offline.',
 	},
 	probe_location_changed: { // Also controls 'probe_location_changed_back'.
-		skipChecks: false,
+		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: false,
 		description: 'Probe location changed.',
 	},
 	probe_location_changed_back: 'probe_location_changed',
 	low_credits: {
-		skipChecks: false,
+		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: true,
 		description: 'Credits are getting low.',
@@ -56,7 +56,12 @@ const notificationTypes = {
 
 export const allNotificationTypes = Object.keys(notificationTypes);
 
-export const configurableNotifications = Object.fromEntries(Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.skipChecks));
+export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.ignorePreferences) as [string, NotificationType][])
+	.map(([ key, value ]) => [ key, {
+		allowEmail: value.allowEmail,
+		hasParameter: value.hasParameter,
+		description: value.description,
+	}]));
 
 export const configurableNotificationTypes = Object.keys(configurableNotifications);
 

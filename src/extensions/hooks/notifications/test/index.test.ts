@@ -49,7 +49,7 @@ describe('notifications hooks', () => {
 			}
 		});
 
-		it('should skip checks for skipChecks notification types', async () => {
+		it('should skip checks for ignorePreferences notification types', async () => {
 			const payload = { type: 'welcome', recipient: 'user-1', subject: 'Hello' };
 			const result = await filter()(payload);
 			expect(result).to.equal(payload);
@@ -132,7 +132,7 @@ describe('notifications hooks', () => {
 	// 		expect(send.callCount).to.equal(0);
 	// 	});
 
-	// 	it('should send email for skipChecks types regardless of preferences', async () => {
+	// 	it('should send email for ignorePreferences types regardless of preferences', async () => {
 	// 		readOne.resolves({ email: 'test@test.com', notification_preferences: { welcome: { enabled: false, emailEnabled: false } } });
 
 	// 		await action()({ payload: { type: 'welcome', recipient: 'user-1', subject: 'Hello', message: 'body' } });

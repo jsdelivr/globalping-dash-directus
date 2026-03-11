@@ -9,13 +9,13 @@ export const payloadError = (message: string) => new (createError('INVALID_PAYLO
 
 const userSchema = Joi.object({
 	notification_preferences: Joi.object().pattern(
-		Joi.string().valid(...configurableNotificationTypes),
+		Joi.string().max(100).valid(...configurableNotificationTypes),
 		Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().optional(),
 			parameter: Joi.number().strict().min(0).max(1_000_000_000).optional(),
 		}),
-	).allow(null).optional(),
+	).max(50).allow(null).optional(),
 }).unknown(true);
 
 export const joiValidateUser = (fields: unknown) => {

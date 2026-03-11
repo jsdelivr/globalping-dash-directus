@@ -42,7 +42,7 @@ export default defineHook(({ filter, action }, context) => {
 
 		const notification = getNotificationType(type);
 
-		if (notification.skipChecks) {
+		if (notification.ignorePreferences) {
 			return payload;
 		}
 
@@ -109,7 +109,7 @@ export default defineHook(({ filter, action }, context) => {
 
 		let shouldSendEmail: boolean;
 
-		if (notification.skipChecks) {
+		if (notification.ignorePreferences) {
 			shouldSendEmail = true;
 		} else if (user.notification_preferences === null) {
 			shouldSendEmail = true;
