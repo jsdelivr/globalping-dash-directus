@@ -19,7 +19,7 @@ const createNotificationPreferenceSchema = (notificationType: string) => Joi.obj
 			then: parameterSchema.required().messages({
 				'any.required': 'Threshold value for notification should be specified.',
 			}),
-			otherwise: Joi.forbidden(),
+			otherwise: Joi.optional(),
 		})
 		: parameterSchema.optional(),
 });

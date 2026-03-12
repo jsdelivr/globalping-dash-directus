@@ -4,6 +4,7 @@ export type NotificationType = {
 	ignorePreferences: boolean;
 	allowEmail: boolean;
 	hasParameter: boolean;
+	defaultParameter?: number;
 	description: string;
 };
 
@@ -50,6 +51,7 @@ const notificationTypes = {
 		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: true,
+		defaultParameter: 10000,
 		description: 'Credits are running low',
 	},
 };
@@ -60,6 +62,7 @@ export const configurableNotifications = Object.fromEntries((Object.entries(noti
 	.map(([ key, value ]) => [ key, {
 		allowEmail: value.allowEmail,
 		hasParameter: value.hasParameter,
+		defaultParameter: value.defaultParameter,
 		description: value.description,
 	}]));
 
