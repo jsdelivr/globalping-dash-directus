@@ -1,10 +1,15 @@
 export type NotificationTypeKey = keyof typeof notificationTypes;
 
-export type NotificationType = {
+type NotificationType = {
 	ignorePreferences: boolean;
 	allowEmail: boolean;
-	hasParameter: boolean;
-	defaultParameter?: number;
+	hasParameter: false;
+	description: string;
+} | {
+	ignorePreferences: boolean;
+	allowEmail: boolean;
+	hasParameter: true;
+	defaultParameter: number;
 	description: string;
 };
 
@@ -51,20 +56,20 @@ const notificationTypes = {
 		ignorePreferences: false,
 		allowEmail: false,
 		hasParameter: true,
-		defaultParameter: 10000,
+		defaultParameter: 1000,
 		description: 'Credits are running low',
 	},
-};
-
-export const allNotificationTypes = Object.keys(notificationTypes);
+} satisfies Record<string, string | NotificationType>;
 
 export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.ignorePreferences) as [string, NotificationType][])
 	.map(([ key, value ]) => [ key, {
 		allowEmail: value.allowEmail,
 		hasParameter: value.hasParameter,
-		defaultParameter: value.defaultParameter,
+		...value.hasParameter ? { defaultParameter: value.defaultParameter } : {},
 		description: value.description,
 	}]));
+
+export const allNotificationTypes = Object.keys(notificationTypes);
 
 export const configurableNotificationTypes = Object.keys(configurableNotifications);
 

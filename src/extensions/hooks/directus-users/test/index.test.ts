@@ -48,18 +48,17 @@ describe('users hooks', () => {
 		getSchema: sinon.stub(),
 		env: {},
 	} as unknown as HookExtensionContext;
-	const contextAny = context as any;
 
 	defineHook(events, context);
 
 	beforeEach(() => {
 		sinon.resetHistory();
-		contextAny.env = {};
+		context.env = {};
 	});
 
 	describe('server.start', () => {
 		it('should update system user token from env', async () => {
-			contextAny.env.DIRECTUS_SYSTEM_TOKEN = 'new-system-token';
+			context.env.GP_SYSTEM_KEY = 'new-system-token';
 
 			await callbacks.action['server.start']?.({}, {});
 

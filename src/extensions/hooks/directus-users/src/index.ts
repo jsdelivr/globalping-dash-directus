@@ -18,7 +18,7 @@ export const deleteUserIdToGithubId = new TTLCache<string, string>({ ttl: 60 * 1
 
 export default defineHook(({ filter, action }, context) => {
 	action('server.start', async () => {
-		const token = context.env.DIRECTUS_SYSTEM_TOKEN;
+		const token = context.env.GP_SYSTEM_KEY;
 
 		if (!token) {
 			return;
