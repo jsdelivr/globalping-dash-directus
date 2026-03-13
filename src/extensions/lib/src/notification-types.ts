@@ -52,13 +52,13 @@ const notificationTypes = {
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
-	low_credits: {
-		ignorePreferences: false,
-		allowEmail: false,
-		hasParameter: true,
-		defaultParameter: 1000,
-		description: 'Credits are running low',
-	},
+	// low_credits: {
+	// 	ignorePreferences: false,
+	// 	allowEmail: false,
+	// 	hasParameter: true,
+	// 	defaultParameter: 1000,
+	// 	description: 'Credits are running low',
+	// },
 } satisfies Record<string, string | NotificationType>;
 
 export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.ignorePreferences) as [string, NotificationType][])
