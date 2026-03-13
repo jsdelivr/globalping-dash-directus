@@ -43,6 +43,7 @@ export const seed = async (knex) => {
 			recipient: user.id,
 			timestamp: relativeDayUtc(-10),
 			status: 'inbox',
+			type: 'welcome',
 			subject: 'Welcome to Globalping!',
 			message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
 		},
@@ -52,6 +53,7 @@ export const seed = async (knex) => {
 				recipient: user.id,
 				timestamp: relativeDayUtc(-index),
 				status: index % 2 ? 'archived' : 'inbox',
+				type: 'probe_unassigned',
 				subject: 'Probe unassigned',
 				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
 			}
@@ -62,9 +64,10 @@ export const seed = async (knex) => {
 				recipient: user.id,
 				timestamp: relativeDayUtc(-index),
 				status: index === 2 ? 'archived' : 'inbox',
+				type: 'probe_unassigned',
 				collection: 'gp_probes',
-				subject: 'Your probe has been deleted',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+				subject: 'Your probe has been unassigned',
+				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been unassigned from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			}
 		)),
 		// new probe adopted message
@@ -73,6 +76,7 @@ export const seed = async (knex) => {
 				recipient: user.id,
 				timestamp: relativeDayUtc(0),
 				status: index === 3 ? 'archived' : 'inbox',
+				type: 'probe_adopted',
 				subject: 'New probe adopted',
 				message: `A new probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}** has been assigned to your account.`,
 			}

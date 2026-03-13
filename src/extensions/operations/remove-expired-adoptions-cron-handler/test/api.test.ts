@@ -169,8 +169,9 @@ describe('Remove expired adoptions CRON handler', () => {
 		expect(createOne.args[0]).to.deep.equal([
 			{
 				recipient: 'userId1',
-				subject: 'Your probe has been deleted',
-				message: 'Your probe with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
+				type: 'probe_unassigned',
+				subject: 'Your probe has been unassigned',
+				message: 'Your probe with IP address **1.1.1.1** has been unassigned from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
 				item: 'probeId1',
 				collection: 'gp_probes',
 			},
@@ -216,8 +217,9 @@ describe('Remove expired adoptions CRON handler', () => {
 		expect(createOne.args[0]).to.deep.equal([
 			{
 				recipient: 'userId1',
-				subject: 'Your probe has been deleted',
-				message: 'Your probe with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
+				type: 'probe_unassigned',
+				subject: 'Your probe has been unassigned',
+				message: 'Your probe with IP address **1.1.1.1** has been unassigned from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
 				item: 'probeId1',
 				collection: 'gp_probes',
 			},

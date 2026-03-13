@@ -1,8 +1,9 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import TTLCache from '@isaacs/ttlcache';
+import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { getDirectusUsers, deleteCreditsAdditions, type DirectusUser } from './repositories/directus.js';
-import { validateDefaultPrefix } from './validate-fields.js';
+import { joiValidateUser, validateDefaultPrefix } from './validate-fields.js';
 
 export type Fields = Partial<DirectusUser>;
 
@@ -16,8 +17,20 @@ export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 
 export const deleteUserIdToGithubId = new TTLCache<string, string>({ ttl: 60 * 1000 });
 
 export default defineHook(({ filter, action }, context) => {
+	action('server.start', async () => {
+		const token = context.env.GP_SYSTEM_KEY;
+
+		if (!token) {
+			return;
+		}
+
+		await context.database('directus_users').where({ id: SYSTEM_USER_ID }).update({ token });
+	});
+
 	filter('users.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
+
+		joiValidateUser(fields);
 
 		if (fields.default_prefix) {
 			await validateDefaultPrefix(fields.default_prefix, keys, accountability, context);
