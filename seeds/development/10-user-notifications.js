@@ -84,7 +84,7 @@ export const seed = async (knex) => {
 
 			return {
 				recipient: user.id,
-				subject: 'Your probe went offline',
+				subject: `Your probe${probe.name ? ` ${probe.name}` : ''} went offline`,
 				timestamp: new Date(probe.lastSyncDate),
 				type: 'offline_probe',
 				item: probe.id,
