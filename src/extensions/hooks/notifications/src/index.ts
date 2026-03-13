@@ -4,7 +4,7 @@ import Joi from 'joi';
 import { type NotificationTypeKey, allNotificationTypes, getNotificationType, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type User = {
-	email?: string | null;
+	email: string | null;
 	notification_preferences: Partial<Record<NotificationTypeKey, {
 		enabled: boolean;
 		emailEnabled?: boolean;
@@ -40,7 +40,6 @@ export default defineHook(({ filter, action }, context) => {
 
 		const { recipient } = value as { type: NotificationTypeKey; recipient: string };
 		const type = mapNotificationTypeKey(value.type);
-
 		const notification = getNotificationType(type);
 
 		if (notification.ignorePreferences) {

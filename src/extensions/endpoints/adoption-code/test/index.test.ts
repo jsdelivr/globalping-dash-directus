@@ -54,7 +54,7 @@ describe('adoption code endpoints', () => {
 
 	const app = express();
 	app.use(express.json());
-	let accountability: { user: string; admin: boolean; role?: string } | Record<string, never> = {};
+	let accountability: { user: string; admin: boolean; role?: string } | Record<string, never> | null = {};
 	app.use(((req: Request, _res: Response, next: NextFunction) => {
 		req.accountability = accountability as unknown as Request['accountability'];
 		next();
@@ -1210,6 +1210,17 @@ describe('adoption code endpoints', () => {
 				{ emitEvents: false },
 			]);
 
+			expect(notificationCreateOne.callCount).to.equal(0);
+		});
+
+		it('should reject without accountability', async () => {
+			accountability = null;
+
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
+
+			expect(res.status).to.equal(403);
+
+			expect(createOne.callCount).to.equal(0);
 			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
