@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, allNotificationTypes, getNotificationType } from '../../../lib/src/notification-types.js';
+import { type NotificationTypeKey, allNotificationTypes, getNotificationType, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email?: string | null;
@@ -38,7 +38,8 @@ export default defineHook(({ filter, action }, context) => {
 			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 		}
 
-		const { type, recipient } = value as { type: NotificationTypeKey; recipient: string };
+		const { recipient } = value as { type: NotificationTypeKey; recipient: string };
+		const type = mapNotificationTypeKey(value.type);
 
 		const notification = getNotificationType(type);
 
@@ -84,7 +85,7 @@ export default defineHook(({ filter, action }, context) => {
 	action('notifications.create', async (meta) => {
 		const payload = meta.payload as NotificationPayload;
 		const recipient = payload.recipient;
-		const type = payload.type;
+		const type = mapNotificationTypeKey(payload.type);
 		const notification = getNotificationType(type);
 
 		if (!notification.allowEmail) {

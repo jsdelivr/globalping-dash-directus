@@ -28,7 +28,7 @@ const notificationTypes = {
 	},
 	probe_unassigned: {
 		ignorePreferences: false,
-		allowEmail: true,
+		allowEmail: false,
 		hasParameter: false,
 		description: 'Probe was unassigned',
 	},
@@ -73,16 +73,23 @@ export const allNotificationTypes = Object.keys(notificationTypes);
 
 export const configurableNotificationTypes = Object.keys(configurableNotifications);
 
-export const getNotificationType = (key: NotificationTypeKey): NotificationType => {
+export const mapNotificationTypeKey = (key: NotificationTypeKey): NotificationTypeKey => {
 	const notificationType = notificationTypes[key];
 
 	if (typeof notificationType === 'string') {
-		return notificationTypes[notificationType as NotificationTypeKey] as NotificationType;
+		return notificationType as NotificationTypeKey;
 	}
 
 	if (!notificationType) {
 		throw new Error(`Notification type "${key}" not found.`);
 	}
 
-	return notificationType;
+	return key;
+};
+
+export const getNotificationType = (key: NotificationTypeKey): NotificationType => {
+	const resolvedKey = mapNotificationTypeKey(key);
+	const notificationType = notificationTypes[resolvedKey];
+
+	return notificationType as NotificationType;
 };

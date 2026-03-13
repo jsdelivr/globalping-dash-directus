@@ -151,7 +151,7 @@ test('Software probe adoption (token)', async ({ page, user }) => {
 		user: { id: user.id },
 	}, {
 		headers: {
-			'X-Api-Key': 'system',
+			Authorization: 'Bearer system',
 		},
 	});
 
@@ -170,7 +170,7 @@ test('Software probe adoption by asn/city', async ({ page, user }) => {
 		user: { id: user.id },
 	}, {
 		headers: {
-			'X-Api-Key': 'system',
+			Authorization: 'Bearer system',
 		},
 	});
 
@@ -251,7 +251,7 @@ test('Adoption of a probe adopted by another user', async ({ page, user, user2 }
 		user: { id: user.id },
 	}, {
 		headers: {
-			'X-Api-Key': 'system',
+			Authorization: 'Bearer system',
 		},
 	});
 
@@ -278,7 +278,7 @@ test('Adoption of a probe with different data in SQL and API', async ({ page, us
 		user: { id: user.id },
 	}, {
 		headers: {
-			'X-Api-Key': 'system',
+			Authorization: 'Bearer system',
 		},
 	});
 
@@ -308,7 +308,7 @@ test('Adoption of a probe with old node version', async ({ page, user }) => {
 		user: { id: user.id },
 	}, {
 		headers: {
-			'X-Api-Key': 'system',
+			Authorization: 'Bearer system',
 		},
 	});
 
