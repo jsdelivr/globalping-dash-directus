@@ -13,3 +13,4 @@ config/local*
 /playwright/.cache/
 /test/e2e/globalping-dash/
 /src/extensions/*/*/lib
+package-lock.json
