@@ -57,10 +57,10 @@ export default defineHook(({ filter, action }, context) => {
 		}
 
 		const notificationPreferences = user.notification_preferences ?? {};
+		const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
 
 		const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-		const userHasDisabledTypes = (Object.keys(notificationPreferences) as Array<NotificationTypeKey>)
-			.some(key => !notificationPreferences[key]!.enabled);
+		const allDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.enabled === false);
 
 		let shouldSend: boolean;
 
@@ -68,7 +68,7 @@ export default defineHook(({ filter, action }, context) => {
 			shouldSend = true;
 		} else if (typeof userEnabled === 'boolean') {
 			shouldSend = userEnabled;
-		} else if (userHasDisabledTypes) {
+		} else if (allDisabled) {
 			shouldSend = false;
 		} else {
 			shouldSend = true;
@@ -102,10 +102,10 @@ export default defineHook(({ filter, action }, context) => {
 		}
 
 		const notificationPreferences = user.notification_preferences ?? {};
+		const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
 
 		const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
-		const userHasDisabledEmailTypes = (Object.keys(notificationPreferences) as Array<NotificationTypeKey>)
-			.some(key => !notificationPreferences[key]!.emailEnabled);
+		const allEmailDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.emailEnabled === false);
 
 		let shouldSendEmail: boolean;
 
@@ -115,7 +115,7 @@ export default defineHook(({ filter, action }, context) => {
 			shouldSendEmail = true;
 		} else if (typeof userEmailEnabled === 'boolean') {
 			shouldSendEmail = userEmailEnabled;
-		} else if (userHasDisabledEmailTypes) {
+		} else if (allEmailDisabled) {
 			shouldSendEmail = false;
 		} else {
 			shouldSendEmail = true;

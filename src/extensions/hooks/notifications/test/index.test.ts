@@ -94,8 +94,26 @@ describe('notifications hooks', () => {
 			}
 		});
 
-		it('should cancel if user has disabled other types and this type is not configured', async () => {
-			readOne.resolves({ notification_preferences: { offline_probe: { enabled: false, emailEnabled: true } } });
+		it('should send if at least one configured type is enabled and this type is not configured', async () => {
+			readOne.resolves({
+				notification_preferences: {
+					offline_probe: { enabled: false, emailEnabled: true },
+					probe_unassigned: { enabled: true, emailEnabled: true },
+				},
+			});
+
+			const payload = { type: 'probe_adopted', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.equal(payload);
+		});
+
+		it('should cancel if all configured types are disabled and this type is not configured', async () => {
+			readOne.resolves({
+				notification_preferences: {
+					offline_probe: { enabled: false, emailEnabled: true },
+					probe_unassigned: { enabled: false, emailEnabled: true },
+				},
+			});
 
 			try {
 				await filter()({ type: 'probe_adopted', recipient: 'user-1', subject: 'test' });

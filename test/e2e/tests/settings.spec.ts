@@ -51,7 +51,30 @@ test('Notifications are sent when preferences are null', async ({ page, user }) 
 	await expect(page.getByText('probe_adopted').first()).toBeVisible();
 });
 
-test('If there are disabled notification types, unspecified notification types are not sent', async ({ page, user }) => {
+test('If all notification types are disabled, unspecified notification types are not sent', async ({ page, user }) => {
+	await client('directus_users').where({ id: user.id }).update({
+		notification_preferences: JSON.stringify({
+			probe_adopted: { enabled: false },
+			outdated_software: { enabled: false },
+		}),
+	});
+
+	await page.goto('/settings');
+
+	await sendNotification('outdated_firmware', user.id);
+	await sendNotification('welcome', user.id);
+	await sendNotification('probe_adopted', user.id);
+	await sendNotification('offline_probe', user.id);
+
+	await page.reload();
+	await page.getByRole('button', { name: 'Notifications' }).click();
+	await expect(page.getByText('outdated_firmware').first()).not.toBeVisible();
+	await expect(page.getByText('welcome').first()).toBeVisible();
+	await expect(page.getByText('probe_adopted').first()).not.toBeVisible();
+	await expect(page.getByText('offline_probe').first()).not.toBeVisible();
+});
+
+test('If some notification types are enabled, unspecified notification types are sent', async ({ page, user }) => {
 	await client('directus_users').where({ id: user.id }).update({
 		notification_preferences: JSON.stringify({
 			probe_adopted: { enabled: false },
@@ -71,7 +94,7 @@ test('If there are disabled notification types, unspecified notification types a
 	await expect(page.getByText('outdated_firmware').first()).toBeVisible();
 	await expect(page.getByText('welcome').first()).toBeVisible();
 	await expect(page.getByText('probe_adopted').first()).not.toBeVisible();
-	await expect(page.getByText('offline_probe').first()).not.toBeVisible();
+	await expect(page.getByText('offline_probe').first()).toBeVisible();
 });
 
 test('Toggles of notification types', async ({ page, user }) => {
