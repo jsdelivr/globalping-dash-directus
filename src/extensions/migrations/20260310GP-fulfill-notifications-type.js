@@ -33,6 +33,15 @@ export async function up (knex) {
 			WHERE type IS NULL
 				AND subject LIKE 'Welcome to Globalping%'
 		`);
+
+		const notificationWithNullType = await trx('directus_notifications')
+			.whereNull('type')
+			.select('subject')
+			.first();
+
+		if (notificationWithNullType) {
+			throw new Error(`Found directus_notifications rows with NULL type after backfill. Subject: ${notificationWithNullType.subject}`);
+		}
 	});
 
 	console.log('Backfilled null directus_notifications.type values for known subjects.');

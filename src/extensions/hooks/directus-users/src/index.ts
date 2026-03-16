@@ -24,7 +24,11 @@ export default defineHook(({ filter, action }, context) => {
 			return;
 		}
 
-		await context.database('directus_users').where({ id: SYSTEM_USER_ID }).update({ token });
+		const updated = await context.database('directus_users').where({ id: SYSTEM_USER_ID }).update({ token });
+
+		if (updated === 0) {
+			throw new Error('System user row not found; token sync failed.');
+		}
 	});
 
 	filter('users.update', async (payload, { keys }, { accountability }) => {

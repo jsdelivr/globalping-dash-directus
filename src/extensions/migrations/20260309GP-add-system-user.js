@@ -5,7 +5,7 @@ const GP_SYSTEM_KEY = process.env.GP_SYSTEM_KEY;
 const SYSTEM_USER_ID = 'f3249755-8b2b-43e6-878e-d5387afe1a24';
 
 if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN || !GP_SYSTEM_KEY) {
-	throw new Error(`DIRECTUS_URL, ADMIN_ACCESS_TOKEN and DIRECTUS_SYSTEM_TOKEN must be set. Actual values: DIRECTUS_URL: ${DIRECTUS_URL}.`);
+	throw new Error(`DIRECTUS_URL, ADMIN_ACCESS_TOKEN and GP_SYSTEM_KEY must be set. Actual values: DIRECTUS_URL: ${DIRECTUS_URL}.`);
 }
 
 async function directusRequest (path, method = 'GET', body) {
