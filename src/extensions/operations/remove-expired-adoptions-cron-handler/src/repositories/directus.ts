@@ -94,8 +94,8 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSch
 		await notificationsService.createOne({
 			recipient: probe.userId,
 			type: 'probe_unassigned',
-			subject: 'Your probe has been unassigned',
-			message: `Your ${probe.name ? `probe **${probe.name}**` : 'probe'} with IP address **${probe.ip}** has been unassigned from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+			subject: 'Your probe has been deleted',
+			message: `Your ${probe.name ? `probe **${probe.name}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			item: probe.id,
 			collection: 'gp_probes',
 		});

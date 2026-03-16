@@ -66,8 +66,8 @@ export const seed = async (knex) => {
 				status: index === 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
 				collection: 'gp_probes',
-				subject: 'Your probe has been unassigned',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been unassigned from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+				subject: 'Your probe has been deleted',
+				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			}
 		)),
 		// new probe adopted message
