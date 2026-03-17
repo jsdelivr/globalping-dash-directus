@@ -102,7 +102,8 @@ export default defineHook(({ filter, action }, context) => {
 		}
 
 		const notificationPreferences = user.notification_preferences ?? {};
-		const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
+		const configuredTypes = (Object.keys(notificationPreferences) as Array<NotificationTypeKey>)
+			.filter(key => typeof notificationPreferences[key]?.emailEnabled === 'boolean');
 
 		const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
 		const allEmailDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.emailEnabled === false);
