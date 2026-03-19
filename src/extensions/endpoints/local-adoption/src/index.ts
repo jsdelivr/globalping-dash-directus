@@ -60,62 +60,56 @@ export default defineEndpoint((router, context) => {
 		const req = eReq as Request;
 		const clientIp = getClientIp(req);
 
-		const updatedProbe = await database.transaction(async (trx) => {
-			const row = await database('gp_probes')
-				.transacting(trx)
-				.forUpdate()
-				.whereNull('userId')
-				.whereNotNull('localAdoptionServer')
-				.where('status', 'ready')
-				.where((query) => {
-					query.where('ip', clientIp)
-						.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
-				})
-				.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
-				.first<Row>();
+		const row = await database('gp_probes')
+			.whereNull('userId')
+			.whereNotNull('localAdoptionServer')
+			.where('status', 'ready')
+			.where((query) => {
+				query.where('ip', clientIp)
+					.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
+			})
+			.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
+			.first<Row>();
 
-			if (!row) {
-				throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
-			}
+		if (!row) {
+			throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
+		}
 
-			const probe = parseRow(row);
-			const probeToAdopt: ProbeToAdopt = {
-				userId: null,
-				ip: probe.ip,
-				name: null,
-				altIps: probe.altIps,
-				uuid: probe.uuid,
-				tags: [],
-				systemTags: probe.systemTags,
-				status: probe.status,
-				isIPv4Supported: probe.isIPv4Supported,
-				isIPv6Supported: probe.isIPv6Supported,
-				version: probe.version,
-				nodeVersion: probe.nodeVersion,
-				hardwareDevice: probe.hardwareDevice,
-				hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
-				city: probe.city,
-				state: probe.state,
-				stateName: probe.stateName,
-				country: probe.country,
-				countryName: probe.countryName,
-				continent: probe.continent,
-				continentName: probe.continentName,
-				region: probe.region,
-				latitude: probe.latitude,
-				longitude: probe.longitude,
-				asn: probe.asn,
-				network: probe.network,
-				allowedCountries: probe.allowedCountries,
-				originalLocation: null,
-				customLocation: null,
-				localAdoptionServer: probe.localAdoptionServer,
-			};
+		const probe = parseRow(row);
+		const probeToAdopt: ProbeToAdopt = {
+			userId: null,
+			ip: probe.ip,
+			name: null,
+			altIps: probe.altIps,
+			uuid: probe.uuid,
+			tags: [],
+			systemTags: probe.systemTags,
+			status: probe.status,
+			isIPv4Supported: probe.isIPv4Supported,
+			isIPv6Supported: probe.isIPv6Supported,
+			version: probe.version,
+			nodeVersion: probe.nodeVersion,
+			hardwareDevice: probe.hardwareDevice,
+			hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
+			city: probe.city,
+			state: probe.state,
+			stateName: probe.stateName,
+			country: probe.country,
+			countryName: probe.countryName,
+			continent: probe.continent,
+			continentName: probe.continentName,
+			region: probe.region,
+			latitude: probe.latitude,
+			longitude: probe.longitude,
+			asn: probe.asn,
+			network: probe.network,
+			allowedCountries: probe.allowedCountries,
+			originalLocation: null,
+			customLocation: null,
+			localAdoptionServer: probe.localAdoptionServer,
+		};
 
-			const adoption = await createAdoptedProbe(req.accountability.user!, probeToAdopt, context);
-
-			return adoption;
-		});
+		const updatedProbe = await createAdoptedProbe(req.accountability.user!, probeToAdopt, context);
 
 		res.json(updatedProbe);
 	}, context));
