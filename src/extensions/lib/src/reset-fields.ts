@@ -37,6 +37,6 @@ export const getResetUserFields = (probe: Probe) => ({
 	...getResetLocationFields(probe),
 	name: null,
 	userId: null,
-	tags: [] as string[],
+	tags: [] as [],
 	systemTags: probe.systemTags.filter(tag => !tag.startsWith('u-')),
 });
