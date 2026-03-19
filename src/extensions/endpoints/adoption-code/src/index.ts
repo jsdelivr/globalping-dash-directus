@@ -11,11 +11,10 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
+import { createAdoptedProbe, type ProbeToAdopt } from '../../../lib/src/create-adopted-probe.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
-import { createAdoptedProbe, findAdoptedProbeByIp } from './repositories/directus.js';
-
-export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
+import { findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
 	accountability?: {
@@ -26,59 +25,6 @@ export type Request = ExpressRequest & {
 	schema: object;
 };
 
-export type ProbeToAdopt = {
-	ip: string;
-	altIps: string[];
-	name: null;
-	uuid: string;
-	version: string;
-	nodeVersion: string;
-	hardwareDevice: string | null;
-	hardwareDeviceFirmware: string | null;
-	userId: null;
-	tags: string[];
-	systemTags: string[];
-	status: string;
-	city: string;
-	state: string | null;
-	stateName: string | null;
-	country: string;
-	countryName: string;
-	continent: string;
-	continentName: string;
-	region: string;
-	latitude: number;
-	longitude: number;
-	asn: number;
-	network: string;
-	isIPv4Supported: boolean;
-	isIPv6Supported: boolean;
-	allowedCountries: string[];
-	originalLocation: null;
-	customLocation: null;
-};
-
-export type AdoptedProbe = Override<ProbeToAdopt, {
-	id: string;
-	userId: string;
-	name: string | null;
-	lastSyncDate: Date;
-	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
-	customLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
-	isOutdated: boolean;
-}>;
-
-export type Row = Override<AdoptedProbe, {
-	tags: string;
-	altIps: string;
-	systemTags: string;
-	allowedCountries: string;
-	isIPv4Supported: number;
-	isIPv6Supported: number;
-	originalLocation: string | null;
-	customLocation: string | null;
-	isOutdated: number;
-}>;
 
 const InvalidCodeError = createError('INVALID_PAYLOAD_ERROR', 'Invalid code', 400);
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
@@ -162,6 +108,7 @@ export default defineEndpoint((router, context) => {
 						isIPv6Supported: false,
 						customLocation: null,
 						originalLocation: null,
+						localAdoptionServer: null,
 					},
 				});
 

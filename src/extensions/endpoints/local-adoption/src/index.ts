@@ -5,6 +5,7 @@ import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getIpFromRequest } from '../../../lib/src/client-ip.js';
+import { type ProbeToAdopt, type Row, createAdoptedProbe, parseRow } from '../../../lib/src/create-adopted-probe.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 
 type Request = ExpressRequest & {
@@ -31,7 +32,7 @@ const getClientIp = (req: ExpressRequest) => {
 };
 
 export default defineEndpoint((router, context) => {
-	const { getSchema, services, database } = context;
+	const { database } = context;
 
 	router.get('/', asyncWrapper(async (req, res) => {
 		const clientIp = getClientIp(req);
@@ -60,7 +61,7 @@ export default defineEndpoint((router, context) => {
 		const clientIp = getClientIp(req);
 
 		const updatedProbe = await database.transaction(async (trx) => {
-			const probe = await database('gp_probes')
+			const row = await database('gp_probes')
 				.transacting(trx)
 				.forUpdate()
 				.whereNull('userId')
@@ -71,22 +72,49 @@ export default defineEndpoint((router, context) => {
 						.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
 				})
 				.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
-				.first();
+				.first<Row>();
 
-			if (!probe) {
+			if (!row) {
 				throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
 			}
 
-			const probesService = new services.ItemsService('gp_probes', {
-				schema: await getSchema(),
-				knex: trx,
-			});
+			const probe = parseRow(row);
+			const probeToAdopt: ProbeToAdopt = {
+				userId: null,
+				ip: probe.ip,
+				name: null,
+				altIps: probe.altIps,
+				uuid: probe.uuid,
+				tags: [],
+				systemTags: probe.systemTags,
+				status: probe.status,
+				isIPv4Supported: probe.isIPv4Supported,
+				isIPv6Supported: probe.isIPv6Supported,
+				version: probe.version,
+				nodeVersion: probe.nodeVersion,
+				hardwareDevice: probe.hardwareDevice,
+				hardwareDeviceFirmware: probe.hardwareDeviceFirmware,
+				city: probe.city,
+				state: probe.state,
+				stateName: probe.stateName,
+				country: probe.country,
+				countryName: probe.countryName,
+				continent: probe.continent,
+				continentName: probe.continentName,
+				region: probe.region,
+				latitude: probe.latitude,
+				longitude: probe.longitude,
+				asn: probe.asn,
+				network: probe.network,
+				allowedCountries: probe.allowedCountries,
+				originalLocation: null,
+				customLocation: null,
+				localAdoptionServer: probe.localAdoptionServer,
+			};
 
-			await probesService.updateOne(probe.id, {
-				userId: req.accountability.user,
-			}, { emitEvents: false });
+			const adoption = await createAdoptedProbe(req.accountability.user!, probeToAdopt, context);
 
-			return probesService.readOne(probe.id);
+			return adoption;
 		});
 
 		res.json(updatedProbe);

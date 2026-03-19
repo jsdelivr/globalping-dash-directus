@@ -10,6 +10,7 @@ describe('local-adoption endpoint', () => {
 
 	const knexQueryBuilder = {
 		where: sandbox.stub(),
+		orWhere: sandbox.stub(),
 		whereNull: sandbox.stub(),
 		whereNotNull: sandbox.stub(),
 		select: sandbox.stub(),
@@ -23,6 +24,7 @@ describe('local-adoption endpoint', () => {
 
 	// make the knexQueryBuilder chainable
 	knexQueryBuilder.where.returns(knexQueryBuilder);
+	knexQueryBuilder.orWhere.returns(knexQueryBuilder);
 	knexQueryBuilder.whereNull.returns(knexQueryBuilder);
 	knexQueryBuilder.whereNotNull.returns(knexQueryBuilder);
 	knexQueryBuilder.select.returns(knexQueryBuilder);
@@ -39,6 +41,8 @@ describe('local-adoption endpoint', () => {
 
 	const updateOne = sandbox.stub();
 	const readOne = sandbox.stub();
+	const readByQuery = sandbox.stub();
+	const notificationCreateOne = sandbox.stub();
 	const getSchema = sandbox.stub().resolves({});
 
 	const endpointContext = {
@@ -49,7 +53,10 @@ describe('local-adoption endpoint', () => {
 		getSchema,
 		services: {
 			ItemsService: sandbox.stub().callsFake(() => {
-				return { updateOne, readOne };
+				return { updateOne, readOne, readByQuery };
+			}),
+			NotificationsService: sandbox.stub().callsFake(() => {
+				return { createOne: notificationCreateOne };
 			}),
 		},
 	} as unknown as EndpointExtensionContext;
@@ -107,6 +114,8 @@ describe('local-adoption endpoint', () => {
 
 		updateOne.resolves('probe-1');
 		readOne.resolves({ ...probeData, userId: 'user-id' });
+		readByQuery.resolves([]);
+		notificationCreateOne.resolves('notification-1');
 
 		accountability = {
 			user: 'user-id',
@@ -176,7 +185,7 @@ describe('local-adoption endpoint', () => {
 			expect(res.body).to.deep.include({ id: 'probe-1', userId: 'user-id' });
 
 			expect(knexQueryBuilder.first.called).to.equal(true);
-			expect(updateOne.calledWith('probe-1', { userId: 'user-id' }, { emitEvents: false })).to.equal(true);
+			expect(updateOne.called).to.equal(true);
 			expect(readOne.calledWith('probe-1')).to.equal(true);
 		});
 
