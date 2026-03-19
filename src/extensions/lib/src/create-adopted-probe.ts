@@ -5,12 +5,12 @@ import { getResetUserFields } from './reset-fields.js';
 export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
 
 export type ProbeToAdopt = {
-	userId: null;
+	userId: string | null;
 	ip: string;
-	name: null;
+	name: string | null;
 	altIps: string[];
 	uuid: string;
-	tags: [];
+	tags: { value: string; prefix: string; format?: string }[];
 	systemTags: string[];
 	status: string;
 	isIPv4Supported: boolean;
@@ -32,15 +32,13 @@ export type ProbeToAdopt = {
 	asn: number;
 	network: string;
 	allowedCountries: string[];
-	originalLocation: null;
-	customLocation: null;
+	originalLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
+	customLocation: { country: string; city: string; latitude: number; longitude: number; state: string | null } | null;
 	localAdoptionServer: string | null;
 };
 
 export type Row = Override<ProbeToAdopt, {
-	userId: string | null;
 	id: string;
-	name: string | null;
 	altIps: string;
 	tags: string;
 	systemTags: string;
