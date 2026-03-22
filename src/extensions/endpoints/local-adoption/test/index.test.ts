@@ -101,7 +101,15 @@ describe('local-adoption endpoint', () => {
 		id: 'probe-1',
 		ip: clientIp,
 		altIps: JSON.stringify([]),
+		uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 		status: 'ready',
+		isIPv4Supported: true,
+		isIPv6Supported: false,
+		version: '0.27.0',
+		nodeVersion: 'v22.17.0',
+		hardwareDevice: 'v2',
+		hardwareDeviceFirmware: 'v2.1',
+		asn: 12876,
 		...reducedProbeData,
 	};
 
@@ -186,7 +194,66 @@ describe('local-adoption endpoint', () => {
 
 			expect(knexQueryBuilder.first.called).to.equal(true);
 			expect(updateOne.called).to.equal(true);
+
+			expect(updateOne.args[0]?.[1]).to.deep.include({
+				name: 'probe-us-new-york-01',
+				userId: 'user-id',
+				ip: clientIp,
+			});
+
+			expect(notificationCreateOne.callCount).to.equal(1);
+
+			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
+				recipient: 'user-id',
+				type: 'probe_adopted',
+				subject: 'New probe adopted',
+				message: 'A new probe [**probe-us-new-york-01**](/probes/probe-1) with IP address **192.168.1.10** has been assigned to your account.',
+			});
+
 			expect(readOne.calledWith('probe-1')).to.equal(true);
+		});
+
+		it('should only update metadata when probe is already assigned to user', async () => {
+			knexQueryBuilder.first.onFirstCall().resolves(probeData);
+
+			knexQueryBuilder.first.onSecondCall().resolves({
+				...probeData,
+				userId: 'user-id',
+			});
+
+			const res = await request(app)
+				.post('/adopt')
+				.set('X-Forwarded-For', clientIp)
+				.send({
+					token: 'valid-token-123',
+				});
+
+			expect(res.status).to.equal(200);
+			expect(updateOne.callCount).to.equal(1);
+
+			expect(updateOne.args[0]).to.deep.equal([
+				'probe-1',
+				{
+					lastSyncDate: new Date(),
+					ip: '192.168.1.10',
+					altIps: [],
+					uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+					version: '0.27.0',
+					nodeVersion: 'v22.17.0',
+					hardwareDevice: 'v2',
+					hardwareDeviceFirmware: 'v2.1',
+					systemTags: [],
+					status: 'ready',
+					isIPv4Supported: true,
+					isIPv6Supported: false,
+					asn: 12876,
+					network: 'Local LAN',
+					localAdoptionServer: reducedProbeData.localAdoptionServer,
+				},
+				{ emitEvents: false },
+			]);
+
+			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
 		it('should 404 if probe not found via token', async () => {

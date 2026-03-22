@@ -993,6 +993,7 @@ describe('adoption code endpoints', () => {
 				network: 'SCALEWAY S.A.S.',
 				customLocation: null,
 				allowedCountries: [ 'FR' ],
+				localAdoptionServer: null,
 			},
 			user: { id: 'first-user-id' },
 		};
@@ -1105,7 +1106,7 @@ describe('adoption code endpoints', () => {
 					name: 'probe-fr-paris-01',
 					userId: 'first-user-id',
 					tags: [],
-					localAdoptionServer: undefined,
+					localAdoptionServer: null,
 				},
 				{ emitEvents: false },
 			]);
@@ -1215,7 +1216,7 @@ describe('adoption code endpoints', () => {
 					isIPv6Supported: false,
 					asn: 12876,
 					network: 'SCALEWAY S.A.S.',
-					localAdoptionServer: undefined,
+					localAdoptionServer: null,
 				},
 				{ emitEvents: false },
 			]);
