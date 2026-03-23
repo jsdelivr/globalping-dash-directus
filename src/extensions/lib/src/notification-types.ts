@@ -1,13 +1,15 @@
 export type NotificationTypeKey = keyof typeof notificationTypes;
 
 type NotificationType = {
-	ignorePreferences: boolean;
-	allowEmail: boolean;
+	configurableByUser: boolean;
+	readOnly: boolean;
+	sendEmail: boolean;
 	hasParameter: false;
 	description: string;
 } | {
-	ignorePreferences: boolean;
-	allowEmail: boolean;
+	configurableByUser: boolean;
+	readOnly: boolean;
+	sendEmail: boolean;
 	hasParameter: true;
 	defaultParameter: number;
 	description: string;
@@ -15,55 +17,63 @@ type NotificationType = {
 
 const notificationTypes = {
 	welcome: {
-		ignorePreferences: true,
-		allowEmail: false,
-		hasParameter: false,
+		configurableByUser: true, // Does type appear in user notification preferences?
+		readOnly: false, // Can user disable "App" notifications for this type?
+		sendEmail: false, // Should system try to send email for this type? (Can be overridden by user preferences.)
+		hasParameter: false, // Does type have a parameter input?
 		description: 'Welcome to Globalping message.',
 	},
 	probe_adopted: {
-		ignorePreferences: false,
-		allowEmail: false,
+		configurableByUser: false,
+		readOnly: false,
+		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe successfully adopted',
 	},
 	probe_unassigned: {
-		ignorePreferences: false,
-		allowEmail: false,
+		configurableByUser: false,
+		readOnly: false,
+		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe was unassigned',
 	},
 	outdated_software: { // Also controls 'outdated_firmware'.
-		ignorePreferences: false,
-		allowEmail: false,
+		configurableByUser: false,
+		readOnly: true,
+		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe software is outdated',
 	},
 	outdated_firmware: 'outdated_software',
 	offline_probe: {
-		ignorePreferences: false,
-		allowEmail: false,
+		configurableByUser: false,
+		readOnly: false,
+		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe went offline',
 	},
 	probe_location_changed: { // Also controls 'probe_location_changed_back'.
-		ignorePreferences: false,
-		allowEmail: false,
+		configurableByUser: false,
+		readOnly: false,
+		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
 	// low_credits: {
-	// 	ignorePreferences: false,
-	// 	allowEmail: false,
+	// 	configurableByUser: false,
+	// 	readOnly: false,
+	// 	sendEmail: false,
 	// 	hasParameter: true,
 	// 	defaultParameter: 1000,
 	// 	description: 'Credits are running low',
 	// },
 } satisfies Record<string, string | NotificationType>;
 
-export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.ignorePreferences) as [string, NotificationType][])
+export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.configurableByUser) as [string, NotificationType][])
 	.map(([ key, value ]) => [ key, {
-		allowEmail: value.allowEmail,
+		readOnly: value.readOnly,
+		sendEmail: value.sendEmail,
 		hasParameter: value.hasParameter,
 		...value.hasParameter ? { defaultParameter: value.defaultParameter } : {},
 		description: value.description,

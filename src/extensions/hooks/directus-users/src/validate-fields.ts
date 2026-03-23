@@ -14,7 +14,18 @@ const validateNotificationParameter = (value: { enabled: boolean; parameter?: nu
 	const notificationType = pathSegments[pathSegments.length - 1] as string;
 
 	if (configurableNotifications[notificationType]?.hasParameter && value.enabled && typeof value.parameter !== 'number') {
-		return helpers.error('threshold.missing');
+		return helpers.error('parameter.missing');
+	}
+
+	return value;
+};
+
+const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
+	const pathSegments = helpers.state.path ?? [];
+	const notificationType = pathSegments[pathSegments.length - 1] as string;
+
+	if (configurableNotifications[notificationType]?.readOnly) {
+		return { ...value, enabled: true };
 	}
 
 	return value;
@@ -27,18 +38,20 @@ const userSchema = Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().optional(),
 			parameter: parameterSchema.optional(),
-		}).custom(validateNotificationParameter).messages({
-			'threshold.missing': 'Threshold value for notification should be specified.',
+		}).custom(validateNotificationParameter).custom(validateReadOnly).messages({
+			'parameter.missing': 'Threshold value for notification should be specified.',
 		}),
 	).max(50).allow(null).optional(),
 }).unknown(true);
 
-export const joiValidateUser = (fields: unknown) => {
-	const { error } = userSchema.validate(fields);
+export const joiValidateUser = (fields: Record<string, unknown>) => {
+	const { error, value } = userSchema.validate(fields);
 
 	if (error) {
 		throw payloadError(error.message);
 	}
+
+	Object.assign(fields, value);
 };
 
 export const validateDefaultPrefix = async (defaultPrefix: string, keys: string[], accountability: EventContext['accountability'] | null, context: HookExtensionContext) => {

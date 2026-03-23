@@ -42,7 +42,7 @@ export default defineHook(({ filter, action }, context) => {
 		const type = mapNotificationTypeKey(value.type);
 		const notification = getNotificationType(type);
 
-		if (notification.ignorePreferences) {
+		if (notification.configurableByUser) {
 			return payload;
 		}
 
@@ -87,7 +87,7 @@ export default defineHook(({ filter, action }, context) => {
 		const type = mapNotificationTypeKey(payload.type);
 		const notification = getNotificationType(type);
 
-		if (!notification.allowEmail) {
+		if (!notification.sendEmail) {
 			return;
 		}
 
@@ -110,7 +110,7 @@ export default defineHook(({ filter, action }, context) => {
 
 		let shouldSendEmail: boolean;
 
-		if (notification.ignorePreferences) {
+		if (notification.configurableByUser) {
 			shouldSendEmail = true;
 		} else if (user.notification_preferences === null) {
 			shouldSendEmail = true;

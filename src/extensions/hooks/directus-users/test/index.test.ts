@@ -146,6 +146,23 @@ describe('users hooks', () => {
 			expect(err.message).to.contain('"notification_preferences.not_existing_type" is not allowed');
 		});
 
+		it('should force enabled true for readOnly notification', async () => {
+			const payload = {
+				notification_preferences: {
+					outdated_software: { enabled: false, emailEnabled: false },
+				},
+			};
+
+			await callbacks.filter['users.update']?.(
+				payload,
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			);
+
+			expect(payload.notification_preferences.outdated_software.enabled).to.equal(true);
+			expect(payload.notification_preferences.outdated_software.emailEnabled).to.equal(false);
+		});
+
 		it('should do nothing if default_prefix is not being updated', async () => {
 			await callbacks.filter['users.update']?.(
 				{ email: 'test@example.com' },

@@ -49,7 +49,7 @@ describe('notifications hooks', () => {
 			}
 		});
 
-		it('should skip checks for ignorePreferences notification types', async () => {
+		it('should skip checks for configurableByUser notification types', async () => {
 			const payload = { type: 'welcome', recipient: 'user-1', subject: 'Hello' };
 			const result = await filter()(payload);
 			expect(result).to.equal(payload);
