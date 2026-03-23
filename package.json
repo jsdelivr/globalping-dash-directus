@@ -49,7 +49,7 @@
 		"lint:fix": "pnpm lint --fix",
 		"init:dev": "./scripts/init.sh development",
 		"init:e2e": "./scripts/init.sh e2e",
-		"auth:dev": "./scripts/auth.sh",
+		"auth:development": "./scripts/auth.sh",
 		"docker:ls:update": "node ./scripts/docker-ls.js",
 		"migrate:development": "dotenv -e .env.scripts.development -e .env.docker.development -- pnpm run migrate:internal",
 		"migrate:e2e": "dotenv -e .env.scripts.e2e -e .env.docker.e2e -- pnpm run migrate:internal",
