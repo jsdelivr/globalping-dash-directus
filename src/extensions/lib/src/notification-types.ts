@@ -40,7 +40,7 @@ const notificationTypes = {
 	outdated_software: { // Also controls 'outdated_firmware'.
 		configurableByUser: false,
 		readOnly: true,
-		sendEmail: false,
+		sendEmail: true,
 		hasParameter: false,
 		description: 'Probe software is outdated',
 	},

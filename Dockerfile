@@ -21,6 +21,7 @@ COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpo
 COPY src/extensions/endpoints/local-adoption/package.json src/extensions/endpoints/local-adoption/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
+COPY src/extensions/hooks/email-sender/package.json src/extensions/hooks/email-sender/
 COPY src/extensions/hooks/gp-tokens/package.json src/extensions/hooks/gp-tokens/
 COPY src/extensions/hooks/location-overrides/package.json src/extensions/hooks/location-overrides/
 COPY src/extensions/hooks/notifications/package.json src/extensions/hooks/notifications/
@@ -76,6 +77,8 @@ COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/package.json /directus/extensions/adopted-probe/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/dist/* /directus/extensions/directus-users/dist/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/package.json /directus/extensions/directus-users/
+COPY --from=builder /builder/src/extensions/hooks/email-sender/dist/* /directus/extensions/email-sender/dist/
+COPY --from=builder /builder/src/extensions/hooks/email-sender/package.json /directus/extensions/email-sender/
 COPY --from=builder /builder/src/extensions/hooks/gp-tokens/dist/* /directus/extensions/gp-tokens/dist/
 COPY --from=builder /builder/src/extensions/hooks/gp-tokens/package.json /directus/extensions/gp-tokens/
 COPY --from=builder /builder/src/extensions/hooks/location-overrides/dist/* /directus/extensions/location-overrides/dist/
