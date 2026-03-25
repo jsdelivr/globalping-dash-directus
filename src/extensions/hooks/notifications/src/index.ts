@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, allNotificationTypes, getNotificationType, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { type NotificationTypeKey, allNotificationTypes, getNotificationType } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email: string | null;
@@ -15,7 +15,8 @@ type NotificationPayload = {
 	type: NotificationTypeKey;
 	recipient: string;
 	subject: string;
-	message?: string;
+	message: string;
+	email_status?: 'not-required' | 'no-email' | 'disabled-by-user' | 'pending' | 'sent';
 };
 
 const UserNotFoundError = createError('NOT_FOUND', 'User for notification not found.', 404);
@@ -24,10 +25,11 @@ const CancelNotificationError = createError('CANCELLED', 'Notification cancelled
 
 const notificationPayloadSchema = Joi.object({
 	type: Joi.string().valid(...allNotificationTypes).required(),
+	message: Joi.string().required(),
 	recipient: Joi.string().required(),
 }).unknown(true);
 
-export default defineHook(({ filter, action }, context) => {
+export default defineHook(({ filter }, context) => {
 	const { services, getSchema } = context;
 	const { UsersService } = services;
 
@@ -38,13 +40,7 @@ export default defineHook(({ filter, action }, context) => {
 			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 		}
 
-		const { recipient } = value as { type: NotificationTypeKey; recipient: string };
-		const type = mapNotificationTypeKey(value.type);
-		const notification = getNotificationType(type);
-
-		if (notification.configurableByUser) {
-			return payload;
-		}
+		const { recipient, type } = value as { type: NotificationTypeKey; recipient: string };
 
 		const usersService = new UsersService({
 			schema: await getSchema(),
@@ -56,90 +52,80 @@ export default defineHook(({ filter, action }, context) => {
 			throw new UserNotFoundError();
 		}
 
-		const notificationPreferences = user.notification_preferences ?? {};
-		const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
-
-		const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-		const allDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.enabled === false);
-
-		let shouldSend: boolean;
-
-		if (user.notification_preferences === null) {
-			shouldSend = true;
-		} else if (typeof userEnabled === 'boolean') {
-			shouldSend = userEnabled;
-		} else if (allDisabled) {
-			shouldSend = false;
-		} else {
-			shouldSend = true;
-		}
+		const shouldSend = getShouldSend(type, user);
 
 		if (!shouldSend) {
 			throw new CancelNotificationError();
 		}
 
-		return payload;
-	});
-
-	action('notifications.create', async (meta) => {
-		const payload = meta.payload as NotificationPayload;
-		const recipient = payload.recipient;
-		const type = mapNotificationTypeKey(payload.type);
-		const notification = getNotificationType(type);
-
-		if (!notification.sendEmail) {
-			return;
-		}
-
-		const usersService = new UsersService({
-			schema: await getSchema(),
-		});
-
-		const user = await usersService.readOne(recipient) as User | null;
-
-		if (!user?.email) {
-			return;
-		}
-
-		const notificationPreferences = user.notification_preferences ?? {};
-		const configuredTypes = (Object.keys(notificationPreferences) as Array<NotificationTypeKey>)
-			.filter(key => typeof notificationPreferences[key]?.emailEnabled === 'boolean');
-
-		const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
-		const allEmailDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.emailEnabled === false);
-
-		let shouldSendEmail: boolean;
-
-		if (notification.configurableByUser) {
-			shouldSendEmail = true;
-		} else if (user.notification_preferences === null) {
-			shouldSendEmail = true;
-		} else if (typeof userEmailEnabled === 'boolean') {
-			shouldSendEmail = userEmailEnabled;
-		} else if (allEmailDisabled) {
-			shouldSendEmail = false;
-		} else {
-			shouldSendEmail = true;
-		}
-
-		if (!shouldSendEmail) {
-			return;
-		}
-
-		const message = payload.message;
-
-		if (message === undefined) {
-			throw new (createError('INVALID_PAYLOAD_ERROR', '"message" is required', 400))();
-		}
-
-		// const mailService = new MailService({
-		// 	schema: await getSchema(),
-		// });
-
-		// await mailService.send({
-		// 	to: user.email,
-		// 	subject: payload.subject,
-		// 	text: message,
-		// });
+		const emailStatus = getEmailStatus(type, user);
+		return { ...payload, email_status: emailStatus };
 	});
 });
+
+const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
+	const notification = getNotificationType(type);
+
+	if (!notification.configurableByUser) {
+		return true;
+	}
+
+	const notificationPreferences = user.notification_preferences ?? {};
+	const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
+	const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
+	const allDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.enabled === false);
+
+	if (user.notification_preferences === null) {
+		return true;
+	}
+
+	if (typeof userEnabled === 'boolean') {
+		return userEnabled;
+	}
+
+	if (allDisabled) {
+		return false;
+	}
+
+	return true;
+};
+
+const getEmailStatus = (type: NotificationTypeKey, user: User): NotificationPayload['email_status'] => {
+	const notification = getNotificationType(type);
+
+	if (!notification.sendEmail) {
+		return 'not-required';
+	}
+
+	if (!user?.email) {
+		return 'no-email';
+	}
+
+	const notificationPreferences = user.notification_preferences ?? {};
+	const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
+	const configuredEmailTypes = configuredTypes.filter(key => typeof notificationPreferences[key]?.emailEnabled === 'boolean');
+	const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
+	const allEmailsDisabled = configuredEmailTypes.length > 0 && configuredEmailTypes.every(key => notificationPreferences[key]!.emailEnabled === false);
+
+	if (!notification.configurableByUser) {
+		return 'pending';
+	}
+
+	if (user.notification_preferences === null) {
+		return 'pending';
+	}
+
+	if (userEmailEnabled === true) {
+		return 'pending';
+	}
+
+	if (userEmailEnabled === false) {
+		return 'disabled-by-user';
+	}
+
+	if (allEmailsDisabled) {
+		return 'disabled-by-user';
+	}
+
+	return 'pending';
+};

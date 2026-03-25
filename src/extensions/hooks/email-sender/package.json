@@ -1,0 +1,47 @@
+{
+	"name": "email-sender",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-hook"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "hook",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"validate": "directus-extension validate",
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^3.0.20",
+		"@directus/extensions-sdk": "17.0.11",
+		"@directus/types": "^14.3.1",
+		"@types/chai": "^5.2.3",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^25.5.0",
+		"@types/sinon": "^17.0.4",
+		"chai": "^6.2.0",
+		"mocha": "^11.7.4",
+		"sinon": "^21.0.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^6.0.2"
+	},
+	"dependencies": {
+		"@directus/errors": "^2.2.0",
+		"resend": "^6.9.4"
+	}
+}
