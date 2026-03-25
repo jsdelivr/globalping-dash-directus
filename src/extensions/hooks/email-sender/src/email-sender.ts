@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto';
 import { setTimeout as wait } from 'node:timers/promises';
 import type { HookExtensionContext } from '@directus/extensions';
+import markdownit from 'markdown-it';
 import { Resend } from 'resend';
+import sanitizeHtml from 'sanitize-html';
 
 type NotificationRow = {
 	id: number;
@@ -10,11 +12,14 @@ type NotificationRow = {
 	email: string;
 };
 
+const md = markdownit();
+
 class EmailService {
 	private readonly client: Resend;
 	private timer: NodeJS.Timeout | undefined;
 	private readonly SEND_INTERVAL = 5_000;
 	private readonly BATCH_SIZE = 100;
+	private readonly EMAIL_FROM = 'Globalping <info@globalping.io>';
 	private stopped = true;
 
 	public constructor (private readonly context: HookExtensionContext) {
@@ -24,8 +29,8 @@ class EmailService {
 			throw new Error('RESEND_API_KEY is not set.');
 		}
 
-		if (!env.EMAIL_FROM) {
-			throw new Error('EMAIL_FROM is not set.');
+		if (!env.DASH_URL) {
+			throw new Error('DASH_URL is not set.');
 		}
 
 		this.client = new Resend(env.RESEND_API_KEY);
@@ -97,10 +102,10 @@ class EmailService {
 
 	private async sendEmails (notifications: NotificationRow[]) {
 		const payload = notifications.map(notification => ({
-			from: this.context.env.EMAIL_FROM,
+			from: this.EMAIL_FROM,
 			to: [ notification.email ],
 			subject: notification.subject,
-			text: notification.message ?? '',
+			html: this.formatMessage(notification.message ?? ''),
 		}));
 		const idempotencyKey = this.getIdempotencyKey(notifications);
 
@@ -125,6 +130,11 @@ class EmailService {
 		const ids = notifications.map(({ id }) => id).join(',');
 		const hash = createHash('sha1').update(ids).digest('hex');
 		return `notifications-batch/${hash}`;
+	}
+
+	private formatMessage (message: string) {
+		const messagesWithAbsoluteLinks = message.replaceAll(/\]\((\/[^)]+)\)/g, (_match, link: string) => `](${this.context.env.DASH_URL}${link})`);
+		return sanitizeHtml(md.render(messagesWithAbsoluteLinks));
 	}
 }
 
