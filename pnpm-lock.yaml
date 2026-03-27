@@ -132,13 +132,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.11
-        version: 3.0.11(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))
+        version: 3.0.11(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
       '@directus/extensions-sdk':
         specifier: 16.0.2
-        version: 16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 16.0.2(@types/node@22.13.14)(@unhead/vue@1.9.16(vue@3.5.24(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       '@directus/types':
         specifier: ^13.2.3
-        version: 13.2.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))
+        version: 13.2.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
       '@types/chai':
         specifier: ^5.2.2
         version: 5.2.2
@@ -1458,6 +1458,9 @@ importers:
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.11

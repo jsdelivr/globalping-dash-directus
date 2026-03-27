@@ -40,17 +40,16 @@ export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: Ope
 };
 
 
-export const getProbesToCheck = async (offsetId: string, { database }: OperationContext) => {
+export const getProbesToCheck = async ({ database }: OperationContext) => {
 	const probes: AdoptedProbe[] = await database('gp_probes')
 		.select('*')
 		.whereRaw(`
 			isOutdated = TRUE
 			AND userId IS NOT NULL
 			AND status != 'offline'
-			AND id > ?
-		`, [ offsetId ])
-		.orderBy('id')
-		.limit(100);
+		`)
+		.orderBy('userId')
+		.orderBy('id');
 
 	return probes;
 };
