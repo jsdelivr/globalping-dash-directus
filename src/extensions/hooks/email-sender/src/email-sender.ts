@@ -17,9 +17,10 @@ const md = markdownit();
 class EmailService {
 	private readonly client: Resend;
 	private timer: NodeJS.Timeout | undefined;
+	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
+	private readonly REPLY_TO = 'd@globalping.io';
 	private readonly SEND_INTERVAL = 5_000;
 	private readonly BATCH_SIZE = 100;
-	private readonly EMAIL_FROM = 'Globalping <info@globalping.io>';
 	private stopped = true;
 
 	public constructor (private readonly context: HookExtensionContext) {
@@ -46,7 +47,7 @@ class EmailService {
 					!this.stopped && this.scheduleSend(count === this.BATCH_SIZE ? 0 : this.SEND_INTERVAL);
 				})
 				.catch((error: Error) => {
-					this.context.logger.error('Error in EmailService.handleEmails()', error);
+					this.context.logger.error(error);
 					!this.stopped && this.scheduleSend(this.SEND_INTERVAL);
 				});
 		}, delay).unref();
@@ -87,15 +88,16 @@ class EmailService {
 			return rows;
 		});
 
+		this.context.logger.info('notifications:');
+		this.context.logger.info(JSON.stringify(notifications, null, 2));
+
 		if (notifications.length === 0) {
 			return 0;
 		}
 
-		await this.sendEmails(notifications);
-
-		await this.context.database('directus_notifications')
-			.whereIn('id', notifications.map(({ id }) => id))
-			.update({ email_status: 'sent' });
+		const { sentIds, failedIds } = await this.sendEmails(notifications);
+		sentIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', sentIds).update({ email_status: 'sent' });
+		failedIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', failedIds).update({ email_status: 'failed' });
 
 		return notifications.length;
 	}
@@ -106,17 +108,26 @@ class EmailService {
 			to: [ notification.email ],
 			subject: notification.subject,
 			html: this.formatMessage(notification.message ?? ''),
+			replyTo: this.REPLY_TO,
 		}));
 		const idempotencyKey = this.getIdempotencyKey(notifications);
 
 		for (let attempt = 0; attempt <= 1; attempt++) {
-			const result = await this.client.batch.send(payload, { idempotencyKey });
+			const result = await this.client.batch.send(payload, {
+				idempotencyKey,
+				batchValidation: 'permissive',
+			});
+			this.context.logger.info('result:');
+			this.context.logger.info(JSON.stringify(result, null, 2));
 
 			if (!result.error) {
-				return;
-			}
+				const errors = result.data.errors ?? [];
+				const failedIndexSet = new Set(errors.map(({ index }) => index));
+				const failedIds = notifications.filter((_notification, index) => failedIndexSet.has(index)).map(({ id }) => id);
+				const sentIds = notifications.filter((_notification, index) => !failedIndexSet.has(index)).map(({ id }) => id);
 
-			if (result.error.statusCode === 429 && attempt < 1) {
+				return { sentIds, failedIds };
+			} else if (result.error.statusCode === 429 && attempt < 1) {
 				const retryAfter = Number(result.headers?.['retry-after']);
 				const delay = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000;
 				await wait(delay);
@@ -124,6 +135,8 @@ class EmailService {
 				throw new Error(result.error.message);
 			}
 		}
+
+		throw new Error('Failed to send email batch.');
 	}
 
 	private getIdempotencyKey (notifications: NotificationRow[]) {
@@ -133,8 +146,9 @@ class EmailService {
 	}
 
 	private formatMessage (message: string) {
-		const messagesWithAbsoluteLinks = message.replaceAll(/\]\((\/[^)]+)\)/g, (_match, link: string) => `](${this.context.env.DASH_URL}${link})`);
-		return sanitizeHtml(md.render(messagesWithAbsoluteLinks));
+		const renderedMessage = md.render(message);
+		const messagesWithAbsoluteLinks = renderedMessage.replaceAll(/href="(\/[^"]*)"/g, (_match, link: string) => `href="${this.context.env.DASH_URL}${link}"`);
+		return sanitizeHtml(messagesWithAbsoluteLinks);
 	}
 }
 
