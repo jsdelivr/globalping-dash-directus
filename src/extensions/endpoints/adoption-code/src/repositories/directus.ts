@@ -148,7 +148,7 @@ const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { servic
 		recipient: adoption.userId,
 		type: 'probe_adopted',
 		subject: 'New probe adopted',
-		message: `A new probe [**${adoption.name}**](/probes/${adoption.id}) with IP address **${adoption.ip}** has been assigned to your account.`,
+		message: `A new probe [${adoption.name}](/probes/${adoption.id}) with IP address **${adoption.ip}** has been assigned to your account.`,
 	});
 };
 

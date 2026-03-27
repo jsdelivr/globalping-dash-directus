@@ -373,7 +373,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -510,7 +510,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -612,7 +612,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
@@ -788,7 +788,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'another-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -891,7 +891,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-02](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -931,7 +931,7 @@ describe('adoption code endpoints', () => {
 				recipient: 'first-user-id',
 				type: 'probe_adopted',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-02](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
@@ -941,7 +941,7 @@ describe('adoption code endpoints', () => {
 				type: 'outdated_firmware',
 				secondary_type: 'v2.0_v22.16.0',
 				subject: 'Your hardware probe is running an outdated firmware',
-				message: 'Your probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
+				message: 'Your probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 			});
 		});
 	});
@@ -1032,7 +1032,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -1107,7 +1107,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
