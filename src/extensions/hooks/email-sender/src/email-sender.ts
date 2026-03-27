@@ -14,7 +14,7 @@ type NotificationRow = {
 
 const md = markdownit();
 
-class EmailService {
+export class EmailService {
 	private readonly client: Resend;
 	private timer: NodeJS.Timeout | undefined;
 	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
@@ -88,9 +88,6 @@ class EmailService {
 			return rows;
 		});
 
-		this.context.logger.info('notifications:');
-		this.context.logger.info(JSON.stringify(notifications, null, 2));
-
 		if (notifications.length === 0) {
 			return 0;
 		}
@@ -117,8 +114,6 @@ class EmailService {
 				idempotencyKey,
 				batchValidation: 'permissive',
 			});
-			this.context.logger.info('result:');
-			this.context.logger.info(JSON.stringify(result, null, 2));
 
 			if (!result.error) {
 				const errors = result.data.errors ?? [];

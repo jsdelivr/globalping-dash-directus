@@ -17,28 +17,28 @@ type NotificationType = {
 
 const notificationTypes = {
 	welcome: {
-		configurableByUser: true, // Does type appear in user notification preferences?
+		configurableByUser: false, // Does type appear in user notification preferences?
 		readOnly: false, // Can user disable "App" notifications for this type?
 		sendEmail: false, // Should system try to send email for this type? (Can be overridden by user preferences.)
 		hasParameter: false, // Does type have a parameter input?
 		description: 'Welcome to Globalping message.',
 	},
 	probe_adopted: {
-		configurableByUser: false,
+		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe successfully adopted',
 	},
 	probe_unassigned: {
-		configurableByUser: false,
+		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe was unassigned',
 	},
 	outdated_software: { // Also controls 'outdated_firmware'.
-		configurableByUser: false,
+		configurableByUser: true,
 		readOnly: true,
 		sendEmail: true,
 		hasParameter: false,
@@ -46,14 +46,14 @@ const notificationTypes = {
 	},
 	outdated_firmware: 'outdated_software',
 	offline_probe: {
-		configurableByUser: false,
+		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe went offline',
 	},
 	probe_location_changed: { // Also controls 'probe_location_changed_back'.
-		configurableByUser: false,
+		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
@@ -61,7 +61,7 @@ const notificationTypes = {
 	},
 	probe_location_changed_back: 'probe_location_changed',
 	// low_credits: {
-	// 	configurableByUser: false,
+	// 	configurableByUser: true,
 	// 	readOnly: false,
 	// 	sendEmail: false,
 	// 	hasParameter: true,
@@ -70,7 +70,7 @@ const notificationTypes = {
 	// },
 } satisfies Record<string, string | NotificationType>;
 
-export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && !value.configurableByUser) as [string, NotificationType][])
+export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && value.configurableByUser) as [string, NotificationType][])
 	.map(([ key, value ]) => [ key, {
 		readOnly: value.readOnly,
 		sendEmail: value.sendEmail,

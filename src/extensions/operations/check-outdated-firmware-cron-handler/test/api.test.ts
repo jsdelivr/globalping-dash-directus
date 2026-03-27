@@ -41,6 +41,7 @@ describe('Adopted probes status cron handler', () => {
 	it('should send notification about outdated firmware', async () => {
 		sql.limit.onFirstCall().resolves([{
 			id: 'probe-id',
+			ip: '1.1.1.1',
 			userId: 'user-id',
 			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
@@ -59,13 +60,14 @@ describe('Adopted probes status cron handler', () => {
 			type: 'outdated_firmware',
 			secondary_type: 'v2.0_v20.13.0',
 			subject: 'Your hardware probe is running an outdated firmware',
-			message: 'Your [probe with IP address **undefined**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
+			message: 'Your [probe with IP address **1.1.1.1**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 		});
 	});
 
 	it('should send notification about outdated node.js', async () => {
 		sql.limit.onFirstCall().resolves([{
 			id: 'probe-id',
+			ip: '1.1.1.1',
 			userId: 'user-id',
 			hardwareDevice: null,
 			hardwareDeviceFirmware: null,
@@ -84,7 +86,7 @@ describe('Adopted probes status cron handler', () => {
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
 			subject: 'Your probe container is running an outdated software',
-			message: 'Your [probe with IP address **undefined**](/probes/probe-id) is running an outdated software and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			message: 'Your [probe with IP address **1.1.1.1**](/probes/probe-id) is running an outdated software and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
 		});
 	});
 
