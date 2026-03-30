@@ -1,5 +1,4 @@
 import type { OperationContext } from '@directus/extensions';
-import type { Notification } from '@directus/types';
 import { OUTDATED_FIRMWARE_NOTIFICATION_TYPE, OUTDATED_SOFTWARE_NOTIFICATION_TYPE } from '../../../../lib/src/check-firmware-versions.js';
 
 export type AdoptedProbe = {
@@ -13,6 +12,11 @@ export type AdoptedProbe = {
 	isOutdated: boolean;
 };
 
+type Notification = {
+	item: string | null;
+	metadata: unknown;
+};
+
 export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: OperationContext) => {
 	const { ItemsService } = services;
 
@@ -21,7 +25,7 @@ export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: Ope
 	});
 
 	const existingNotifications = await notificationsService.readByQuery({
-		fields: [ 'item' ],
+		fields: [ 'item', 'metadata' ],
 		filter: {
 			_or: [
 				{
@@ -36,7 +40,12 @@ export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: Ope
 		},
 	});
 
-	return new Set(existingNotifications.map(({ item }) => item));
+	const idsSet = new Set(existingNotifications.map(({ item }) => item).filter(id => id !== null));
+	existingNotifications.filter(({ metadata }) => Array.isArray(metadata)).forEach(({ metadata }) => {
+		(metadata as string[]).forEach((id) => { idsSet.add(id); });
+	});
+
+	return idsSet;
 };
 
 

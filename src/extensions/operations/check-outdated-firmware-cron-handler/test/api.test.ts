@@ -126,4 +126,68 @@ describe('Adopted probes status cron handler', () => {
 
 		expect(result).to.deep.equal([]);
 	});
+
+	it('should send one notification for multiple probes', async () => {
+		readByQuery.resolves([{
+			item: null,
+			metadata: [ 'probe-id-1' ],
+		}]);
+
+		mockProbesResult([
+			{
+				id: 'probe-id-2',
+				ip: '1.1.1.2',
+				userId: 'user-id',
+				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
+				isOutdated: true,
+				nodeVersion: 'v20.12.0',
+			},
+			{
+				id: 'probe-id-3',
+				ip: '1.1.1.3',
+				userId: 'user-id',
+				hardwareDevice: null,
+				hardwareDeviceFirmware: null,
+				isOutdated: true,
+				nodeVersion: 'v20.12.0',
+			},
+		]);
+
+		const result = await checkOutdatedFirmware({ data, database, env, getSchema, services, logger, accountability });
+
+		expect(result).to.deep.equal([ 'probe-id-2', 'probe-id-3' ]);
+		expect(createOne.callCount).to.equal(1);
+
+		expect(createOne.args[0]?.[0]).to.deep.include({
+			recipient: 'user-id',
+			collection: 'gp_probes',
+			metadata: [ 'probe-id-2', 'probe-id-3' ],
+			type: 'outdated_software',
+			secondary_type: 'v20.13.0',
+			subject: 'Probes with outdated software',
+		});
+	});
+
+	it('should not send notification if already notified via bulk notification', async () => {
+		readByQuery.resolves([{
+			item: null,
+			metadata: [ 'probe-id-1', 'probe-id-2' ],
+		}]);
+
+		mockProbesResult([{
+			id: 'probe-id-1',
+			ip: '1.1.1.1',
+			userId: 'user-id',
+			hardwareDevice: null,
+			hardwareDeviceFirmware: null,
+			isOutdated: true,
+			nodeVersion: 'v20.12.0',
+		}]);
+
+		const result = await checkOutdatedFirmware({ data, database, env, getSchema, services, logger, accountability });
+
+		expect(result).to.deep.equal([]);
+		expect(createOne.callCount).to.equal(0);
+	});
 });
