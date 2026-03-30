@@ -8,12 +8,10 @@ describe('Adopted probes status cron handler', () => {
 		select: sinon.stub(),
 		whereRaw: sinon.stub(),
 		orderBy: sinon.stub(),
-		limit: sinon.stub(),
 	};
 	sql.select.returns(sql);
 	sql.whereRaw.returns(sql);
 	sql.orderBy.returns(sql);
-	sql.limit.returns(sql);
 	const database = sinon.stub().returns(sql) as any;
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
@@ -31,15 +29,21 @@ describe('Adopted probes status cron handler', () => {
 		NotificationsService: sinon.stub().returns({ createOne }),
 	} as unknown as OperationContext['services'];
 
+	const mockProbesResult = (probes: any[]) => {
+		sql.orderBy.resetBehavior();
+		sql.orderBy.onFirstCall().returns(sql);
+		sql.orderBy.onSecondCall().resolves(probes);
+	};
+
 
 	beforeEach(() => {
 		readByQuery.resolves([]);
-		sql.limit.resolves([]);
 		sinon.resetHistory();
+		mockProbesResult([]);
 	});
 
 	it('should send notification about outdated firmware', async () => {
-		sql.limit.onFirstCall().resolves([{
+		mockProbesResult([{
 			id: 'probe-id',
 			ip: '1.1.1.1',
 			userId: 'user-id',
@@ -65,7 +69,7 @@ describe('Adopted probes status cron handler', () => {
 	});
 
 	it('should send notification about outdated node.js', async () => {
-		sql.limit.onFirstCall().resolves([{
+		mockProbesResult([{
 			id: 'probe-id',
 			ip: '1.1.1.1',
 			userId: 'user-id',
@@ -91,7 +95,7 @@ describe('Adopted probes status cron handler', () => {
 	});
 
 	it('should not send notification if versions are actual', async () => {
-		sql.limit.onFirstCall().resolves([{
+		mockProbesResult([{
 			id: 'probe-id',
 			userId: 'user-id',
 			hardwareDevice: 'v1',
@@ -110,7 +114,7 @@ describe('Adopted probes status cron handler', () => {
 			subject: 'Outdated probe firmware, should be v2.0',
 		}]);
 
-		sql.limit.onFirstCall().resolves([{
+		mockProbesResult([{
 			id: 'probe-id',
 			userId: 'user-id',
 			hardwareDevice: 'v1',

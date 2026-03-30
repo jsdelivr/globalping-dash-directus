@@ -334,6 +334,8 @@ fields:
             value: pending
           - text: sent
             value: sent
+          - text: failed
+            value: failed
       readonly: false
       required: false
       sort: 3
