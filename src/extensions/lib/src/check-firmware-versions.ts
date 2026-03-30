@@ -103,7 +103,7 @@ const notifyMultipleSoftwareProbe = async (probes: ProbeInfo[], userId: string, 
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Probes with outdated software',
-		message: `Some of your probes are running an outdated software:\n${lines.join('\n')}\n\nPlease follow [our guide](/probes?view=update-a-probe) to update them manually.`,
+		message: `Some of your probes are running an outdated software and we couldn't update them automatically. Please follow [our guide](/probes?view=update-a-probe) to update them manually:\n${lines.join('\n')}`,
 	});
 
 	return probes.map(({ id }) => id);
@@ -124,7 +124,7 @@ const notifyMultipleHardwareProbe = async (probes: ProbeInfo[], userId: string, 
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Probes with outdated firmware',
-		message: `Some of your hardware probes are running an outdated firmware:\n${lines.join('\n')}\n\nPlease follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually.`,
+		message: `Some of your hardware probes are running an outdated firmware and we couldn't update them automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually:\n${lines.join('\n')}`,
 	});
 
 	return probes.map(({ id }) => id);
@@ -146,7 +146,7 @@ const notifyMultipleTypes = async (softwareProbes: ProbeInfo[], hardwareProbes: 
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Probes with outdated firmware',
-		message: `Some of your probes are outdated:\n\nOutdated software:\n${softwareLines.join('\n')}\n\nOutdated firmware:\n${hardwareLines.join('\n')}\n\nPlease follow [our software update guide](/probes?view=update-a-probe) and [firmware update guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware).`,
+		message: `Some of your probes are outdated and we couldn't update them automatically. Please follow [our software update guide](/probes?view=update-a-probe) and [firmware update guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually.\n\nOutdated software:\n${softwareLines.join('\n')}\n\nOutdated firmware:\n${hardwareLines.join('\n')}`,
 	});
 
 	return [ ...softwareProbes.map(({ id }) => id), ...hardwareProbes.map(({ id }) => id) ];
