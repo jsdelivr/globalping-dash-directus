@@ -99,6 +99,7 @@ const notifyMultipleSoftwareProbe = async (probes: ProbeInfo[], userId: string, 
 	await notificationsService.createOne({
 		recipient: userId,
 		collection: 'gp_probes',
+		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Probes with outdated software',
@@ -119,6 +120,7 @@ const notifyMultipleHardwareProbe = async (probes: ProbeInfo[], userId: string, 
 	await notificationsService.createOne({
 		recipient: userId,
 		collection: 'gp_probes',
+		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Probes with outdated firmware',
@@ -140,6 +142,7 @@ const notifyMultipleTypes = async (softwareProbes: ProbeInfo[], hardwareProbes: 
 	await notificationsService.createOne({
 		recipient: userId,
 		collection: 'gp_probes',
+		metadata: [ ...softwareProbes.map(({ id }) => id), ...hardwareProbes.map(({ id }) => id) ],
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Probes with outdated firmware',
