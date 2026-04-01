@@ -143,7 +143,7 @@ export class EmailService {
 	private formatMessage (message: string) {
 		const renderedMessage = md.render(message);
 		const messagesWithAbsoluteLinks = renderedMessage.replaceAll(/href="(\/[^"]*)"/g, (_match, link: string) => `href="${this.context.env.DASH_URL}${link}"`);
-		const messageWithFooter = `${messagesWithAbsoluteLinks}<p>—<br><a href="${this.context.env.DASH_URL}/settings">Manage notifications</a>.</p>`;
+		const messageWithFooter = `${messagesWithAbsoluteLinks}<p>—<br><a href="${this.context.env.DASH_URL}/settings">Manage notification settings</a>.</p>`;
 		return sanitizeHtml(messageWithFooter);
 	}
 }
