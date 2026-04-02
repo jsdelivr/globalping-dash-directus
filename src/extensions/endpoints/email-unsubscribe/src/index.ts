@@ -1,5 +1,6 @@
 import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
+import type { Request } from 'express';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getEmailLinks } from '../../../lib/src/email-links.js';
 import { configurableNotificationTypes, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
@@ -20,10 +21,8 @@ const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'data is requir
 const InvalidTokenError = createError('INVALID_TOKEN', 'Invalid token.', 400);
 const UserNotFoundError = createError('NOT_FOUND', 'User not found.', 404);
 
-type AsyncWrapperContext = Parameters<typeof asyncWrapper>[1];
-
 export default defineEndpoint((router, context) => {
-	router.post('/list-unsubscribe', asyncWrapper(async (req, res) => {
+	const unsubscribeByData = async (req: Request) => {
 		const data = req.query.data;
 
 		if (!data || typeof data !== 'string') {
@@ -67,7 +66,15 @@ export default defineEndpoint((router, context) => {
 		await usersService.updateOne(userId, {
 			notification_preferences: updatedPreferences,
 		});
+	};
 
+	router.post('/list-unsubscribe', asyncWrapper(async (req, res) => {
+		await unsubscribeByData(req);
 		res.status(204).send();
-	}, context as unknown as AsyncWrapperContext));
+	}, context));
+
+	router.get('/list-unsubscribe', asyncWrapper(async (req, res) => {
+		await unsubscribeByData(req);
+		res.redirect(`${context.env.DASH_URL}/emails/success`);
+	}, context));
 });
