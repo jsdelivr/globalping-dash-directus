@@ -12,6 +12,7 @@ type NotificationRow = {
 	subject: string;
 	message: string | null;
 	email: string;
+	type: string;
 };
 
 const md = markdownit();
@@ -65,6 +66,7 @@ export class EmailService {
 				.select<NotificationRow[]>([
 					'notifications.id',
 					'notifications.recipient',
+					'notifications.type',
 					'notifications.subject',
 					'notifications.message',
 					'users.email',
@@ -105,7 +107,7 @@ export class EmailService {
 			from: this.EMAIL_FROM,
 			to: [ notification.email ],
 			subject: notification.subject,
-			html: this.formatMessage(notification.message ?? ''),
+			html: this.formatMessage(notification),
 			replyTo: this.REPLY_TO,
 			headers: {
 				'List-Unsubscribe': `<${this.emailLinks.generateListUnsubscribeLink(notification.recipient)}>`,
@@ -145,10 +147,15 @@ export class EmailService {
 		return `notifications-batch/${hash}`;
 	}
 
-	private formatMessage (message: string) {
-		const renderedMessage = md.render(message);
+	private formatMessage (notification: NotificationRow) {
+		const renderedMessage = md.render(notification.message ?? '');
 		const messagesWithAbsoluteLinks = renderedMessage.replaceAll(/href="(\/[^"]*)"/g, (_match, link: string) => `href="${this.context.env.DASH_URL}${link}"`);
-		const messageWithFooter = `${messagesWithAbsoluteLinks}<p>—<br><a href="${this.emailLinks.generateSettingsLink()}">Manage notification settings</a>.</p>`;
+		const typeTitle = notification.type.replace('_', ' ').replace(/^./, c => c.toUpperCase());
+		const messageWithFooter = messagesWithAbsoluteLinks
+			+ '<p>—<br>'
+			+ `<a href="${this.emailLinks.generateSettingsLink()}">Manage notification settings</a> | `
+			+ `<a href="${this.emailLinks.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable email notifications for "${typeTitle}"</a>`
+			+ '</p>';
 		return sanitizeHtml(messageWithFooter);
 	}
 }

@@ -4,10 +4,6 @@ type Context = {
 	env: Record<string, string>;
 };
 
-type TokenPayload = {
-	userId: string;
-};
-
 export class EmailLinks {
 	public constructor (private readonly context: Context) {
 		if (!context.env.DASH_URL) {
@@ -21,30 +17,46 @@ export class EmailLinks {
 
 	public generateListUnsubscribeLink (userId: string): string {
 		const query = new URLSearchParams({
-			data: this.createToken(userId),
+			data: this.createToken({ userId }),
 		});
-		return `${this.getNormalizedDashUrl()}/list-unsubscribe?${query.toString()}`;
+		return `${this.getNormalizedDirectusUrl()}/email-unsubscribe/list-unsubscribe?${query.toString()}`;
+	}
+
+	public generateTypeUnsubscribeLink (userId: string, type: string): string {
+		const query = new URLSearchParams({
+			data: this.createToken({ userId, type }),
+		});
+		return `${this.getNormalizedDirectusUrl()}/email-unsubscribe/type-unsubscribe?${query.toString()}`;
 	}
 
 	public generateSettingsLink (): string {
 		return `${this.getNormalizedDashUrl()}/settings`;
 	}
 
-	public verifyToken (data: string): TokenPayload | null {
+	public verifyToken<T extends Record<string, string>> (data: string): T | null {
 		try {
-			const payload = jwt.verify(data, this.context.env.SECRET!) as TokenPayload;
-			return payload;
+			const payload = jwt.verify(data, this.context.env.SECRET!);
+
+			if (!payload || typeof payload !== 'object') {
+				return null;
+			}
+
+			return payload as T;
 		} catch {
 			return null;
 		}
 	}
 
-	private createToken (userId: string): string {
-		return jwt.sign({ userId }, this.context.env.SECRET!);
+	private createToken (payload: Record<string, unknown>): string {
+		return jwt.sign(payload, this.context.env.SECRET!);
 	}
 
 	private getNormalizedDashUrl () {
 		return this.context.env.DASH_URL!.replace(/\/+$/, '');
+	}
+
+	private getNormalizedDirectusUrl () {
+		return this.context.env.PUBLIC_URL!.replace(/\/+$/, '');
 	}
 }
 

@@ -53,6 +53,17 @@ describe('email-unsubscribe endpoint', () => {
 		return new URL(unsubscribeLink).searchParams.get('data')!;
 	};
 
+	const getTypeData = (userId: string, type: string) => {
+		const links = new EmailLinks({
+			env: {
+				DASH_URL: 'https://dash.globalping.io',
+				SECRET: 'test-secret',
+			},
+		});
+		const unsubscribeLink = links.generateTypeUnsubscribeLink(userId, type);
+		return new URL(unsubscribeLink).searchParams.get('data')!;
+	};
+
 	beforeEach(() => {
 		sinon.resetHistory();
 
@@ -103,5 +114,17 @@ describe('email-unsubscribe endpoint', () => {
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('Invalid token.');
 		expect(updateOne.notCalled).to.equal(true);
+	});
+
+	it('should unsubscribe one type with GET', async () => {
+		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+
+		expect(res.status).to.equal(302);
+		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success');
+		expect(updateOne.calledOnce).to.equal(true);
+		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
+
+		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
+		expect(updated.outdated_software?.emailEnabled).to.equal(true);
 	});
 });

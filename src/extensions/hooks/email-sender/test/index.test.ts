@@ -102,8 +102,13 @@ describe('EmailService', () => {
 		const context = createContext();
 		const service = new EmailService(context as any);
 
-		const html = (service as any).formatMessage('Probe [link](/probes/1) <script>alert(1)</script>');
+		const html = (service as any).formatMessage({
+			message: 'Probe [link](/probes/1) <script>alert(1)</script>',
+			recipient: 'u1',
+			type: 'outdated_software',
+		});
 		expect(html).to.include('href="https://dash.globalping.io/probes/1"');
+		expect(html).to.include('/type-unsubscribe?data=');
 		expect(html).to.not.include('<script>');
 	});
 
@@ -121,8 +126,8 @@ describe('EmailService', () => {
 		(service as any).client.batch.send = batchSend;
 
 		const result = await (service as any).sendEmails([
-			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1' },
-			{ id: 11, recipient: 'u2', email: 'b@example.com', subject: 's2', message: 'm2' },
+			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1', type: 'outdated_software' },
+			{ id: 11, recipient: 'u2', email: 'b@example.com', subject: 's2', message: 'm2', type: 'outdated_firmware' },
 		]);
 
 		expect(result).to.deep.equal({ sentIds: [ 10 ], failedIds: [ 11 ] });
@@ -133,8 +138,8 @@ describe('EmailService', () => {
 
 	it('should update sent and failed statuses in handleEmails', async () => {
 		const rows = [
-			{ id: 1, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1' },
-			{ id: 2, recipient: 'u2', email: 'b@example.com', subject: 's2', message: 'm2' },
+			{ id: 1, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1', type: 'outdated_software' },
+			{ id: 2, recipient: 'u2', email: 'b@example.com', subject: 's2', message: 'm2', type: 'outdated_firmware' },
 		];
 		const context = createContext(rows);
 		const service = new EmailService(context as any);
@@ -206,7 +211,7 @@ describe('EmailService', () => {
 		(service as any).client.batch.send = batchSend;
 		const startedAt = Date.now();
 		await (service as any).sendEmails([
-			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1' },
+			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1', type: 'outdated_software' },
 		]);
 
 		const elapsedMs = Date.now() - startedAt;

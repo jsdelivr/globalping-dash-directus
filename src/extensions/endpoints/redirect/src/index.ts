@@ -14,9 +14,9 @@ const template = Handlebars.compile(`
 	</html>
 `);
 
-export default defineEndpoint((router) => {
+export default defineEndpoint((router, context) => {
 	router.get('/', (req, res) => {
-		const dashHome = 'https://dash.globalping.io';
+		const dashHome = context.env.DASH_URL;
 		const requestRedirect = new URL(typeof req.query.url === 'string' ? req.query.url : '', dashHome);
 		const isRequestRedirectValid = requestRedirect.hostname === 'globalping.io' || requestRedirect.hostname.endsWith('.globalping.io');
 		const redirect = isRequestRedirectValid ? requestRedirect.toString() : dashHome;
