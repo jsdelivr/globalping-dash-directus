@@ -4,9 +4,11 @@ import type { HookExtensionContext } from '@directus/extensions';
 import markdownit from 'markdown-it';
 import { Resend } from 'resend';
 import sanitizeHtml from 'sanitize-html';
+import { type EmailLinks, getEmailLinks } from '../../../lib/src/email-links.js';
 
 type NotificationRow = {
 	id: number;
+	recipient: string;
 	subject: string;
 	message: string | null;
 	email: string;
@@ -16,6 +18,7 @@ const md = markdownit();
 
 export class EmailService {
 	private readonly client: Resend;
+	private readonly emailLinks: EmailLinks;
 	private timer: NodeJS.Timeout | undefined;
 	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
 	private readonly REPLY_TO = 'd@globalping.io';
@@ -30,11 +33,8 @@ export class EmailService {
 			throw new Error('RESEND_API_KEY is not set.');
 		}
 
-		if (!env.DASH_URL) {
-			throw new Error('DASH_URL is not set.');
-		}
-
 		this.client = new Resend(env.RESEND_API_KEY);
+		this.emailLinks = getEmailLinks(context);
 	}
 
 	scheduleSend (delay: number = this.SEND_INTERVAL) {
@@ -64,6 +64,7 @@ export class EmailService {
 				.leftJoin('directus_users as users', 'users.id', 'notifications.recipient')
 				.select<NotificationRow[]>([
 					'notifications.id',
+					'notifications.recipient',
 					'notifications.subject',
 					'notifications.message',
 					'users.email',
@@ -106,6 +107,10 @@ export class EmailService {
 			subject: notification.subject,
 			html: this.formatMessage(notification.message ?? ''),
 			replyTo: this.REPLY_TO,
+			headers: {
+				'List-Unsubscribe': `<${this.emailLinks.generateListUnsubscribeLink(notification.recipient)}>`,
+				'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+			},
 		}));
 		const idempotencyKey = this.getIdempotencyKey(notifications);
 
@@ -143,7 +148,7 @@ export class EmailService {
 	private formatMessage (message: string) {
 		const renderedMessage = md.render(message);
 		const messagesWithAbsoluteLinks = renderedMessage.replaceAll(/href="(\/[^"]*)"/g, (_match, link: string) => `href="${this.context.env.DASH_URL}${link}"`);
-		const messageWithFooter = `${messagesWithAbsoluteLinks}<p>—<br><a href="${this.context.env.DASH_URL}/settings">Manage notification settings</a>.</p>`;
+		const messageWithFooter = `${messagesWithAbsoluteLinks}<p>—<br><a href="${this.emailLinks.generateSettingsLink()}">Manage notification settings</a>.</p>`;
 		return sanitizeHtml(messageWithFooter);
 	}
 }

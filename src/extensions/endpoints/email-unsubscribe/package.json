@@ -22,11 +22,25 @@
 		"build": "directus-extension build",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
-		"validate": "directus-extension validate"
+		"validate": "directus-extension validate",
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
+		"@directus/extensions": "^3.0.23",
 		"@directus/extensions-sdk": "17.1.1",
+		"@directus/types": "^15.0.1",
+		"@types/chai": "^5.2.3",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.5.0",
+		"@types/sinon": "^17.0.4",
+		"chai": "^6.2.0",
+		"mocha": "^11.7.4",
+		"sinon": "^21.0.0",
+		"ts-node": "^10.9.2",
 		"typescript": "^6.0.2"
+	},
+	"dependencies": {
+		"@directus/errors": "^2.3.0"
 	}
 }

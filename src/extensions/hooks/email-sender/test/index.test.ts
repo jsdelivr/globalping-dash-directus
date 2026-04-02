@@ -7,6 +7,7 @@ type MinimalContext = {
 	env: {
 		RESEND_API_KEY?: string;
 		DASH_URL?: string;
+		SECRET?: string;
 	};
 	logger: {
 		error: sinon.SinonStub;
@@ -68,6 +69,7 @@ const createContext = (rows: any[] = []): MinimalContext => {
 		env: {
 			RESEND_API_KEY: 'test-key',
 			DASH_URL: 'https://dash.globalping.io',
+			SECRET: 'test-secret',
 		},
 		logger: { error },
 		database,
@@ -87,6 +89,13 @@ describe('EmailService', () => {
 		delete context.env.DASH_URL;
 
 		expect(() => new EmailService(context as any)).to.throw('DASH_URL is not set.');
+	});
+
+	it('should throw on missing SECRET', () => {
+		const context = createContext();
+		delete context.env.SECRET;
+
+		expect(() => new EmailService(context as any)).to.throw('SECRET is not set.');
 	});
 
 	it('should format markdown links to absolute HTML links', () => {
@@ -112,18 +121,20 @@ describe('EmailService', () => {
 		(service as any).client.batch.send = batchSend;
 
 		const result = await (service as any).sendEmails([
-			{ id: 10, email: 'a@example.com', subject: 's1', message: 'm1' },
-			{ id: 11, email: 'b@example.com', subject: 's2', message: 'm2' },
+			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1' },
+			{ id: 11, recipient: 'u2', email: 'b@example.com', subject: 's2', message: 'm2' },
 		]);
 
 		expect(result).to.deep.equal({ sentIds: [ 10 ], failedIds: [ 11 ] });
 		expect(batchSend.firstCall.args[1]).to.include({ batchValidation: 'permissive' });
+		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash\.globalping\.io\/list-unsubscribe\?data=.*>$/);
+		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe-Post']).to.equal('List-Unsubscribe=One-Click');
 	});
 
 	it('should update sent and failed statuses in handleEmails', async () => {
 		const rows = [
-			{ id: 1, email: 'a@example.com', subject: 's1', message: 'm1' },
-			{ id: 2, email: 'b@example.com', subject: 's2', message: 'm2' },
+			{ id: 1, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1' },
+			{ id: 2, recipient: 'u2', email: 'b@example.com', subject: 's2', message: 'm2' },
 		];
 		const context = createContext(rows);
 		const service = new EmailService(context as any);
@@ -195,7 +206,7 @@ describe('EmailService', () => {
 		(service as any).client.batch.send = batchSend;
 		const startedAt = Date.now();
 		await (service as any).sendEmails([
-			{ id: 10, email: 'a@example.com', subject: 's1', message: 'm1' },
+			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1' },
 		]);
 
 		const elapsedMs = Date.now() - startedAt;

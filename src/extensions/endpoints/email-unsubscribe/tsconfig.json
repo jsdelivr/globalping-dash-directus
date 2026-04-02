@@ -1,11 +1,11 @@
 {
 	"compilerOptions": {
-		"target": "ES2019",
+		"target": "ES2022",
 		"lib": [
-			"ES2019",
+			"ES2023",
 			"DOM"
 		],
-		"moduleResolution": "node",
+		"moduleResolution": "NodeNext",
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"esModuleInterop": true,
@@ -20,14 +20,16 @@
 		"strictFunctionTypes": true,
 		"strictBindCallApply": true,
 		"strictPropertyInitialization": true,
-		"resolveJsonModule": false,
+		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"allowSyntheticDefaultImports": true,
 		"isolatedModules": true,
-		"rootDir": "./src"
+		"module": "NodeNext"
 	},
 	"include": [
-		"./src/**/*.ts"
+		"./src/**/*.ts",
+		"../../lib/**/*.ts",
+		"./test/**/*.ts"
 	]
 }
