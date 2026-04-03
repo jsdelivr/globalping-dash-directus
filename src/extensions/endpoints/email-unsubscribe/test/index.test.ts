@@ -25,6 +25,7 @@ describe('email-unsubscribe endpoint', () => {
 	const context = {
 		env: {
 			DASH_URL: 'https://dash.globalping.io',
+			PUBLIC_URL: 'https://dash.globalping.io',
 			SECRET: 'test-secret',
 		},
 		logger: {
@@ -46,6 +47,7 @@ describe('email-unsubscribe endpoint', () => {
 		const links = new EmailLinks({
 			env: {
 				DASH_URL: 'https://dash.globalping.io',
+				PUBLIC_URL: 'https://dash.globalping.io',
 				SECRET: 'test-secret',
 			},
 		});
@@ -57,6 +59,7 @@ describe('email-unsubscribe endpoint', () => {
 		const links = new EmailLinks({
 			env: {
 				DASH_URL: 'https://dash.globalping.io',
+				PUBLIC_URL: 'https://dash.globalping.io',
 				SECRET: 'test-secret',
 			},
 		});
@@ -120,7 +123,7 @@ describe('email-unsubscribe endpoint', () => {
 		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
 		expect(res.status).to.equal(302);
-		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success');
+		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success?type=probe_adopted');
 		expect(updateOne.calledOnce).to.equal(true);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 

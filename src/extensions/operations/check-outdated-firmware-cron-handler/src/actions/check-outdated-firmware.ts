@@ -1,8 +1,8 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
-import { checkFirmwareVersions } from '../../../../lib/src/check-firmware-versions.js';
-import { getAlreadyNotifiedProbes, getProbesToCheck } from '../repositories/directus.js';
+import { checkFirmwareVersions, getAlreadyNotifiedProbes } from '../../../../lib/src/check-firmware-versions.js';
+import { getProbesToCheck } from '../repositories/directus.js';
 
 export const checkOutdatedFirmware = async (context: OperationContext): Promise<string[]> => {
 	const alreadyNotifiedIds = await getAlreadyNotifiedProbes(context);

@@ -7,6 +7,7 @@ type MinimalContext = {
 	env: {
 		RESEND_API_KEY?: string;
 		DASH_URL?: string;
+		PUBLIC_URL?: string;
 		SECRET?: string;
 	};
 	logger: {
@@ -69,6 +70,7 @@ const createContext = (rows: any[] = []): MinimalContext => {
 		env: {
 			RESEND_API_KEY: 'test-key',
 			DASH_URL: 'https://dash.globalping.io',
+			PUBLIC_URL: 'https://dash.globalping.io',
 			SECRET: 'test-secret',
 		},
 		logger: { error },
@@ -132,7 +134,7 @@ describe('EmailService', () => {
 
 		expect(result).to.deep.equal({ sentIds: [ 10 ], failedIds: [ 11 ] });
 		expect(batchSend.firstCall.args[1]).to.include({ batchValidation: 'permissive' });
-		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash\.globalping\.io\/list-unsubscribe\?data=.*>$/);
+		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash\.globalping\.io\/email-unsubscribe\/list-unsubscribe\?data=.*>$/);
 		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe-Post']).to.equal('List-Unsubscribe=One-Click');
 	});
 

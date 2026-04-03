@@ -10,18 +10,26 @@ type ProbeInfo = {
 	isOutdated: boolean;
 };
 
+type Notification = {
+	item: string | null;
+	metadata: unknown;
+};
+
 export const OUTDATED_SOFTWARE_NOTIFICATION_TYPE = 'outdated_software';
 export const OUTDATED_FIRMWARE_NOTIFICATION_TYPE = 'outdated_firmware';
 
-export async function checkFirmwareVersions (probes: ProbeInfo[], userId: string, context: ApiExtensionContext): Promise<string[]> {
-	const outdatedProbes = probes.filter(probe => probe.isOutdated);
+export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], userId: string, context: ApiExtensionContext): Promise<string[]> {
+	const outdatedProbes = probesToCheck.filter(probe => probe.isOutdated);
 
-	if (outdatedProbes.length === 0) {
-		return [];
-	}
+	if (outdatedProbes.length === 0) { return []; }
 
-	const softwareProbes = outdatedProbes.filter(probe => !probe.hardwareDevice);
-	const hardwareProbes = outdatedProbes.filter(probe => Boolean(probe.hardwareDevice));
+	const alreadyNotifiedProbes = await getAlreadyNotifiedProbes(context, userId);
+	const probes = outdatedProbes.filter(probe => !alreadyNotifiedProbes.has(probe.id));
+
+	if (probes.length === 0) { return []; }
+
+	const softwareProbes = probes.filter(probe => !probe.hardwareDevice);
+	const hardwareProbes = probes.filter(probe => Boolean(probe.hardwareDevice));
 
 	if (softwareProbes.length > 0 && hardwareProbes.length > 0) {
 		return notifyMultipleTypes(softwareProbes, hardwareProbes, userId, context);
@@ -47,6 +55,38 @@ export async function checkFirmwareVersions (probes: ProbeInfo[], userId: string
 
 	return [];
 }
+
+export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: ApiExtensionContext, userId?: string) => {
+	const { ItemsService } = services;
+
+	const notificationsService = new ItemsService<Notification>('directus_notifications', {
+		schema: await getSchema(),
+	});
+
+	const existingNotifications = await notificationsService.readByQuery({
+		fields: [ 'item', 'metadata' ],
+		filter: {
+			...userId ? { recipient: { _eq: userId } } : null,
+			_or: [
+				{
+					type: { _eq: OUTDATED_SOFTWARE_NOTIFICATION_TYPE },
+					secondary_type: { _eq: env.TARGET_NODE_VERSION },
+				},
+				{
+					type: { _eq: OUTDATED_FIRMWARE_NOTIFICATION_TYPE },
+					secondary_type: { _eq: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}` },
+				},
+			],
+		},
+	});
+
+	const idsSet = new Set(existingNotifications.map(({ item }) => item).filter(id => id !== null));
+	existingNotifications.filter(({ metadata }) => Array.isArray(metadata)).forEach(({ metadata }) => {
+		(metadata as string[]).forEach((id) => { idsSet.add(id); });
+	});
+
+	return idsSet;
+};
 
 const notifySingleSoftwareProbe = async (probe: ProbeInfo, userId: string, { services, getSchema, env }: ApiExtensionContext) => {
 	const { NotificationsService } = services;
