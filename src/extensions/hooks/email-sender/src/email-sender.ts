@@ -154,7 +154,7 @@ export class EmailService {
 		const messageWithFooter = messagesWithAbsoluteLinks
 			+ '<p>—<br>'
 			+ `<a href="${this.emailLinks.generateSettingsLink()}">Manage notification settings</a> | `
-			+ `<a href="${this.emailLinks.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable email notifications for "${typeTitle}"</a>`
+			+ `<a href="${this.emailLinks.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable "${typeTitle}" emails</a>`
 			+ '</p>';
 		return sanitizeHtml(messageWithFooter);
 	}

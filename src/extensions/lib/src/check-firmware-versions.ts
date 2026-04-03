@@ -46,11 +46,11 @@ export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], userId:
 	}
 
 	if (softwareProbes.length > 1) {
-		return notifyMultipleSoftwareProbe(softwareProbes, userId, context);
+		return notifyMultipleSoftwareProbes(softwareProbes, userId, context);
 	}
 
 	if (hardwareProbes.length > 1) {
-		return notifyMultipleHardwareProbe(hardwareProbes, userId, context);
+		return notifyMultipleHardwareProbes(hardwareProbes, userId, context);
 	}
 
 	return [];
@@ -128,7 +128,7 @@ const notifySingleHardwareProbe = async (probe: ProbeInfo, userId: string, { ser
 	return probe.id;
 };
 
-const notifyMultipleSoftwareProbe = async (probes: ProbeInfo[], userId: string, context: ApiExtensionContext) => {
+const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], userId: string, context: ApiExtensionContext) => {
 	const { services, getSchema, env } = context;
 	const { NotificationsService } = services;
 	const notificationsService = new NotificationsService({
@@ -149,7 +149,7 @@ const notifyMultipleSoftwareProbe = async (probes: ProbeInfo[], userId: string, 
 	return probes.map(({ id }) => id);
 };
 
-const notifyMultipleHardwareProbe = async (probes: ProbeInfo[], userId: string, context: ApiExtensionContext) => {
+const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], userId: string, context: ApiExtensionContext) => {
 	const { services, getSchema, env } = context;
 	const { NotificationsService } = services;
 	const notificationsService = new NotificationsService({
@@ -185,7 +185,7 @@ const notifyMultipleTypes = async (softwareProbes: ProbeInfo[], hardwareProbes: 
 		metadata: [ ...softwareProbes.map(({ id }) => id), ...hardwareProbes.map(({ id }) => id) ],
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
-		subject: 'Probes with outdated firmware',
+		subject: 'Probes with outdated software',
 		message: `Some of your probes are outdated and we couldn't update them automatically. Please follow [our software update guide](/probes?view=update-a-probe) and [firmware update guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually.\n\nOutdated software:\n${softwareLines.join('\n')}\n\nOutdated firmware:\n${hardwareLines.join('\n')}`,
 	});
 

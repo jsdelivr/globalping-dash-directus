@@ -19,7 +19,7 @@ const notificationTypes = {
 	welcome: {
 		configurableByUser: false, // Does type appear in user notification preferences?
 		readOnly: false, // Can user disable "App" notifications for this type?
-		sendEmail: false, // Should system try to send email for this type? (Can be overridden by user preferences.)
+		sendEmail: false, // Should system try to send email for this type? (Can be disabled by user preferences.)
 		hasParameter: false, // Does type have a parameter input?
 		description: 'Welcome to Globalping message.',
 	},
@@ -60,6 +60,7 @@ const notificationTypes = {
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
+	// TODO: sending of low_credits notifications is not implemented. Keeping it to document the structure of notifications with parameters.
 	// low_credits: {
 	// 	configurableByUser: true,
 	// 	readOnly: false,
