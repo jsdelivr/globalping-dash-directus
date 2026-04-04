@@ -93,7 +93,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSch
 	await Bluebird.map(probes, async (probe) => {
 		await notificationsService.createOne({
 			recipient: probe.userId,
-			subject: 'Your probe has been deleted',
+			subject: `Your probe${probe.name ? ` ${probe.name}` : ''} has been deleted`,
 			message: `Your ${probe.name ? `probe **${probe.name}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			item: probe.id,
 			collection: 'gp_probes',
