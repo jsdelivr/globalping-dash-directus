@@ -150,10 +150,10 @@ export class EmailService {
 	private formatMessage (notification: NotificationRow) {
 		const renderedMessage = md.render(notification.message ?? '');
 		const messagesWithAbsoluteLinks = renderedMessage.replaceAll(/href="(\/[^"]*)"/g, (_match, link: string) => `href="${this.context.env.DASH_URL}${link}"`);
-		const typeTitle = notification.type.replace('_', ' ').replace(/^./, c => c.toUpperCase());
+		const typeTitle = notification.type.replace('_', '\u00A0').replace(/^./, c => c.toUpperCase());
 		const messageWithFooter = messagesWithAbsoluteLinks
 			+ '<p>—<br>'
-			+ `<a href="${this.emailLinks.generateSettingsLink()}">Manage notification settings</a> | `
+			+ `<a href="${this.emailLinks.generateSettingsLink()}">Manage notifications</a> | `
 			+ `<a href="${this.emailLinks.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable "${typeTitle}" emails</a>`
 			+ '</p>';
 		return sanitizeHtml(messageWithFooter);

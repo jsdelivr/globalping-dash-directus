@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, allNotificationTypes, getNotificationType } from '../../../lib/src/notification-types.js';
+import { type NotificationTypeKey, allNotificationTypes, getAllDisabled, getNotificationType } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email: string | null;
@@ -72,8 +72,7 @@ const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
 
 	const notificationPreferences = user.notification_preferences ?? {};
 	const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-	const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
-	const allDisabled = configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences[key]!.enabled === false);
+	const allDisabled = getAllDisabled(notificationPreferences);
 
 	if (user.notification_preferences === null) {
 		return true;

@@ -48,7 +48,7 @@ const notificationTypes = {
 	offline_probe: {
 		configurableByUser: true,
 		readOnly: false,
-		sendEmail: false,
+		sendEmail: true,
 		hasParameter: false,
 		description: 'Probe went offline',
 	},
@@ -103,4 +103,12 @@ export const getNotificationType = (key: NotificationTypeKey): NotificationType 
 	const notificationType = notificationTypes[resolvedKey];
 
 	return notificationType as NotificationType;
+};
+
+export const getAllDisabled = (notificationPreferences: { [key: string]: { enabled: boolean; emailEnabled?: boolean } } | null): boolean => {
+	const configuredTypes = Object.keys(notificationPreferences ?? {}) as Array<NotificationTypeKey>;
+	return configuredTypes.length > 0 && configuredTypes.every((key) => {
+		const notification = getNotificationType(key);
+		return notificationPreferences![key]!.enabled === false || notification.readOnly;
+	});
 };

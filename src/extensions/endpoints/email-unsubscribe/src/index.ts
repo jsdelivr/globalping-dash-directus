@@ -3,7 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request } from 'express';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getEmailLinks } from '../../../lib/src/email-links.js';
-import { configurableNotificationTypes, configurableNotifications, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { configurableNotificationTypes, getAllDisabled, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
 	enabled: boolean;
@@ -50,8 +50,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
-		const configuredTypes = Object.keys(userPreferences) as Array<NotificationTypeKey>;
-		const allDisabled = configuredTypes.length > 0 && configuredTypes.every(type => userPreferences[type]!.enabled === false);
+		const allDisabled = getAllDisabled(userPreferences);
 
 		const updatedPreferences = { ...userPreferences };
 
@@ -91,10 +90,6 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidTokenError();
 		}
 
-		if (!Object.hasOwn(configurableNotifications, resolvedType)) {
-			throw new InvalidTokenError();
-		}
-
 		const { UsersService } = context.services;
 		const usersService = new UsersService({
 			schema: await context.getSchema(),
@@ -108,8 +103,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
-		const configuredTypes = Object.keys(userPreferences) as Array<NotificationTypeKey>;
-		const allDisabled = configuredTypes.length > 0 && configuredTypes.every(type => userPreferences[type]!.enabled === false);
+		const allDisabled = getAllDisabled(userPreferences);
 
 		const current = userPreferences[resolvedType];
 		const updatedPreferences = {

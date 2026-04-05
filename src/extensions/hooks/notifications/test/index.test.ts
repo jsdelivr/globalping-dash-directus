@@ -180,5 +180,21 @@ describe('notifications hooks', () => {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
 			}
 		});
+
+		it('should treat as "allDisabled" when only readOnly type is enabled', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					outdated_software: { enabled: true, emailEnabled: true },
+				},
+			});
+
+			try {
+				await filter()({ type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' });
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+		});
 	});
 });
