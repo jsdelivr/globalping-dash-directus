@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request } from 'express';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { getEmailLinks } from '../../../lib/src/email-links.js';
+import { getEmailGenerator } from '../../../lib/src/email-generator.js';
 import { getAllDisabled, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
@@ -30,7 +30,7 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidPayloadError();
 		}
 
-		const emailLinks = getEmailLinks(context);
+		const emailLinks = getEmailGenerator(context);
 		const tokenPayload = emailLinks.verifyToken<{ userId: string }>(data);
 		const userId = tokenPayload?.userId ?? null;
 
@@ -67,7 +67,7 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidPayloadError();
 		}
 
-		const emailLinks = getEmailLinks(context);
+		const emailLinks = getEmailGenerator(context);
 		const tokenPayload = emailLinks.verifyToken<{ userId: string; type: string }>(data);
 
 		if (!tokenPayload) {

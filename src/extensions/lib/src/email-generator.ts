@@ -4,7 +4,7 @@ type Context = {
 	env: Record<string, string>;
 };
 
-export class EmailLinks {
+export class EmailGenerator {
 	public constructor (private readonly context: Context) {
 		if (!context.env.DASH_URL) {
 			throw new Error('DASH_URL is not set.');
@@ -60,11 +60,11 @@ export class EmailLinks {
 	}
 }
 
-let emailLinks: EmailLinks | null = null;
+let emailLinks: EmailGenerator | null = null;
 
-export const getEmailLinks = (context: Context): EmailLinks => {
+export const getEmailGenerator = (context: Context): EmailGenerator => {
 	if (!emailLinks) {
-		emailLinks = new EmailLinks(context);
+		emailLinks = new EmailGenerator(context);
 	}
 
 	return emailLinks;

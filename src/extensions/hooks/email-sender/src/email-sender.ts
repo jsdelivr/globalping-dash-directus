@@ -4,7 +4,7 @@ import type { HookExtensionContext } from '@directus/extensions';
 import markdownit from 'markdown-it';
 import { Resend } from 'resend';
 import sanitizeHtml from 'sanitize-html';
-import { type EmailLinks, getEmailLinks } from '../../../lib/src/email-links.js';
+import { type EmailGenerator, getEmailGenerator } from '../../../lib/src/email-generator.js';
 
 type NotificationRow = {
 	id: number;
@@ -19,7 +19,7 @@ const md = markdownit();
 
 export class EmailService {
 	private readonly client: Resend;
-	private readonly emailLinks: EmailLinks;
+	private readonly emailLinks: EmailGenerator;
 	private timer: NodeJS.Timeout | undefined;
 	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
 	private readonly REPLY_TO = 'd@globalping.io';
@@ -35,7 +35,7 @@ export class EmailService {
 		}
 
 		this.client = new Resend(env.RESEND_API_KEY);
-		this.emailLinks = getEmailLinks(context);
+		this.emailLinks = getEmailGenerator(context);
 	}
 
 	scheduleSend (delay: number = this.SEND_INTERVAL) {
