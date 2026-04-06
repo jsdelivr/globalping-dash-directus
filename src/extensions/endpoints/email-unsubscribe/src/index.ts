@@ -52,7 +52,10 @@ export default defineEndpoint((router, context) => {
 
 		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
 		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
-		const updatedPreferences = { ...defaultPreferences, ...userPreferences };
+		const updatedPreferences = {
+			...defaultPreferences,
+			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => mapNotificationTypeKey(key))),
+		};
 		Object.values(updatedPreferences).forEach((preference) => { preference.emailEnabled = false; });
 
 		await usersService.updateOne(userId, {
@@ -100,7 +103,7 @@ export default defineEndpoint((router, context) => {
 		const current = userPreferences[resolvedType];
 		const updatedPreferences = {
 			...defaultPreferences,
-			...userPreferences,
+			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => mapNotificationTypeKey(key))),
 			[resolvedType]: {
 				enabled: typeof current?.enabled === 'boolean' ? current.enabled : !allDisabled,
 				emailEnabled: false,
