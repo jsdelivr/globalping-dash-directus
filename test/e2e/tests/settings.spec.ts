@@ -61,14 +61,14 @@ test('If all notification types are disabled, unspecified notification types are
 
 	await page.goto('/settings');
 
-	await sendNotification('outdated_firmware', user.id);
+	await sendNotification('probe_unassigned', user.id);
 	await sendNotification('welcome', user.id);
 	await sendNotification('probe_adopted', user.id);
 	await sendNotification('offline_probe', user.id);
 
 	await page.reload();
 	await page.getByRole('button', { name: 'Notifications' }).click();
-	await expect(page.getByText('outdated_firmware').first()).not.toBeVisible();
+	await expect(page.getByText('probe_unassigned').first()).not.toBeVisible();
 	await expect(page.getByText('welcome').first()).toBeVisible();
 	await expect(page.getByText('probe_adopted').first()).not.toBeVisible();
 	await expect(page.getByText('offline_probe').first()).not.toBeVisible();
