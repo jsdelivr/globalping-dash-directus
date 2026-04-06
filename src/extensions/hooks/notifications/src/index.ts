@@ -64,7 +64,7 @@ export default defineHook(({ filter }, context) => {
 });
 
 const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
-	const notification = getNotificationType(type);
+	const notification = getNotificationType(type)!;
 
 	if (!notification.configurableByUser) {
 		return true;
@@ -90,7 +90,7 @@ const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
 };
 
 const getEmailStatus = (type: NotificationTypeKey, user: User): NotificationPayload['email_status'] => {
-	const notification = getNotificationType(type);
+	const notification = getNotificationType(type)!;
 
 	if (!notification.sendEmail) {
 		return 'not-required';

@@ -75,11 +75,9 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const userId = tokenPayload.userId;
-		let resolvedType: NotificationTypeKey;
+		const resolvedType = mapNotificationTypeKey(tokenPayload.type);
 
-		try {
-			resolvedType = mapNotificationTypeKey(tokenPayload.type as NotificationTypeKey);
-		} catch {
+		if (!resolvedType) {
 			throw new InvalidTokenError();
 		}
 

@@ -1,6 +1,6 @@
 export type NotificationTypeKey = keyof typeof notificationTypes;
 
-type NotificationType = {
+export type NotificationType = {
 	configurableByUser: boolean;
 	readOnly: boolean;
 	sendEmail: boolean;
@@ -84,29 +84,32 @@ export const allNotificationTypes = Object.keys(notificationTypes);
 
 export const configurableNotificationTypes = Object.keys(configurableNotifications);
 
-export const mapNotificationTypeKey = (key: NotificationTypeKey): NotificationTypeKey => {
-	const notificationType = notificationTypes[key];
+export const mapNotificationTypeKey = (key: string): NotificationTypeKey | null => {
+	const notificationType = notificationTypes[key as NotificationTypeKey];
 
 	if (typeof notificationType === 'string') {
 		return notificationType as NotificationTypeKey;
 	}
 
 	if (!notificationType) {
-		throw new Error(`Notification type "${key}" not found.`);
+		return null;
 	}
 
-	return key;
+	return key as NotificationTypeKey;
 };
 
-export const getNotificationType = (key: NotificationTypeKey): NotificationType => {
+export const getNotificationType = (key: NotificationTypeKey): NotificationType | null => {
 	const resolvedKey = mapNotificationTypeKey(key);
-	const notificationType = notificationTypes[resolvedKey];
 
-	return notificationType as NotificationType;
+	if (!resolvedKey) {
+		return null;
+	}
+
+	return notificationTypes[resolvedKey] as NotificationType;
 };
 
 export const getAllDisabled = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null): boolean => {
-	const configuredTypes = Object.keys(notificationPreferences ?? {}).filter(key => getNotificationType(key as NotificationTypeKey).readOnly === false);
+	const configuredTypes = Object.keys(notificationPreferences ?? {}).filter(key => getNotificationType(key as NotificationTypeKey)?.readOnly === false);
 	return configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences![key]!.enabled === false);
 };
 
