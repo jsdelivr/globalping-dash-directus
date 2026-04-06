@@ -166,4 +166,34 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.probe_adopted?.enabled).to.equal(false);
 		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
 	});
+
+	it('should generate default preferences from notification types', async () => {
+		readOne.resolves({
+			id: 'user-1',
+			notification_preferences: {
+				probe_unassigned: { enabled: true, emailEnabled: true },
+			} as NotificationPreferences,
+		});
+
+		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+
+		expect(res.status).to.equal(302);
+		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
+		expect(updated.offline_probe).to.deep.equal({ enabled: true, emailEnabled: true });
+	});
+
+	it('should set default emailEnabled=false for email types when all emails disabled', async () => {
+		readOne.resolves({
+			id: 'user-1',
+			notification_preferences: {
+				probe_unassigned: { enabled: true, emailEnabled: false },
+			} as NotificationPreferences,
+		});
+
+		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+
+		expect(res.status).to.equal(302);
+		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
+		expect(updated.offline_probe).to.deep.equal({ enabled: true, emailEnabled: false });
+	});
 });

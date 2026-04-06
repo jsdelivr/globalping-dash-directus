@@ -3,11 +3,12 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Request } from 'express';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getEmailLinks } from '../../../lib/src/email-links.js';
-import { configurableNotificationTypes, getAllDisabled, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { configurableNotificationTypes, getAllDisabled, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
 	enabled: boolean;
 	emailEnabled?: boolean;
+	parameter?: number;
 };
 
 type NotificationPreferences = Partial<Record<NotificationTypeKey, NotificationPreference>>;
@@ -104,9 +105,11 @@ export default defineEndpoint((router, context) => {
 
 		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
 		const allDisabled = getAllDisabled(userPreferences);
+		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
 
 		const current = userPreferences[resolvedType];
 		const updatedPreferences = {
+			...defaultPreferences,
 			...userPreferences,
 			[resolvedType]: {
 				enabled: typeof current?.enabled === 'boolean' ? current.enabled : !allDisabled,
