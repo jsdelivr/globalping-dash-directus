@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, allNotificationTypes, getAllDisabled, getNotificationType } from '../../../lib/src/notification-types.js';
+import { type NotificationTypeKey, allNotificationTypes, getAllDisabled, getAllEmailsDisabled, getNotificationType } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email: string | null;
@@ -101,10 +101,8 @@ const getEmailStatus = (type: NotificationTypeKey, user: User): NotificationPayl
 	}
 
 	const notificationPreferences = user.notification_preferences ?? {};
-	const configuredTypes = Object.keys(notificationPreferences) as Array<NotificationTypeKey>;
-	const configuredEmailTypes = configuredTypes.filter(key => typeof notificationPreferences[key]?.emailEnabled === 'boolean');
 	const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
-	const allEmailsDisabled = configuredEmailTypes.length > 0 && configuredEmailTypes.every(key => notificationPreferences[key]!.emailEnabled === false);
+	const allEmailsDisabled = getAllEmailsDisabled(notificationPreferences);
 
 	if (!notification.configurableByUser) {
 		return 'pending';

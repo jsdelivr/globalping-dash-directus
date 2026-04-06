@@ -105,10 +105,12 @@ export const getNotificationType = (key: NotificationTypeKey): NotificationType 
 	return notificationType as NotificationType;
 };
 
-export const getAllDisabled = (notificationPreferences: { [key: string]: { enabled: boolean; emailEnabled?: boolean } } | null): boolean => {
-	const configuredTypes = Object.keys(notificationPreferences ?? {}) as Array<NotificationTypeKey>;
-	return configuredTypes.length > 0 && configuredTypes.every((key) => {
-		const notification = getNotificationType(key);
-		return notificationPreferences![key]!.enabled === false || notification.readOnly;
-	});
+export const getAllDisabled = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null): boolean => {
+	const configuredTypes = Object.keys(notificationPreferences ?? {}).filter(key => getNotificationType(key as NotificationTypeKey).readOnly === false);
+	return configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences![key]!.enabled === false);
+};
+
+export const getAllEmailsDisabled = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null): boolean => {
+	const configuredTypes = Object.values(notificationPreferences ?? {}).filter(preference => typeof preference.emailEnabled === 'boolean');
+	return configuredTypes.length > 0 && configuredTypes.every(preference => preference.emailEnabled === false);
 };

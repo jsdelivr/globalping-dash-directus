@@ -131,10 +131,11 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.outdated_software?.emailEnabled).to.equal(true);
 	});
 
-	it('should treat readOnly enabled type as disabled in list unsubscribe', async () => {
+	it('should ignore readOnly in allDisabled calculation during list unsubscribe', async () => {
 		readOne.resolves({
 			id: 'user-1',
 			notification_preferences: {
+				probe_unassigned: { enabled: false, emailEnabled: false },
 				outdated_software: { enabled: true, emailEnabled: true },
 			} as NotificationPreferences,
 		});
@@ -147,27 +148,11 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
 	});
 
-	it('should not treat as allDisabled when readOnly and non-readOnly enabled in list unsubscribe', async () => {
+	it('should ignore readOnly in allDisabled calculation during type unsubscribe', async () => {
 		readOne.resolves({
 			id: 'user-1',
 			notification_preferences: {
-				outdated_software: { enabled: true, emailEnabled: true },
-				offline_probe: { enabled: true, emailEnabled: true },
-			} as NotificationPreferences,
-		});
-
-		const res = await request(app).post('/list-unsubscribe').query({ data: getData('user-1') });
-
-		expect(res.status).to.equal(204);
-		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
-		expect(updated.probe_adopted?.enabled).to.equal(true);
-		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
-	});
-
-	it('should treat readOnly enabled type as disabled in type unsubscribe', async () => {
-		readOne.resolves({
-			id: 'user-1',
-			notification_preferences: {
+				probe_unassigned: { enabled: false, emailEnabled: false },
 				outdated_software: { enabled: true, emailEnabled: true },
 			} as NotificationPreferences,
 		});
@@ -175,25 +160,10 @@ describe('email-unsubscribe endpoint', () => {
 		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
 		expect(res.status).to.equal(302);
+		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success?type=probe_adopted');
+		expect(updateOne.calledOnce).to.equal(true);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 		expect(updated.probe_adopted?.enabled).to.equal(false);
-		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
-	});
-
-	it('should not treat as allDisabled when readOnly and non-readOnly enabled in type unsubscribe', async () => {
-		readOne.resolves({
-			id: 'user-1',
-			notification_preferences: {
-				outdated_software: { enabled: true, emailEnabled: true },
-				offline_probe: { enabled: true, emailEnabled: true },
-			} as NotificationPreferences,
-		});
-
-		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
-
-		expect(res.status).to.equal(302);
-		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
-		expect(updated.probe_adopted?.enabled).to.equal(true);
 		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
 	});
 });

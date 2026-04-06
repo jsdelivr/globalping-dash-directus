@@ -181,10 +181,11 @@ describe('notifications hooks', () => {
 			}
 		});
 
-		it('should treat as "allDisabled" when only readOnly type is enabled', async () => {
+		it('should ignore readOnly in allDisabled calculation', async () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
+					probe_unassigned: { enabled: false, emailEnabled: false },
 					outdated_software: { enabled: true, emailEnabled: true },
 				},
 			});
@@ -195,6 +196,19 @@ describe('notifications hooks', () => {
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
 			}
+		});
+
+		it('should not set "allDisabled: true" from readOnly type alone', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					outdated_software: { enabled: true, emailEnabled: true },
+				},
+			});
+
+			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
 		});
 	});
 });
