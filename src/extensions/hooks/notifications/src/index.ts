@@ -70,6 +70,10 @@ const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
 		return true;
 	}
 
+	if (notification.readOnly) {
+		return true;
+	}
+
 	const notificationPreferences = user.notification_preferences ?? {};
 	const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
 	const allDisabled = getAllDisabled(notificationPreferences);
