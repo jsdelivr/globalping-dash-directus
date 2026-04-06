@@ -78,7 +78,7 @@ test('If some notification types are enabled, unspecified notification types are
 	await client('directus_users').where({ id: user.id }).update({
 		notification_preferences: JSON.stringify({
 			probe_adopted: { enabled: false },
-			outdated_software: { enabled: true },
+			probe_unassigned: { enabled: true },
 		}),
 	});
 
