@@ -119,7 +119,7 @@ export default defineEndpoint((router, context) => {
 
 	router.post('/list-unsubscribe', asyncWrapper(async (req, res) => {
 		await unsubscribeAllEmails(req);
-		res.status(204).send();
+		res.status(200).send();
 	}, context));
 
 	router.get('/list-unsubscribe', asyncWrapper(async (req, res) => {

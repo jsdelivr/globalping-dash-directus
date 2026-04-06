@@ -21,7 +21,7 @@ type NotificationPayload = {
 
 const UserNotFoundError = createError('NOT_FOUND', 'User for notification not found.', 404);
 
-const CancelNotificationError = createError('CANCELLED', 'Notification cancelled by user preferences.', 204);
+const CancelNotificationError = createError('CANCELLED', 'Notification cancelled by user preferences.', 202);
 
 const notificationPayloadSchema = Joi.object({
 	type: Joi.string().valid(...allNotificationTypes).required(),

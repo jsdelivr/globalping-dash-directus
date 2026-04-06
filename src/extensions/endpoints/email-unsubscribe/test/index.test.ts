@@ -82,7 +82,7 @@ describe('email-unsubscribe endpoint', () => {
 	it('should unsubscribe all configurable email notifications with POST', async () => {
 		const res = await request(app).post('/list-unsubscribe').query({ data: getData('user-1') });
 
-		expect(res.status).to.equal(204);
+		expect(res.status).to.equal(200);
 		expect(updateOne.calledOnce).to.equal(true);
 		expect(updateOne.firstCall.args[0]).to.equal('user-1');
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
@@ -142,7 +142,7 @@ describe('email-unsubscribe endpoint', () => {
 
 		const res = await request(app).post('/list-unsubscribe').query({ data: getData('user-1') });
 
-		expect(res.status).to.equal(204);
+		expect(res.status).to.equal(200);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 		expect(updated.probe_adopted?.enabled).to.equal(false);
 		expect(updated.probe_adopted?.emailEnabled).to.equal(false);
