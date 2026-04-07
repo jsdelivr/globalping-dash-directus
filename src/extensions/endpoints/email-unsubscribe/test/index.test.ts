@@ -179,7 +179,8 @@ describe('email-unsubscribe endpoint', () => {
 
 		expect(res.status).to.equal(302);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
-		expect(updated.offline_probe).to.deep.equal({ enabled: true, emailEnabled: true });
+		expect(updated.outdated_software).to.deep.equal({ enabled: true, emailEnabled: true });
+		expect(updated.outdated_firmware).to.equal(undefined);
 	});
 
 	it('should set default emailEnabled=false for email types when all emails disabled', async () => {
@@ -194,6 +195,6 @@ describe('email-unsubscribe endpoint', () => {
 
 		expect(res.status).to.equal(302);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
-		expect(updated.offline_probe).to.deep.equal({ enabled: true, emailEnabled: false });
+		expect(updated.outdated_software).to.deep.equal({ enabled: true, emailEnabled: false });
 	});
 });

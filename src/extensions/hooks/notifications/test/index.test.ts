@@ -83,7 +83,7 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					outdated_firmware: { enabled: true, emailEnabled: true },
+					outdated_software: { enabled: true, emailEnabled: true },
 				},
 			});
 
@@ -96,7 +96,7 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					outdated_firmware: { enabled: true, emailEnabled: false },
+					outdated_software: { enabled: true, emailEnabled: false },
 				},
 			});
 
@@ -109,7 +109,6 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					offline_probe: { enabled: true, emailEnabled: false },
 					probe_unassigned: { enabled: true, emailEnabled: false },
 				},
 			});
@@ -130,7 +129,7 @@ describe('notifications hooks', () => {
 		it('should send configurable notification if user explicitly enabled the type', async () => {
 			readOne.resolves({
 				email: 'user@example.com',
-				notification_preferences: { welcome: { enabled: true, emailEnabled: true } },
+				notification_preferences: { probe_adopted: { enabled: true } },
 			});
 
 			const payload = { type: 'welcome', message: 'body', recipient: 'user-1', subject: 'test' };
@@ -155,7 +154,8 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					offline_probe: { enabled: false, emailEnabled: true },
+					probe_adopted: { enabled: false, emailEnabled: true },
+					probe_unassigned: { enabled: false, emailEnabled: true },
 				},
 			});
 
@@ -164,11 +164,41 @@ describe('notifications hooks', () => {
 			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
 		});
 
+		it('should cancel when user explicitly disabled this type', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_adopted: { enabled: false },
+					probe_unassigned: { enabled: true },
+				},
+			});
+
+			try {
+				await filter()({ type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' });
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+		});
+
+		it('should send in-app when user explicitly enabled this type', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_adopted: { enabled: true },
+				},
+			});
+
+			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
+		});
+
 		it('should cancel configurable notification if all configured types are disabled and this type is not configured', async () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					offline_probe: { enabled: false, emailEnabled: false },
+					outdated_software: { enabled: false, emailEnabled: false },
 					probe_unassigned: { enabled: false, emailEnabled: false },
 				},
 			});
