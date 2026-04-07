@@ -60,7 +60,7 @@ const notificationTypes = {
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
-	// TODO: sending of low_credits notifications is not implemented. Keeping it to document the structure of notifications with parameters.
+	// Sending of low_credits notifications is not implemented. Keeping it to document the structure of notifications with parameters.
 	// low_credits: {
 	// 	configurableByUser: true,
 	// 	readOnly: false,

@@ -31,6 +31,7 @@
 		"@directus/extensions-sdk": "17.0.11",
 		"@directus/types": "^14.3.1",
 		"@types/chai": "^5.2.3",
+		"@types/jsonwebtoken": "^9.0.10",
 		"@types/markdown-it": "^14.1.2",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.5.0",
@@ -44,6 +45,7 @@
 	},
 	"dependencies": {
 		"@directus/errors": "^2.2.0",
+		"jsonwebtoken": "^9.0.3",
 		"markdown-it": "^14.1.1",
 		"resend": "^6.9.4",
 		"sanitize-html": "^2.17.2"

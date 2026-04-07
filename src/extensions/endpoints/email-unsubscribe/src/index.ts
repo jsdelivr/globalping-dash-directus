@@ -23,6 +23,8 @@ const InvalidTokenError = createError('INVALID_TOKEN', 'Invalid token.', 400);
 const UserNotFoundError = createError('NOT_FOUND', 'User not found.', 404);
 
 export default defineEndpoint((router, context) => {
+	const emailGenerator = getEmailGenerator(context);
+
 	const unsubscribeAllEmails = async (req: Request) => {
 		const data = req.query.data;
 
@@ -30,8 +32,7 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidPayloadError();
 		}
 
-		const emailLinks = getEmailGenerator(context);
-		const tokenPayload = emailLinks.verifyToken<{ userId: string }>(data);
+		const tokenPayload = emailGenerator.verifyToken<{ userId: string }>(data);
 		const userId = tokenPayload?.userId ?? null;
 
 		if (!userId) {
@@ -70,8 +71,7 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidPayloadError();
 		}
 
-		const emailLinks = getEmailGenerator(context);
-		const tokenPayload = emailLinks.verifyToken<{ userId: string; type: string }>(data);
+		const tokenPayload = emailGenerator.verifyToken<{ userId: string; type: string }>(data);
 
 		if (!tokenPayload) {
 			throw new InvalidTokenError();

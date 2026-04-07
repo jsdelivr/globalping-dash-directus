@@ -70,7 +70,7 @@ const createContext = (rows: any[] = []): MinimalContext => {
 		env: {
 			RESEND_API_KEY: 'test-key',
 			DASH_URL: 'https://dash.globalping.io',
-			PUBLIC_URL: 'https://dash.globalping.io',
+			PUBLIC_URL: 'https://dash-directus.globalping.io',
 			SECRET: 'test-secret',
 		},
 		logger: { error },
@@ -134,7 +134,7 @@ describe('EmailService', () => {
 
 		expect(result).to.deep.equal({ sentIds: [ 10 ], failedIds: [ 11 ] });
 		expect(batchSend.firstCall.args[1]).to.include({ batchValidation: 'permissive' });
-		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash\.globalping\.io\/email-unsubscribe\/list-unsubscribe\?data=.*>$/);
+		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash-directus\.globalping\.io\/email-unsubscribe\/list-unsubscribe\?data=.*>$/);
 		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe-Post']).to.equal('List-Unsubscribe=One-Click');
 	});
 
@@ -193,7 +193,7 @@ describe('EmailService', () => {
 
 		expect(context.logger.error.calledOnceWithExactly(error)).to.equal(true);
 		expect(scheduleSpy.callCount).to.be.greaterThan(1);
-		expect(scheduleSpy.getCall(1).args[0]).to.equal(5000);
+		expect(scheduleSpy.getCall(1).args[0]).to.equal(10000);
 	});
 
 	it('should wait retry-after seconds before retry on 429', async () => {

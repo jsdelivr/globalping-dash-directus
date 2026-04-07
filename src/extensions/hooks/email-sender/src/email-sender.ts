@@ -19,11 +19,11 @@ const md = markdownit();
 
 export class EmailService {
 	private readonly client: Resend;
-	private readonly emailLinks: EmailGenerator;
+	private readonly emailGenerator: EmailGenerator;
 	private timer: NodeJS.Timeout | undefined;
 	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
 	private readonly REPLY_TO = 'd@globalping.io';
-	private readonly SEND_INTERVAL = 5_000;
+	private readonly SEND_INTERVAL = 10_000;
 	private readonly BATCH_SIZE = 100;
 	private stopped = true;
 
@@ -35,7 +35,7 @@ export class EmailService {
 		}
 
 		this.client = new Resend(env.RESEND_API_KEY);
-		this.emailLinks = getEmailGenerator(context);
+		this.emailGenerator = getEmailGenerator(context);
 	}
 
 	scheduleSend (delay: number = this.SEND_INTERVAL) {
@@ -110,7 +110,7 @@ export class EmailService {
 			html: this.formatMessage(notification),
 			replyTo: this.REPLY_TO,
 			headers: {
-				'List-Unsubscribe': `<${this.emailLinks.generateListUnsubscribeLink(notification.recipient)}>`,
+				'List-Unsubscribe': `<${this.emailGenerator.generateListUnsubscribeLink(notification.recipient)}>`,
 				'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
 			},
 		}));
@@ -131,7 +131,7 @@ export class EmailService {
 				return { sentIds, failedIds };
 			} else if (result.error.statusCode === 429 && attempt < 1) {
 				const retryAfter = Number(result.headers?.['retry-after']);
-				const delay = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000;
+				const delay = Number.isFinite(retryAfter) ? retryAfter * 1000 : 1000;
 				await wait(delay);
 			} else {
 				throw new Error(result.error.message);
@@ -153,8 +153,8 @@ export class EmailService {
 		const typeTitle = notification.type.replace('_', '\u00A0').replace(/^./, c => c.toUpperCase());
 		const messageWithFooter = messagesWithAbsoluteLinks
 			+ '<p>—<br>'
-			+ `<a href="${this.emailLinks.generateSettingsLink()}">Manage notifications</a> | `
-			+ `<a href="${this.emailLinks.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable "${typeTitle}" emails</a>`
+			+ `<a href="${this.emailGenerator.generateSettingsLink()}">Manage notifications</a> | `
+			+ `<a href="${this.emailGenerator.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable "${typeTitle}" emails</a>`
 			+ '</p>';
 		return sanitizeHtml(messageWithFooter);
 	}

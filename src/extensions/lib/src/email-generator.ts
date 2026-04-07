@@ -60,12 +60,12 @@ export class EmailGenerator {
 	}
 }
 
-let emailLinks: EmailGenerator | null = null;
+let emailGenerator: EmailGenerator | null = null;
 
 export const getEmailGenerator = (context: Context): EmailGenerator => {
-	if (!emailLinks) {
-		emailLinks = new EmailGenerator(context);
+	if (!emailGenerator) {
+		emailGenerator = new EmailGenerator(context);
 	}
 
-	return emailLinks;
+	return emailGenerator;
 };

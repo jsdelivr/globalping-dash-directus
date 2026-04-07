@@ -25,7 +25,7 @@ describe('email-unsubscribe endpoint', () => {
 	const context = {
 		env: {
 			DASH_URL: 'https://dash.globalping.io',
-			PUBLIC_URL: 'https://dash.globalping.io',
+			PUBLIC_URL: 'https://dash-directus.globalping.io',
 			SECRET: 'test-secret',
 		},
 		logger: {
@@ -47,7 +47,7 @@ describe('email-unsubscribe endpoint', () => {
 		const links = new EmailGenerator({
 			env: {
 				DASH_URL: 'https://dash.globalping.io',
-				PUBLIC_URL: 'https://dash.globalping.io',
+				PUBLIC_URL: 'https://dash-directus.globalping.io',
 				SECRET: 'test-secret',
 			},
 		});
@@ -59,7 +59,7 @@ describe('email-unsubscribe endpoint', () => {
 		const links = new EmailGenerator({
 			env: {
 				DASH_URL: 'https://dash.globalping.io',
-				PUBLIC_URL: 'https://dash.globalping.io',
+				PUBLIC_URL: 'https://dash-directus.globalping.io',
 				SECRET: 'test-secret',
 			},
 		});
