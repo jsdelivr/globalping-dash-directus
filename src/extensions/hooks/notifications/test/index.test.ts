@@ -55,69 +55,6 @@ describe('notifications hooks', () => {
 			}
 		});
 
-		it('should set email_status=not-required for non-email notification type', async () => {
-			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
-
-			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
-			const result = await filter()(payload);
-			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
-		});
-
-		it('should set email_status=no-email for email notification type without user email', async () => {
-			readOne.resolves({ email: null, notification_preferences: null });
-
-			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
-			const result = await filter()(payload);
-			expect(result).to.deep.equal({ ...payload, email_status: 'no-email' });
-		});
-
-		it('should set email_status=pending for email notification type with user email', async () => {
-			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
-
-			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
-			const result = await filter()(payload);
-			expect(result).to.deep.equal({ ...payload, email_status: 'pending' });
-		});
-
-		it('should set email_status=pending when user explicitly enabled email for type', async () => {
-			readOne.resolves({
-				email: 'user@example.com',
-				notification_preferences: {
-					outdated_software: { enabled: true, emailEnabled: true },
-				},
-			});
-
-			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
-			const result = await filter()(payload);
-			expect(result).to.deep.equal({ ...payload, email_status: 'pending' });
-		});
-
-		it('should set email_status=disabled-by-user when user explicitly disabled email for type', async () => {
-			readOne.resolves({
-				email: 'user@example.com',
-				notification_preferences: {
-					outdated_software: { enabled: true, emailEnabled: false },
-				},
-			});
-
-			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
-			const result = await filter()(payload);
-			expect(result).to.deep.equal({ ...payload, email_status: 'disabled-by-user' });
-		});
-
-		it('should set email_status=disabled-by-user when all configured email types are disabled', async () => {
-			readOne.resolves({
-				email: 'user@example.com',
-				notification_preferences: {
-					probe_unassigned: { enabled: true, emailEnabled: false },
-				},
-			});
-
-			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
-			const result = await filter()(payload);
-			expect(result).to.deep.equal({ ...payload, email_status: 'disabled-by-user' });
-		});
-
 		it('should send configurable notification if notification_preferences is null', async () => {
 			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
 
@@ -141,7 +78,7 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					welcome: { enabled: false, emailEnabled: true },
+					welcome: { enabled: false, emailEnabled: false },
 				},
 			});
 
@@ -154,8 +91,8 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					probe_adopted: { enabled: false, emailEnabled: true },
-					probe_unassigned: { enabled: false, emailEnabled: true },
+					probe_adopted: { enabled: false, emailEnabled: false },
+					probe_unassigned: { enabled: false, emailEnabled: false },
 				},
 			});
 
@@ -232,13 +169,107 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					outdated_software: { enabled: true, emailEnabled: true },
+					outdated_software: { enabled: false, emailEnabled: false },
 				},
 			});
 
 			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
 			const result = await filter()(payload);
 			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
+		});
+
+		it('should set email_status=not-required for non-email notification type', async () => {
+			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
+
+			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
+		});
+
+		it('should set email_status=no-email for email notification type without user email', async () => {
+			readOne.resolves({ email: null, notification_preferences: null });
+
+			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'no-email' });
+		});
+
+		it('should set email_status=pending for email notification type with user email', async () => {
+			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
+
+			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'pending' });
+		});
+
+		it('should set email_status=pending when user explicitly enabled email for type', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_unassigned: { enabled: false, emailEnabled: false },
+					outdated_software: { enabled: true, emailEnabled: true },
+				},
+			});
+
+			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'pending' });
+		});
+
+		it('should set email_status=disabled-by-user for outdated_firmware when prefs have disabled outdated_software', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_unassigned: { enabled: true, emailEnabled: true },
+					outdated_software: { enabled: true, emailEnabled: false },
+				},
+			});
+
+			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'disabled-by-user' });
+		});
+
+		it('should set email_status=disabled-by-user for outdated_software payload prefs have disabled outdated_software', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_unassigned: { enabled: true, emailEnabled: true },
+					outdated_software: { enabled: true, emailEnabled: false },
+				},
+			});
+
+			const payload = { type: 'outdated_software', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'disabled-by-user' });
+		});
+
+		it('should set email_status=disabled-by-user when all configured email types are disabled', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_adopted: { enabled: true, emailEnabled: false },
+					probe_unassigned: { enabled: true, emailEnabled: false },
+				},
+			});
+
+			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'disabled-by-user' });
+		});
+
+		it('should set email_status=pending when not all configured email types are disabled', async () => {
+			readOne.resolves({
+				email: 'user@example.com',
+				notification_preferences: {
+					probe_adopted: { enabled: true, emailEnabled: true },
+					probe_unassigned: { enabled: true, emailEnabled: false },
+				},
+			});
+
+			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
+			const result = await filter()(payload);
+			expect(result).to.deep.equal({ ...payload, email_status: 'pending' });
 		});
 	});
 });

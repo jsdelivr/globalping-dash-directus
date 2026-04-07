@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, allNotificationTypes, getAllDisabled, getAllEmailsDisabled, getNotificationType } from '../../../lib/src/notification-types.js';
+import { type NotificationTypeKey, allNotificationTypes, getAllDisabled, getAllEmailsDisabled, mapNotificationTypeKey, getNotificationType } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email: string | null;
@@ -40,13 +40,13 @@ export default defineHook(({ filter }, context) => {
 			throw new (createError('INVALID_PAYLOAD_ERROR', error.message, 400))();
 		}
 
-		const { recipient, type } = value as { type: NotificationTypeKey; recipient: string };
+		const type = mapNotificationTypeKey(value.type)!;
 
 		const usersService = new UsersService({
 			schema: await getSchema(),
 		});
 
-		const user = await usersService.readOne(recipient) as User | null;
+		const user = await usersService.readOne(value.recipient) as User | null;
 
 		if (!user) {
 			throw new UserNotFoundError();
@@ -74,13 +74,13 @@ const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
 		return true;
 	}
 
-	const notificationPreferences = user.notification_preferences ?? {};
-	const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-	const allDisabled = getAllDisabled(notificationPreferences);
-
 	if (user.notification_preferences === null) {
 		return true;
 	}
+
+	const notificationPreferences = user.notification_preferences;
+	const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
+	const allDisabled = getAllDisabled(notificationPreferences);
 
 	if (typeof userEnabled === 'boolean') {
 		return userEnabled;
@@ -104,15 +104,15 @@ const getEmailStatus = (type: NotificationTypeKey, user: User): NotificationPayl
 		return 'no-email';
 	}
 
-	const notificationPreferences = user.notification_preferences ?? {};
+	if (user.notification_preferences === null) {
+		return 'pending';
+	}
+
+	const notificationPreferences = user.notification_preferences;
 	const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
 	const allEmailsDisabled = getAllEmailsDisabled(notificationPreferences);
 
 	if (!notification.configurableByUser) {
-		return 'pending';
-	}
-
-	if (user.notification_preferences === null) {
 		return 'pending';
 	}
 
