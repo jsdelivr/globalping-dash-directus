@@ -87,8 +87,10 @@ test('Toggles of notification types', async ({ page, user }) => {
 	await page.goto('/settings');
 
 	const probeAdoptedSection = page.getByText('Probe successfully adopted').locator('..');
+	// Disable probe adopted notifications.
 	await probeAdoptedSection.getByRole('switch').first().click();
 	const outdatedSoftwareSection = page.getByText('Probe software is outdated').locator('..');
+	// Disable outdated software emails.
 	await outdatedSoftwareSection.getByRole('switch').nth(1).click();
 	await page.getByRole('button', { name: 'Apply settings' }).click();
 
@@ -105,6 +107,7 @@ test('Toggles of notification types', async ({ page, user }) => {
 	await page.getByRole('button', { name: 'Notifications' }).click();
 	await expect(page.getByText('probe_adopted').first()).not.toBeVisible();
 	await expect(page.getByText('probe_unassigned').first()).toBeVisible();
+	await expect(page.getByText('outdated_firmware').first()).toBeVisible();
 	expect(await notificationEmailStatus(user.id, 'probe_unassigned')).toBe('not-required');
 	expect(await notificationEmailStatus(user.id, 'outdated_firmware')).toBe('disabled-by-user');
 });
