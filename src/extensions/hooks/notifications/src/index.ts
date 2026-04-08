@@ -108,13 +108,13 @@ const getEmailStatus = (type: NotificationTypeKey, user: User): NotificationPayl
 		return 'pending';
 	}
 
-	const notificationPreferences = user.notification_preferences;
-	const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
-	const allEmailsDisabled = getAllEmailsDisabled(notificationPreferences);
-
 	if (!notification.configurableByUser) {
 		return 'pending';
 	}
+
+	const notificationPreferences = user.notification_preferences;
+	const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
+	const allEmailsDisabled = getAllEmailsDisabled(notificationPreferences);
 
 	if (userEmailEnabled === true) {
 		return 'pending';

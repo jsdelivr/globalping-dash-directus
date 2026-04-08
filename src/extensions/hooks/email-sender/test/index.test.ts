@@ -114,7 +114,7 @@ describe('EmailService', () => {
 		expect(html).to.not.include('<script>');
 	});
 
-	it('should map permissive batch errors to sent/failed ids', async () => {
+	it('should map batch errors to sent/failed ids', async () => {
 		const context = createContext();
 		const service = new EmailService(context as any);
 		const batchSend = sinon.stub().resolves({

@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import Joi from 'joi';
-import { configurableNotifications, configurableNotificationTypes } from '../../../lib/src/notification-types.js';
+import { configurableNotificationTypes, getNotificationType } from '../../../lib/src/notification-types.js';
 import { getDirectusUsers } from './repositories/directus.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
@@ -12,7 +12,7 @@ const parameterSchema = Joi.number().strict().min(0).max(1_000_000_000);
 const validateNotificationParameter = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
 	const pathSegments = helpers.state.path ?? [];
 	const notificationType = pathSegments[pathSegments.length - 1] as string;
-	const notification = configurableNotifications[notificationType];
+	const notification = getNotificationType(notificationType);
 
 	if (notification?.hasParameter && value.enabled && typeof value.parameter !== 'number') {
 		return { ...value, parameter: notification.defaultParameter };
@@ -24,8 +24,9 @@ const validateNotificationParameter = (value: { enabled: boolean; parameter?: nu
 const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
 	const pathSegments = helpers.state.path ?? [];
 	const notificationType = pathSegments[pathSegments.length - 1] as string;
+	const notification = getNotificationType(notificationType);
 
-	if (configurableNotifications[notificationType]?.readOnly) {
+	if (notification?.readOnly) {
 		return { ...value, enabled: true };
 	}
 

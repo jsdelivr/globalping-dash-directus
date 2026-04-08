@@ -29,7 +29,7 @@ export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], userId:
 	if (probes.length === 0) { return []; }
 
 	const softwareProbes = probes.filter(probe => !probe.hardwareDevice);
-	const hardwareProbes = probes.filter(probe => Boolean(probe.hardwareDevice));
+	const hardwareProbes = probes.filter(probe => probe.hardwareDevice);
 
 	if (softwareProbes.length > 0 && hardwareProbes.length > 0) {
 		return notifyMultipleTypes(softwareProbes, hardwareProbes, userId, context);

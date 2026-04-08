@@ -16,35 +16,35 @@ export type NotificationType = {
 };
 
 const notificationTypes = {
-	welcome: { // TYPE: not-configurable
+	welcome: {
 		configurableByUser: false, // Does type appear in user notification preferences?
 		readOnly: false, // Can user disable "App" notifications for this type?
 		sendEmail: false, // Should system try to send email for this type? (Can be disabled by user preferences.)
 		hasParameter: false, // Does type have a parameter input?
 		description: 'Welcome to Globalping message.',
 	},
-	probe_adopted: { // TYPE: no email
+	probe_adopted: {
 		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe successfully adopted',
 	},
-	probe_unassigned: { // TYPE: no email
+	probe_unassigned: {
 		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
 		description: 'Probe was unassigned',
 	},
-	outdated_software: { // TYPE: read-only, email. Also controls 'outdated_firmware'.
+	outdated_software: { // Also controls 'outdated_firmware'.
 		configurableByUser: true,
 		readOnly: true,
 		sendEmail: true,
 		hasParameter: false,
 		description: 'Probe software is outdated',
 	},
-	outdated_firmware: 'outdated_software', // TYPE: alias
+	outdated_firmware: 'outdated_software',
 	offline_probe: {
 		configurableByUser: true,
 		readOnly: false,
@@ -98,7 +98,7 @@ export const mapNotificationTypeKey = (key: string): NotificationTypeKey | null 
 	return key as NotificationTypeKey;
 };
 
-export const getNotificationType = (key: NotificationTypeKey): NotificationType | null => {
+export const getNotificationType = (key: string): NotificationType | null => {
 	const resolvedKey = mapNotificationTypeKey(key);
 
 	if (!resolvedKey) {
@@ -109,7 +109,7 @@ export const getNotificationType = (key: NotificationTypeKey): NotificationType 
 };
 
 export const getAllDisabled = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null): boolean => {
-	const configuredTypes = Object.keys(notificationPreferences ?? {}).filter(key => getNotificationType(key as NotificationTypeKey)?.readOnly !== true);
+	const configuredTypes = Object.keys(notificationPreferences ?? {}).filter(key => getNotificationType(key)?.readOnly !== true);
 	return configuredTypes.length > 0 && configuredTypes.every(key => notificationPreferences![key]!.enabled === false);
 };
 

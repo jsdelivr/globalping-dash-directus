@@ -18,13 +18,13 @@ type NotificationRow = {
 const md = markdownit();
 
 export class EmailService {
-	private readonly client: Resend;
-	private readonly emailGenerator: EmailGenerator;
-	private timer: NodeJS.Timeout | undefined;
 	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
 	private readonly REPLY_TO = 'd@globalping.io';
 	private readonly SEND_INTERVAL = 10_000;
 	private readonly BATCH_SIZE = 100;
+	private readonly client: Resend;
+	private readonly emailGenerator: EmailGenerator;
+	private timer: NodeJS.Timeout | undefined;
 	private stopped = true;
 
 	public constructor (private readonly context: HookExtensionContext) {

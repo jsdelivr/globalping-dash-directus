@@ -33,11 +33,12 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const tokenPayload = emailGenerator.verifyToken<{ userId: string }>(data);
-		const userId = tokenPayload?.userId ?? null;
 
-		if (!userId) {
+		if (!tokenPayload) {
 			throw new InvalidTokenError();
 		}
+
+		const userId = tokenPayload.userId;
 
 		const { UsersService } = context.services;
 		const usersService = new UsersService({
@@ -55,6 +56,7 @@ export default defineEndpoint((router, context) => {
 		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
 		const updatedPreferences = {
 			...defaultPreferences,
+			// Filtering here to remove old types that was removed from notificationTypes.
 			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => mapNotificationTypeKey(key))),
 		};
 		Object.values(updatedPreferences).forEach((preference) => { preference.emailEnabled = false; });
@@ -103,6 +105,7 @@ export default defineEndpoint((router, context) => {
 		const current = userPreferences[resolvedType];
 		const updatedPreferences = {
 			...defaultPreferences,
+			// Filtering here to remove old types that was removed from notificationTypes.
 			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => mapNotificationTypeKey(key))),
 			[resolvedType]: {
 				enabled: typeof current?.enabled === 'boolean' ? current.enabled : !allDisabled,
