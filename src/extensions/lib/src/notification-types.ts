@@ -1,3 +1,5 @@
+import Joi from 'joi';
+
 export type NotificationTypeKey = keyof typeof notificationTypes;
 
 export type NotificationType = {
@@ -80,9 +82,9 @@ export const configurableNotifications = Object.fromEntries((Object.entries(noti
 		description: value.description,
 	}]));
 
-export const allNotificationTypes = Object.keys(notificationTypes);
+export const joiNotificationTypeKey = Joi.string().valid(...Object.keys(notificationTypes));
 
-export const configurableNotificationTypes = Object.keys(configurableNotifications);
+export const joiConfigurableNotificationTypeKey = Joi.string().valid(...Object.keys(configurableNotifications));
 
 export const mapNotificationTypeKey = (key: string): NotificationTypeKey | null => {
 	const notificationType = notificationTypes[key as NotificationTypeKey];

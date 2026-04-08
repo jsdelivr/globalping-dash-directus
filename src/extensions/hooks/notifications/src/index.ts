@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, allNotificationTypes, getAllDisabled, getAllEmailsDisabled, mapNotificationTypeKey, getNotificationType } from '../../../lib/src/notification-types.js';
+import { type NotificationTypeKey, getAllDisabled, getAllEmailsDisabled, joiNotificationTypeKey, mapNotificationTypeKey, getNotificationType } from '../../../lib/src/notification-types.js';
 
 type User = {
 	email: string | null;
@@ -24,7 +24,7 @@ const UserNotFoundError = createError('NOT_FOUND', 'User for notification not fo
 const CancelNotificationError = createError('CANCELLED', 'Notification cancelled by user preferences.', 202);
 
 const notificationPayloadSchema = Joi.object({
-	type: Joi.string().valid(...allNotificationTypes).required(),
+	type: joiNotificationTypeKey.required(),
 	message: Joi.string().required(),
 	recipient: Joi.string().required(),
 }).unknown(true);

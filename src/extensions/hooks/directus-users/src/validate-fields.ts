@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import Joi from 'joi';
-import { configurableNotificationTypes, getNotificationType } from '../../../lib/src/notification-types.js';
+import { getNotificationType, joiConfigurableNotificationTypeKey } from '../../../lib/src/notification-types.js';
 import { getDirectusUsers } from './repositories/directus.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
@@ -35,7 +35,7 @@ const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpe
 
 const userSchema = Joi.object({
 	notification_preferences: Joi.object().pattern(
-		Joi.string().max(100).valid(...configurableNotificationTypes),
+		joiConfigurableNotificationTypeKey.max(100),
 		Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().optional(),

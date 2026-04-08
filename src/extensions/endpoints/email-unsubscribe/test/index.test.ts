@@ -4,7 +4,7 @@ import { describe, it, beforeEach } from 'mocha';
 import * as sinon from 'sinon';
 import request from 'supertest';
 import { EmailGenerator } from '../../../lib/src/email-generator.js';
-import { configurableNotificationTypes, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { configurableNotifications, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 import endpoint from '../src/index.js';
 
 type NotificationPreference = {
@@ -87,7 +87,7 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updateOne.firstCall.args[0]).to.equal('user-1');
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 
-		for (const type of configurableNotificationTypes as NotificationTypeKey[]) {
+		for (const type of Object.keys(configurableNotifications) as NotificationTypeKey[]) {
 			expect(updated[type]?.emailEnabled).to.equal(false);
 		}
 

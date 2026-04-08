@@ -1433,6 +1433,9 @@ importers:
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
+      joi:
+        specifier: ^18.0.1
+        version: 18.0.1
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -1461,9 +1464,6 @@ importers:
       express:
         specifier: ^4.21.2
         version: 4.21.2
-      joi:
-        specifier: ^18.0.1
-        version: 18.0.1
 
   src/extensions/modules/probes-adapter:
     devDependencies:

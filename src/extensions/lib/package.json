@@ -19,6 +19,7 @@
 		"countries-list": "^3.1.1",
 		"dayjs": "^1.11.19",
 		"jsonwebtoken": "^9.0.3",
+		"joi": "^18.0.1",
 		"lodash": "^4.17.21",
 		"proxy-addr": "^2.0.7"
 	},
@@ -28,7 +29,6 @@
 		"@types/express": "^4.17.21",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/proxy-addr": "^2.0.3",
-		"express": "^4.21.2",
-		"joi": "^18.0.1"
+		"express": "^4.21.2"
 	}
 }
