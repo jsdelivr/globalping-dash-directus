@@ -4,7 +4,8 @@ import express, { type NextFunction, type Response } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import endpoint, { type AdoptedProbe, type ProbeToAdopt, type Row, type Request } from '../src/index.js';
+import type { Probe, ProbeToAdopt, Row } from '../../../lib/src/create-adopted-probe.js';
+import endpoint, { type Request } from '../src/index.js';
 
 describe('adoption code endpoints', () => {
 	const sandbox = sinon.createSandbox({
@@ -94,9 +95,10 @@ describe('adoption code endpoints', () => {
 		customLocation: null,
 		originalLocation: null,
 		allowedCountries: [ 'FR' ],
+		localAdoptionServer: null,
 	};
 
-	const adoptedProbe: AdoptedProbe = {
+	const adoptedProbe: Probe = {
 		...adoptionCodeGPApiResponse,
 		userId: 'first-user-id',
 		id: 'generatedId',
@@ -104,6 +106,7 @@ describe('adoption code endpoints', () => {
 		lastSyncDate: new Date(),
 		isOutdated: false,
 	};
+
 	const row: Row = {
 		...adoptedProbe,
 		tags: JSON.stringify(adoptedProbe.tags),
@@ -330,6 +333,7 @@ describe('adoption code endpoints', () => {
 				isIPv4Supported: true,
 				isIPv6Supported: false,
 				allowedCountries: [ 'FR' ],
+				localAdoptionServer: null,
 			});
 
 			expect(res.status).to.equal(200);
@@ -433,6 +437,7 @@ describe('adoption code endpoints', () => {
 				isIPv4Supported: true,
 				isIPv6Supported: false,
 				allowedCountries: [ 'FR' ],
+				localAdoptionServer: null,
 			});
 
 			expect(notificationCreateOne.callCount).to.equal(1);
@@ -503,6 +508,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
 				tags: [],
+				localAdoptionServer: null,
 			});
 
 			expect(notificationCreateOne.callCount).to.equal(1);
@@ -605,6 +611,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
 				tags: [],
+				localAdoptionServer: null,
 			});
 
 			expect(notificationCreateOne.callCount).to.equal(2);
@@ -700,6 +707,7 @@ describe('adoption code endpoints', () => {
 				longitude: 2.35,
 				userId: 'first-user-id',
 				name: 'probe-fr-paris-01',
+				localAdoptionServer: null,
 			});
 		});
 
@@ -985,6 +993,7 @@ describe('adoption code endpoints', () => {
 				network: 'SCALEWAY S.A.S.',
 				customLocation: null,
 				allowedCountries: [ 'FR' ],
+				localAdoptionServer: null,
 			},
 			user: { id: 'first-user-id' },
 		};
@@ -1097,6 +1106,7 @@ describe('adoption code endpoints', () => {
 					name: 'probe-fr-paris-01',
 					userId: 'first-user-id',
 					tags: [],
+					localAdoptionServer: null,
 				},
 				{ emitEvents: false },
 			]);
@@ -1206,6 +1216,7 @@ describe('adoption code endpoints', () => {
 					isIPv6Supported: false,
 					asn: 12876,
 					network: 'SCALEWAY S.A.S.',
+					localAdoptionServer: null,
 				},
 				{ emitEvents: false },
 			]);

@@ -8,75 +8,17 @@ import endpoint from '../src/index.js';
 describe('local-adoption endpoint', () => {
 	const sandbox = sinon.createSandbox();
 
-	const knexQueryBuilder = {
-		where: sandbox.stub(),
-		whereNull: sandbox.stub(),
-		whereNotNull: sandbox.stub(),
-		select: sandbox.stub(),
-		orWhereRaw: sandbox.stub(),
-		whereRaw: sandbox.stub(),
-		first: sandbox.stub(),
-		then: sandbox.stub(),
-		transacting: sandbox.stub(),
-		forUpdate: sandbox.stub(),
-	};
-
-	// make the knexQueryBuilder chainable
-	knexQueryBuilder.where.returns(knexQueryBuilder);
-	knexQueryBuilder.whereNull.returns(knexQueryBuilder);
-	knexQueryBuilder.whereNotNull.returns(knexQueryBuilder);
-	knexQueryBuilder.select.returns(knexQueryBuilder);
-	knexQueryBuilder.orWhereRaw.returns(knexQueryBuilder);
-	knexQueryBuilder.whereRaw.returns(knexQueryBuilder);
-	knexQueryBuilder.transacting.returns(knexQueryBuilder);
-	knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
-
-	const databaseStub = sandbox.stub().returns(knexQueryBuilder);
-
-	(databaseStub as any).transaction = sandbox.stub().callsFake(async (callback: any) => {
-		return callback(knexQueryBuilder);
-	});
-
-	const updateOne = sandbox.stub();
-	const readOne = sandbox.stub();
-	const getSchema = sandbox.stub().resolves({});
-
-	const endpointContext = {
-		logger: {
-			error: console.error,
-		},
-		database: databaseStub,
-		getSchema,
-		services: {
-			ItemsService: sandbox.stub().callsFake(() => {
-				return { updateOne, readOne };
-			}),
-		},
-	} as unknown as EndpointExtensionContext;
-
-	const app = express();
-	app.use(express.json());
-
+	let knexQueryBuilder: any;
+	let databaseStub: any;
+	let updateOne: any;
+	let readOne: any;
+	let readByQuery: any;
+	let notificationCreateOne: any;
+	let getSchema: any;
+	let endpointContext: EndpointExtensionContext;
+	let app: express.Express;
 	let accountability: { user: string; admin: boolean } | Record<string, never> = {};
 	let simulateIpFailure = false;
-
-	// middleware to simulate context (Accountability) and failure scenarios (IP)
-	app.use(((req: any, _res: Response, next: NextFunction) => {
-		if (simulateIpFailure) {
-			delete req.headers['x-forwarded-for'];
-
-			Object.defineProperty(req, 'socket', { get: () => ({}), configurable: true });
-			Object.defineProperty(req, 'connection', { get: () => ({}), configurable: true });
-			Object.defineProperty(req, 'ip', { get: () => undefined, configurable: true });
-		}
-
-		req.accountability = accountability;
-		next();
-	}) as NextFunction);
-
-	const router = express.Router();
-	(endpoint as any)(router, endpointContext);
-	app.use(router);
 
 	const clientIp = '192.168.1.10';
 
@@ -94,19 +36,97 @@ describe('local-adoption endpoint', () => {
 		id: 'probe-1',
 		ip: clientIp,
 		altIps: JSON.stringify([]),
+		uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
 		status: 'ready',
+		isIPv4Supported: true,
+		isIPv6Supported: false,
+		version: '0.27.0',
+		nodeVersion: 'v22.17.0',
+		hardwareDevice: 'v2',
+		hardwareDeviceFirmware: 'v2.1',
+		asn: 12876,
 		...reducedProbeData,
 	};
 
 	beforeEach(() => {
-		sandbox.resetHistory();
+		sandbox.restore();
 		simulateIpFailure = false;
+
+		knexQueryBuilder = {
+			where: sandbox.stub(),
+			orWhere: sandbox.stub(),
+			whereNull: sandbox.stub(),
+			whereNotNull: sandbox.stub(),
+			select: sandbox.stub(),
+			orWhereRaw: sandbox.stub(),
+			whereRaw: sandbox.stub(),
+			first: sandbox.stub(),
+			then: sandbox.stub(),
+			transacting: sandbox.stub(),
+			forUpdate: sandbox.stub(),
+		};
+
+		knexQueryBuilder.where.returns(knexQueryBuilder);
+		knexQueryBuilder.orWhere.returns(knexQueryBuilder);
+		knexQueryBuilder.whereNull.returns(knexQueryBuilder);
+		knexQueryBuilder.whereNotNull.returns(knexQueryBuilder);
+		knexQueryBuilder.select.returns(knexQueryBuilder);
+		knexQueryBuilder.orWhereRaw.returns(knexQueryBuilder);
+		knexQueryBuilder.whereRaw.returns(knexQueryBuilder);
+		knexQueryBuilder.transacting.returns(knexQueryBuilder);
+		knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
+
+		databaseStub = sandbox.stub().returns(knexQueryBuilder);
+		databaseStub.transaction = sandbox.stub().callsFake(async (callback: any) => callback(knexQueryBuilder));
+
+		updateOne = sandbox.stub();
+		readOne = sandbox.stub();
+		readByQuery = sandbox.stub();
+		notificationCreateOne = sandbox.stub();
+		getSchema = sandbox.stub().resolves({});
+
+		endpointContext = {
+			logger: {
+				error: console.error,
+			},
+			database: databaseStub,
+			getSchema,
+			services: {
+				ItemsService: sandbox.stub().callsFake(() => {
+					return { updateOne, readOne, readByQuery };
+				}),
+				NotificationsService: sandbox.stub().callsFake(() => {
+					return { createOne: notificationCreateOne };
+				}),
+			},
+		} as unknown as EndpointExtensionContext;
+
+		app = express();
+		app.use(express.json());
+
+		app.use(((req: any, _res: Response, next: NextFunction) => {
+			if (simulateIpFailure) {
+				delete req.headers['x-forwarded-for'];
+				Object.defineProperty(req, 'socket', { get: () => ({}), configurable: true });
+				Object.defineProperty(req, 'connection', { get: () => ({}), configurable: true });
+				Object.defineProperty(req, 'ip', { get: () => undefined, configurable: true });
+			}
+
+			req.accountability = accountability;
+			next();
+		}) as NextFunction);
+
+		const router = express.Router();
+		(endpoint as any)(router, endpointContext);
+		app.use(router);
 
 		knexQueryBuilder.first.resolves(probeData);
 		knexQueryBuilder.then.yields([{ ...reducedProbeData, publicIp: clientIp }]);
 
 		updateOne.resolves('probe-1');
 		readOne.resolves({ ...probeData, userId: 'user-id' });
+		readByQuery.resolves([]);
+		notificationCreateOne.resolves('notification-1');
 
 		accountability = {
 			user: 'user-id',
@@ -176,8 +196,66 @@ describe('local-adoption endpoint', () => {
 			expect(res.body).to.deep.include({ id: 'probe-1', userId: 'user-id' });
 
 			expect(knexQueryBuilder.first.called).to.equal(true);
-			expect(updateOne.calledWith('probe-1', { userId: 'user-id' }, { emitEvents: false })).to.equal(true);
+			expect(updateOne.called).to.equal(true);
+
+			expect(updateOne.args[0]?.[1]).to.deep.include({
+				name: 'probe-us-new-york-01',
+				userId: 'user-id',
+				ip: clientIp,
+			});
+
+			expect(notificationCreateOne.callCount).to.equal(1);
+
+			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
+				recipient: 'user-id',
+				subject: 'New probe adopted',
+				message: 'A new probe [**probe-us-new-york-01**](/probes/probe-1) with IP address **192.168.1.10** has been assigned to your account.',
+			});
+
 			expect(readOne.calledWith('probe-1')).to.equal(true);
+		});
+
+		it('should only update metadata when probe is already assigned to user', async () => {
+			knexQueryBuilder.first.onFirstCall().resolves(probeData);
+
+			knexQueryBuilder.first.onSecondCall().resolves({
+				...probeData,
+				userId: 'user-id',
+			});
+
+			const res = await request(app)
+				.post('/adopt')
+				.set('X-Forwarded-For', clientIp)
+				.send({
+					token: 'valid-token-123',
+				});
+
+			expect(res.status).to.equal(200);
+			expect(updateOne.callCount).to.equal(1);
+
+			expect(updateOne.args[0]?.[0]).to.equal('probe-1');
+
+			expect(updateOne.args[0]?.[1]).to.deep.include({
+				ip: '192.168.1.10',
+				altIps: [],
+				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
+				version: '0.27.0',
+				nodeVersion: 'v22.17.0',
+				hardwareDevice: 'v2',
+				hardwareDeviceFirmware: 'v2.1',
+				systemTags: [],
+				status: 'ready',
+				isIPv4Supported: true,
+				isIPv6Supported: false,
+				asn: 12876,
+				network: 'Local LAN',
+				localAdoptionServer: reducedProbeData.localAdoptionServer,
+			});
+
+			expect(updateOne.args[0]?.[1]?.lastSyncDate).to.be.instanceOf(Date);
+			expect(updateOne.args[0]?.[2]).to.deep.equal({ emitEvents: false });
+
+			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
 		it('should 404 if probe not found via token', async () => {
