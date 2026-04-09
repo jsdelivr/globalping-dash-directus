@@ -248,8 +248,8 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					probe_adopted: { enabled: true, emailEnabled: false },
-					probe_unassigned: { enabled: true, emailEnabled: false },
+					outdated_software: { enabled: true, emailEnabled: false },
+					offline_probe: { enabled: true, emailEnabled: false },
 				},
 			});
 
@@ -262,8 +262,8 @@ describe('notifications hooks', () => {
 			readOne.resolves({
 				email: 'user@example.com',
 				notification_preferences: {
-					probe_adopted: { enabled: true, emailEnabled: true },
-					probe_unassigned: { enabled: true, emailEnabled: false },
+					outdated_software: { enabled: true, emailEnabled: true },
+					offline_probe: { enabled: true, emailEnabled: false },
 				},
 			});
 
