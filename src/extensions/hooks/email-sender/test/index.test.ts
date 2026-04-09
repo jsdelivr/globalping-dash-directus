@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { describe, it } from 'mocha';
 import * as sinon from 'sinon';
 import { EmailService } from '../src/email-sender.js';
 
@@ -79,6 +78,16 @@ const createContext = (rows: any[] = []): MinimalContext => {
 };
 
 describe('EmailService', () => {
+	let sandbox: sinon.SinonSandbox;
+
+	before(() => {
+		sandbox = sinon.createSandbox({ useFakeTimers: true });
+	});
+
+	after(() => {
+		sandbox.restore();
+	});
+
 	it('should throw on missing RESEND_API_KEY', () => {
 		const context = createContext();
 		delete context.env.RESEND_API_KEY;
@@ -158,17 +167,15 @@ describe('EmailService', () => {
 	it('should reschedule immediately when handled full batch', async () => {
 		const context = createContext();
 		const service = new EmailService(context as any);
-		const clock = sinon.useFakeTimers();
 		const handleEmailsStub = sinon.stub(service as any, 'handleEmails').resolves(100);
 		const scheduleSpy = sinon.spy(service, 'scheduleSend');
 
 		try {
 			service.scheduleSend(10);
-			await clock.tickAsync(10);
-			await clock.tickAsync(1);
+			await sandbox.clock.tickAsync(10);
+			await sandbox.clock.tickAsync(1);
 		} finally {
 			service.unscheduleSend();
-			clock.restore();
 		}
 
 		expect(handleEmailsStub.calledTwice).to.equal(true);
@@ -178,17 +185,15 @@ describe('EmailService', () => {
 	it('should log and reschedule with default interval on handleEmails error', async () => {
 		const context = createContext();
 		const service = new EmailService(context as any);
-		const clock = sinon.useFakeTimers();
 		const error = new Error('boom');
 		sinon.stub(service as any, 'handleEmails').rejects(error);
 		const scheduleSpy = sinon.spy(service, 'scheduleSend');
 
 		try {
 			service.scheduleSend(10);
-			await clock.tickAsync(10);
+			await sandbox.clock.tickAsync(10);
 		} finally {
 			service.unscheduleSend();
-			clock.restore();
 		}
 
 		expect(context.logger.error.calledOnceWithExactly(error)).to.equal(true);
@@ -211,14 +216,17 @@ describe('EmailService', () => {
 				data: { data: [{ id: 'm1' }], errors: [] },
 			});
 		(service as any).client.batch.send = batchSend;
-		const startedAt = Date.now();
-		await (service as any).sendEmails([
+
+		const sendPromise = (service as any).sendEmails([
 			{ id: 10, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1', type: 'outdated_software' },
 		]);
 
-		const elapsedMs = Date.now() - startedAt;
+		const before = Date.now();
+		await sandbox.clock.tickAsync(50);
+		expect(Date.now() - before).to.equal(50);
 
+		const result = await sendPromise;
+		expect(result).to.deep.equal({ sentIds: [ 10 ], failedIds: [] });
 		expect(batchSend.callCount).to.equal(2);
-		expect(elapsedMs).to.be.greaterThan(40);
 	});
 });

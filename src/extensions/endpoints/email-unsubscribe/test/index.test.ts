@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import express from 'express';
-import { describe, it, beforeEach } from 'mocha';
 import * as sinon from 'sinon';
 import request from 'supertest';
 import { EmailGenerator } from '../../../lib/src/email-generator.js';
