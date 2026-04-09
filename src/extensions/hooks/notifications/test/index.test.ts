@@ -58,7 +58,7 @@ describe('notifications hooks', () => {
 		it('should send configurable notification if notification_preferences is null', async () => {
 			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
 
-			const payload = { type: 'welcome', message: 'body', recipient: 'user-1', subject: 'test' };
+			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
 			const result = await filter()(payload);
 			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
 		});
@@ -69,7 +69,7 @@ describe('notifications hooks', () => {
 				notification_preferences: { probe_adopted: { enabled: true } },
 			});
 
-			const payload = { type: 'welcome', message: 'body', recipient: 'user-1', subject: 'test' };
+			const payload = { type: 'probe_adopted', message: 'body', recipient: 'user-1', subject: 'test' };
 			const result = await filter()(payload);
 			expect(result).to.deep.equal({ ...payload, email_status: 'not-required' });
 		});

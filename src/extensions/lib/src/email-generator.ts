@@ -19,29 +19,29 @@ export class EmailGenerator {
 		const query = new URLSearchParams({
 			data: this.createToken({ userId }),
 		});
-		return `${this.getNormalizedDirectusUrl()}/email-unsubscribe/list-unsubscribe?${query.toString()}`;
+		return `${this.getNormalizedDirectusUrl()}/email-unsubscribe/unsubscribe?${query.toString()}`;
 	}
 
 	public generateTypeUnsubscribeLink (userId: string, type: string): string {
 		const query = new URLSearchParams({
 			data: this.createToken({ userId, type }),
 		});
-		return `${this.getNormalizedDirectusUrl()}/email-unsubscribe/type-unsubscribe?${query.toString()}`;
+		return `${this.getNormalizedDashUrl()}/emails/confirmation?${query.toString()}`;
 	}
 
 	public generateSettingsLink (): string {
 		return `${this.getNormalizedDashUrl()}/settings`;
 	}
 
-	public verifyToken<T extends Record<string, string>> (data: string): T | null {
+	public verifyToken (data: string): { userId: string; type?: string } | null {
 		try {
-			const payload = jwt.verify(data, this.context.env.SECRET!);
+			const payload = jwt.verify(data, this.context.env.SECRET!) as { userId: string; type?: string };
 
 			if (!payload || typeof payload !== 'object') {
 				return null;
 			}
 
-			return payload as T;
+			return payload;
 		} catch {
 			return null;
 		}

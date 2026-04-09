@@ -95,15 +95,26 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.outdated_software?.enabled).to.equal(false);
 	});
 
-	it('should unsubscribe all configurable email notifications with GET', async () => {
-		const res = await request(app).get('/list-unsubscribe').query({ data: getData('user-1') });
+	it('should redirect GET list-unsubscribe to confirmation with data param without mutating', async () => {
+		const data = getData('user-1');
+		const res = await request(app).get('/list-unsubscribe').query({ data });
 
 		expect(res.status).to.equal(302);
-		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success');
-		expect(updateOne.calledOnce).to.equal(true);
+
+		expect(res.headers.location).to.equal(`https://dash.globalping.io/emails/confirmation?data=${encodeURIComponent(data)}`);
+
+		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should reject missing data query', async () => {
+	it('should reject GET list-unsubscribe when data query is missing', async () => {
+		const res = await request(app).get('/list-unsubscribe');
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('data is required.');
+		expect(updateOne.notCalled).to.equal(true);
+	});
+
+	it('should reject missing data query on POST list-unsubscribe', async () => {
 		const res = await request(app).post('/list-unsubscribe');
 
 		expect(res.status).to.equal(400);
@@ -111,7 +122,7 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should reject invalid token', async () => {
+	it('should reject invalid token on POST list-unsubscribe', async () => {
 		const res = await request(app).post('/list-unsubscribe').query({ data: 'invalid-token' });
 
 		expect(res.status).to.equal(400);
@@ -119,11 +130,10 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should unsubscribe one type with GET', async () => {
-		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+	it('should unsubscribe one type with POST list-unsubscribe when token has type', async () => {
+		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
-		expect(res.status).to.equal(302);
-		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success?type=probe_adopted');
+		expect(res.status).to.equal(200);
 		expect(updateOne.calledOnce).to.equal(true);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 
@@ -157,10 +167,9 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
-		expect(res.status).to.equal(302);
-		expect(res.headers.location).to.equal('https://dash.globalping.io/emails/success?type=probe_adopted');
+		expect(res.status).to.equal(200);
 		expect(updateOne.calledOnce).to.equal(true);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 		expect(updated.probe_adopted?.enabled).to.equal(false);
@@ -175,9 +184,9 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
-		expect(res.status).to.equal(302);
+		expect(res.status).to.equal(200);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 		expect(updated.outdated_software).to.deep.equal({ enabled: true, emailEnabled: true });
 		expect(updated.outdated_firmware).to.equal(undefined);
@@ -191,9 +200,9 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).get('/type-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
-		expect(res.status).to.equal(302);
+		expect(res.status).to.equal(200);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
 		expect(updated.outdated_software).to.deep.equal({ enabled: true, emailEnabled: false });
 	});
