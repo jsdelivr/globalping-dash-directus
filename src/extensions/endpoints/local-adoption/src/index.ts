@@ -5,6 +5,7 @@ import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getIpFromRequest } from '../../../lib/src/client-ip.js';
+import { type Row, createAdoptedProbe, parseRow } from '../../../lib/src/create-adopted-probe.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 
 type Request = ExpressRequest & {
@@ -31,7 +32,7 @@ const getClientIp = (req: ExpressRequest) => {
 };
 
 export default defineEndpoint((router, context) => {
-	const { getSchema, services, database } = context;
+	const { database } = context;
 
 	router.get('/', asyncWrapper(async (req, res) => {
 		const clientIp = getClientIp(req);
@@ -59,35 +60,23 @@ export default defineEndpoint((router, context) => {
 		const req = eReq as Request;
 		const clientIp = getClientIp(req);
 
-		const updatedProbe = await database.transaction(async (trx) => {
-			const probe = await database('gp_probes')
-				.transacting(trx)
-				.forUpdate()
-				.whereNull('userId')
-				.whereNotNull('localAdoptionServer')
-				.where('status', 'ready')
-				.where((query) => {
-					query.where('ip', clientIp)
-						.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
-				})
-				.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
-				.first();
+		const row = await database('gp_probes')
+			.whereNull('userId')
+			.whereNotNull('localAdoptionServer')
+			.where('status', 'ready')
+			.where((query) => {
+				query.where('ip', clientIp)
+					.orWhereRaw('JSON_CONTAINS(altIps, ?)', [ `"${clientIp}"` ]);
+			})
+			.whereRaw('JSON_VALUE(localAdoptionServer, "$.token") = ?', [ req.body.token ])
+			.first<Row>();
 
-			if (!probe) {
-				throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
-			}
+		if (!row) {
+			throw new (createError('NOT_FOUND', 'No probe with a matching token found.', 404))();
+		}
 
-			const probesService = new services.ItemsService('gp_probes', {
-				schema: await getSchema(),
-				knex: trx,
-			});
-
-			await probesService.updateOne(probe.id, {
-				userId: req.accountability.user,
-			}, { emitEvents: false });
-
-			return probesService.readOne(probe.id);
-		});
+		const probe = parseRow(row);
+		const updatedProbe = await createAdoptedProbe(req.accountability.user!, probe, context);
 
 		res.json(updatedProbe);
 	}, context));

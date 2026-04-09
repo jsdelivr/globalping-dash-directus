@@ -11,6 +11,7 @@ dotenv.config({
 export default defineConfig({
 	testDir: './test/e2e',
 	workers: 1,
+	retries: process.env.CI ? 2 : 0,
 	use: {
 		baseURL: process.env.DASH_URL,
 	},
