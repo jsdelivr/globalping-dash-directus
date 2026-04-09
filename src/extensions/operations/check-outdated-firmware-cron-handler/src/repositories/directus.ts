@@ -11,17 +11,34 @@ export type AdoptedProbe = {
 	isOutdated: boolean;
 };
 
+const OUTDATED_PROBE_FILTER = `
+	isOutdated = TRUE
+	AND userId IS NOT NULL
+	AND status != 'offline'
+`;
 
-export const getProbesToCheck = async ({ database }: OperationContext) => {
-	const probes: AdoptedProbe[] = await database('gp_probes')
-		.select('*')
-		.whereRaw(`
-			isOutdated = TRUE
-			AND userId IS NOT NULL
-			AND status != 'offline'
-		`)
-		.orderBy('userId')
+export const getAllUserIdsToCheck = async ({ database }: OperationContext): Promise<string[]> => {
+	const rows: { userId: string }[] = await database('gp_probes')
+		.distinct('userId')
+		.whereRaw(OUTDATED_PROBE_FILTER)
+		.orderBy('userId');
+
+	return rows.map(r => r.userId);
+};
+
+export const getOutdatedProbesForUsers = async (userId: string, { database }: OperationContext): Promise<AdoptedProbe[]> => {
+	return database('gp_probes')
+		.select([
+			'id',
+			'ip',
+			'userId',
+			'name',
+			'hardwareDevice',
+			'hardwareDeviceFirmware',
+			'nodeVersion',
+			'isOutdated',
+		])
+		.whereRaw(OUTDATED_PROBE_FILTER)
+		.where('userId', userId)
 		.orderBy('id');
-
-	return probes;
 };

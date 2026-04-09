@@ -4,15 +4,25 @@ import * as sinon from 'sinon';
 import { checkOutdatedFirmware } from '../src/actions/check-outdated-firmware.js';
 
 describe('Adopted probes status cron handler', () => {
-	const sql = {
-		select: sinon.stub(),
+	const sqlIds = {
+		distinct: sinon.stub(),
 		whereRaw: sinon.stub(),
 		orderBy: sinon.stub(),
 	};
-	sql.select.returns(sql);
-	sql.whereRaw.returns(sql);
-	sql.orderBy.returns(sql);
-	const database = sinon.stub().returns(sql) as any;
+	sqlIds.distinct.returns(sqlIds);
+	sqlIds.whereRaw.returns(sqlIds);
+
+	const sqlProbes = {
+		select: sinon.stub(),
+		whereRaw: sinon.stub(),
+		where: sinon.stub(),
+		orderBy: sinon.stub(),
+	};
+	sqlProbes.select.returns(sqlProbes);
+	sqlProbes.whereRaw.returns(sqlProbes);
+	sqlProbes.where.returns(sqlProbes);
+
+	const database = sinon.stub() as any;
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -30,16 +40,19 @@ describe('Adopted probes status cron handler', () => {
 	} as unknown as OperationContext['services'];
 
 	const mockProbesResult = (probes: any[]) => {
-		sql.orderBy.resetBehavior();
-		sql.orderBy.onFirstCall().returns(sql);
-		sql.orderBy.onSecondCall().resolves(probes);
+		sqlProbes.orderBy.resetBehavior();
+		sqlProbes.orderBy.resolves(probes);
 	};
-
 
 	beforeEach(() => {
 		readByQuery.resolves([]);
-		sinon.resetHistory();
+		database.reset();
+		sqlIds.orderBy.resetBehavior();
+		sqlIds.orderBy.resolves([{ userId: 'user-id' }]);
 		mockProbesResult([]);
+		database.onFirstCall().returns(sqlIds);
+		database.onSecondCall().returns(sqlProbes);
+		sinon.resetHistory();
 	});
 
 	it('should send notification about outdated firmware', async () => {

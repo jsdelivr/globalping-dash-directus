@@ -80,7 +80,7 @@ describe('email-unsubscribe endpoint', () => {
 	});
 
 	it('should unsubscribe all configurable email notifications with POST', async () => {
-		const res = await request(app).post('/list-unsubscribe').query({ data: getData('user-1') });
+		const res = await request(app).post('/unsubscribe').query({ data: getData('user-1') });
 
 		expect(res.status).to.equal(200);
 		expect(updateOne.calledOnce).to.equal(true);
@@ -95,9 +95,9 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.outdated_software?.enabled).to.equal(false);
 	});
 
-	it('should redirect GET list-unsubscribe to confirmation with data param without mutating', async () => {
+	it('should redirect GET /unsubscribe to confirmation with data param without mutating', async () => {
 		const data = getData('user-1');
-		const res = await request(app).get('/list-unsubscribe').query({ data });
+		const res = await request(app).get('/unsubscribe').query({ data });
 
 		expect(res.status).to.equal(302);
 
@@ -106,32 +106,32 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should reject GET list-unsubscribe when data query is missing', async () => {
-		const res = await request(app).get('/list-unsubscribe');
+	it('should reject GET /unsubscribe when data query is missing', async () => {
+		const res = await request(app).get('/unsubscribe');
 
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('data is required.');
 		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should reject missing data query on POST list-unsubscribe', async () => {
-		const res = await request(app).post('/list-unsubscribe');
+	it('should reject missing data query on POST /unsubscribe', async () => {
+		const res = await request(app).post('/unsubscribe');
 
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('data is required.');
 		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should reject invalid token on POST list-unsubscribe', async () => {
-		const res = await request(app).post('/list-unsubscribe').query({ data: 'invalid-token' });
+	it('should reject invalid token on POST /unsubscribe', async () => {
+		const res = await request(app).post('/unsubscribe').query({ data: 'invalid-token' });
 
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('Invalid token.');
 		expect(updateOne.notCalled).to.equal(true);
 	});
 
-	it('should unsubscribe one type with POST list-unsubscribe when token has type', async () => {
-		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+	it('should unsubscribe one type with POST /unsubscribe when token has type', async () => {
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
 		expect(res.status).to.equal(200);
 		expect(updateOne.calledOnce).to.equal(true);
@@ -150,7 +150,7 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).post('/list-unsubscribe').query({ data: getData('user-1') });
+		const res = await request(app).post('/unsubscribe').query({ data: getData('user-1') });
 
 		expect(res.status).to.equal(200);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
@@ -167,7 +167,7 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
 		expect(res.status).to.equal(200);
 		expect(updateOne.calledOnce).to.equal(true);
@@ -184,7 +184,7 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
 		expect(res.status).to.equal(200);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
@@ -200,7 +200,7 @@ describe('email-unsubscribe endpoint', () => {
 			} as NotificationPreferences,
 		});
 
-		const res = await request(app).post('/list-unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
 
 		expect(res.status).to.equal(200);
 		const updated = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;

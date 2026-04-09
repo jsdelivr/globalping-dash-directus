@@ -1536,9 +1536,6 @@ importers:
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.23

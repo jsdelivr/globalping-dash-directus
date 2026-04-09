@@ -110,7 +110,7 @@ describe('EmailService', () => {
 			type: 'outdated_software',
 		});
 		expect(html).to.include('href="https://dash.globalping.io/probes/1"');
-		expect(html).to.include('/type-unsubscribe?data=');
+		expect(html).to.include('https://dash.globalping.io/emails/confirmation?data=');
 		expect(html).to.not.include('<script>');
 	});
 
@@ -134,7 +134,7 @@ describe('EmailService', () => {
 
 		expect(result).to.deep.equal({ sentIds: [ 10 ], failedIds: [ 11 ] });
 		expect(batchSend.firstCall.args[1]).to.include({ batchValidation: 'permissive' });
-		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash-directus\.globalping\.io\/email-unsubscribe\/list-unsubscribe\?data=.*>$/);
+		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe']).to.match(/^<https:\/\/dash-directus\.globalping\.io\/email-unsubscribe\/unsubscribe\?data=.*>$/);
 		expect(batchSend.firstCall.args[0][0].headers['List-Unsubscribe-Post']).to.equal('List-Unsubscribe=One-Click');
 	});
 
