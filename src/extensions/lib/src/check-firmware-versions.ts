@@ -31,29 +31,21 @@ export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], userId:
 	const softwareProbes = probes.filter(probe => !probe.hardwareDevice);
 	const hardwareProbes = probes.filter(probe => probe.hardwareDevice);
 
-	if (softwareProbes.length > 0 && hardwareProbes.length > 0) {
-		return notifyMultipleTypes(softwareProbes, hardwareProbes, userId, context);
-	}
+	const ids: string[] = [];
 
 	if (softwareProbes.length === 1) {
-		const id = await notifySingleSoftwareProbe(softwareProbes[0]!, userId, context);
-		return [ id ];
+		ids.push(await notifySingleSoftwareProbe(softwareProbes[0]!, userId, context));
+	} else if (softwareProbes.length > 1) {
+		ids.push(...await notifyMultipleSoftwareProbes(softwareProbes, userId, context));
 	}
 
 	if (hardwareProbes.length === 1) {
-		const id = await notifySingleHardwareProbe(hardwareProbes[0]!, userId, context);
-		return [ id ];
+		ids.push(await notifySingleHardwareProbe(hardwareProbes[0]!, userId, context));
+	} else if (hardwareProbes.length > 1) {
+		ids.push(...await notifyMultipleHardwareProbes(hardwareProbes, userId, context));
 	}
 
-	if (softwareProbes.length > 1) {
-		return notifyMultipleSoftwareProbes(softwareProbes, userId, context);
-	}
-
-	if (hardwareProbes.length > 1) {
-		return notifyMultipleHardwareProbes(hardwareProbes, userId, context);
-	}
-
-	return [];
+	return ids;
 }
 
 export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: ApiExtensionContext, userId?: string) => {
@@ -168,26 +160,4 @@ const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], userId: string,
 	});
 
 	return probes.map(({ id }) => id);
-};
-
-const notifyMultipleTypes = async (softwareProbes: ProbeInfo[], hardwareProbes: ProbeInfo[], userId: string, context: ApiExtensionContext) => {
-	const { services, getSchema, env } = context;
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
-	const softwareLines = softwareProbes.map(probe => `- ${probe.name ? `probe [${probe.name}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}**`);
-	const hardwareLines = hardwareProbes.map(probe => `- ${probe.name ? `probe [${probe.name}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}**`);
-
-	await notificationsService.createOne({
-		recipient: userId,
-		collection: 'gp_probes',
-		metadata: [ ...softwareProbes.map(({ id }) => id), ...hardwareProbes.map(({ id }) => id) ],
-		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
-		secondary_type: env.TARGET_NODE_VERSION,
-		subject: 'Probes with outdated software',
-		message: `Some of your probes are outdated and we couldn't update them automatically. Please follow [our software update guide](/probes?view=update-a-probe) and [firmware update guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually.\n\nOutdated software:\n${softwareLines.join('\n')}\n\nOutdated firmware:\n${hardwareLines.join('\n')}`,
-	});
-
-	return [ ...softwareProbes.map(({ id }) => id), ...hardwareProbes.map(({ id }) => id) ];
 };
