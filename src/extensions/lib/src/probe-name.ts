@@ -47,3 +47,15 @@ export const getDefaultProbeName = async (userId: string, probe: { id?: string; 
 
 	return `${prefix}-${newIndex}`;
 };
+
+export const escapeMdSymbols = (value: string): string => value
+	.replace(/&/g, '&amp;')
+	.replace(/</g, '&lt;')
+	.replace(/>/g, '&gt;')
+	.replace(/\r\n|\r|\n|\u2028|\u2029/g, ' ')
+	.replace(/\\/g, '\\\\')
+	.replace(/\[/g, '\\[')
+	.replace(/\]/g, '\\]')
+	.replace(/\*/g, '\\*')
+	.replace(/_/g, '\\_')
+	.replace(/`/g, '\\`');

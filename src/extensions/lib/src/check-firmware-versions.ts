@@ -1,4 +1,5 @@
 import type { ApiExtensionContext } from '@directus/extensions';
+import { escapeMdSymbols } from './probe-name.js';
 
 type ProbeInfo = {
 	id: string;
@@ -94,7 +95,7 @@ const notifySingleSoftwareProbe = async (probe: ProbeInfo, userId: string, { ser
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Your probe container is running an outdated software',
-		message: `Your ${probe.name ? `probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated software and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
+		message: `Your ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated software and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 	});
 
 	return probe.id;
@@ -114,7 +115,7 @@ const notifySingleHardwareProbe = async (probe: ProbeInfo, userId: string, { ser
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Your hardware probe is running an outdated firmware',
-		message: `Your ${probe.name ? `probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
+		message: `Your ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 	});
 
 	return probe.id;
@@ -126,7 +127,7 @@ const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], userId: string,
 	const notificationsService = new NotificationsService({
 		schema: await getSchema(),
 	});
-	const lines = probes.map(probe => `- ${probe.name ? `probe [${probe.name}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}**`);
+	const lines = probes.map(probe => `- ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}**`);
 
 	await notificationsService.createOne({
 		recipient: userId,
@@ -147,7 +148,7 @@ const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], userId: string,
 	const notificationsService = new NotificationsService({
 		schema: await getSchema(),
 	});
-	const lines = probes.map(probe => `- ${probe.name ? `probe [${probe.name}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}**`);
+	const lines = probes.map(probe => `- ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}**`);
 
 	await notificationsService.createOne({
 		recipient: userId,

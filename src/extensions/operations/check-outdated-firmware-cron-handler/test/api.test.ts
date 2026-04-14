@@ -107,6 +107,33 @@ describe('Adopted probes status cron handler', () => {
 		});
 	});
 
+	it('should escape markdown in probe name', async () => {
+		mockProbesResult([{
+			id: 'probe-id',
+			ip: '1.1.1.1',
+			name: '][not the probe](https://another.link)[probe',
+			userId: 'user-id',
+			hardwareDevice: null,
+			hardwareDeviceFirmware: null,
+			isOutdated: true,
+			nodeVersion: 'v20.12.0',
+		}]);
+
+		const result = await checkOutdatedFirmware({ data, database, env, getSchema, services, logger, accountability });
+
+		expect(result).to.deep.equal([ 'probe-id' ]);
+
+		expect(createOne.args[0]?.[0]).to.deep.equal({
+			recipient: 'user-id',
+			item: 'probe-id',
+			collection: 'gp_probes',
+			type: 'outdated_software',
+			secondary_type: 'v20.13.0',
+			subject: 'Your probe container is running an outdated software',
+			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+		});
+	});
+
 	it('should not send notification if versions are actual', async () => {
 		mockProbesResult([{
 			id: 'probe-id',
