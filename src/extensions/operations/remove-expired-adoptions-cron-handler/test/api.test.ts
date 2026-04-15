@@ -66,7 +66,7 @@ describe('Remove expired adoptions CRON handler', () => {
 				item: 'probeId2',
 				collection: 'gp_probes',
 				type: 'offline_probe',
-				subject: 'Your probe went offline',
+				subject: 'Your probe probe-gb-london-01 went offline',
 				message: 'Your probe [**probe-gb-london-01**](/probes/probeId2) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 			},
 		]);
