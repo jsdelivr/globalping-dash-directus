@@ -60,7 +60,7 @@ export class EmailService {
 	}
 
 	private async handleEmails () {
-		const notifications = await this.context.database.transaction(async (trx) => {
+		const { toSend, rowsCount } = await this.context.database.transaction(async (trx) => {
 			const rows = await trx('directus_notifications as notifications')
 				.leftJoin('directus_users as users', 'users.id', 'notifications.recipient')
 				.select<NotificationRow[]>([
@@ -72,7 +72,6 @@ export class EmailService {
 					'users.email',
 				])
 				.where('notifications.email_status', 'pending')
-				.whereNotNull('users.email')
 				.andWhere((query) => {
 					query.whereNull('notifications.email_last_attempt')
 						.orWhere('notifications.email_last_attempt', '<=', new Date(Date.now() - 60_000));
@@ -82,24 +81,39 @@ export class EmailService {
 				.forUpdate()
 				.skipLocked();
 
-			if (rows.length > 0) {
+			const noEmailIds: number[] = [];
+			const toSend: NotificationRow[] = [];
+
+			for (const row of rows) {
+				if (row.email) {
+					toSend.push({ ...row, email: row.email });
+				} else {
+					noEmailIds.push(row.id);
+				}
+			}
+
+			if (noEmailIds.length > 0) {
 				await trx('directus_notifications')
-					.whereIn('id', rows.map(({ id }) => id))
+					.whereIn('id', noEmailIds)
+					.update({ email_status: 'no-email' });
+			}
+
+			if (toSend.length > 0) {
+				await trx('directus_notifications')
+					.whereIn('id', toSend.map(({ id }) => id))
 					.update({ email_last_attempt: new Date() });
 			}
 
-			return rows;
+			return { toSend, rowsCount: rows.length };
 		});
 
-		if (notifications.length === 0) {
-			return 0;
+		if (toSend.length > 0) {
+			const { sentIds, failedIds } = await this.sendEmails(toSend);
+			sentIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', sentIds).update({ email_status: 'sent' });
+			failedIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', failedIds).update({ email_status: 'failed' });
 		}
 
-		const { sentIds, failedIds } = await this.sendEmails(notifications);
-		sentIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', sentIds).update({ email_status: 'sent' });
-		failedIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', failedIds).update({ email_status: 'failed' });
-
-		return notifications.length;
+		return rowsCount;
 	}
 
 	private async sendEmails (notifications: NotificationRow[]) {

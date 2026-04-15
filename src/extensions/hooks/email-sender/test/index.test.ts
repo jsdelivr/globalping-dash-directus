@@ -23,7 +23,6 @@ const createContext = (rows: any[] = []): MinimalContext => {
 		leftJoin: () => trxBuilder,
 		select: () => trxBuilder,
 		where: () => trxBuilder,
-		whereNotNull: () => trxBuilder,
 		andWhere: (fn: (q: any) => void) => {
 			const query = {
 				whereNull: () => query,
@@ -162,6 +161,47 @@ describe('EmailService', () => {
 		expect(count).to.equal(2);
 		expect(updates[1]).to.deep.equal({ ids: [ 1 ], patch: { email_status: 'sent' } });
 		expect(updates[2]).to.deep.equal({ ids: [ 2 ], patch: { email_status: 'failed' } });
+	});
+
+	it('should set no-email for pending rows whose recipient has no email', async () => {
+		const rows = [
+			{ id: 1, recipient: 'u0', email: null, subject: 's0', message: 'm0', type: 'offline_probe' },
+			{ id: 2, recipient: 'u1', email: 'a@example.com', subject: 's1', message: 'm1', type: 'outdated_software' },
+		];
+		const context = createContext(rows);
+		const service = new EmailService(context as any);
+		sinon.stub(service as any, 'sendEmails').resolves({ sentIds: [ 2 ], failedIds: [] });
+
+		const count = await (service as any).handleEmails();
+		const updates = context.database.__updates;
+
+		expect(count).to.equal(2);
+		expect(updates[0]?.ids).to.deep.equal([ 1 ]);
+		expect(updates[0]?.patch).to.include({ email_status: 'no-email' });
+		expect(updates[1]?.ids).to.deep.equal([ 2 ]);
+		expect(updates[1]?.patch).to.have.keys('email_last_attempt');
+		expect(updates[2]).to.deep.equal({ ids: [ 2 ], patch: { email_status: 'sent' } });
+	});
+
+	it('should return batch row count when every row lacks email so scheduler can drain', async () => {
+		const rows = Array.from({ length: 100 }, (_, i) => ({
+			id: i + 1,
+			recipient: `u${i}`,
+			email: null,
+			subject: 's',
+			message: 'm',
+			type: 'offline_probe',
+		}));
+		const context = createContext(rows);
+		const service = new EmailService(context as any);
+		const sendEmails = sinon.stub(service as any, 'sendEmails');
+
+		const count = await (service as any).handleEmails();
+
+		expect(count).to.equal(100);
+		expect(sendEmails.called).to.equal(false);
+		expect(context.database.__updates[0]?.ids).to.have.length(100);
+		expect(context.database.__updates[0]?.patch).to.include({ email_status: 'no-email' });
 	});
 
 	it('should reschedule immediately when handled full batch', async () => {
