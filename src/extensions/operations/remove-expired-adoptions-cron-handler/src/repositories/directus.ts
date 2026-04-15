@@ -1,6 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 import type { Notification } from '@directus/types';
 import Bluebird from 'bluebird';
+import { escapeMdSymbols } from '../../../../lib/src/probe-name.js';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
@@ -72,7 +73,7 @@ export const notifyAdoptions = async (probes: AdoptedProbe[], { services, getSch
 			collection: 'gp_probes',
 			type: OFFLINE_PROBE_NOTIFICATIION_TYPE,
 			subject: 'Your probe went offline',
-			message: `Your ${probe.name ? `probe [**${probe.name}**](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} has been offline for more than 24 hours. If it does not come back online before **${dateOfExpiration.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}** it will be removed from your account.`,
+			message: `Your ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} has been offline for more than 24 hours. If it does not come back online before **${dateOfExpiration.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}** it will be removed from your account.`,
 		});
 	});
 
@@ -95,7 +96,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSch
 			recipient: probe.userId,
 			type: 'probe_unassigned',
 			subject: 'Your probe has been deleted',
-			message: `Your ${probe.name ? `probe **${probe.name}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			item: probe.id,
 			collection: 'gp_probes',
 		});

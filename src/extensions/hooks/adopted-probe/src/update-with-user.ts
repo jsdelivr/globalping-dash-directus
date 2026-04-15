@@ -2,8 +2,8 @@ import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import axios from 'axios';
 import Joi from 'joi';
-import { getDefaultProbeName } from '../../../lib/src/default-probe-name.js';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
+import { getDefaultProbeName } from '../../../lib/src/probe-name.js';
 import { getProbes, getUser } from './repositories/directus.js';
 import { type Fields, UserNotFoundError, payloadError } from './index.js';
 

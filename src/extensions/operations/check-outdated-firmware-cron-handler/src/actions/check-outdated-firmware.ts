@@ -1,30 +1,17 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
-import { checkFirmwareVersions } from '../../../../lib/src/check-firmware-versions.js';
-import { getAlreadyNotifiedProbes, getProbesToCheck } from '../repositories/directus.js';
+import { checkFirmwareVersions, getAlreadyNotifiedProbes } from '../../../../lib/src/check-firmware-versions.js';
+import { getAllUserIdsToCheck, getOutdatedProbesForUsers } from '../repositories/directus.js';
 
 export const checkOutdatedFirmware = async (context: OperationContext): Promise<string[]> => {
+	const userIds = await getAllUserIdsToCheck(context);
 	const alreadyNotifiedIds = await getAlreadyNotifiedProbes(context);
-	const result: string[] = [];
-	let offsetId: string | undefined = '';
 
-	do {
-		const probes = await getProbesToCheck(offsetId, context);
-		const ids = await Bluebird.map(probes, async (probe) => {
-			if (!probe.userId) {
-				return null;
-			}
+	const ids = await Bluebird.map(userIds, async (userId) => {
+		const probes = await getOutdatedProbesForUsers(userId, context);
+		const notNotified = probes.filter(p => !alreadyNotifiedIds.has(p.id));
+		return notNotified.length === 0 ? [] : checkFirmwareVersions(notNotified, userId, context);
+	}, { concurrency: 8 });
 
-			if (alreadyNotifiedIds.has(probe.id)) {
-				return null;
-			}
-
-			return checkFirmwareVersions(probe, probe.userId, context);
-		}, { concurrency: 4 });
-
-		result.push(...ids.filter((id): id is string => !!id));
-		offsetId = probes.at(-1)?.id;
-	} while (offsetId);
-
-	return result;
+	return ids.flat();
 };

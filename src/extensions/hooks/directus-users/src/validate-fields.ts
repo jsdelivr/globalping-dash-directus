@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import Joi from 'joi';
-import { configurableNotifications, configurableNotificationTypes } from '../../../lib/src/notification-types.js';
+import { getNotificationType, joiConfigurableNotificationTypeKey } from '../../../lib/src/notification-types.js';
 import { getDirectusUsers } from './repositories/directus.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
@@ -12,9 +12,10 @@ const parameterSchema = Joi.number().strict().min(0).max(1_000_000_000);
 const validateNotificationParameter = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
 	const pathSegments = helpers.state.path ?? [];
 	const notificationType = pathSegments[pathSegments.length - 1] as string;
+	const notification = getNotificationType(notificationType);
 
-	if (configurableNotifications[notificationType]?.hasParameter && value.enabled && typeof value.parameter !== 'number') {
-		return helpers.error('parameter.missing');
+	if (notification?.hasParameter && value.enabled && typeof value.parameter !== 'number') {
+		return { ...value, parameter: notification.defaultParameter };
 	}
 
 	return value;
@@ -23,8 +24,9 @@ const validateNotificationParameter = (value: { enabled: boolean; parameter?: nu
 const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
 	const pathSegments = helpers.state.path ?? [];
 	const notificationType = pathSegments[pathSegments.length - 1] as string;
+	const notification = getNotificationType(notificationType);
 
-	if (configurableNotifications[notificationType]?.readOnly) {
+	if (notification?.readOnly) {
 		return { ...value, enabled: true };
 	}
 
@@ -33,14 +35,12 @@ const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpe
 
 const userSchema = Joi.object({
 	notification_preferences: Joi.object().pattern(
-		Joi.string().max(100).valid(...configurableNotificationTypes),
+		joiConfigurableNotificationTypeKey.max(100),
 		Joi.object({
 			enabled: Joi.boolean().required(),
 			emailEnabled: Joi.boolean().optional(),
 			parameter: parameterSchema.optional(),
-		}).custom(validateNotificationParameter).custom(validateReadOnly).messages({
-			'parameter.missing': 'Threshold value for notification should be specified.',
-		}),
+		}).custom(validateNotificationParameter).custom(validateReadOnly),
 	).max(50).allow(null).optional(),
 }).unknown(true);
 
