@@ -23,28 +23,28 @@ const notificationTypes = {
 		readOnly: false, // Can user disable "App" notifications for this type?
 		sendEmail: false, // Should system try to send email for this type? (Can be disabled by user preferences.)
 		hasParameter: false, // Does type have a parameter input?
-		description: 'Welcome to Globalping message.',
+		description: 'Welcome to Globalping message.', // Visible in the UI if configurableByUser.
 	},
 	probe_adopted: {
 		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
-		description: 'Probe successfully adopted',
+		description: 'New probe adopted',
 	},
 	probe_unassigned: {
 		configurableByUser: true,
 		readOnly: false,
 		sendEmail: false,
 		hasParameter: false,
-		description: 'Probe was unassigned',
+		description: 'Probe unassigned',
 	},
 	outdated_software: { // Also controls 'outdated_firmware'.
 		configurableByUser: true,
 		readOnly: true,
 		sendEmail: true,
 		hasParameter: false,
-		description: 'Probe software is outdated',
+		description: 'Probe container or firmware is outdated',
 	},
 	outdated_firmware: 'outdated_software',
 	offline_probe: {
