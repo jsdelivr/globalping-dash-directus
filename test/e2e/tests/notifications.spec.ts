@@ -86,10 +86,10 @@ test('Toggles of notification types', async ({ page, user }) => {
 	await client('directus_users').where({ id: user.id }).update({ notification_preferences: null });
 	await page.goto('/settings');
 
-	const probeAdoptedSection = page.getByText('Probe successfully adopted').locator('..');
+	const probeAdoptedSection = page.getByText('New probe adopted').locator('..');
 	// Disable probe adopted notifications.
 	await probeAdoptedSection.getByRole('switch').first().click();
-	const outdatedSoftwareSection = page.getByText('Probe software is outdated').locator('..');
+	const outdatedSoftwareSection = page.getByText('Probe container or firmware is outdated').locator('..');
 	// Disable outdated software emails.
 	await outdatedSoftwareSection.getByRole('switch').nth(1).click();
 	await page.getByRole('button', { name: 'Apply settings' }).click();
