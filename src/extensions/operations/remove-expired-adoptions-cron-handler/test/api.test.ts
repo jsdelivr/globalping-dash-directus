@@ -27,7 +27,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		sandbox.restore();
 	});
 
-	it('should notify user if probe is offline for >2 days', async () => {
+	it('should send a group notification for multiple offline probes of the same user', async () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
@@ -39,6 +39,41 @@ describe('Remove expired adoptions CRON handler', () => {
 			ip: '1.1.1.1',
 			name: 'probe-gb-london-01',
 			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
+		}]);
+
+		itemsReadByQuery.onSecondCall().resolves([]);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(createOne.callCount).to.equal(1);
+
+		expect(createOne.args[0]).to.deep.equal([
+			{
+				recipient: 'userId1',
+				collection: 'gp_probes',
+				metadata: [ 'probeId1', 'probeId2' ],
+				type: 'offline_probe',
+				subject: 'Your probes went offline',
+				message: 'Some of your probes have been offline for more than 24 hours and will be removed from your account if they do not come back online:\n- [probe](/probes/probeId1) with IP address **1.1.1.1** - before **May 23, 2023**\n- [probe-gb-london-01](/probes/probeId2) with IP address **1.1.1.1** - before **May 23, 2023**',
+			},
+		]);
+
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: probeId1, probeId2.');
+	});
+
+	it('should send individual notifications for probes of different users', async () => {
+		itemsReadByQuery.onFirstCall().resolves([{
+			id: 'probeId1',
+			ip: '1.1.1.1',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
+		}, {
+			id: 'probeId2',
+			ip: '2.2.2.2',
+			userId: 'userId2',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
 		}]);
@@ -62,12 +97,12 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[1]).to.deep.equal([
 			{
-				recipient: 'userId1',
+				recipient: 'userId2',
 				item: 'probeId2',
 				collection: 'gp_probes',
 				type: 'offline_probe',
 				subject: 'Your probe went offline',
-				message: 'Your probe [probe-gb-london-01](/probes/probeId2) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
+				message: 'Your [probe with IP address **2.2.2.2**](/probes/probeId2) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 			},
 		]);
 
@@ -104,6 +139,36 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onSecondCall().resolves([{
 			recipient: 'userId1',
 			item: 'probeId1',
+			timestamp: relativeDayUtc(-1).toISOString(),
+			collection: 'gp_probes',
+		}]);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(createOne.callCount).to.equal(0);
+
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: [].');
+	});
+
+	it('should not create duplicated notifications when probes were previously notified via bulk', async () => {
+		itemsReadByQuery.onFirstCall().resolves([{
+			id: 'probeId1',
+			ip: '1.1.1.1',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-3).toISOString(),
+		}, {
+			id: 'probeId2',
+			ip: '2.2.2.2',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-3).toISOString(),
+		}]);
+
+		itemsReadByQuery.onSecondCall().resolves([{
+			recipient: 'userId1',
+			item: null,
+			metadata: [ 'probeId1', 'probeId2' ],
 			timestamp: relativeDayUtc(-1).toISOString(),
 			collection: 'gp_probes',
 		}]);
