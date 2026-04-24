@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getEmailGenerator } from '../../../lib/src/email-generator.js';
-import { areAllDisabled, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { areAllDisabled, configurableNotifications, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
 	enabled: boolean;
@@ -42,7 +42,7 @@ export default defineEndpoint((router, context) => {
 		const updatedPreferences = {
 			...defaultPreferences,
 			// Filtering here to remove old types that was removed from notificationTypes.
-			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => mapNotificationTypeKey(key))),
+			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
 		};
 		Object.values(updatedPreferences).forEach((preference) => { preference.emailEnabled = false; });
 
@@ -78,7 +78,7 @@ export default defineEndpoint((router, context) => {
 		const updatedPreferences = {
 			...defaultPreferences,
 			// Filtering here to remove old types that was removed from notificationTypes.
-			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => mapNotificationTypeKey(key))),
+			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
 			[resolvedType]: {
 				enabled: typeof current?.enabled === 'boolean' ? current.enabled : !allDisabled,
 				emailEnabled: false,
