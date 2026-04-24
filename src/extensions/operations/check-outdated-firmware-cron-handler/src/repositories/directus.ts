@@ -1,6 +1,4 @@
 import type { OperationContext } from '@directus/extensions';
-import type { Notification } from '@directus/types';
-import { OUTDATED_FIRMWARE_NOTIFICATION_TYPE, OUTDATED_SOFTWARE_NOTIFICATION_TYPE } from '../../../../lib/src/check-firmware-versions.js';
 
 export type AdoptedProbe = {
 	id: string;
@@ -13,44 +11,34 @@ export type AdoptedProbe = {
 	isOutdated: boolean;
 };
 
-export const getAlreadyNotifiedProbes = async ({ env, services, getSchema }: OperationContext) => {
-	const { ItemsService } = services;
+const OUTDATED_PROBE_FILTER = `
+	isOutdated = TRUE
+	AND userId IS NOT NULL
+	AND status != 'offline'
+`;
 
-	const notificationsService = new ItemsService<Notification>('directus_notifications', {
-		schema: await getSchema(),
-	});
+export const getAllUserIdsToCheck = async ({ database }: OperationContext): Promise<string[]> => {
+	const rows: { userId: string }[] = await database('gp_probes')
+		.distinct('userId')
+		.whereRaw(OUTDATED_PROBE_FILTER)
+		.orderBy('userId');
 
-	const existingNotifications = await notificationsService.readByQuery({
-		fields: [ 'item' ],
-		filter: {
-			_or: [
-				{
-					type: { _eq: OUTDATED_SOFTWARE_NOTIFICATION_TYPE },
-					secondary_type: { _eq: env.TARGET_NODE_VERSION },
-				},
-				{
-					type: { _eq: OUTDATED_FIRMWARE_NOTIFICATION_TYPE },
-					secondary_type: { _eq: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}` },
-				},
-			],
-		},
-	});
-
-	return new Set(existingNotifications.map(({ item }) => item));
+	return rows.map(r => r.userId);
 };
 
-
-export const getProbesToCheck = async (offsetId: string, { database }: OperationContext) => {
-	const probes: AdoptedProbe[] = await database('gp_probes')
-		.select('*')
-		.whereRaw(`
-			isOutdated = TRUE
-			AND userId IS NOT NULL
-			AND status != 'offline'
-			AND id > ?
-		`, [ offsetId ])
-		.orderBy('id')
-		.limit(100);
-
-	return probes;
+export const getOutdatedProbesForUsers = async (userId: string, { database }: OperationContext): Promise<AdoptedProbe[]> => {
+	return database('gp_probes')
+		.select([
+			'id',
+			'ip',
+			'userId',
+			'name',
+			'hardwareDevice',
+			'hardwareDeviceFirmware',
+			'nodeVersion',
+			'isOutdated',
+		])
+		.whereRaw(OUTDATED_PROBE_FILTER)
+		.where('userId', userId)
+		.orderBy('id');
 };

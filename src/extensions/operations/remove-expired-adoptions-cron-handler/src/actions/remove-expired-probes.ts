@@ -31,14 +31,29 @@ export const removeExpiredAdoptions = async (context: OperationContext): Promise
 const excludeAlreadyNotifiedProbes = async (probes: AdoptedProbe[], context: OperationContext) => {
 	const probesMap = new Map(probes.map(probe => [ probe.id, probe ]));
 	const existingNotifications = await getExistingNotifications(probes, context);
-	const notifiedProbeIds = existingNotifications
-		.filter((notification) => {
-			const probe = probesMap.get(notification.item as string);
-			const alreadyNotified = probe && new Date(notification.timestamp) > probe.lastSyncDate;
-			return alreadyNotified;
-		})
-		.map(notification => notification.item);
-	return probes.filter(probe => !notifiedProbeIds.includes(probe.id));
+	const notifiedProbeIds = new Set<string>();
+
+	for (const notification of existingNotifications) {
+		const probeIds: string[] = [];
+
+		if (notification.item) {
+			probeIds.push(notification.item);
+		}
+
+		if (Array.isArray(notification.metadata)) {
+			probeIds.push(...(notification.metadata as string[]));
+		}
+
+		for (const probeId of probeIds) {
+			const probe = probesMap.get(probeId);
+
+			if (probe && new Date(notification.timestamp) > probe.lastSyncDate) {
+				notifiedProbeIds.add(probeId);
+			}
+		}
+	}
+
+	return probes.filter(probe => !notifiedProbeIds.has(probe.id));
 };
 
 const isExpired = (date: Date, numberOfDays: number) => {

@@ -55,7 +55,7 @@ describe('adoption code endpoints', () => {
 
 	const app = express();
 	app.use(express.json());
-	let accountability: { user: string; admin: boolean } | Record<string, never> = {};
+	let accountability: { user: string; admin: boolean; role?: string } | Record<string, never> | null = {};
 	app.use(((req: Request, _res: Response, next: NextFunction) => {
 		req.accountability = accountability as unknown as Request['accountability'];
 		next();
@@ -377,7 +377,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -516,7 +516,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -619,7 +619,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
@@ -796,7 +796,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'another-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -899,7 +899,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-02](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -937,8 +937,9 @@ describe('adoption code endpoints', () => {
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({
 				recipient: 'first-user-id',
+				type: 'probe_adopted',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-02**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-02](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
@@ -948,12 +949,20 @@ describe('adoption code endpoints', () => {
 				type: 'outdated_firmware',
 				secondary_type: 'v2.0_v22.16.0',
 				subject: 'Your hardware probe is running an outdated firmware',
-				message: 'Your probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
+				message: 'Your probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 			});
 		});
 	});
 
 	describe('/adoption-code/adopt-by-token endpoint', () => {
+		beforeEach(() => {
+			accountability = {
+				user: 'f3249755-8b2b-43e6-878e-d5387afe1a24',
+				admin: false,
+				role: 'system-role-id',
+			};
+		});
+
 		const adoptionTokenRequest = {
 			probe: {
 				userId: null,
@@ -990,7 +999,7 @@ describe('adoption code endpoints', () => {
 		};
 
 		it('should adopt unassigned probe', async () => {
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1032,7 +1041,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 		});
 
@@ -1057,7 +1066,7 @@ describe('adoption code endpoints', () => {
 				originalLocation: JSON.stringify({ country: 'FR', city: 'Paris', state: null, latitude: 48.85, longitude: 2.35 }),
 			});
 
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1108,7 +1117,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				recipient: 'first-user-id',
 				subject: 'New probe adopted',
-				message: 'A new probe [**probe-fr-paris-01**](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
+				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
@@ -1133,7 +1142,7 @@ describe('adoption code endpoints', () => {
 				hardwareDeviceFirmware: 'v1.6',
 			});
 
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1182,7 +1191,7 @@ describe('adoption code endpoints', () => {
 				hardwareDeviceFirmware: 'v2.1',
 			});
 
-			const res = await request(app).put('/adopt-by-token').set('x-api-key', 'system').send(adoptionTokenRequest);
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(200);
 
@@ -1215,7 +1224,24 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(0);
 		});
 
-		it('should reject without system token', async () => {
+		it('should reject without accountability', async () => {
+			accountability = null;
+
+			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
+
+			expect(res.status).to.equal(403);
+
+			expect(createOne.callCount).to.equal(0);
+			expect(notificationCreateOne.callCount).to.equal(0);
+		});
+
+		it('should reject without system user', async () => {
+			accountability = {
+				user: 'first-user-id',
+				admin: false,
+				role: 'another-role-id',
+			};
+
 			const res = await request(app).put('/adopt-by-token').send(adoptionTokenRequest);
 
 			expect(res.status).to.equal(403);

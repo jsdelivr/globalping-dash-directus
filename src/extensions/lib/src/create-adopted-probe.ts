@@ -1,5 +1,5 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import { getDefaultProbeName } from './default-probe-name.js';
+import { escapeMdSymbols, getDefaultProbeName } from './probe-name.js';
 import { getResetUserFields } from './reset-fields.js';
 
 export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
@@ -195,8 +195,9 @@ const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { servic
 
 	await notificationsService.createOne({
 		recipient: adoption.userId,
+		type: 'probe_adopted',
 		subject: 'New probe adopted',
-		message: `A new probe [**${adoption.name}**](/probes/${adoption.id}) with IP address **${adoption.ip}** has been assigned to your account.`,
+		message: `A new ${adoption.name ? `probe [${escapeMdSymbols(adoption.name)}](/probes/${adoption.id})` : `[probe](/probes/${adoption.id})`} with IP address **${adoption.ip}** has been assigned to your account.`,
 	});
 };
 
@@ -208,7 +209,8 @@ const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, 
 
 	await notificationsService.createOne({
 		recipient: existingProbe.userId,
+		type: 'probe_unassigned',
 		subject: 'Probe unassigned',
-		message: `Your probe ${existingProbe.name ? `**${existingProbe.name}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
+		message: `Your probe ${existingProbe.name ? `**${escapeMdSymbols(existingProbe.name)}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
 	});
 };

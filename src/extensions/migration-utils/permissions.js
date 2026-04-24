@@ -59,10 +59,7 @@ export async function editPermissions (permissionsObj, fieldsToAdd = [], fieldsT
 		method: 'PATCH',
 		body: JSON.stringify({
 			...permissionsObj,
-			fields: [
-				...filteredFields,
-				...fieldsToAdd,
-			],
+			fields: [ ...new Set([ ...filteredFields, ...fieldsToAdd ]) ],
 		}),
 		headers: {
 			'Content-Type': 'application/json',

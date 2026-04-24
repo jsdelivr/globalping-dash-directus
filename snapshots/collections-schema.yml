@@ -246,7 +246,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       sort: 1
       special: null
       translations: null
@@ -261,7 +261,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_indexed: false
       is_primary_key: false
@@ -298,6 +298,138 @@ fields:
       data_type: varchar
       default_value: null
       max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: directus_notifications
+    field: email_status
+    type: string
+    meta:
+      collection: directus_notifications
+      conditions: null
+      display: null
+      display_options: null
+      field: email_status
+      group: null
+      hidden: false
+      interface: select-dropdown
+      note: null
+      options:
+        choices:
+          - text: not-required
+            value: not-required
+          - text: no-email
+            value: no-email
+          - text: disabled-by-user
+            value: disabled-by-user
+          - text: pending
+            value: pending
+          - text: sent
+            value: sent
+          - text: failed
+            value: failed
+      readonly: false
+      required: false
+      sort: 3
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: email_status
+      table: directus_notifications
+      data_type: varchar
+      default_value: not-required
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: directus_notifications
+    field: email_last_attempt
+    type: timestamp
+    meta:
+      collection: directus_notifications
+      conditions: null
+      display: null
+      display_options: null
+      field: email_last_attempt
+      group: null
+      hidden: false
+      interface: datetime
+      note: null
+      options:
+        relative: true
+      readonly: false
+      required: false
+      sort: 4
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: email_last_attempt
+      table: directus_notifications
+      data_type: timestamp
+      default_value: null
+      max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: directus_notifications
+    field: metadata
+    type: json
+    meta:
+      collection: directus_notifications
+      conditions: null
+      display: null
+      display_options: null
+      field: metadata
+      group: null
+      hidden: false
+      interface: input-code
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 5
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: metadata
+      table: directus_notifications
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
@@ -620,6 +752,46 @@ fields:
       data_type: timestamp
       default_value: null
       max_length: null
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: directus_users
+    field: notification_preferences
+    type: json
+    meta:
+      collection: directus_users
+      conditions: null
+      display: null
+      display_options: null
+      field: notification_preferences
+      group: null
+      hidden: true
+      interface: input-code
+      note: null
+      options: null
+      readonly: false
+      required: false
+      sort: 8
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: notification_preferences
+      table: directus_users
+      data_type: longtext
+      default_value: null
+      max_length: 4294967295
       numeric_precision: null
       numeric_scale: null
       is_nullable: true
