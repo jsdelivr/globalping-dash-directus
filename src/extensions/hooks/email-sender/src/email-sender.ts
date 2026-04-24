@@ -5,6 +5,7 @@ import markdownit from 'markdown-it';
 import { Resend } from 'resend';
 import sanitizeHtml from 'sanitize-html';
 import { type EmailGenerator, getEmailGenerator } from '../../../lib/src/email-generator.js';
+import { getNotificationType, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationRow = {
 	id: number;
@@ -163,11 +164,11 @@ export class EmailService {
 
 	private formatMessage (notification: NotificationRow) {
 		const renderedMessage = this.md.render(notification.message ?? '');
-		const typeTitle = notification.type.replace('_', '\u00A0').replace(/^./, c => c.toUpperCase());
+		const typeTitle = getNotificationType(notification.type)!.description;
 		const messageWithFooter = renderedMessage
 			+ '<p>—<br>'
 			+ `<a href="${this.emailGenerator.generateSettingsLink()}">Manage notifications</a> | `
-			+ `<a href="${this.emailGenerator.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable "${typeTitle}" emails</a>`
+			+ `<a href="${this.emailGenerator.generateTypeUnsubscribeLink(notification.recipient, mapNotificationTypeKey(notification.type)!)}">Disable "${typeTitle}" emails</a>`
 			+ '</p>';
 		return sanitizeHtml(messageWithFooter);
 	}

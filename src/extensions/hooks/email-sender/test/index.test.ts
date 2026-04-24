@@ -119,7 +119,27 @@ describe('EmailService', () => {
 		});
 		expect(html).to.include('href="https://dash.globalping.io/probes/1"');
 		expect(html).to.include('https://dash.globalping.io/emails/unsubscribe?data=');
+		expect(html).to.include('Probe container or firmware is outdated');
 		expect(html).to.not.include('<script>');
+	});
+
+	it('should map alias notification type to canonical key in unsubscribe link', () => {
+		const context = createContext();
+		const service = new EmailService(context as any);
+		const spy = sinon.spy((service as any).emailGenerator, 'generateTypeUnsubscribeLink');
+
+		try {
+			const html = (service as any).formatMessage({
+				message: 'Some message',
+				recipient: 'u1',
+				type: 'outdated_firmware',
+			});
+
+			expect(spy.firstCall.args[1]).to.equal('outdated_software');
+			expect(html).to.include('Probe container or firmware is outdated');
+		} finally {
+			spy.restore();
+		}
 	});
 
 	it('should map batch errors to sent/failed ids', async () => {
