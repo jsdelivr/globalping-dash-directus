@@ -26,7 +26,7 @@ export class EmailGenerator {
 		const query = new URLSearchParams({
 			data: this.createToken({ userId, type }),
 		});
-		return `${this.getNormalizedDashUrl()}/emails/confirmation?${query.toString()}`;
+		return `${this.getNormalizedDashUrl()}/emails/unsubscribe?${query.toString()}`;
 	}
 
 	public generateSettingsLink (): string {

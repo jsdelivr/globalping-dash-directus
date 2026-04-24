@@ -118,7 +118,7 @@ describe('EmailService', () => {
 			type: 'outdated_software',
 		});
 		expect(html).to.include('href="https://dash.globalping.io/probes/1"');
-		expect(html).to.include('https://dash.globalping.io/emails/confirmation?data=');
+		expect(html).to.include('https://dash.globalping.io/emails/unsubscribe?data=');
 		expect(html).to.not.include('<script>');
 	});
 

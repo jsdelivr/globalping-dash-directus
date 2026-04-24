@@ -94,13 +94,13 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.outdated_software?.enabled).to.equal(false);
 	});
 
-	it('should redirect GET /unsubscribe to confirmation with data param without mutating', async () => {
+	it('should redirect GET /unsubscribe to dashboard with data param without mutating', async () => {
 		const data = getData('user-1');
 		const res = await request(app).get('/unsubscribe').query({ data });
 
 		expect(res.status).to.equal(302);
 
-		expect(res.headers.location).to.equal(`https://dash.globalping.io/emails/confirmation?data=${encodeURIComponent(data)}`);
+		expect(res.headers.location).to.equal(`https://dash.globalping.io/emails/unsubscribe?data=${encodeURIComponent(data)}`);
 
 		expect(updateOne.notCalled).to.equal(true);
 	});

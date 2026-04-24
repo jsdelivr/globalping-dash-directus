@@ -120,7 +120,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const params = new URLSearchParams({ data }).toString();
-		const location = `${context.env.DASH_URL}/emails/confirmation?${params}`;
+		const location = `${context.env.DASH_URL}/emails/unsubscribe?${params}`;
 		res.redirect(location);
 	}, context));
 });
