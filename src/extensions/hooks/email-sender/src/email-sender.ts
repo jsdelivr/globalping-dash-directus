@@ -15,8 +15,6 @@ type NotificationRow = {
 	type: string;
 };
 
-const md = markdownit();
-
 export class EmailService {
 	private readonly EMAIL_FROM = 'Globalping <dash@notify.globalping.io>';
 	private readonly REPLY_TO = 'd@globalping.io';
@@ -24,6 +22,7 @@ export class EmailService {
 	private readonly BATCH_SIZE = 100;
 	private readonly client: Resend;
 	private readonly emailGenerator: EmailGenerator;
+	private readonly md: ReturnType<typeof createMarkdown>;
 	private timer: NodeJS.Timeout | undefined;
 	private stopped = true;
 
@@ -36,6 +35,7 @@ export class EmailService {
 
 		this.client = new Resend(env.RESEND_API_KEY);
 		this.emailGenerator = getEmailGenerator(context);
+		this.md = createMarkdown(this.context.env.DASH_URL);
 	}
 
 	scheduleSend (delay: number = this.SEND_INTERVAL) {
@@ -162,16 +162,34 @@ export class EmailService {
 	}
 
 	private formatMessage (notification: NotificationRow) {
-		const renderedMessage = md.render(notification.message ?? '');
-		const messagesWithAbsoluteLinks = renderedMessage.replaceAll(/href="(\/[^"]*)"/g, (_match, link: string) => `href="${this.context.env.DASH_URL}${link}"`);
+		const renderedMessage = this.md.render(notification.message ?? '');
 		const typeTitle = notification.type.replace('_', '\u00A0').replace(/^./, c => c.toUpperCase());
-		const messageWithFooter = messagesWithAbsoluteLinks
+		const messageWithFooter = renderedMessage
 			+ '<p>—<br>'
 			+ `<a href="${this.emailGenerator.generateSettingsLink()}">Manage notifications</a> | `
 			+ `<a href="${this.emailGenerator.generateTypeUnsubscribeLink(notification.recipient, notification.type)}">Disable "${typeTitle}" emails</a>`
 			+ '</p>';
 		return sanitizeHtml(messageWithFooter);
 	}
+}
+
+function createMarkdown (dashUrl: string) {
+	const md = markdownit();
+	const defaultLinkOpen = md.renderer.rules.link_open || ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
+	md.renderer.rules.link_open = (tokens, idx, options, _env, self) => {
+		const token = tokens[idx]!;
+		const aIndex = token.attrIndex('href');
+
+		if (aIndex >= 0 && token.attrs) {
+			const href = token.attrs[aIndex]![1];
+
+			if (href.startsWith('/')) { token.attrs[aIndex]![1] = `${dashUrl}${href}`; }
+		}
+
+		return defaultLinkOpen(tokens, idx, options, _env, self);
+	};
+
+	return md;
 }
 
 let emailService: EmailService | null = null;
