@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getEmailGenerator } from '../../../lib/src/email-generator.js';
-import { getAllDisabled, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { areAllDisabled, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
 	enabled: boolean;
@@ -71,7 +71,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
-		const allDisabled = getAllDisabled(userPreferences);
+		const allDisabled = areAllDisabled(userPreferences);
 		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
 
 		const current = userPreferences[resolvedType];
