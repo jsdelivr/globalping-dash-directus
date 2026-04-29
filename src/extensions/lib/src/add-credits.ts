@@ -9,6 +9,7 @@ export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 	21207279: '219827779',
 	138994461: '90101384',
 	133026984: '38296588',
+	154700772: '180483416',
 };
 
 type CreditsAddition = {
