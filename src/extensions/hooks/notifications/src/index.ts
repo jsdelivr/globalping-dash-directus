@@ -25,6 +25,7 @@ const CancelNotificationError = createError('CANCELLED', 'Notification cancelled
 
 const notificationPayloadSchema = Joi.object({
 	type: joiNotificationTypeKey.required(),
+	subject: Joi.string().required(),
 	message: Joi.string().required(),
 	recipient: Joi.string().required(),
 }).unknown(true);
