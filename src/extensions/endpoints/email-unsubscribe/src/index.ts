@@ -41,7 +41,7 @@ export default defineEndpoint((router, context) => {
 		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
 		const updatedPreferences = {
 			...defaultPreferences,
-			// Filtering here to remove old types that was removed from notificationTypes.
+			// Filtering here to remove old types that were removed from notificationTypes.
 			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
 		};
 		Object.values(updatedPreferences).forEach((preference) => { preference.emailEnabled = false; });
@@ -77,7 +77,7 @@ export default defineEndpoint((router, context) => {
 		const current = userPreferences[resolvedType];
 		const updatedPreferences = {
 			...defaultPreferences,
-			// Filtering here to remove old types that was removed from notificationTypes.
+			// Filtering here to remove old types that were removed from notificationTypes.
 			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
 			[resolvedType]: {
 				enabled: typeof current?.enabled === 'boolean' ? current.enabled : !allDisabled,
