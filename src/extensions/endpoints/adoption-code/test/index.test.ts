@@ -625,7 +625,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
 				recipient: 'another-user-id',
 				subject: 'Probe unassigned',
-				message: 'Your probe **another-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user (it reported an adoption token of another user).',
+				message: 'Your probe **another-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user because it reported an adoption token that belongs to another user.',
 			});
 		});
 
@@ -1123,7 +1123,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
 				recipient: 'another-user-id',
 				subject: 'Probe unassigned',
-				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user (it reported an adoption token of another user).',
+				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user because it reported an adoption token that belongs to another user.',
 			});
 		});
 

@@ -55,7 +55,7 @@ export const seed = async (knex) => {
 				status: index % 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
 				subject: 'Probe unassigned',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been reassigned to another user (it reported an adoption token of another user).`,
+				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
 			}
 		)),
 		// your probe has been deleted message
@@ -120,8 +120,8 @@ export const seed = async (knex) => {
 				collection: 'gp_probes',
 				type: 'outdated_software',
 				secondary_type: targetNodeVersion,
-				subject: 'Your probe container is running an outdated software',
-				message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated software and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
+				subject: 'Your probe container is running an outdated software version',
+				message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 			};
 		}),
 	]);

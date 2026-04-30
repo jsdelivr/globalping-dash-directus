@@ -5,7 +5,7 @@ import { escapeMdSymbols } from '../../../../lib/src/probe-name.js';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
-const OFFLINE_PROBE_NOTIFICATIION_TYPE = 'offline_probe';
+const OFFLINE_PROBE_NOTIFICATION_TYPE = 'offline_probe';
 
 type OfflineNotification = {
 	item: string | null;
@@ -50,7 +50,7 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 	const result = await notificationsService.readByQuery({
 		fields: [ 'item', 'metadata', 'timestamp', 'recipient' ],
 		filter: {
-			type: { _eq: OFFLINE_PROBE_NOTIFICATIION_TYPE },
+			type: { _eq: OFFLINE_PROBE_NOTIFICATION_TYPE },
 			collection: { _eq: 'gp_probes' },
 			recipient: { _in: userIds },
 			timestamp: { _gte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString() },
@@ -95,7 +95,7 @@ const notifySingleProbe = async (probe: AdoptedProbe, userId: string, { services
 		recipient: userId,
 		item: probe.id,
 		collection: 'gp_probes',
-		type: OFFLINE_PROBE_NOTIFICATIION_TYPE,
+		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
 		subject: 'Your probe went offline',
 		message: `Your ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} has been offline for more than 24 hours. If it does not come back online before **${formatExpirationDate(probe.lastSyncDate)}** it will be removed from your account.`,
 	});
@@ -105,15 +105,15 @@ const notifyMultipleProbes = async (probes: AdoptedProbe[], userId: string, { se
 	const { NotificationsService } = services;
 	const notificationsService = new NotificationsService({ schema: await getSchema() });
 
-	const lines = probes.map(probe => `- ${probe.name ? `[${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}** - before **${formatExpirationDate(probe.lastSyncDate)}**`);
+	const lines = probes.map(probe => `- ${probe.name ? `[${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`} with IP address **${probe.ip}** - **${formatExpirationDate(probe.lastSyncDate)}**`);
 
 	await notificationsService.createOne({
 		recipient: userId,
 		collection: 'gp_probes',
 		metadata: probes.map(p => p.id),
-		type: OFFLINE_PROBE_NOTIFICATIION_TYPE,
+		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
 		subject: 'Your probes went offline',
-		message: `Some of your probes have been offline for more than 24 hours and will be removed from your account if they do not come back online:\n${lines.join('\n')}`,
+		message: `Some of your probes have been offline for more than 24 hours and will be removed from your account unless they come back online by these dates:\n${lines.join('\n')}`,
 	});
 };
 
@@ -133,7 +133,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSch
 			recipient: probe.userId,
 			type: 'probe_unassigned',
 			subject: 'Your probe has been deleted',
-			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than ${REMOVE_AFTER_DAYS} days. You can adopt it again when it is back online.`,
 			item: probe.id,
 			collection: 'gp_probes',
 		});

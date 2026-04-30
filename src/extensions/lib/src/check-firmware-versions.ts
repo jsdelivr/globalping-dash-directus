@@ -94,8 +94,8 @@ const notifySingleSoftwareProbe = async (probe: ProbeInfo, userId: string, { ser
 		collection: 'gp_probes',
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
-		subject: 'Your probe container is running an outdated software',
-		message: `Your ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated software and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
+		subject: 'Your probe container is running an outdated software version',
+		message: `Your ${probe.name ? `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`} is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 	});
 
 	return probe.id;
@@ -135,8 +135,8 @@ const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], userId: string,
 		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
-		subject: 'Probes with outdated software',
-		message: `Some of your probes are running an outdated software and we couldn't update them automatically. Please follow [our guide](/probes?view=update-a-probe) to update them manually:\n${lines.join('\n')}`,
+		subject: 'Your probe containers are running an outdated software version',
+		message: `Some of your probes are running an outdated software version and we couldn't update them automatically. Please follow [our guide](/probes?view=update-a-probe) to update them manually:\n${lines.join('\n')}`,
 	});
 
 	return probes.map(({ id }) => id);
@@ -156,7 +156,7 @@ const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], userId: string,
 		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
-		subject: 'Probes with outdated firmware',
+		subject: 'Your hardware probes are running an outdated firmware',
 		message: `Some of your hardware probes are running an outdated firmware and we couldn't update them automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually:\n${lines.join('\n')}`,
 	});
 

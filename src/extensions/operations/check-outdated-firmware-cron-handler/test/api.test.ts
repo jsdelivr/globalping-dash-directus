@@ -102,8 +102,8 @@ describe('Adopted probes status cron handler', () => {
 			collection: 'gp_probes',
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
-			subject: 'Your probe container is running an outdated software',
-			message: 'Your [probe with IP address **1.1.1.1**](/probes/probe-id) is running an outdated software and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			subject: 'Your probe container is running an outdated software version',
+			message: 'Your [probe with IP address **1.1.1.1**](/probes/probe-id) is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
 		});
 	});
 
@@ -129,8 +129,8 @@ describe('Adopted probes status cron handler', () => {
 			collection: 'gp_probes',
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
-			subject: 'Your probe container is running an outdated software',
-			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			subject: 'Your probe container is running an outdated software version',
+			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
 		});
 	});
 
@@ -205,7 +205,7 @@ describe('Adopted probes status cron handler', () => {
 			metadata: [ 'probe-id-2', 'probe-id-3' ],
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
-			subject: 'Probes with outdated software',
+			subject: 'Your probe containers are running an outdated software version',
 		});
 	});
 
@@ -249,7 +249,7 @@ describe('Adopted probes status cron handler', () => {
 			recipient: 'user-id',
 			item: 'probe-sw',
 			type: 'outdated_software',
-			subject: 'Your probe container is running an outdated software',
+			subject: 'Your probe container is running an outdated software version',
 		});
 
 		expect(createOne.args[1]?.[0]).to.deep.include({
@@ -258,7 +258,7 @@ describe('Adopted probes status cron handler', () => {
 			metadata: [ 'probe-hw-1', 'probe-hw-2' ],
 			type: 'outdated_firmware',
 			secondary_type: 'v2.0_v20.13.0',
-			subject: 'Probes with outdated firmware',
+			subject: 'Your hardware probes are running an outdated firmware',
 		});
 	});
 
