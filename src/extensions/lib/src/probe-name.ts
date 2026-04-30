@@ -48,6 +48,16 @@ export const getDefaultProbeName = async (userId: string, probe: { id?: string; 
 	return `${prefix}-${newIndex}`;
 };
 
+export const getIPSuffix = (ip: string | null): string => ip ? ` with IP address **${ip}**` : '';
+
+export const getProbeLink = (probe: { id: string; name: string | null; ip: string | null }): string => {
+	if (probe.name) {
+		return `probe [${escapeMdSymbols(probe.name)}](/probes/${probe.id})${getIPSuffix(probe.ip)}`;
+	}
+
+	return `[probe${getIPSuffix(probe.ip)}](/probes/${probe.id})`;
+};
+
 export const escapeMdSymbols = (value: string): string => value
 	.replace(/&/g, '&amp;')
 	.replace(/</g, '&lt;')
