@@ -157,6 +157,7 @@ const sendWelcomeNotification = async (userId: string, _user: User, context: Hoo
 
 	await notificationsService.createOne({
 		recipient: userId,
+		type: 'welcome',
 		subject: 'Welcome to Globalping 🎉',
 		message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
 	});

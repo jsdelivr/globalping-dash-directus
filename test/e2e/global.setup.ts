@@ -4,9 +4,17 @@ import { test as setup } from '@playwright/test';
 import { promisify } from 'util';
 import waitOn from 'wait-on';
 
-const DIRECTUS_URL = process.env.DIRECTUS_URL!;
-const DASH_URL = process.env.DASH_URL!;
-const DASH_INDEX_FILE_PATH = process.env.DASH_INDEX_FILE_PATH!;
+const requiredEnvVars = [ 'DIRECTUS_URL', 'DASH_URL', 'DASH_INDEX_FILE_PATH', 'GP_SYSTEM_KEY' ] as const;
+
+for (const envVar of requiredEnvVars) {
+	if (!process.env[envVar]) {
+		throw new Error(`${envVar} is not set.`);
+	}
+}
+
+const DIRECTUS_URL = process.env.DIRECTUS_URL as string;
+const DASH_URL = process.env.DASH_URL as string;
+const DASH_INDEX_FILE_PATH = process.env.DASH_INDEX_FILE_PATH as string;
 
 const pm2Start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 

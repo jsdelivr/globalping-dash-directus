@@ -1,6 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import defineHook, { deleteUserIdToGithubId } from '../src/index.js';
 
 type FilterCallback = (payload: any, meta: any, context: any) => Promise<void>;
@@ -27,6 +28,8 @@ describe('users hooks', () => {
 	const creditsAdditionsService = {
 		deleteByQuery: sinon.stub(),
 	};
+	const updateSystemUserToken = sinon.stub();
+	const whereSystemUser = sinon.stub().returns({ update: updateSystemUserToken });
 
 	const context = {
 		services: {
@@ -41,14 +44,36 @@ describe('users hooks', () => {
 				}
 			}),
 		},
-		database: sinon.stub(),
+		database: sinon.stub().returns({ where: whereSystemUser }),
 		getSchema: sinon.stub(),
+		env: {},
 	} as unknown as HookExtensionContext;
 
 	defineHook(events, context);
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		context.env = {};
+	});
+
+	describe('server.start', () => {
+		it('should update system user token from env', async () => {
+			context.env.GP_SYSTEM_KEY = 'new-system-token';
+
+			await callbacks.action['server.start']?.({}, {});
+
+			expect(whereSystemUser.callCount).to.equal(1);
+			expect(whereSystemUser.args[0]?.[0]).to.deep.equal({ id: SYSTEM_USER_ID });
+			expect(updateSystemUserToken.callCount).to.equal(1);
+			expect(updateSystemUserToken.args[0]?.[0]).to.deep.equal({ token: 'new-system-token' });
+		});
+
+		it('should skip system user token update if env token is missing', async () => {
+			await callbacks.action['server.start']?.({}, {});
+
+			expect(whereSystemUser.callCount).to.equal(0);
+			expect(updateSystemUserToken.callCount).to.equal(0);
+		});
 	});
 
 	describe('users.delete', () => {
@@ -109,6 +134,33 @@ describe('users hooks', () => {
 			).catch(err => err);
 
 			expect(err.message).to.equal('"value" must be one of [testuser, org1, org2]');
+		});
+
+		it('should throw error if notification_preferences has invalid type key', async () => {
+			const err = await callbacks.filter['users.update']?.(
+				{ notification_preferences: { not_existing_type: { enabled: true, emailEnabled: true } } },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			).catch(err => err);
+
+			expect(err.message).to.contain('"notification_preferences.not_existing_type" is not allowed');
+		});
+
+		it('should force enabled true for readOnly notification', async () => {
+			const payload = {
+				notification_preferences: {
+					outdated_software: { enabled: false, emailEnabled: false },
+				},
+			};
+
+			await callbacks.filter['users.update']?.(
+				payload,
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			);
+
+			expect(payload.notification_preferences.outdated_software.enabled).to.equal(true);
+			expect(payload.notification_preferences.outdated_software.emailEnabled).to.equal(false);
 		});
 
 		it('should do nothing if default_prefix is not being updated', async () => {

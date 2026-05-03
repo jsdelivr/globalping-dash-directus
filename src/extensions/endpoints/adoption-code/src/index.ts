@@ -10,15 +10,17 @@ import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
+import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { createAdoptedProbe, type ProbeToAdopt } from '../../../lib/src/create-adopted-probe.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
-	accountability: {
+	accountability?: {
 		user: string;
 		admin: boolean;
+		role: string;
 	};
 	schema: object;
 };
@@ -64,7 +66,7 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe IP address format is wrong', 400))();
 			}
 
-			await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
+			await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
 
 			const adoptedProbe = await findAdoptedProbeByIp(ip, context as unknown as EndpointExtensionContext);
 
@@ -156,7 +158,7 @@ export default defineEndpoint((router, context) => {
 		const userId = req.body.userId;
 		const userCode = req.body.code.replaceAll(' ', '');
 
-		await rateLimiter.consume(req.accountability.user, 1).catch(() => { throw new TooManyRequestsError(); });
+		await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
 
 		const value = probesToAdopt.get(userId);
 
@@ -168,9 +170,9 @@ export default defineEndpoint((router, context) => {
 		const adoptedProbe = await createAdoptedProbe(userId, probe, context);
 
 		probesToAdopt.delete(userId);
-		await rateLimiter.delete(req.accountability.user);
+		await rateLimiter.delete(req.accountability?.user ?? '');
 
-		await checkFirmwareVersions(adoptedProbe, userId, context);
+		await checkFirmwareVersions([ adoptedProbe ], userId, context).catch((error) => { context.logger.error(error); });
 
 		res.send({
 			id: adoptedProbe.id,
@@ -210,14 +212,14 @@ export default defineEndpoint((router, context) => {
 	router.put('/adopt-by-token', asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 
-		if (req.headers['x-api-key'] !== env.GP_SYSTEM_KEY) {
+		if (req.accountability?.user !== SYSTEM_USER_ID) {
 			throw new (createError('FORBIDDEN', 'Invalid system token', 403))();
 		}
 
 		const probe = req.body.probe as ProbeToAdopt;
 		const user = req.body.user as { id: string };
 		const adoptedProbe = await createAdoptedProbe(user.id, probe, context);
-		await checkFirmwareVersions(adoptedProbe, user.id, context);
+		await checkFirmwareVersions([ adoptedProbe ], user.id, context).catch((error) => { context.logger.error(error); });
 
 		res.sendStatus(200);
 	}, context));

@@ -1,0 +1,134 @@
+import Joi from 'joi';
+
+export type NotificationTypeKey = keyof typeof notificationTypes;
+
+export type NotificationType = {
+	configurableByUser: boolean;
+	readOnly: boolean;
+	sendEmail: boolean;
+	hasParameter: false;
+	description: string;
+} | {
+	configurableByUser: boolean;
+	readOnly: boolean;
+	sendEmail: boolean;
+	hasParameter: true;
+	defaultParameter: number;
+	description: string;
+};
+
+const notificationTypes = {
+	welcome: {
+		configurableByUser: false, // Does type appear in user notification preferences?
+		readOnly: false, // Can user disable "App" notifications for this type?
+		sendEmail: false, // Should system try to send email for this type? (Can be disabled by user preferences.)
+		hasParameter: false, // Does type have a parameter input?
+		description: 'Welcome to Globalping message.', // Visible in the UI if configurableByUser.
+	},
+	probe_adopted: {
+		configurableByUser: true,
+		readOnly: false,
+		sendEmail: false,
+		hasParameter: false,
+		description: 'New probe adopted',
+	},
+	probe_unassigned: {
+		configurableByUser: true,
+		readOnly: false,
+		sendEmail: false,
+		hasParameter: false,
+		description: 'Probe unassigned',
+	},
+	outdated_software: { // Also controls 'outdated_firmware'.
+		configurableByUser: true,
+		readOnly: true,
+		sendEmail: true,
+		hasParameter: false,
+		description: 'Probe container or firmware is outdated',
+	},
+	outdated_firmware: 'outdated_software',
+	offline_probe: {
+		configurableByUser: true,
+		readOnly: false,
+		sendEmail: true,
+		hasParameter: false,
+		description: 'Probe went offline',
+	},
+	probe_location_changed: { // Also controls 'probe_location_changed_back'.
+		configurableByUser: true,
+		readOnly: false,
+		sendEmail: false,
+		hasParameter: false,
+		description: 'Probe location has changed',
+	},
+	probe_location_changed_back: 'probe_location_changed',
+	// Sending of low_credits notifications is not implemented. Keeping it to document the structure of notifications with parameters.
+	// low_credits: {
+	// 	configurableByUser: true,
+	// 	readOnly: false,
+	// 	sendEmail: false,
+	// 	hasParameter: true,
+	// 	defaultParameter: 1000,
+	// 	description: 'Credits are running low',
+	// },
+} satisfies Record<string, string | NotificationType>;
+
+export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && value.configurableByUser) as [string, NotificationType][])
+	.map(([ key, value ]) => [ key, {
+		readOnly: value.readOnly,
+		sendEmail: value.sendEmail,
+		hasParameter: value.hasParameter,
+		...value.hasParameter ? { defaultParameter: value.defaultParameter } : {},
+		description: value.description,
+	}]));
+
+export const joiNotificationTypeKey = Joi.string().valid(...Object.keys(notificationTypes));
+
+export const joiConfigurableNotificationTypeKey = Joi.string().valid(...Object.keys(configurableNotifications));
+
+export const mapNotificationTypeKey = (key: string): NotificationTypeKey | null => {
+	const notificationType = notificationTypes[key as NotificationTypeKey];
+
+	if (typeof notificationType === 'string') {
+		return notificationType as NotificationTypeKey;
+	}
+
+	if (!notificationType) {
+		return null;
+	}
+
+	return key as NotificationTypeKey;
+};
+
+export const getNotificationType = (key: string): NotificationType | null => {
+	const resolvedKey = mapNotificationTypeKey(key);
+
+	if (!resolvedKey) {
+		return null;
+	}
+
+	return notificationTypes[resolvedKey] as NotificationType;
+};
+
+export const areAllDisabled = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null): boolean => {
+	const configuredTypes = Object.keys(notificationPreferences ?? {}).filter(key => getNotificationType(key)?.readOnly !== true);
+	return configuredTypes.length > 0 && configuredTypes.every(key => !notificationPreferences![key]!.enabled);
+};
+
+export const areAllEmailsDisabled = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null): boolean => {
+	const configuredTypes = Object.values(notificationPreferences ?? {}).filter(preference => typeof preference.emailEnabled === 'boolean');
+	return configuredTypes.length > 0 && configuredTypes.every(preference => preference.emailEnabled === false);
+};
+
+export const getDefaultNotificationPreferences = (notificationPreferences: Record<string, { enabled: boolean; emailEnabled?: boolean }> | null) => {
+	const allDisabled = areAllDisabled(notificationPreferences);
+	const allEmailsDisabled = areAllEmailsDisabled(notificationPreferences);
+	return Object.fromEntries(Object.entries(configurableNotifications).map(([ key, notification ]) => [
+		key,
+		{
+			enabled: !allDisabled,
+			...notification.sendEmail ? { emailEnabled: !allEmailsDisabled } : {},
+			...notification.hasParameter ? { parameter: notification.defaultParameter } : {},
+		},
+	]));
+};
