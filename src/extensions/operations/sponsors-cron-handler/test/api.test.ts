@@ -81,6 +81,7 @@ describe('Sponsors cron handler', () => {
 
 	after(() => {
 		nock.cleanAll();
+		clock.restore();
 	});
 
 	it('should add credits to recurring sponsors with last_earning_date > 30 days (1 month)', async () => {
