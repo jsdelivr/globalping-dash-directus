@@ -21,13 +21,14 @@ type AddCreditsData = {
 	github_id: string;
 	amount: number;
 	reason: 'recurring_sponsorship' | 'one_time_sponsorship' | 'tier_changed';
-	meta: { amountInDollars: number; monthsCovered?: number };
+	meta: { amountInDollars: number; monthsCovered?: number; tierId: string };
 };
 
 type AddRecurringCreditsData = {
 	githubId: string;
 	monthlyAmount: number;
 	monthsToAward: number;
+	tierId: string;
 };
 
 export const getUserBonus = async (
@@ -91,14 +92,14 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 	return { creditsId, githubId };
 };
 
-export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAward }: AddRecurringCreditsData, context: ApiExtensionContext) => {
+export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAward, tierId }: AddRecurringCreditsData, context: ApiExtensionContext) => {
 	const totalAmount = monthlyAmount * monthsToAward;
 
 	const { creditsId } = await addCredits({
 		github_id: githubId,
 		amount: totalAmount,
 		reason: 'recurring_sponsorship',
-		meta: { amountInDollars: monthlyAmount, monthsCovered: monthsToAward },
+		meta: { amountInDollars: monthlyAmount, monthsCovered: monthsToAward, tierId },
 	}, context);
 
 	return { creditsId, totalAmount };

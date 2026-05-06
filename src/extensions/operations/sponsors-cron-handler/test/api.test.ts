@@ -102,6 +102,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-08-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -112,7 +113,7 @@ describe('Sponsors cron handler', () => {
 		});
 
 		creditsAdditionsService.readByQuery.resolves([{
-			meta: { amountInDollars: 100 },
+			meta: { amountInDollars: 100, tierId: 'T_test_tier' },
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -132,6 +133,7 @@ describe('Sponsors cron handler', () => {
 			meta: {
 				amountInDollars: 10,
 				monthsCovered: 1,
+				tierId: 'T_test_tier',
 				bonus: 5,
 			},
 		}]);
@@ -157,6 +159,7 @@ describe('Sponsors cron handler', () => {
 								isActive: true,
 								isOneTimePayment: false,
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -248,6 +251,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -304,6 +308,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: true,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -360,6 +365,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 15,
 								},
 							},
@@ -389,6 +395,7 @@ describe('Sponsors cron handler', () => {
 			meta: {
 				amountInDollars: 15,
 				monthsCovered: 1,
+				tierId: 'T_test_tier',
 				bonus: 0,
 			},
 		}]);
@@ -417,6 +424,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -466,7 +474,7 @@ describe('Sponsors cron handler', () => {
 			amount: 100000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 1, tierId: 'T_test_tier', bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 1 month(s).' ]);
@@ -491,6 +499,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: true,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -534,6 +543,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -547,6 +557,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 3,
 								},
 							},
@@ -586,7 +597,7 @@ describe('Sponsors cron handler', () => {
 								isActive: true,
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-07-01T00:00:00.000Z',
-								tier: { monthlyPriceInDollars: 10 },
+								tier: { id: 'T_test_tier', monthlyPriceInDollars: 10 },
 							},
 						}],
 					},
@@ -613,7 +624,7 @@ describe('Sponsors cron handler', () => {
 			amount: 200000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 2, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 2, tierId: 'T_test_tier', bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 2 month(s).' ]);
@@ -631,7 +642,7 @@ describe('Sponsors cron handler', () => {
 								isActive: true,
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-07-06T00:00:00.000Z',
-								tier: { monthlyPriceInDollars: 10 },
+								tier: { id: 'T_test_tier', monthlyPriceInDollars: 10 },
 							},
 						}],
 					},
@@ -653,7 +664,7 @@ describe('Sponsors cron handler', () => {
 			github_id: '3',
 			reason: 'recurring_sponsorship',
 			amount: 300000,
-			meta: { amountInDollars: 10, monthsCovered: 3, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 3, tierId: 'T_test_tier', bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);

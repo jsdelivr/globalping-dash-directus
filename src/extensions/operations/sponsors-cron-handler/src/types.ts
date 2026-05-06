@@ -9,6 +9,7 @@ export type DirectusSponsor = {
 export type GithubSponsor = {
 	githubLogin: string;
 	githubId: string;
+	tierId: string;
 	isActive: boolean;
 	monthlyAmount: number;
 	isOneTimePayment: boolean;

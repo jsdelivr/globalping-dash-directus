@@ -49,6 +49,7 @@ describe('GitHub webhook one-time handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 0,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 
@@ -88,6 +89,7 @@ describe('GitHub webhook one-time handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 20,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 
@@ -117,6 +119,7 @@ describe('GitHub webhook one-time handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 0,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 

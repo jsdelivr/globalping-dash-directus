@@ -80,6 +80,7 @@ describe('GitHub webhook recurring handler', () => {
 			meta: {
 				amountInDollars: 15,
 				bonus: 5,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 
@@ -137,6 +138,7 @@ describe('GitHub webhook recurring handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 0,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 

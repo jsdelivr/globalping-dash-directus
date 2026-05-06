@@ -11,6 +11,7 @@ export type Data = {
 					id: number;
 				};
 				tier: {
+					node_id: string;
 					created_at: string;
 					monthly_price_in_dollars: number;
 					is_one_time: boolean;
