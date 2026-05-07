@@ -17,7 +17,7 @@ export default defineOperationApi({
 		const githubSponsors = await getGithubSponsors(context);
 		const directusSponsors = await getDirectusSponsors(context);
 
-		// Sync existing directus sponsors with github sponsors.
+		// Sync existing directus sponsors info with github.
 		for (const directusSponsor of directusSponsors) {
 			const result = await handleDirectusSponsor({ directusSponsor, githubSponsors }, context);
 

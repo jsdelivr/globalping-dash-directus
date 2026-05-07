@@ -1,4 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
+import Bluebird from 'bluebird';
 import { addCredits, redirectGithubId } from '../../../../lib/src/add-credits.js';
 import { createDirectusSponsor, getRecentCreditsAdditions, sponsorExists } from '../repositories/directus.js';
 import { getGithubSponsorActivities } from '../repositories/github-activities.js';
@@ -24,7 +25,7 @@ export class SponsorActivitiesHandler {
 		const { remainingActivities, remainingAdditions } = this.matchByTierId(activities, additions);
 		const activitiesWithoutAddition = this.matchByDate(remainingActivities, remainingAdditions);
 
-		const results = await Promise.all(activitiesWithoutAddition.map(a => this.createAddition(a, context)));
+		const results = await Bluebird.map(activitiesWithoutAddition, a => this.createAddition(a, context), { concurrency: 8 });
 
 		this.lastWindowEnd = windowEnd;
 		return results.filter((r): r is string => r !== null);
@@ -62,11 +63,14 @@ export class SponsorActivitiesHandler {
 
 		return activities.filter((activity) => {
 			const githubId = this.getGithubId(activity);
+			const reason = this.getReason(activity);
 			const amount = this.amountInDollars(activity);
 			const activityTime = new Date(activity.timestamp).getTime();
 
 			const idx = remainingAdditions.findIndex((a) => {
 				if (a.github_id !== githubId) { return false; }
+
+				if (a.reason !== reason) { return false; }
 
 				if (a.meta.amountInDollars !== amount) { return false; }
 
