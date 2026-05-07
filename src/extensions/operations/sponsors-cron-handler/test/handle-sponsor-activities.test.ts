@@ -381,4 +381,98 @@ describe('SponsorActivitiesHandler', () => {
 		// windowEnd = NOW - 10 min = 2026-05-06T11:50:00.000Z
 		expect(handler.lastWindowEnd).to.equal(new Date('2026-05-06T11:50:00.000Z').getTime());
 	});
+
+	it('uses lastWindowEnd as windowStart basis on subsequent runs', async () => {
+		const prevWindowEnd = new Date('2026-05-06T10:00:00.000Z').getTime();
+		const expectedSince = new Date(prevWindowEnd - 10 * 60 * 1000).toISOString();
+
+		nock('https://api.github.com')
+			.post('/graphql', (body: any) => body?.variables?.since === expectedSince)
+			.reply(200, {
+				data: {
+					organization: {
+						sponsorsActivities: {
+							pageInfo: { hasNextPage: false, endCursor: null },
+							nodes: [],
+						},
+					},
+				},
+			});
+
+		creditsAdditionsService.readByQuery.resolves([]);
+
+		const handler = new SponsorActivitiesHandler();
+		handler.lastWindowEnd = prevWindowEnd;
+
+		// If `since` didn't match, nock would refuse the request and this would throw.
+		await handler.handle(context);
+	});
+
+	// ── multiple activities ───────────────────────────────────────────────────
+
+	it('processes multiple unmatched activities in parallel', async () => {
+		mockActivities([
+			{
+				id: 'SA_p1',
+				action: 'NEW_SPONSORSHIP',
+				timestamp: activityTimestamp,
+				sponsor: { databaseId: 100, login: 'multi-a' },
+				sponsorsTier: { id: 'tier_ot_1', monthlyPriceInDollars: 5, isOneTime: true },
+				previousSponsorsTier: null,
+			},
+			{
+				id: 'SA_p2',
+				action: 'TIER_CHANGE',
+				timestamp: '2026-05-05T15:00:30.000Z',
+				sponsor: { databaseId: 200, login: 'multi-b' },
+				sponsorsTier: { id: 'tier_2', monthlyPriceInDollars: 15, isOneTime: false },
+				previousSponsorsTier: { monthlyPriceInDollars: 10 },
+			},
+		]);
+
+		creditsAdditionsService.readByQuery.resolves([]);
+
+		const handler = new SponsorActivitiesHandler();
+		const results = await handler.handle(context);
+
+		expect(creditsAdditionsService.createOne.callCount).to.equal(2);
+		expect(results).to.have.length(2);
+	});
+
+	it('matches each addition to at most one activity (1-to-1 splice)', async () => {
+		// Two activities sharing (user, reason, tierId) — only one addition exists.
+		mockActivities([
+			{
+				id: 'SA_dup1',
+				action: 'NEW_SPONSORSHIP',
+				timestamp: activityTimestamp,
+				sponsor: { databaseId: 50, login: 'eve' },
+				sponsorsTier: { id: 'tier_ot_dup', monthlyPriceInDollars: 5, isOneTime: true },
+				previousSponsorsTier: null,
+			},
+			{
+				id: 'SA_dup2',
+				action: 'NEW_SPONSORSHIP',
+				timestamp: '2026-05-05T15:30:00.000Z',
+				sponsor: { databaseId: 50, login: 'eve' },
+				sponsorsTier: { id: 'tier_ot_dup', monthlyPriceInDollars: 5, isOneTime: true },
+				previousSponsorsTier: null,
+			},
+		]);
+
+		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
+			github_id: '50',
+			reason: 'one_time_sponsorship',
+			meta: { amountInDollars: 5, tierId: 'tier_ot_dup' },
+			date_created: '2026-05-05T15:00:05.000Z',
+		}]);
+
+		creditsAdditionsService.readByQuery.onSecondCall().resolves([]);
+
+		const handler = new SponsorActivitiesHandler();
+		await handler.handle(context);
+
+		// One activity consumes the addition, the other creates a new credit.
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+	});
 });

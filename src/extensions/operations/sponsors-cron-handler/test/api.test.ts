@@ -672,6 +672,55 @@ describe('Sponsors cron handler', () => {
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);
 	});
 
+	it('processes activities phase before sponsors loop runs', async () => {
+		// Activities phase returns one one-time sponsorship.
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorsActivities: {
+						pageInfo: { hasNextPage: false, endCursor: null },
+						nodes: [{
+							id: 'SA_api_1',
+							action: 'NEW_SPONSORSHIP',
+							timestamp: '2023-09-18T12:00:00.000Z',
+							sponsor: { databaseId: 99, login: 'oneoff' },
+							sponsorsTier: { id: 'tier_ot_api', monthlyPriceInDollars: 7, isOneTime: true },
+							previousSponsorsTier: null,
+						}],
+					},
+				},
+			},
+		});
+
+		// Sponsors phase returns nothing — keep this test focused on the activities path.
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: { hasNextPage: false, endCursor: 'NQ' },
+						edges: [],
+					},
+				},
+			},
+		});
+
+		sponsorsService.readByQuery.resolves([]);
+		creditsAdditionsService.readByQuery.resolves([]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+
+		expect(creditsAdditionsService.createOne.firstCall.args[0]).to.include({
+			github_id: '99',
+			reason: 'one_time_sponsorship',
+		});
+
+		const messages = result as string[];
+		expect(messages).to.have.length(1);
+		expect(messages[0]).to.include('SA_api_1');
+	});
+
 	it('getFullMonthsSinceWithAdvance handles Jan 30/31 anchor correctly across shorter months', () => {
 		const originalTime = new Date();
 		clock.setSystemTime(new Date('2023-02-28Z'));
