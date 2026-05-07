@@ -374,7 +374,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.resolves([]);
 
 		const handler = new SponsorActivitiesHandler();
-		expect(handler.lastWindowEnd).to.be.null;
+		expect(handler.lastWindowEnd).to.equal(null);
 
 		await handler.handle(context);
 

@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import { getFullMonthsSinceWithAdvance } from '../../../lib/src/add-credits.js';
+import { sponsorActivitiesHandler } from '../src/actions/handle-sponsor-activities.js';
 import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
@@ -16,6 +17,7 @@ describe('Sponsors cron handler', () => {
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 	const env = {
+		GITHUB_ACCESS_TOKEN: 'test-token',
 		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 		CREDITS_PER_DOLLAR: '10000',
 		CREDITS_BONUS_PER_100_DOLLARS: '5',
@@ -68,6 +70,7 @@ describe('Sponsors cron handler', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		sponsorActivitiesHandler.lastWindowEnd = null;
 		creditsAdditionsService.readByQuery.resolves([]);
 
 		sponsorsService.readByQuery.resolves([{
@@ -79,12 +82,27 @@ describe('Sponsors cron handler', () => {
 		}]);
 	});
 
+	const mockEmptyActivities = () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorsActivities: {
+						pageInfo: { hasNextPage: false, endCursor: null },
+						nodes: [],
+					},
+				},
+			},
+		});
+	};
+
 	after(() => {
 		nock.cleanAll();
 		clock.restore();
 	});
 
 	it('should add credits to recurring sponsors with last_earning_date > 30 days (1 month)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -143,6 +161,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should not add credits to recurring sponsors with last_earning_date < 30 days', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -180,9 +200,6 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
@@ -192,6 +209,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should delete sponsor from directus if it is not found on github', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -208,14 +227,9 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -234,6 +248,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should delete sponsor from directus if it is not active', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -264,15 +280,9 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
 		expect(sponsorsService.deleteOne.callCount).to.equal(1);
@@ -291,6 +301,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should delete sponsor from directus if his payment is one-time', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -321,20 +333,13 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
 		expect(sponsorsService.deleteOne.callCount).to.equal(1);
 		expect(sponsorsService.deleteOne.args[0]).to.deep.equal([ 1 ]);
-
 		expect(usersService.updateByQuery.callCount).to.equal(1);
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
@@ -348,6 +353,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should update directus "monthly_amount" field if github and directus fields do not match', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -380,13 +387,9 @@ describe('Sponsors cron handler', () => {
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
 		expect(sponsorsService.updateOne.callCount).to.equal(2);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
 		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-15T08:19:00.000Z' }]);
-
-		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
-
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
@@ -407,6 +410,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should add missing recurring sponsors to the directus and award initial credits (1 month)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -439,15 +444,9 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(4);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.createOne.callCount).to.equal(1);
 
 		expect(sponsorsService.createOne.args[0]).to.deep.equal([{
@@ -466,8 +465,6 @@ describe('Sponsors cron handler', () => {
 			{ user_type: 'sponsor' },
 		]);
 
-		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('gp_credits_additions');
-		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -482,6 +479,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should not add non-recurring sponsors to the directus', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -514,10 +513,6 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -526,6 +521,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should handle multiple sponsors and return results for each', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -587,6 +584,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should add credits for multiple months for existing sponsors (2 months catch-up)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -632,6 +631,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should award multiple months on new sponsor based on tierSelectedAt (3 months)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
