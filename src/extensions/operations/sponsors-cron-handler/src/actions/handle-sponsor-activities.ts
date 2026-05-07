@@ -88,12 +88,11 @@ export class SponsorActivitiesHandler {
 	}
 
 	private async createAddition (activity: GithubActivity, context: OperationContext): Promise<string | null> {
-		const githubId = this.getGithubId(activity);
-
 		if (activity.action === 'NEW_SPONSORSHIP' && !activity.sponsorsTier.isOneTime) {
-			return this.createRecurringSponsor(activity, githubId, context);
+			return this.createRecurringSponsor(activity, context);
 		}
 
+		const githubId = String(activity.sponsor.databaseId);
 		const reason = this.getReason(activity);
 		const amount = this.amountInDollars(activity);
 		const tierId = activity.sponsorsTier.id;
@@ -108,11 +107,9 @@ export class SponsorActivitiesHandler {
 		return `Activity ${activity.id}: ${reason === 'one_time_sponsorship' ? 'one-time sponsorship' : 'tier change'} credits added for github_id ${githubId}`;
 	}
 
-	private async createRecurringSponsor (
-		activity: NewSponsorshipActivity,
-		githubId: string,
-		context: OperationContext,
-	): Promise<string | null> {
+	private async createRecurringSponsor (activity: NewSponsorshipActivity, context: OperationContext): Promise<string | null> {
+		const githubId = String(activity.sponsor.databaseId);
+
 		if (await sponsorExists(githubId, context)) {
 			return null;
 		}

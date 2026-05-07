@@ -226,6 +226,31 @@ describe('SponsorActivitiesHandler', () => {
 		expect(results).to.have.length(1);
 	});
 
+	it('stores un-redirected github_id in sponsors table for redirected recurring sponsor', async () => {
+		// 66716858 → '6209808' per SOURCE_ID_TO_TARGET_ID.
+		mockActivities([{
+			id: 'SA_redirect_rec',
+			action: 'NEW_SPONSORSHIP',
+			timestamp: activityTimestamp,
+			sponsor: { databaseId: 66716858, login: 'redirected-user' },
+			sponsorsTier: { id: 'tier_rec_x', monthlyPriceInDollars: 10, isOneTime: false },
+			previousSponsorsTier: null,
+		}]);
+
+		creditsAdditionsService.readByQuery.onFirstCall().resolves([]);
+		sponsorsService.readByQuery.resolves([]); // sponsorExists → not found
+		creditsAdditionsService.readByQuery.onSecondCall().resolves([]);
+
+		const handler = new SponsorActivitiesHandler();
+		await handler.handle(context);
+
+		// Sponsor row uses ORIGINAL id (so the sponsors sync loop can find it).
+		expect(sponsorsService.createOne.firstCall.args[0].github_id).to.equal('66716858');
+
+		// Credit row uses REDIRECTED id (addCredits applies redirect internally).
+		expect(creditsAdditionsService.createOne.firstCall.args[0].github_id).to.equal('6209808');
+	});
+
 	it('skips recurring credit when sponsor already exists', async () => {
 		mockActivities([{
 			id: 'SA_6',
