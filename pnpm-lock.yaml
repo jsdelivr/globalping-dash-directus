@@ -1790,6 +1790,9 @@ importers:
       '@octokit/graphql':
         specifier: ^9.0.2
         version: 9.0.2
+      dayjs:
+        specifier: ^1.11.19
+        version: 1.11.19
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.23

@@ -18,7 +18,7 @@ export type GithubSponsor = {
 
 export type GithubActivity = NewSponsorshipActivity | TierChangeActivity;
 
-type NewSponsorshipActivity = {
+export type NewSponsorshipActivity = {
 	id: string;
 	action: 'NEW_SPONSORSHIP';
 	timestamp: string;
@@ -34,7 +34,7 @@ type NewSponsorshipActivity = {
 	previousSponsorsTier: null;
 };
 
-type TierChangeActivity = {
+export type TierChangeActivity = {
 	id: string;
 	action: 'TIER_CHANGE';
 	timestamp: string;

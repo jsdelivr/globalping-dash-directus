@@ -29,7 +29,8 @@
 		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"dependencies": {
-		"@octokit/graphql": "^9.0.2"
+		"@octokit/graphql": "^9.0.2",
+		"dayjs": "^1.11.19"
 	},
 	"devDependencies": {
 		"@directus/extensions": "^3.0.11",

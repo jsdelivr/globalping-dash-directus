@@ -51,7 +51,7 @@ const query = `
 	}
 `;
 
-export const getGithubSponsorActivities = async (since: Date, until: Date, env: OperationContext['env']): Promise<GithubActivity[]> => {
+export const getGithubSponsorActivities = async (since: number, until: number, { env }: OperationContext): Promise<GithubActivity[]> => {
 	const nodes: GithubActivity[] = [];
 	let hasNextPage = true;
 	let cursor: string | null = null;
@@ -61,8 +61,8 @@ export const getGithubSponsorActivities = async (since: Date, until: Date, env: 
 			headers: {
 				Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
 			},
-			since: since.toISOString(),
-			until: until.toISOString(),
+			since: new Date(since).toISOString(),
+			until: new Date(until).toISOString(),
 			after: cursor,
 		});
 
@@ -74,5 +74,12 @@ export const getGithubSponsorActivities = async (since: Date, until: Date, env: 
 		cursor = pageInfo.endCursor;
 	}
 
-	return nodes;
+	// Drop tier downgrades — no additions ever gets created for them.
+	return nodes.filter((node) => {
+		if (node.action === 'TIER_CHANGE' && node.previousSponsorsTier.monthlyPriceInDollars >= node.sponsorsTier.monthlyPriceInDollars) {
+			return false;
+		}
+
+		return true;
+	});
 };

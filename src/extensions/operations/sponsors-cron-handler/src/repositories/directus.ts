@@ -89,7 +89,7 @@ export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { 
 	return result;
 };
 
-export const getRecentCreditsAdditions = async (since: Date, { services, getSchema }: OperationContext): Promise<CreditsAddition[]> => {
+export const getRecentCreditsAdditions = async (since: number, { services, getSchema }: OperationContext): Promise<CreditsAddition[]> => {
 	const { ItemsService } = services;
 
 	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
@@ -98,7 +98,7 @@ export const getRecentCreditsAdditions = async (since: Date, { services, getSche
 
 	return creditsAdditionsService.readByQuery({
 		filter: {
-			date_created: { _gte: since.toISOString() },
+			date_created: { _gte: new Date(since).toISOString() },
 			reason: { _in: [ 'one_time_sponsorship', 'recurring_sponsorship', 'tier_changed' ] },
 		},
 		fields: [ 'github_id', 'reason', 'meta', 'date_created' ],
