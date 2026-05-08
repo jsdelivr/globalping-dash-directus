@@ -647,6 +647,9 @@ importers:
       '@directus/errors':
         specifier: ^2.0.4
         version: 2.0.4
+      dayjs:
+        specifier: ^1.11.19
+        version: 1.11.19
       joi:
         specifier: ^18.0.1
         version: 18.0.1

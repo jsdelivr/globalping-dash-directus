@@ -46,6 +46,7 @@
 	},
 	"dependencies": {
 		"@directus/errors": "^2.0.4",
+		"dayjs": "^1.11.19",
 		"joi": "^18.0.1",
 		"lodash": "^4.17.21"
 	}

@@ -71,23 +71,23 @@ describe('/sponsorship-details', () => {
 
 	it('should return sponsorship details for valid user request', async () => {
 		readByQuery.resolves([
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-08-04 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-09-03 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-11-02 01:00:00' },
-			{ meta: { amountInDollars: 25, bonus: 0 }, date_created: '2024-12-02 01:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-12-02 01:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-01-01 01:00:00' },
-			{ meta: { amountInDollars: 20, bonus: 0 }, date_created: '2025-01-31 01:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-01-31 01:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-03-02 01:00:00' },
-			{ meta: { amountInDollars: 15, bonus: 0 }, date_created: '2025-04-01 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-04-01 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-05-01 02:00:00' },
-			{ meta: { amountInDollars: 10, bonus: 5 }, date_created: '2025-05-31 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-05-31 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-06-30 02:00:00' },
-			{ meta: { amountInDollars: 50, bonus: 5 }, date_created: '2025-07-10 02:00:00' },
-			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-07-10 02:00:00' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-08-04T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-09-03T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-11-02T01:00:00.000Z' },
+			{ meta: { amountInDollars: 25, bonus: 0 }, date_created: '2024-12-02T01:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2024-12-02T01:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-01-01T01:00:00.000Z' },
+			{ meta: { amountInDollars: 20, bonus: 0 }, date_created: '2025-01-31T01:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-01-31T01:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 0 }, date_created: '2025-03-02T01:00:00.000Z' },
+			{ meta: { amountInDollars: 15, bonus: 0 }, date_created: '2025-04-01T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-04-01T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-05-01T02:00:00.000Z' },
+			{ meta: { amountInDollars: 10, bonus: 5 }, date_created: '2025-05-31T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-05-31T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-06-30T02:00:00.000Z' },
+			{ meta: { amountInDollars: 50, bonus: 5 }, date_created: '2025-07-10T02:00:00.000Z' },
+			{ meta: { amountInDollars: 5, bonus: 5 }, date_created: '2025-07-10T02:00:00.000Z' },
 		]);
 
 		const res = await request(app).get('/').query({
@@ -105,6 +105,29 @@ describe('/sponsorship-details', () => {
 		expect(_.sum(res.body.donatedByMonth)).to.equal(180);
 		expect(readOne.callCount).to.equal(1);
 		expect(readOne.args[0]?.[0]).to.equal('user-id');
+	});
+
+	it('should distribute multi-month recurring credits across covered months and cap at the 12-month edge', async () => {
+		readByQuery.resolves([
+			// 5-month catch-up credit near the start of the window — 3 of the 5 covered months fall outside and are dropped.
+			{ meta: { amountInDollars: 20, monthsCovered: 5, bonus: 0 }, date_created: '2024-08-20T02:00:00.000Z' },
+			// 4-month catch-up credit awarded recently — fully inside the window.
+			{ meta: { amountInDollars: 30, monthsCovered: 4, bonus: 0 }, date_created: '2025-07-10T02:00:00.000Z' },
+		]);
+
+		const res = await request(app).get('/').query({
+			userId: 'user-id',
+		});
+
+		expect(res.status).to.equal(200);
+
+		expect(res.body).to.deep.equal({
+			bonus: 10,
+			donatedInLastYear: 160,
+			donatedByMonth: [ 20, 20, 0, 0, 0, 0, 0, 0, 30, 30, 30, 30 ],
+		});
+
+		expect(_.sum(res.body.donatedByMonth)).to.equal(160);
 	});
 
 	it('should return empty details for non-sponsor user', async () => {

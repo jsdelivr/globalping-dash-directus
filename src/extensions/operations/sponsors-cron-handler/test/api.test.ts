@@ -133,6 +133,7 @@ describe('Sponsors cron handler', () => {
 
 		creditsAdditionsService.readByQuery.resolves([{
 			meta: { amountInDollars: 100, tierId: 'T_test_tier' },
+			date_created: '2023-08-15T08:19:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
