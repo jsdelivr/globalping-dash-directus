@@ -1796,6 +1796,9 @@ importers:
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.23

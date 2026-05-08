@@ -1,5 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
+import _ from 'lodash';
 import { addCredits, redirectGithubId } from '../../../../lib/src/add-credits.js';
 import { createDirectusSponsor, getRecentCreditsAdditions, sponsorExists } from '../repositories/directus.js';
 import { getGithubSponsorActivities } from '../repositories/github-activities.js';
@@ -25,10 +26,14 @@ export class SponsorActivitiesHandler {
 		const { remainingActivities, remainingAdditions } = this.matchByTierId(activities, additions);
 		const activitiesWithoutAddition = this.matchByDate(remainingActivities, remainingAdditions);
 
-		const results = await Bluebird.map(activitiesWithoutAddition, a => this.createAddition(a, context), { concurrency: 8 });
+		const activitiesBySponsorId = Object.values(_.groupBy(activitiesWithoutAddition, a => a.sponsor.databaseId));
+		const results = await Bluebird.map(activitiesBySponsorId, (activities) => {
+			// Process activities of the same sponsor sequentially to avoid race conditions.
+			return Bluebird.map(activities, a => this.createAddition(a, context), { concurrency: 1 });
+		}, { concurrency: 8 });
 
 		this.lastWindowEnd = windowEnd;
-		return results.filter((r): r is string => r !== null);
+		return results.flat().filter((r): r is string => r !== null);
 	}
 
 	private matchByTierId (

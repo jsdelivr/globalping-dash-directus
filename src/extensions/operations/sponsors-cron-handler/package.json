@@ -31,7 +31,8 @@
 	"dependencies": {
 		"@octokit/graphql": "^9.0.2",
 		"bluebird": "^3.7.2",
-		"dayjs": "^1.11.19"
+		"dayjs": "^1.11.19",
+		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
 		"@directus/extensions": "^3.0.11",

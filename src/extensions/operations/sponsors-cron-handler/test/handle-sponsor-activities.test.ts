@@ -149,7 +149,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '10',
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, tierId: 'different_tier' },
+			meta: { amountInDollars: 5 },
 			date_created: '2026-05-05T15:00:30.000Z',
 		}]);
 
@@ -174,7 +174,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '10',
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, tierId: 'different_tier' },
+			meta: { amountInDollars: 5 },
 			date_created: '2026-05-05T15:05:00.000Z',
 		}]);
 
