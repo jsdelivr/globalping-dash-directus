@@ -394,42 +394,34 @@ describe('SponsorActivitiesHandler', () => {
 
 	// ── window tracking ───────────────────────────────────────────────────────
 
-	it('updates lastWindowEnd to windowEnd after each run', async () => {
-		mockActivities([]);
-		creditsAdditionsService.readByQuery.resolves([]);
-
-		const handler = new SponsorActivitiesHandler();
-		expect(handler.lastWindowEnd).to.equal(null);
-
-		await handler.handle(context);
-
-		// windowEnd = NOW - 10 min = 2026-05-06T11:50:00.000Z
-		expect(handler.lastWindowEnd).to.equal(new Date('2026-05-06T11:50:00.000Z').getTime());
-	});
-
-	it('uses lastWindowEnd as windowStart basis on subsequent runs', async () => {
-		const prevWindowEnd = new Date('2026-05-06T10:00:00.000Z').getTime();
-		const expectedSince = new Date(prevWindowEnd - 10 * 60 * 1000).toISOString();
-
-		nock('https://api.github.com')
-			.post('/graphql', (body: any) => body?.variables?.since === expectedSince)
-			.reply(200, {
-				data: {
-					organization: {
-						sponsorsActivities: {
-							pageInfo: { hasNextPage: false, endCursor: null },
-							nodes: [],
-						},
+	it('queries a fixed 24h lookback window on every run, regardless of prior calls', async () => {
+		const emptyResponse = {
+			data: {
+				organization: {
+					sponsorsActivities: {
+						pageInfo: { hasNextPage: false, endCursor: null },
+						nodes: [],
 					},
 				},
-			});
+			},
+		};
+
+		// since = NOW - 24 h = 2026-05-05T12:00:00.000Z
+		// until = NOW - 10 min = 2026-05-06T11:50:00.000Z
+		const expectedSince = '2026-05-05T12:00:00.000Z';
+		const expectedUntil = '2026-05-06T11:50:00.000Z';
+
+		const matchWindow = (body: any) => body?.variables?.since === expectedSince && body?.variables?.until === expectedUntil;
+
+		nock('https://api.github.com').post('/graphql', matchWindow).reply(200, emptyResponse);
+		nock('https://api.github.com').post('/graphql', matchWindow).reply(200, emptyResponse);
 
 		creditsAdditionsService.readByQuery.resolves([]);
 
 		const handler = new SponsorActivitiesHandler();
-		handler.lastWindowEnd = prevWindowEnd;
 
-		// If `since` didn't match, nock would refuse the request and this would throw.
+		// If `since`/`until` didn't match on either call, nock would refuse the request and this would throw.
+		await handler.handle(context);
 		await handler.handle(context);
 	});
 

@@ -3,7 +3,6 @@ import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import { getFullMonthsSinceWithAdvance } from '../../../lib/src/add-credits.js';
-import { sponsorActivitiesHandler } from '../src/actions/handle-sponsor-activities.js';
 import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
@@ -70,7 +69,6 @@ describe('Sponsors cron handler', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
-		sponsorActivitiesHandler.lastWindowEnd = null;
 		creditsAdditionsService.readByQuery.resolves([]);
 
 		sponsorsService.readByQuery.resolves([{

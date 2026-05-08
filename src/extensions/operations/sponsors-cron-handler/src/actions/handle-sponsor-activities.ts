@@ -12,12 +12,9 @@ const TEN_MINS = 10 * 60 * 1000;
 type Reason = 'one_time_sponsorship' | 'recurring_sponsorship' | 'tier_changed';
 
 export class SponsorActivitiesHandler {
-	lastWindowEnd: number | null = null;
-
 	async handle (context: OperationContext): Promise<string[]> {
 		const now = new Date();
-		const defaultWindowStart = now.getTime() - ONE_DAY;
-		const windowStart = (this.lastWindowEnd ?? defaultWindowStart) - TEN_MINS; // Overlap with prev window to handle activities created after windowEnd but which timestamp is before windowEnd.
+		const windowStart = now.getTime() - ONE_DAY;
 		const windowEnd = now.getTime() - TEN_MINS; // Do not handle activities created in the last 10 minutes, so webhook has time to process them.
 
 		const activities = await getGithubSponsorActivities(windowStart, windowEnd, context);
@@ -32,7 +29,6 @@ export class SponsorActivitiesHandler {
 			return Bluebird.map(activities, a => this.createAddition(a, context), { concurrency: 1 });
 		}, { concurrency: 8 });
 
-		this.lastWindowEnd = windowEnd;
 		return results.flat().filter((r): r is string => r !== null);
 	}
 
