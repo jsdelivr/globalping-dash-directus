@@ -67,6 +67,7 @@ describe('GitHub webhook recurring handler', () => {
 
 		creditsAdditionsService.readByQuery.resolves([{
 			meta: { amountInDollars: 100, bonus: 5 },
+			date_created: '2023-09-01T00:00:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
