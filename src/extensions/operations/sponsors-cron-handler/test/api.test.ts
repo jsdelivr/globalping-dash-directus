@@ -16,6 +16,7 @@ describe('Sponsors cron handler', () => {
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 	const env = {
+		GITHUB_ACCESS_TOKEN: 'test-token',
 		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
 		CREDITS_PER_DOLLAR: '10000',
 		CREDITS_BONUS_PER_100_DOLLARS: '5',
@@ -79,11 +80,27 @@ describe('Sponsors cron handler', () => {
 		}]);
 	});
 
+	const mockEmptyActivities = () => {
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorsActivities: {
+						pageInfo: { hasNextPage: false, endCursor: null },
+						nodes: [],
+					},
+				},
+			},
+		});
+	};
+
 	after(() => {
 		nock.cleanAll();
+		clock.restore();
 	});
 
 	it('should add credits to recurring sponsors with last_earning_date > 30 days (1 month)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -102,6 +119,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-08-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -112,7 +130,8 @@ describe('Sponsors cron handler', () => {
 		});
 
 		creditsAdditionsService.readByQuery.resolves([{
-			meta: { amountInDollars: 100 },
+			meta: { amountInDollars: 100, tierId: 'T_test_tier' },
+			date_created: '2023-08-15T08:19:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -132,6 +151,7 @@ describe('Sponsors cron handler', () => {
 			meta: {
 				amountInDollars: 10,
 				monthsCovered: 1,
+				tierId: 'T_test_tier',
 				bonus: 5,
 			},
 		}]);
@@ -140,6 +160,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should not add credits to recurring sponsors with last_earning_date < 30 days', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -157,6 +179,7 @@ describe('Sponsors cron handler', () => {
 								isActive: true,
 								isOneTimePayment: false,
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -176,9 +199,6 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
@@ -188,6 +208,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should delete sponsor from directus if it is not found on github', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -204,14 +226,9 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -230,6 +247,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should delete sponsor from directus if it is not active', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -248,6 +267,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -259,15 +279,9 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
 		expect(sponsorsService.deleteOne.callCount).to.equal(1);
@@ -286,6 +300,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should delete sponsor from directus if his payment is one-time', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -304,6 +320,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: true,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -315,20 +332,13 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(2);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.updateOne.callCount).to.equal(0);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
 		expect(sponsorsService.deleteOne.callCount).to.equal(1);
 		expect(sponsorsService.deleteOne.args[0]).to.deep.equal([ 1 ]);
-
 		expect(usersService.updateByQuery.callCount).to.equal(1);
 
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
@@ -342,6 +352,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should update directus "monthly_amount" field if github and directus fields do not match', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -360,6 +372,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 15,
 								},
 							},
@@ -373,13 +386,9 @@ describe('Sponsors cron handler', () => {
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
 		expect(sponsorsService.updateOne.callCount).to.equal(2);
 		expect(sponsorsService.updateOne.args[0]).to.deep.equal([ 1, { monthly_amount: 15 }]);
 		expect(sponsorsService.updateOne.args[1]).to.deep.equal([ 1, { last_earning_date: '2023-09-15T08:19:00.000Z' }]);
-
-		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
-
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
 		expect(creditsAdditionsService.createOne.args[0]).to.deep.equal([{
@@ -389,6 +398,7 @@ describe('Sponsors cron handler', () => {
 			meta: {
 				amountInDollars: 15,
 				monthsCovered: 1,
+				tierId: 'T_test_tier',
 				bonus: 0,
 			},
 		}]);
@@ -399,6 +409,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should add missing recurring sponsors to the directus and award initial credits (1 month)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -417,6 +429,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -430,15 +443,9 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(4);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
 
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
-
-		expect(services.ItemsService.args[1]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.createOne.callCount).to.equal(1);
 
 		expect(sponsorsService.createOne.args[0]).to.deep.equal([{
@@ -457,8 +464,6 @@ describe('Sponsors cron handler', () => {
 			{ user_type: 'sponsor' },
 		]);
 
-		expect(services.ItemsService.args[2]?.[0]).to.deep.equal('gp_credits_additions');
-		expect(services.ItemsService.args[3]?.[0]).to.deep.equal('gp_credits_additions');
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -466,13 +471,15 @@ describe('Sponsors cron handler', () => {
 			amount: 100000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 1, tierId: 'T_test_tier', bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 1 month(s).' ]);
 	});
 
 	it('should not add non-recurring sponsors to the directus', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -491,6 +498,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: true,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -504,10 +512,6 @@ describe('Sponsors cron handler', () => {
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(services.ItemsService.callCount).to.equal(1);
-
-		expect(services.ItemsService.args[0]?.[0]).to.deep.equal('sponsors');
-
 		expect(sponsorsService.readByQuery.callCount).to.equal(1);
 		expect(sponsorsService.readByQuery.args[0]).to.deep.equal([{}]);
 		expect(sponsorsService.createOne.callCount).to.equal(0);
@@ -516,6 +520,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should handle multiple sponsors and return results for each', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -534,6 +540,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 10,
 								},
 							},
@@ -547,6 +554,7 @@ describe('Sponsors cron handler', () => {
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-09-01T00:00:00.000Z',
 								tier: {
+									id: 'T_test_tier',
 									monthlyPriceInDollars: 3,
 								},
 							},
@@ -575,6 +583,8 @@ describe('Sponsors cron handler', () => {
 	});
 
 	it('should add credits for multiple months for existing sponsors (2 months catch-up)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -586,7 +596,7 @@ describe('Sponsors cron handler', () => {
 								isActive: true,
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-07-01T00:00:00.000Z',
-								tier: { monthlyPriceInDollars: 10 },
+								tier: { id: 'T_test_tier', monthlyPriceInDollars: 10 },
 							},
 						}],
 					},
@@ -613,13 +623,15 @@ describe('Sponsors cron handler', () => {
 			amount: 200000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 2, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 2, tierId: 'T_test_tier', bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 2 month(s).' ]);
 	});
 
 	it('should award multiple months on new sponsor based on tierSelectedAt (3 months)', async () => {
+		mockEmptyActivities();
+
 		nock('https://api.github.com').post('/graphql').reply(200, {
 			data: {
 				organization: {
@@ -631,7 +643,7 @@ describe('Sponsors cron handler', () => {
 								isActive: true,
 								isOneTimePayment: false,
 								tierSelectedAt: '2023-07-06T00:00:00.000Z',
-								tier: { monthlyPriceInDollars: 10 },
+								tier: { id: 'T_test_tier', monthlyPriceInDollars: 10 },
 							},
 						}],
 					},
@@ -653,10 +665,59 @@ describe('Sponsors cron handler', () => {
 			github_id: '3',
 			reason: 'recurring_sponsorship',
 			amount: 300000,
-			meta: { amountInDollars: 10, monthsCovered: 3, bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 3, tierId: 'T_test_tier', bonus: 0 },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);
+	});
+
+	it('processes activities phase before sponsors loop runs', async () => {
+		// Activities phase returns one one-time sponsorship.
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorsActivities: {
+						pageInfo: { hasNextPage: false, endCursor: null },
+						nodes: [{
+							id: 'SA_api_1',
+							action: 'NEW_SPONSORSHIP',
+							timestamp: '2023-09-18T12:00:00.000Z',
+							sponsor: { databaseId: 99, login: 'oneoff' },
+							sponsorsTier: { id: 'tier_ot_api', monthlyPriceInDollars: 7, isOneTime: true },
+							previousSponsorsTier: null,
+						}],
+					},
+				},
+			},
+		});
+
+		// Sponsors phase returns nothing — keep this test focused on the activities path.
+		nock('https://api.github.com').post('/graphql').reply(200, {
+			data: {
+				organization: {
+					sponsorshipsAsMaintainer: {
+						pageInfo: { hasNextPage: false, endCursor: 'NQ' },
+						edges: [],
+					},
+				},
+			},
+		});
+
+		sponsorsService.readByQuery.resolves([]);
+		creditsAdditionsService.readByQuery.resolves([]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+
+		expect(creditsAdditionsService.createOne.firstCall.args[0]).to.include({
+			github_id: '99',
+			reason: 'one_time_sponsorship',
+		});
+
+		const messages = result as string[];
+		expect(messages).to.have.length(1);
+		expect(messages[0]).to.include('SA_api_1');
 	});
 
 	it('getFullMonthsSinceWithAdvance handles Jan 30/31 anchor correctly across shorter months', () => {

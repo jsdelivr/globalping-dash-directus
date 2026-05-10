@@ -16,7 +16,7 @@ export const createdAction = async (body: Data['$trigger']['body'], context: Ope
 			github_id: body.sponsorship.sponsor.id.toString(),
 			amount: body.sponsorship.tier.monthly_price_in_dollars,
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: body.sponsorship.tier.monthly_price_in_dollars },
+			meta: { amountInDollars: body.sponsorship.tier.monthly_price_in_dollars, tierId: body.sponsorship.tier.node_id },
 		}, context);
 		return `Credits item with id: ${creditsId} created. One-time sponsorship handled.`;
 	}
@@ -31,7 +31,7 @@ export const createdAction = async (body: Data['$trigger']['body'], context: Ope
 		github_id: body.sponsorship.sponsor.id.toString(),
 		amount: body.sponsorship.tier.monthly_price_in_dollars,
 		reason: 'recurring_sponsorship',
-		meta: { amountInDollars: body.sponsorship.tier.monthly_price_in_dollars },
+		meta: { amountInDollars: body.sponsorship.tier.monthly_price_in_dollars, tierId: body.sponsorship.tier.node_id },
 	}, context);
 	return `Sponsor with id: ${sponsorId} created. Credits item with id: ${creditsId} created. Recurring sponsorship handled.`;
 };

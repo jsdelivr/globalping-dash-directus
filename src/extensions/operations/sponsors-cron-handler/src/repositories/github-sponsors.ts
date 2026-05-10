@@ -18,6 +18,7 @@ type GithubResponse = {
 					isActive: boolean;
 					isOneTimePayment: boolean;
 					tier: {
+						id: string;
 						monthlyPriceInDollars: number;
 					};
 					tierSelectedAt: string;
@@ -51,6 +52,7 @@ const query = `
 						isOneTimePayment
 						tierSelectedAt
 						tier {
+							id
 							monthlyPriceInDollars
 						}
 					}
@@ -79,6 +81,7 @@ export const getGithubSponsors = async ({ env }: { env: OperationContext['env'] 
 		const newNodes: GithubSponsor[] = edges.map(edge => edge.node).map(node => ({
 			githubLogin: node.sponsorEntity.login,
 			githubId: node.sponsorEntity.databaseId.toString(),
+			tierId: node.tier.id,
 			isActive: node.isActive,
 			isOneTimePayment: node.isOneTimePayment,
 			monthlyAmount: node.tier.monthlyPriceInDollars,

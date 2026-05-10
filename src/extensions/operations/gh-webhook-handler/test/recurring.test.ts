@@ -67,6 +67,7 @@ describe('GitHub webhook recurring handler', () => {
 
 		creditsAdditionsService.readByQuery.resolves([{
 			meta: { amountInDollars: 100, bonus: 5 },
+			date_created: '2023-09-01T00:00:00.000Z',
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -80,6 +81,7 @@ describe('GitHub webhook recurring handler', () => {
 			meta: {
 				amountInDollars: 15,
 				bonus: 5,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 
@@ -137,6 +139,7 @@ describe('GitHub webhook recurring handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 0,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 

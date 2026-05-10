@@ -40,6 +40,7 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 			githubId: githubSponsor.githubId,
 			monthlyAmount: githubSponsor.monthlyAmount,
 			monthsToAward: monthsPassed,
+			tierId: githubSponsor.tierId,
 		}, context);
 
 		return `Credits item with id: ${creditsId} for user with github id: ${githubSponsor.githubId} created. Recurring sponsorship handled for ${monthsPassed} month(s).`;

@@ -13,7 +13,7 @@ export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
 };
 
 type CreditsAddition = {
-	meta: { amountInDollars?: number };
+	meta: { amountInDollars?: number; monthsCovered?: number };
 	date_created: string;
 };
 
@@ -21,13 +21,14 @@ type AddCreditsData = {
 	github_id: string;
 	amount: number;
 	reason: 'recurring_sponsorship' | 'one_time_sponsorship' | 'tier_changed';
-	meta: { amountInDollars: number; monthsCovered?: number };
+	meta: { amountInDollars: number; monthsCovered?: number; tierId: string };
 };
 
 type AddRecurringCreditsData = {
 	githubId: string;
 	monthlyAmount: number;
 	monthsToAward: number;
+	tierId: string;
 };
 
 export const getUserBonus = async (
@@ -60,12 +61,11 @@ export const getUserBonus = async (
 				_between: [ start.toISOString(), end.toISOString() ],
 			},
 		},
-		sort: [ 'date_created' ], // Additions should be sorted for getDollarsByMonth().
 		fields: [ 'meta', 'date_created' ],
 	}) as CreditsAddition[];
 
 	const dollarsByMonth = getDollarsByMonth(additionsInLastYear, end);
-	const dollarsInLastYear = additionsInLastYear.reduce((sum, { meta }) => sum + (meta.amountInDollars ?? 0), 0);
+	const dollarsInLastYear = dollarsByMonth.reduce((sum, n) => sum + n, 0);
 	const calculatedBonus = Math.floor((dollarsInLastYear + incomingAmountInDollars) / 100) * parseInt(env.CREDITS_BONUS_PER_100_DOLLARS, 10);
 	const bonus = calculatedBonus <= maxCreditsBonus ? calculatedBonus : maxCreditsBonus;
 
@@ -91,14 +91,14 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 	return { creditsId, githubId };
 };
 
-export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAward }: AddRecurringCreditsData, context: ApiExtensionContext) => {
+export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAward, tierId }: AddRecurringCreditsData, context: ApiExtensionContext) => {
 	const totalAmount = monthlyAmount * monthsToAward;
 
 	const { creditsId } = await addCredits({
 		github_id: githubId,
 		amount: totalAmount,
 		reason: 'recurring_sponsorship',
-		meta: { amountInDollars: monthlyAmount, monthsCovered: monthsToAward },
+		meta: { amountInDollars: monthlyAmount, monthsCovered: monthsToAward, tierId },
 	}, context);
 
 	return { creditsId, totalAmount };
@@ -126,19 +126,25 @@ const getPrevious12Dates = (endDate?: Date) => {
 };
 
 const getDollarsByMonth = (additions: CreditsAddition[], endDate?: Date) => {
-	const breakdown: number[] = [];
 	const previous12Dates = getPrevious12Dates(endDate);
-	let additionIndex = 0;
+	const breakdown: number[] = new Array(previous12Dates.length).fill(0);
 
-	for (const date of previous12Dates) {
-		let currentSum = 0;
+	for (const addition of additions) {
+		const created = new Date(addition.date_created);
+		const amount = addition.meta.amountInDollars ?? 0;
+		const monthsCovered = addition.meta.monthsCovered ?? 1;
+		const bucketIdx = previous12Dates.findIndex(d => created <= d);
 
-		while (additions[additionIndex] && new Date(additions[additionIndex]!.date_created) <= date) {
-			currentSum += additions[additionIndex]!.meta.amountInDollars ?? 0;
-			additionIndex++;
+		if (bucketIdx < 0) { continue; }
+
+		// monthsCovered > 1 contribute to past months, dropping months outside the 12-month window.
+		for (let i = 0; i < monthsCovered; i++) {
+			const idx = bucketIdx - i;
+
+			if (idx < 0) { break; }
+
+			breakdown[idx] = breakdown[idx]! + amount;
 		}
-
-		breakdown.push(currentSum);
 	}
 
 	return breakdown;

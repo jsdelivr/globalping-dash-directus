@@ -9,8 +9,55 @@ export type DirectusSponsor = {
 export type GithubSponsor = {
 	githubLogin: string;
 	githubId: string;
+	tierId: string;
 	isActive: boolean;
 	monthlyAmount: number;
 	isOneTimePayment: boolean;
 	tierSelectedAt: Date;
+};
+
+export type GithubActivity = NewSponsorshipActivity | TierChangeActivity;
+
+export type NewSponsorshipActivity = {
+	id: string;
+	action: 'NEW_SPONSORSHIP';
+	timestamp: string;
+	sponsor: {
+		databaseId: number;
+		login: string;
+	};
+	sponsorsTier: {
+		id: string;
+		monthlyPriceInDollars: number;
+		isOneTime: boolean;
+	};
+	previousSponsorsTier: null;
+};
+
+export type TierChangeActivity = {
+	id: string;
+	action: 'TIER_CHANGE';
+	timestamp: string;
+	sponsor: {
+		databaseId: number;
+		login: string;
+	};
+	sponsorsTier: {
+		id: string;
+		monthlyPriceInDollars: number;
+		isOneTime: boolean;
+	};
+	previousSponsorsTier: {
+		monthlyPriceInDollars: number;
+	};
+};
+
+export type CreditsAddition = {
+	github_id: string;
+	reason: string;
+	meta: {
+		amountInDollars: number;
+		tierId: string;
+	};
+	date_created: string;
 };

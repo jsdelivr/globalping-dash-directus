@@ -49,6 +49,7 @@ describe('GitHub webhook one-time handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 0,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 
@@ -67,14 +68,19 @@ describe('GitHub webhook one-time handler', () => {
 
 		readByQuery.resolves([{ // 494 already donated + 5 incoming donation = 499
 			meta: { amountInDollars: 100, bonus: 5 },
+			date_created: new Date().toISOString(),
 		}, {
 			meta: { amountInDollars: 200, bonus: 15 },
+			date_created: new Date().toISOString(),
 		}, {
 			meta: { amountInDollars: 50, bonus: 15 },
+			date_created: new Date().toISOString(),
 		}, {
 			meta: { amountInDollars: 50, bonus: 20 },
+			date_created: new Date().toISOString(),
 		}, {
 			meta: { amountInDollars: 94, bonus: 20 },
+			date_created: new Date().toISOString(),
 		}]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
@@ -88,6 +94,7 @@ describe('GitHub webhook one-time handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 20,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 
@@ -117,6 +124,7 @@ describe('GitHub webhook one-time handler', () => {
 			meta: {
 				amountInDollars: 5,
 				bonus: 0,
+				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
 			},
 		}]);
 

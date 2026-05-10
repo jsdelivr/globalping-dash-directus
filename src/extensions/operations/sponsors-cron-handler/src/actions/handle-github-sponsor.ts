@@ -22,6 +22,7 @@ export const handleGithubSponsor = async ({ githubSponsor, directusSponsors }: H
 			githubId: githubSponsor.githubId,
 			monthlyAmount: githubSponsor.monthlyAmount,
 			monthsToAward,
+			tierId: githubSponsor.tierId,
 		}, context);
 
 		return `Sponsor with github id: ${id} not found on directus sponsors list. Sponsor added to directus. Credits item with id: ${creditsId} created. Recurring sponsorship handled for ${monthsToAward} month(s).`;
