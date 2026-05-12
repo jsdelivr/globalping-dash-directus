@@ -1164,6 +1164,31 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  src/extensions/hooks/settings:
+    dependencies:
+      '@directus/errors':
+        specifier: ^2.3.1
+        version: 2.3.1
+    devDependencies:
+      '@directus/extensions':
+        specifier: ^3.0.23
+        version: 3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
+      '@directus/extensions-sdk':
+        specifier: ^17.1.1
+        version: 17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@6.0.3)(vue@3.5.24(typescript@6.0.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@6.0.3)
+      '@directus/types':
+        specifier: ^15.0.1
+        version: 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
+      '@types/node':
+        specifier: ^25.7.0
+        version: 25.7.0
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@25.7.0)(typescript@6.0.3)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   src/extensions/hooks/sign-in:
     dependencies:
       axios:
@@ -1330,7 +1355,7 @@ importers:
     devDependencies:
       '@directus/extensions-sdk':
         specifier: ^17.1.1
-        version: 17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       sass:
         specifier: ^1.93.2
         version: 1.93.2
@@ -1345,7 +1370,7 @@ importers:
     devDependencies:
       '@directus/extensions-sdk':
         specifier: ^17.1.1
-        version: 17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       sass:
         specifier: ^1.93.2
         version: 1.93.2
@@ -1451,10 +1476,10 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.23
-        version: 3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.2))
+        version: 3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
       '@directus/types':
         specifier: ^15.0.1
-        version: 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.2))
+        version: 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
@@ -2040,6 +2065,9 @@ packages:
 
   '@directus/errors@2.3.0':
     resolution: {integrity: sha512-FJ1c4b5M03wxdJQXF035nYsS1FrZjN1ZGiWaWz6c6zurRLz+sFP851LPwMQwrKyQUKROjVGO7vTUlQ0BL6in1A==}
+
+  '@directus/errors@2.3.1':
+    resolution: {integrity: sha512-lTFCIBRirQa7gH1Nr6EpNiM0cFeIUMfBMrRzGDmgCqe56MnQ6+ZG0f7czY35+5uCKeIsLcrOVVv7NM3XGBQZ9w==}
 
   '@directus/extensions-sdk@17.1.1':
     resolution: {integrity: sha512-5KHSoHTRRRC0ueEex023XyMC88ZBfB26tyFHaZ5Jg3YFcBu1nRhL52nsEz5kMZiIbR8qSYXbk/1HoPRk3turKw==}
@@ -3487,6 +3515,9 @@ packages:
 
   '@types/node@25.5.0':
     resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
+
+  '@types/node@25.7.0':
+    resolution: {integrity: sha512-z+pdZyxE+RTQE9AcboAZCb4otwcrvgHD+GlBpPgn0emDVt0ohrTMhAwlr2Wd9nZ+nihhYFxO2pThz3C5qSu2Eg==}
 
   '@types/nodemailer@7.0.3':
     resolution: {integrity: sha512-fC8w49YQ868IuPWRXqPfLf+MuTRex5Z1qxMoG8rr70riqqbOp2F5xgOKE9fODEBPzpnvjkJXFgK6IL2xgMSTnA==}
@@ -6528,6 +6559,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
@@ -6545,6 +6581,9 @@ packages:
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
+  undici-types@7.21.0:
+    resolution: {integrity: sha512-w9IMgQrz4O0YN1LtB7K5P63vhlIOvC7opSmouCJ+ZywlPAlO9gIkJ+otk6LvGpAs2wg4econaCz3TvQ9xPoyuQ==}
 
   unhead@1.9.16:
     resolution: {integrity: sha512-FOoXkuRNDwt7PUaNE0LXNCb6RCz4vTpkGymz4tJ8rcaG5uUJ0lxGK536hzCFwFw3Xkp3n+tkt2yCcbAZE/FOvA==}
@@ -7259,6 +7298,17 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
+  '@directus/composables@11.2.17(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@directus/constants': 14.3.0
+      '@directus/utils': 13.4.0(vue@3.5.24(typescript@6.0.3))
+      axios: 1.13.5
+      lodash-es: 4.17.23
+      nanoid: 5.1.6
+      vue: 3.5.24(typescript@6.0.3)
+    transitivePeerDependencies:
+      - debug
+
   '@directus/constants@14.3.0': {}
 
   '@directus/errors@2.0.4':
@@ -7272,6 +7322,11 @@ snapshots:
       ms: 2.1.3
 
   '@directus/errors@2.3.0':
+    dependencies:
+      '@directus/storage': 12.0.4
+      ms: 2.1.3
+
+  '@directus/errors@2.3.1':
     dependencies:
       '@directus/storage': 12.0.4
       ms: 2.1.3
@@ -7474,7 +7529,73 @@ snapshots:
       - ws
       - yaml
 
-  '@directus/extensions-sdk@17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)':
+  '@directus/extensions-sdk@17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.2)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@6.0.2)(vue@3.5.24(typescript@6.0.2)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@6.0.2)':
+    dependencies:
+      '@directus/composables': 11.2.17(vue@3.5.24(typescript@6.0.2))
+      '@directus/constants': 14.3.0
+      '@directus/extensions': 3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.2))
+      '@directus/themes': 1.3.1(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.2)))(pinia@2.2.0(typescript@6.0.2)(vue@3.5.24(typescript@6.0.2)))(vue@3.5.24(typescript@6.0.2))
+      '@directus/types': 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.2))
+      '@directus/utils': 13.4.0(vue@3.5.24(typescript@6.0.2))
+      '@rollup/plugin-commonjs': 28.0.9(rollup@4.59.0)
+      '@rollup/plugin-json': 6.1.0(rollup@4.59.0)
+      '@rollup/plugin-node-resolve': 16.0.3(rollup@4.59.0)
+      '@rollup/plugin-replace': 6.0.3(rollup@4.59.0)
+      '@rollup/plugin-terser': 1.0.0(rollup@4.59.0)
+      '@rollup/plugin-virtual': 3.0.2(rollup@4.59.0)
+      '@vitejs/plugin-vue': 6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@6.0.2))
+      chalk: 5.6.2
+      commander: 14.0.2
+      esbuild: 0.26.0
+      execa: 9.6.0
+      fs-extra: 11.3.2
+      inquirer: 12.11.0(@types/node@25.5.0)
+      ora: 8.2.0
+      rollup: 4.59.0
+      rollup-plugin-esbuild: 6.2.1(esbuild@0.26.0)(rollup@4.59.0)
+      rollup-plugin-styler: 2.0.0(rollup@4.59.0)(typescript@6.0.2)
+      semver: 7.7.3
+      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
+      vue: 3.5.24(typescript@6.0.2)
+    transitivePeerDependencies:
+      - '@emnapi/core'
+      - '@emnapi/runtime'
+      - '@types/node'
+      - '@unhead/vue'
+      - '@vitejs/devtools'
+      - aws-crt
+      - better-sqlite3
+      - debug
+      - deep-diff
+      - express
+      - graphql
+      - jiti
+      - knex
+      - less
+      - mysql
+      - mysql2
+      - nodemailer
+      - openapi3-ts
+      - pg
+      - pg-native
+      - pinia
+      - pino
+      - sass
+      - sass-embedded
+      - sharp
+      - sqlite3
+      - stylus
+      - sugarss
+      - supports-color
+      - tedious
+      - terser
+      - tsx
+      - typescript
+      - vue-router
+      - ws
+      - yaml
+
+  '@directus/extensions-sdk@17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(@unhead/vue@1.9.16(vue@3.5.18(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@5.8.3)(vue@3.5.18(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)':
     dependencies:
       '@directus/composables': 11.2.17(vue@3.5.24(typescript@5.8.3))
       '@directus/constants': 14.3.0
@@ -7488,19 +7609,19 @@ snapshots:
       '@rollup/plugin-replace': 6.0.3(rollup@4.59.0)
       '@rollup/plugin-terser': 1.0.0(rollup@4.59.0)
       '@rollup/plugin-virtual': 3.0.2(rollup@4.59.0)
-      '@vitejs/plugin-vue': 6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@5.8.3))
+      '@vitejs/plugin-vue': 6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@5.8.3))
       chalk: 5.6.2
       commander: 14.0.2
       esbuild: 0.26.0
       execa: 9.6.0
       fs-extra: 11.3.2
-      inquirer: 12.11.0(@types/node@25.5.0)
+      inquirer: 12.11.0(@types/node@25.7.0)
       ora: 8.2.0
       rollup: 4.59.0
       rollup-plugin-esbuild: 6.2.1(esbuild@0.26.0)(rollup@4.59.0)
       rollup-plugin-styler: 2.0.0(rollup@4.59.0)(typescript@5.8.3)
       semver: 7.7.3
-      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
+      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
       vue: 3.5.24(typescript@5.8.3)
     transitivePeerDependencies:
       - '@emnapi/core'
@@ -7540,34 +7661,34 @@ snapshots:
       - ws
       - yaml
 
-  '@directus/extensions-sdk@17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.2)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@6.0.2)(vue@3.5.24(typescript@6.0.2)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@6.0.2)':
+  '@directus/extensions-sdk@17.1.1(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.2.0(typescript@6.0.3)(vue@3.5.24(typescript@6.0.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@6.0.3)':
     dependencies:
-      '@directus/composables': 11.2.17(vue@3.5.24(typescript@6.0.2))
+      '@directus/composables': 11.2.17(vue@3.5.24(typescript@6.0.3))
       '@directus/constants': 14.3.0
-      '@directus/extensions': 3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.2))
-      '@directus/themes': 1.3.1(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.2)))(pinia@2.2.0(typescript@6.0.2)(vue@3.5.24(typescript@6.0.2)))(vue@3.5.24(typescript@6.0.2))
-      '@directus/types': 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.2))
-      '@directus/utils': 13.4.0(vue@3.5.24(typescript@6.0.2))
+      '@directus/extensions': 3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
+      '@directus/themes': 1.3.1(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.3)))(pinia@2.2.0(typescript@6.0.3)(vue@3.5.24(typescript@6.0.3)))(vue@3.5.24(typescript@6.0.3))
+      '@directus/types': 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
+      '@directus/utils': 13.4.0(vue@3.5.24(typescript@6.0.3))
       '@rollup/plugin-commonjs': 28.0.9(rollup@4.59.0)
       '@rollup/plugin-json': 6.1.0(rollup@4.59.0)
       '@rollup/plugin-node-resolve': 16.0.3(rollup@4.59.0)
       '@rollup/plugin-replace': 6.0.3(rollup@4.59.0)
       '@rollup/plugin-terser': 1.0.0(rollup@4.59.0)
       '@rollup/plugin-virtual': 3.0.2(rollup@4.59.0)
-      '@vitejs/plugin-vue': 6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@6.0.2))
+      '@vitejs/plugin-vue': 6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@6.0.3))
       chalk: 5.6.2
       commander: 14.0.2
       esbuild: 0.26.0
       execa: 9.6.0
       fs-extra: 11.3.2
-      inquirer: 12.11.0(@types/node@25.5.0)
+      inquirer: 12.11.0(@types/node@25.7.0)
       ora: 8.2.0
       rollup: 4.59.0
       rollup-plugin-esbuild: 6.2.1(esbuild@0.26.0)(rollup@4.59.0)
-      rollup-plugin-styler: 2.0.0(rollup@4.59.0)(typescript@6.0.2)
+      rollup-plugin-styler: 2.0.0(rollup@4.59.0)(typescript@6.0.3)
       semver: 7.7.3
-      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
-      vue: 3.5.24(typescript@6.0.2)
+      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
+      vue: 3.5.24(typescript@6.0.3)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -7726,6 +7847,36 @@ snapshots:
       - tedious
       - ws
 
+  '@directus/extensions@3.0.23(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@directus/constants': 14.3.0
+      '@directus/types': 15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))
+      '@directus/utils': 13.4.0(vue@3.5.24(typescript@6.0.3))
+      '@types/express': 4.17.21
+      fs-extra: 11.3.2
+      lodash-es: 4.17.23
+      zod: 4.1.12
+    optionalDependencies:
+      knex: 3.1.0(mysql@2.18.1)
+      vue: 3.5.24(typescript@6.0.3)
+    transitivePeerDependencies:
+      - aws-crt
+      - better-sqlite3
+      - deep-diff
+      - express
+      - graphql
+      - mysql
+      - mysql2
+      - nodemailer
+      - openapi3-ts
+      - pg
+      - pg-native
+      - sharp
+      - sqlite3
+      - supports-color
+      - tedious
+      - ws
+
   '@directus/schema@13.0.7(mysql@2.18.1)':
     dependencies:
       knex: 3.1.0(mysql@2.18.1)
@@ -7786,6 +7937,16 @@ snapshots:
       lodash-es: 4.17.23
       pinia: 2.2.0(typescript@6.0.2)(vue@3.5.24(typescript@6.0.2))
       vue: 3.5.24(typescript@6.0.2)
+
+  '@directus/themes@1.3.1(@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.3)))(pinia@2.2.0(typescript@6.0.3)(vue@3.5.24(typescript@6.0.3)))(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@directus/utils': 13.4.0(vue@3.5.24(typescript@6.0.3))
+      '@unhead/vue': 1.9.16(vue@3.5.24(typescript@6.0.3))
+      decamelize: 6.0.1
+      flat: 6.0.1
+      lodash-es: 4.17.23
+      pinia: 2.2.0(typescript@6.0.3)(vue@3.5.24(typescript@6.0.3))
+      vue: 3.5.24(typescript@6.0.3)
 
   '@directus/types@15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.18(typescript@5.8.3))':
     dependencies:
@@ -7895,6 +8056,33 @@ snapshots:
       - supports-color
       - tedious
 
+  '@directus/types@15.0.1(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@directus/ai': 1.3.1
+      '@directus/constants': 14.3.0
+      '@directus/schema': 13.0.7(mysql@2.18.1)
+      '@sinclair/typebox': 0.34.41
+      '@types/archiver': 7.0.0
+      '@types/express': 4.17.21
+      '@types/geojson': 7946.0.16
+      '@types/nodemailer': 7.0.3
+      '@types/ws': 8.18.1
+      zod: 4.1.12
+    optionalDependencies:
+      express: 4.21.2
+      knex: 3.1.0(mysql@2.18.1)
+      vue: 3.5.24(typescript@6.0.3)
+    transitivePeerDependencies:
+      - aws-crt
+      - better-sqlite3
+      - mysql
+      - mysql2
+      - pg
+      - pg-native
+      - sqlite3
+      - supports-color
+      - tedious
+
   '@directus/utils@13.4.0(vue@3.5.18(typescript@5.8.3))':
     dependencies:
       '@directus/constants': 14.3.0
@@ -7950,6 +8138,20 @@ snapshots:
       zod: 4.1.12
     optionalDependencies:
       vue: 3.5.24(typescript@6.0.2)
+
+  '@directus/utils@13.4.0(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@directus/constants': 14.3.0
+      '@directus/system-data': 4.4.0
+      date-fns: 4.1.0
+      fs-extra: 11.3.2
+      joi: 18.0.1
+      js-yaml: 4.1.1
+      lodash-es: 4.17.23
+      micromustache: 8.0.3
+      zod: 4.1.12
+    optionalDependencies:
+      vue: 3.5.24(typescript@6.0.3)
 
   '@emnapi/core@1.9.1':
     dependencies:
@@ -8230,6 +8432,16 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  '@inquirer/checkbox@4.3.2(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   '@inquirer/confirm@5.1.21(@types/node@22.13.14)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@22.13.14)
@@ -8250,6 +8462,13 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@25.5.0)
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/confirm@5.1.21(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/core@10.3.2(@types/node@22.13.14)':
     dependencies:
@@ -8290,6 +8509,19 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  '@inquirer/core@10.3.2(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   '@inquirer/editor@4.2.23(@types/node@22.13.14)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@22.13.14)
@@ -8313,6 +8545,14 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@25.5.0)
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/editor@4.2.23(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/external-editor': 1.0.3(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/expand@4.0.23(@types/node@22.13.14)':
     dependencies:
@@ -8338,6 +8578,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  '@inquirer/expand@4.0.23(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   '@inquirer/external-editor@1.0.3(@types/node@22.13.14)':
     dependencies:
       chardet: 2.1.1
@@ -8358,6 +8606,13 @@ snapshots:
       iconv-lite: 0.7.0
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/external-editor@1.0.3(@types/node@25.7.0)':
+    dependencies:
+      chardet: 2.1.1
+      iconv-lite: 0.7.0
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/figures@1.0.15': {}
 
@@ -8382,6 +8637,13 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  '@inquirer/input@4.3.1(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   '@inquirer/number@3.0.23(@types/node@22.13.14)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@22.13.14)
@@ -8402,6 +8664,13 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@25.5.0)
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/number@3.0.23(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/password@4.0.23(@types/node@22.13.14)':
     dependencies:
@@ -8426,6 +8695,14 @@ snapshots:
       '@inquirer/type': 3.0.10(@types/node@25.5.0)
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/password@4.0.23(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/prompts@7.10.1(@types/node@22.13.14)':
     dependencies:
@@ -8472,6 +8749,21 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  '@inquirer/prompts@7.10.1(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/checkbox': 4.3.2(@types/node@25.7.0)
+      '@inquirer/confirm': 5.1.21(@types/node@25.7.0)
+      '@inquirer/editor': 4.2.23(@types/node@25.7.0)
+      '@inquirer/expand': 4.0.23(@types/node@25.7.0)
+      '@inquirer/input': 4.3.1(@types/node@25.7.0)
+      '@inquirer/number': 3.0.23(@types/node@25.7.0)
+      '@inquirer/password': 4.0.23(@types/node@25.7.0)
+      '@inquirer/rawlist': 4.1.11(@types/node@25.7.0)
+      '@inquirer/search': 3.2.2(@types/node@25.7.0)
+      '@inquirer/select': 4.4.2(@types/node@25.7.0)
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   '@inquirer/rawlist@4.1.11(@types/node@22.13.14)':
     dependencies:
       '@inquirer/core': 10.3.2(@types/node@22.13.14)
@@ -8495,6 +8787,14 @@ snapshots:
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/rawlist@4.1.11(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/search@3.2.2(@types/node@22.13.14)':
     dependencies:
@@ -8522,6 +8822,15 @@ snapshots:
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/search@3.2.2(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@inquirer/select@4.4.2(@types/node@22.13.14)':
     dependencies:
@@ -8553,6 +8862,16 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  '@inquirer/select@4.4.2(@types/node@25.7.0)':
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/figures': 1.0.15
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      yoctocolors-cjs: 2.1.3
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   '@inquirer/type@3.0.10(@types/node@22.13.14)':
     optionalDependencies:
       '@types/node': 22.13.14
@@ -8564,6 +8883,10 @@ snapshots:
   '@inquirer/type@3.0.10(@types/node@25.5.0)':
     optionalDependencies:
       '@types/node': 25.5.0
+
+  '@inquirer/type@3.0.10(@types/node@25.7.0)':
+    optionalDependencies:
+      '@types/node': 25.7.0
 
   '@intlify/core-base@11.1.11':
     dependencies:
@@ -9353,7 +9676,7 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@types/chai@5.2.2':
     dependencies:
@@ -9368,7 +9691,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@types/cookiejar@2.1.5': {}
 
@@ -9383,7 +9706,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.7':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.0
@@ -9439,16 +9762,20 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
+  '@types/node@25.7.0':
+    dependencies:
+      undici-types: 7.21.0
+
   '@types/nodemailer@7.0.3':
     dependencies:
       '@aws-sdk/client-sesv2': 3.970.0
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
     transitivePeerDependencies:
       - aws-crt
 
   '@types/proxy-addr@2.0.3':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@types/qs@6.14.0': {}
 
@@ -9456,7 +9783,7 @@ snapshots:
 
   '@types/readdir-glob@1.1.5':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@types/resolve@1.20.2': {}
 
@@ -9471,16 +9798,16 @@ snapshots:
   '@types/send@0.17.5':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@types/send@1.2.0':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@types/serve-static@1.15.9':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
       '@types/send': 0.17.5
 
   '@types/sinon@17.0.4':
@@ -9493,7 +9820,7 @@ snapshots:
     dependencies:
       '@types/cookiejar': 2.1.5
       '@types/methods': 1.1.4
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
       form-data: 4.0.5
 
   '@types/supertest@6.0.3':
@@ -9507,7 +9834,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.7.0
 
   '@typescript-eslint/eslint-plugin@8.46.0(@typescript-eslint/parser@8.46.0(eslint@9.37.0)(typescript@5.8.3))(eslint@9.37.0)(typescript@5.8.3)':
     dependencies:
@@ -9648,6 +9975,14 @@ snapshots:
       unhead: 1.9.16
       vue: 3.5.24(typescript@6.0.2)
 
+  '@unhead/vue@1.9.16(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@unhead/schema': 1.9.16
+      '@unhead/shared': 1.9.16
+      hookable: 5.5.3
+      unhead: 1.9.16
+      vue: 3.5.24(typescript@6.0.3)
+
   '@vitejs/plugin-vue@6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@22.13.14)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@5.8.3))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-beta.29
@@ -9660,17 +9995,23 @@ snapshots:
       vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.3.3)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
       vue: 3.5.24(typescript@5.9.3)
 
-  '@vitejs/plugin-vue@6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@5.8.3))':
-    dependencies:
-      '@rolldown/pluginutils': 1.0.0-beta.29
-      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
-      vue: 3.5.24(typescript@5.8.3)
-
   '@vitejs/plugin-vue@6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@6.0.2))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-beta.29
       vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.5.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
       vue: 3.5.24(typescript@6.0.2)
+
+  '@vitejs/plugin-vue@6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@5.8.3))':
+    dependencies:
+      '@rolldown/pluginutils': 1.0.0-beta.29
+      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
+      vue: 3.5.24(typescript@5.8.3)
+
+  '@vitejs/plugin-vue@6.0.1(vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@rolldown/pluginutils': 1.0.0-beta.29
+      vite: 8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)
+      vue: 3.5.24(typescript@6.0.3)
 
   '@vue/compiler-core@3.5.18':
     dependencies:
@@ -9789,6 +10130,12 @@ snapshots:
       '@vue/compiler-ssr': 3.5.24
       '@vue/shared': 3.5.24
       vue: 3.5.24(typescript@6.0.2)
+
+  '@vue/server-renderer@3.5.24(vue@3.5.24(typescript@6.0.3))':
+    dependencies:
+      '@vue/compiler-ssr': 3.5.24
+      '@vue/shared': 3.5.24
+      vue: 3.5.24(typescript@6.0.3)
 
   '@vue/shared@3.5.18': {}
 
@@ -10170,6 +10517,15 @@ snapshots:
       path-type: 4.0.0
     optionalDependencies:
       typescript: 6.0.2
+
+  cosmiconfig@8.3.6(typescript@6.0.3):
+    dependencies:
+      import-fresh: 3.3.1
+      js-yaml: 4.1.1
+      parse-json: 5.2.0
+      path-type: 4.0.0
+    optionalDependencies:
+      typescript: 6.0.3
 
   countries-list@3.1.1: {}
 
@@ -11255,6 +11611,18 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.5.0
 
+  inquirer@12.11.0(@types/node@25.7.0):
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@25.7.0)
+      '@inquirer/prompts': 7.10.1(@types/node@25.7.0)
+      '@inquirer/type': 3.0.10(@types/node@25.7.0)
+      mute-stream: 3.0.0
+      run-async: 4.0.6
+      rxjs: 7.8.2
+    optionalDependencies:
+      '@types/node': 25.7.0
+
   internal-slot@1.1.0:
     dependencies:
       es-errors: 1.3.0
@@ -11998,6 +12366,14 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.2
 
+  pinia@2.2.0(typescript@6.0.3)(vue@3.5.24(typescript@6.0.3)):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.24(typescript@6.0.3)
+      vue-demi: 0.14.10(vue@3.5.24(typescript@6.0.3))
+    optionalDependencies:
+      typescript: 6.0.3
+
   playwright-core@1.56.0: {}
 
   playwright@1.56.0:
@@ -12537,6 +12913,30 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
+  rollup-plugin-styler@2.0.0(rollup@4.59.0)(typescript@6.0.3):
+    dependencies:
+      '@rollup/pluginutils': 5.3.0(rollup@4.59.0)
+      cosmiconfig: 8.3.6(typescript@6.0.3)
+      cssnano: 7.1.1(postcss@8.5.8)
+      fs-extra: 11.3.2
+      icss-utils: 5.1.0(postcss@8.5.8)
+      mime-types: 2.1.35
+      p-queue: 8.1.1
+      postcss: 8.5.8
+      postcss-modules-extract-imports: 3.1.0(postcss@8.5.8)
+      postcss-modules-local-by-default: 4.2.0(postcss@8.5.8)
+      postcss-modules-scope: 3.2.1(postcss@8.5.8)
+      postcss-modules-values: 4.0.0(postcss@8.5.8)
+      postcss-value-parser: 4.2.0
+      query-string: 9.3.1
+      resolve: 1.22.10
+      resolve.exports: 2.0.3
+      rollup: 4.59.0
+      source-map-js: 1.2.1
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - typescript
+
   rollup@4.59.0:
     dependencies:
       '@types/estree': 1.0.8
@@ -13003,6 +13403,24 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
+  ts-node@10.9.2(@types/node@25.7.0)(typescript@6.0.3):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.11
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 25.7.0
+      acorn: 8.15.0
+      acorn-walk: 8.3.3
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 6.0.3
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+
   tsconfig-paths@3.15.0:
     dependencies:
       '@types/json5': 0.0.29
@@ -13091,6 +13509,8 @@ snapshots:
 
   typescript@6.0.2: {}
 
+  typescript@6.0.3: {}
+
   uc.micro@2.1.0: {}
 
   uglify-js@3.19.3:
@@ -13106,6 +13526,8 @@ snapshots:
   undici-types@6.20.0: {}
 
   undici-types@7.18.2: {}
+
+  undici-types@7.21.0: {}
 
   unhead@1.9.16:
     dependencies:
@@ -13204,6 +13626,25 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
+  vite@8.0.0(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@25.7.0)(esbuild@0.26.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6):
+    dependencies:
+      '@oxc-project/runtime': 0.115.0
+      lightningcss: 1.32.0
+      picomatch: 4.0.3
+      postcss: 8.5.8
+      rolldown: 1.0.0-rc.9(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 25.7.0
+      esbuild: 0.26.0
+      fsevents: 2.3.3
+      sass: 1.93.2
+      terser: 5.44.0
+      tsx: 4.20.6
+    transitivePeerDependencies:
+      - '@emnapi/core'
+      - '@emnapi/runtime'
+
   vizion@2.2.1:
     dependencies:
       async: 2.6.4
@@ -13226,6 +13667,10 @@ snapshots:
   vue-demi@0.14.10(vue@3.5.24(typescript@6.0.2)):
     dependencies:
       vue: 3.5.24(typescript@6.0.2)
+
+  vue-demi@0.14.10(vue@3.5.24(typescript@6.0.3)):
+    dependencies:
+      vue: 3.5.24(typescript@6.0.3)
 
   vue-eslint-parser@9.4.3(eslint@9.37.0):
     dependencies:
@@ -13286,6 +13731,16 @@ snapshots:
       '@vue/shared': 3.5.24
     optionalDependencies:
       typescript: 6.0.2
+
+  vue@3.5.24(typescript@6.0.3):
+    dependencies:
+      '@vue/compiler-dom': 3.5.24
+      '@vue/compiler-sfc': 3.5.24
+      '@vue/runtime-dom': 3.5.24
+      '@vue/server-renderer': 3.5.24(vue@3.5.24(typescript@6.0.3))
+      '@vue/shared': 3.5.24
+    optionalDependencies:
+      typescript: 6.0.3
 
   wait-on@9.0.1:
     dependencies:

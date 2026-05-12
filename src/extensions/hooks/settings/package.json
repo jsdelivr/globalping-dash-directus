@@ -1,0 +1,38 @@
+{
+	"name": "settings",
+	"description": "Please enter a description for your extension",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-extension-hook"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "hook",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"validate": "directus-extension validate"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^3.0.23",
+		"@directus/extensions-sdk": "17.1.4",
+		"@directus/types": "^15.0.1",
+		"@types/node": "^25.7.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^6.0.3"
+	},
+	"dependencies": {
+		"@directus/errors": "^2.3.1"
+	}
+}
