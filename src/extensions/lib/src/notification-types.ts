@@ -16,6 +16,7 @@ export type NotificationType = {
 	sendEmail: boolean;
 	hasParameter: true;
 	defaultParameter: number;
+	min: number;
 	description: string;
 };
 
@@ -70,6 +71,7 @@ const notificationTypes = {
 		sendEmail: true,
 		hasParameter: true,
 		defaultParameter: LOW_CREDITS_DEFAULT_THRESHOLD,
+		min: 500,
 		description: 'Credits are running low',
 	},
 } satisfies Record<string, string | NotificationType>;

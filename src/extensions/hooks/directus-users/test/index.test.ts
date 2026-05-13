@@ -146,6 +146,16 @@ describe('users hooks', () => {
 			expect(err.message).to.contain('"notification_preferences.not_existing_type" is not allowed');
 		});
 
+		it('should throw error if notification parameter is below the minimum', async () => {
+			const err = await callbacks.filter['users.update']?.(
+				{ notification_preferences: { low_credits: { enabled: true, emailEnabled: true, parameter: 100 } } },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			).catch(err => err);
+
+			expect(err.message).to.equal('"low_credits" parameter must be greater than or equal to 500');
+		});
+
 		it('should force enabled true for readOnly notification', async () => {
 			const payload = {
 				notification_preferences: {
