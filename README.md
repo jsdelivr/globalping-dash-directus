@@ -94,6 +94,7 @@ cd "$original_dir"
 original_dir=$PWD
 cd ../../lib/src
 ln -s $PWD "$original_dir/lib"
+cd "$original_dir"
 ```
 
 ## Prepare dev host

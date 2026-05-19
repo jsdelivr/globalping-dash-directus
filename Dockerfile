@@ -40,6 +40,7 @@ COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/p
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
 COPY src/extensions/operations/check-outdated-firmware-cron-handler/package.json src/extensions/operations/check-outdated-firmware-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
+COPY src/extensions/operations/low-credits-cron-handler/package.json src/extensions/operations/low-credits-cron-handler/
 COPY src/extensions/operations/probes-status-cron-handler/package.json src/extensions/operations/probes-status-cron-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
 COPY src/extensions/operations/remove-expired-adoptions-cron-handler/package.json src/extensions/operations/remove-expired-adoptions-cron-handler/
@@ -114,6 +115,8 @@ COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-c
 COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/package.json /directus/extensions/check-outdated-firmware-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/dist/* /directus/extensions/gh-webhook-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/package.json /directus/extensions/gh-webhook-handler/
+COPY --from=builder /builder/src/extensions/operations/low-credits-cron-handler/dist/* /directus/extensions/low-credits-cron-handler/dist/
+COPY --from=builder /builder/src/extensions/operations/low-credits-cron-handler/package.json /directus/extensions/low-credits-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/dist/* /directus/extensions/probes-status-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/package.json /directus/extensions/probes-status-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/remove-banned-users-cron-handler/dist/
