@@ -11,7 +11,7 @@ export const checkOutdatedFirmware = async (context: OperationContext): Promise<
 		const probes = await getOutdatedProbesForUsers(userId, context);
 		const notNotified = probes.filter(p => !alreadyNotifiedIds.has(p.id));
 		return notNotified.length === 0 ? [] : checkFirmwareVersions(notNotified, userId, context);
-	}, { concurrency: 8 });
+	}, { concurrency: 4 });
 
 	return ids.flat();
 };

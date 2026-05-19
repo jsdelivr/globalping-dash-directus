@@ -27,7 +27,7 @@ export class SponsorActivitiesHandler {
 		const results = await Bluebird.map(activitiesBySponsorId, (activities) => {
 			// Process activities of the same sponsor sequentially to avoid race conditions.
 			return Bluebird.map(activities, a => this.createAddition(a, context), { concurrency: 1 });
-		}, { concurrency: 8 });
+		}, { concurrency: 4 });
 
 		return results.flat().filter((r): r is string => r !== null);
 	}

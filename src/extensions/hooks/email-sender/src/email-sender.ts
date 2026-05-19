@@ -61,52 +61,60 @@ export class EmailService {
 	}
 
 	private async handleEmails () {
-		const { toSend, rowsCount } = await this.context.database.transaction(async (trx) => {
-			const rows = await trx('directus_notifications as notifications')
-				.leftJoin('directus_users as users', 'users.id', 'notifications.recipient')
-				.select<NotificationRow[]>([
-					'notifications.id',
-					'notifications.recipient',
-					'notifications.type',
-					'notifications.subject',
-					'notifications.message',
-					'users.email',
+		const rows = await this.context.database.transaction(async (trx) => {
+			const claimed = await trx('directus_notifications')
+				.select<Omit<NotificationRow, 'email'>[]>([
+					'id',
+					'recipient',
+					'type',
+					'subject',
+					'message',
 				])
-				.where('notifications.email_status', 'pending')
+				.where('email_status', 'pending')
 				.andWhere((query) => {
-					query.whereNull('notifications.email_last_attempt')
-						.orWhere('notifications.email_last_attempt', '<=', new Date(Date.now() - 60_000));
+					query.whereNull('email_last_attempt')
+						.orWhere('email_last_attempt', '<=', new Date(Date.now() - 60_000));
 				})
-				.orderBy('notifications.id', 'asc')
+				.orderBy('id', 'asc')
 				.limit(this.BATCH_SIZE)
 				.forUpdate()
 				.skipLocked();
 
-			const noEmailIds: number[] = [];
-			const toSend: NotificationRow[] = [];
-
-			for (const row of rows) {
-				if (row.email) {
-					toSend.push({ ...row, email: row.email });
-				} else {
-					noEmailIds.push(row.id);
-				}
-			}
-
-			if (noEmailIds.length > 0) {
+			if (claimed.length > 0) {
 				await trx('directus_notifications')
-					.whereIn('id', noEmailIds)
-					.update({ email_status: 'no-email' });
-			}
-
-			if (toSend.length > 0) {
-				await trx('directus_notifications')
-					.whereIn('id', toSend.map(({ id }) => id))
+					.whereIn('id', claimed.map(({ id }) => id))
 					.update({ email_last_attempt: new Date() });
 			}
 
-			return { toSend, rowsCount: rows.length };
+			return claimed;
 		});
+
+		if (rows.length === 0) {
+			return 0;
+		}
+
+		const recipientIds = [ ...new Set(rows.map(({ recipient }) => recipient)) ];
+		const users = await this.context.database('directus_users')
+			.select<{ id: string; email: string | null }[]>([ 'id', 'email' ])
+			.whereIn('id', recipientIds);
+		const emailByRecipient = new Map(users.map(({ id, email }) => [ id, email ]));
+
+		const noEmailIds: number[] = [];
+		const toSend: NotificationRow[] = [];
+
+		for (const row of rows) {
+			const email = emailByRecipient.get(row.recipient);
+
+			if (email) {
+				toSend.push({ ...row, email });
+			} else {
+				noEmailIds.push(row.id);
+			}
+		}
+
+		if (noEmailIds.length > 0) {
+			await this.context.database('directus_notifications').whereIn('id', noEmailIds).update({ email_status: 'no-email' });
+		}
 
 		if (toSend.length > 0) {
 			const { sentIds, failedIds } = await this.sendEmails(toSend);
@@ -114,7 +122,7 @@ export class EmailService {
 			failedIds.length > 0 && await this.context.database('directus_notifications').whereIn('id', failedIds).update({ email_status: 'failed' });
 		}
 
-		return rowsCount;
+		return rows.length;
 	}
 
 	private async sendEmails (notifications: NotificationRow[]) {
