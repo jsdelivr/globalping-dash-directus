@@ -1,25 +1,10 @@
 import { defineOperationApp } from '@directus/extensions-sdk';
 
 export default defineOperationApp({
-	id: 'custom',
-	name: 'Custom',
-	icon: 'box',
-	description: 'This is my custom operation!',
-	overview: ({ text }) => [
-		{
-			label: 'Text',
-			text,
-		},
-	],
-	options: [
-		{
-			field: 'text',
-			name: 'Text',
-			type: 'string',
-			meta: {
-				width: 'full',
-				interface: 'input',
-			},
-		},
-	],
+	id: 'low-credits-cron-handler',
+	name: 'Low credits CRON handler',
+	icon: 'schedule',
+	description: 'Sends a notification when a user\'s Globalping credits drop below threshold.',
+	overview: () => [],
+	options: [],
 });

@@ -1,12 +1,10 @@
 import { defineOperationApi } from '@directus/extensions-sdk';
+import { checkLowCredits } from './actions/check-low-credits.js';
 
-type Options = {
-	text: string;
-};
-
-export default defineOperationApi<Options>({
-	id: 'custom',
-	handler: ({ text }) => {
-		console.log(text);
+export default defineOperationApi({
+	id: 'low-credits-cron-handler',
+	handler: async (_operationData, context) => {
+		const { notified, reset } = await checkLowCredits(context);
+		return `Notified users: ${notified.toString() || '[]'}. Reset users: ${reset.toString() || '[]'}.`;
 	},
 });

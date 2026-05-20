@@ -1,6 +1,6 @@
 {
 	"name": "low-credits-cron-handler",
-	"description": "Please enter a description for your extension",
+	"description": "Sends a notification when a user's Globalping credits drop below their threshold.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
@@ -34,17 +34,17 @@
 	},
 	"devDependencies": {
 		"@directus/extensions": "^3.0.23",
-		"@directus/extensions-sdk": "17.1.4",
+		"@directus/extensions-sdk": "17.1.1",
 		"@directus/types": "^15.0.1",
 		"@types/chai": "^5.2.3",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^25.9.0",
+		"@types/node": "^25.5.0",
 		"@types/sinon": "^17.0.4",
 		"chai": "^6.2.0",
 		"mocha": "^11.7.4",
 		"sinon": "^21.0.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^6.0.3",
+		"typescript": "^6.0.2",
 		"vue": "^3.5.34"
 	},
 	"dependencies": {

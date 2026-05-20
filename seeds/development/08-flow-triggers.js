@@ -79,6 +79,18 @@ export const seed = async (knex) => {
 			type: 'sponsors-cron-handler',
 		},
 	});
+
+	await createManualTrigger({
+		flow: {
+			id: '9fce4936-773d-4942-bfb1-fc608dfda174',
+			name: '[DEV] Low credits manual flow',
+		},
+		operation: {
+			name: '[DEV] Low credits manual operation',
+			key: 'low_credits_manual_handler',
+			type: 'low-credits-cron-handler',
+		},
+	});
 };
 
 const createManualTrigger = async (config) => {

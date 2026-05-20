@@ -1,9 +1,12 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
+		"types": [
+			"node",
+			"mocha"
+		],
 		"lib": [
-			"ES2023",
-			"DOM"
+			"ES2023"
 		],
 		"moduleResolution": "NodeNext",
 		"strict": true,
