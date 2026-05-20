@@ -7,9 +7,7 @@ import { client as sql } from '../client.ts';
 const MANUAL_FLOW_ID = '9fce4936-773d-4942-bfb1-fc608dfda174';
 
 const triggerLowCreditsCron = async () => {
-	await axios.post(`${process.env.DIRECTUS_URL}/flows/trigger/${MANUAL_FLOW_ID}`, {}, {
-		headers: { Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}` },
-	});
+	await axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${MANUAL_FLOW_ID}`);
 };
 
 test('notifies the user and flips the flag when amount is at or below the default threshold', async ({ user }) => {
