@@ -18,49 +18,52 @@ type MinimalContext = {
 const createContext = (rows: any[] = []): MinimalContext => {
 	const error = sinon.stub();
 	const updates: Array<{ ids: number[]; patch: Record<string, unknown> }> = [];
-	const trxUpdate = sinon.stub().resolves(1);
-	const trxBuilder = {
-		leftJoin: () => trxBuilder,
-		select: () => trxBuilder,
-		where: () => trxBuilder,
-		andWhere: (fn: (q: any) => void) => {
-			const query = {
-				whereNull: () => query,
-				orWhere: () => query,
-			};
-			fn(query);
-			return trxBuilder;
-		},
-		orderBy: () => trxBuilder,
-		limit: () => trxBuilder,
-		forUpdate: () => trxBuilder,
-		skipLocked: async () => rows,
-		whereIn: () => ({
-			update: trxUpdate,
-		}),
-	};
-	const trx = (table: string) => {
-		if (table === 'directus_notifications as notifications') {
-			return trxBuilder;
-		}
 
-		return {
-			whereIn: (_key: string, ids: number[]) => ({
-				update: async (patch: Record<string, unknown>) => {
-					updates.push({ ids, patch });
-					return 1;
-				},
-			}),
-		};
-	};
-	const database = (() => ({
+	const record = {
 		whereIn: (_key: string, ids: number[]) => ({
 			update: async (patch: Record<string, unknown>) => {
 				updates.push({ ids, patch });
 				return 1;
 			},
 		}),
-	})) as any;
+	};
+
+	const notificationsBuilder: any = {
+		select: () => notificationsBuilder,
+		where: () => notificationsBuilder,
+		andWhere: (fn: (q: any) => void) => {
+			const query = {
+				whereNull: () => query,
+				orWhere: () => query,
+			};
+			fn(query);
+			return notificationsBuilder;
+		},
+		orderBy: () => notificationsBuilder,
+		limit: () => notificationsBuilder,
+		forUpdate: () => notificationsBuilder,
+		skipLocked: async () => rows,
+		whereIn: record.whereIn,
+	};
+
+	const usersBuilder: any = {
+		select: () => usersBuilder,
+		whereIn: async (_key: string, ids: string[]) => {
+			const emailByRecipient = new Map<string, string | null>();
+
+			for (const row of rows) {
+				if (!emailByRecipient.has(row.recipient)) {
+					emailByRecipient.set(row.recipient, row.email ?? null);
+				}
+			}
+
+			return ids.map(id => ({ id, email: emailByRecipient.get(id) ?? null }));
+		},
+	};
+
+	const trx = (table: string) => (table === 'directus_notifications' ? notificationsBuilder : record);
+
+	const database = ((table: string) => (table === 'directus_users' ? usersBuilder : record)) as any;
 	database.transaction = async (cb: (trx: any) => Promise<any>) => cb(trx);
 	database.__updates = updates;
 
@@ -196,10 +199,10 @@ describe('EmailService', () => {
 		const updates = context.database.__updates;
 
 		expect(count).to.equal(2);
-		expect(updates[0]?.ids).to.deep.equal([ 1 ]);
-		expect(updates[0]?.patch).to.include({ email_status: 'no-email' });
-		expect(updates[1]?.ids).to.deep.equal([ 2 ]);
-		expect(updates[1]?.patch).to.have.keys('email_last_attempt');
+		expect(updates[0]?.ids).to.deep.equal([ 1, 2 ]);
+		expect(updates[0]?.patch).to.have.keys('email_last_attempt');
+		expect(updates[1]?.ids).to.deep.equal([ 1 ]);
+		expect(updates[1]?.patch).to.include({ email_status: 'no-email' });
 		expect(updates[2]).to.deep.equal({ ids: [ 2 ], patch: { email_status: 'sent' } });
 	});
 
@@ -221,7 +224,9 @@ describe('EmailService', () => {
 		expect(count).to.equal(100);
 		expect(sendEmails.called).to.equal(false);
 		expect(context.database.__updates[0]?.ids).to.have.length(100);
-		expect(context.database.__updates[0]?.patch).to.include({ email_status: 'no-email' });
+		expect(context.database.__updates[0]?.patch).to.have.keys('email_last_attempt');
+		expect(context.database.__updates[1]?.ids).to.have.length(100);
+		expect(context.database.__updates[1]?.patch).to.include({ email_status: 'no-email' });
 	});
 
 	it('should reschedule immediately when handled full batch', async () => {

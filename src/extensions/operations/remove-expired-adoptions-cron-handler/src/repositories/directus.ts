@@ -76,7 +76,7 @@ export const notifyAdoptions = async (probes: AdoptedProbe[], context: Operation
 		}
 
 		ids.push(...userProbes.map(p => p.id));
-	});
+	}, { concurrency: 4 });
 
 	return ids;
 };
@@ -137,7 +137,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSch
 			item: probe.id,
 			collection: 'gp_probes',
 		});
-	});
+	}, { concurrency: 4 });
 
 	let deletedAdoptionsIds: string[] = [];
 
