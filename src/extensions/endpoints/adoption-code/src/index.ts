@@ -84,7 +84,7 @@ export default defineEndpoint((router, context) => {
 						name: null,
 						userId: null,
 						version: '0.28.0',
-						nodeVersion: 'v22.16.0',
+						nodeVersion: 'v22.22.3',
 						hardwareDevice: null,
 						hardwareDeviceFirmware: null,
 						tags: [],

@@ -33,7 +33,7 @@ test('Local adoption endpoint adopts probe', async ({ user }) => {
 		isIPv4Supported: 1,
 		isIPv6Supported: 0,
 		version: '0.28.0',
-		nodeVersion: 'v22.16.0',
+		nodeVersion: 'v22.22.3',
 		hardwareDevice: null,
 		hardwareDeviceFirmware: null,
 		city: 'Berlin',

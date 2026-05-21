@@ -34,7 +34,7 @@ const addCredits = async (user: User) => {
 		userId: user.id,
 		uuid: randomUUID(),
 		version: '0.28.0',
-		nodeVersion: 'v22.16.0',
+		nodeVersion: 'v22.22.3',
 		hardwareDevice: null,
 		allowedCountries: JSON.stringify([ 'CZ' ]),
 		customLocation: null,
