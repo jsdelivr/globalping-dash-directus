@@ -6,6 +6,6 @@ export default defineOperationApi({
 	handler: async (_operationData, context) => {
 		const notifiedIds = await checkOutdatedFirmware(context);
 
-		return `Notified probes with ids: ${notifiedIds.toString() || '[]'}.`;
+		return `Notified probes with ids: ${notifiedIds.join(', ') || '[]'}.`;
 	},
 });

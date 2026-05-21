@@ -18,7 +18,7 @@ type UserPrefRow = {
 describe('Low credits cron handler', () => {
 	const usersReadByQuery = sinon.stub();
 	const creditsReadByQuery = sinon.stub();
-	const creditsUpdateMany = sinon.stub();
+	const creditsUpdateByQuery = sinon.stub();
 	const createMany = sinon.stub();
 
 	const ItemsService = sinon.stub().callsFake((collection: string) => {
@@ -27,7 +27,7 @@ describe('Low credits cron handler', () => {
 		}
 
 		if (collection === 'gp_credits') {
-			return { readByQuery: creditsReadByQuery, updateMany: creditsUpdateMany };
+			return { readByQuery: creditsReadByQuery, updateByQuery: creditsUpdateByQuery };
 		}
 
 		throw new Error(`unexpected collection: ${collection}`);
@@ -39,7 +39,7 @@ describe('Low credits cron handler', () => {
 	} as unknown as OperationContext['services'];
 
 	const accountability = {} as OperationContext['accountability'];
-	const logger = console.log as unknown as OperationContext['logger'];
+	const logger = { info: sinon.stub(), warn: sinon.stub(), error: sinon.stub() } as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 	const env = {} as OperationContext['env'];
 	const database = sinon.stub() as any;
@@ -65,14 +65,14 @@ describe('Low credits cron handler', () => {
 			creditsReadByQuery.onCall(2).resolves(opts.customRows);
 		}
 
-		creditsUpdateMany.resetBehavior();
-		creditsUpdateMany.resolves([]);
+		creditsUpdateByQuery.resetBehavior();
+		creditsUpdateByQuery.callsFake((query: { filter: { _and: { id?: { _in: number[] } }[] } }) => Promise.resolve(query.filter._and.find(c => c.id)?.id?._in ?? []));
 	};
 
 	beforeEach(() => {
 		usersReadByQuery.resetHistory();
 		creditsReadByQuery.resetHistory();
-		creditsUpdateMany.resetHistory();
+		creditsUpdateByQuery.resetHistory();
 		createMany.resetHistory();
 		createMany.resetBehavior();
 		createMany.resolves([]);
@@ -101,8 +101,8 @@ describe('Low credits cron handler', () => {
 			message: 'You have 100 credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.',
 		});
 
-		expect(creditsUpdateMany.callCount).to.equal(1);
-		expect(creditsUpdateMany.firstCall.args).to.deep.equal([ [ 1 ], { low_credits_notified: true }]);
+		expect(creditsUpdateByQuery.callCount).to.equal(1);
+		expect(creditsUpdateByQuery.firstCall.args).to.deep.equal([{ filter: { _and: [{ id: { _in: [ 1 ] } }, { low_credits_notified: { _eq: false } }] } }, { low_credits_notified: true }]);
 	});
 
 	it('resets the flag when amount recovers above default threshold', async () => {
@@ -118,8 +118,8 @@ describe('Low credits cron handler', () => {
 
 		expect(result).to.deep.equal({ notified: [], reset: [ 'user-7' ] });
 		expect(createMany.callCount).to.equal(0);
-		expect(creditsUpdateMany.callCount).to.equal(1);
-		expect(creditsUpdateMany.firstCall.args).to.deep.equal([ [ 7 ], { low_credits_notified: false }]);
+		expect(creditsUpdateByQuery.callCount).to.equal(1);
+		expect(creditsUpdateByQuery.firstCall.args).to.deep.equal([{ filter: { _and: [{ id: { _in: [ 7 ] } }, { low_credits_notified: { _eq: true } }] } }, { low_credits_notified: false }]);
 	});
 
 	it('excludes disabled users from the bulk SQL prefilter and skips them in code', async () => {
@@ -136,7 +136,7 @@ describe('Low credits cron handler', () => {
 
 		expect(result).to.deep.equal({ notified: [], reset: [] });
 		expect(createMany.callCount).to.equal(0);
-		expect(creditsUpdateMany.callCount).to.equal(0);
+		expect(creditsUpdateByQuery.callCount).to.equal(0);
 	});
 
 	it('uses the custom higher threshold: notifies a user at amount=8000 if their parameter is 10000', async () => {
@@ -163,8 +163,8 @@ describe('Low credits cron handler', () => {
 			message: 'You have 8000 credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.',
 		});
 
-		expect(creditsUpdateMany.callCount).to.equal(1);
-		expect(creditsUpdateMany.firstCall.args).to.deep.equal([ [ 9 ], { low_credits_notified: true }]);
+		expect(creditsUpdateByQuery.callCount).to.equal(1);
+		expect(creditsUpdateByQuery.firstCall.args).to.deep.equal([{ filter: { _and: [{ id: { _in: [ 9 ] } }, { low_credits_notified: { _eq: false } }] } }, { low_credits_notified: true }]);
 	});
 
 	it('uses the custom lower threshold: amount=3000 with parameter=1000 is NOT notified', async () => {
@@ -183,7 +183,7 @@ describe('Low credits cron handler', () => {
 
 		expect(result).to.deep.equal({ notified: [], reset: [] });
 		expect(createMany.callCount).to.equal(0);
-		expect(creditsUpdateMany.callCount).to.equal(0);
+		expect(creditsUpdateByQuery.callCount).to.equal(0);
 	});
 
 	it('resets a custom-threshold user when amount recovers above their parameter', async () => {
@@ -202,8 +202,8 @@ describe('Low credits cron handler', () => {
 
 		expect(result).to.deep.equal({ notified: [], reset: [ 'user-5' ] });
 		expect(createMany.callCount).to.equal(0);
-		expect(creditsUpdateMany.callCount).to.equal(1);
-		expect(creditsUpdateMany.firstCall.args).to.deep.equal([ [ 5 ], { low_credits_notified: false }]);
+		expect(creditsUpdateByQuery.callCount).to.equal(1);
+		expect(creditsUpdateByQuery.firstCall.args).to.deep.equal([{ filter: { _and: [{ id: { _in: [ 5 ] } }, { low_credits_notified: { _eq: true } }] } }, { low_credits_notified: false }]);
 	});
 
 	it('notifies at the boundary: amount == default threshold (5000)', async () => {
@@ -246,6 +246,6 @@ describe('Low credits cron handler', () => {
 
 		expect(result).to.deep.equal({ notified: [], reset: [] });
 		expect(createMany.callCount).to.equal(0);
-		expect(creditsUpdateMany.callCount).to.equal(0);
+		expect(creditsUpdateByQuery.callCount).to.equal(0);
 	});
 });

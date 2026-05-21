@@ -21,11 +21,12 @@ type User = {
 export const checkLowCredits = async (ctx: OperationContext): Promise<{ notified: string[]; reset: string[] }> => {
 	const { disabledUserIds, customThresholds } = await getUsersWithCustomPreferences(ctx);
 	const { toNotify, toReset } = await findCandidates(ctx, disabledUserIds, customThresholds);
-	await sendNotifications(ctx, toNotify);
-	await flipFlags(ctx, toNotify, toReset);
+	const flippedIds = await flipFlags(ctx, toNotify, toReset);
+	const filteredToNotify = toNotify.filter(r => flippedIds.has(r.id));
+	await sendNotifications(ctx, filteredToNotify);
 
 	return {
-		notified: toNotify.map(r => r.user_id),
+		notified: filteredToNotify.map(r => r.user_id),
 		reset: toReset.map(r => r.user_id),
 	};
 };
@@ -75,6 +76,7 @@ const findCandidates = async (
 					{ low_credits_notified: { _eq: false } },
 					{ amount: { _lte: LOW_CREDITS_DEFAULT_THRESHOLD } },
 					{ user_id: { _nin: specialUserIds } },
+					{ user_id: { id: { _nnull: true } } },
 				],
 			},
 			fields,
@@ -129,16 +131,32 @@ const sendNotifications = async (ctx: OperationContext, toNotify: CreditsRow[]):
 	})));
 };
 
-const flipFlags = async (ctx: OperationContext, toNotify: CreditsRow[], toReset: CreditsRow[]): Promise<void> => {
+const flipFlags = async (ctx: OperationContext, toNotify: CreditsRow[], toReset: CreditsRow[]): Promise<Set<number>> => {
 	const { ItemsService } = ctx.services;
 	const creditsService = new ItemsService('gp_credits', { schema: await ctx.getSchema() });
 
-	await Promise.all([
+	const [ flippedIds ] = await Promise.all([
 		toNotify.length > 0
-			? creditsService.updateMany(toNotify.map(r => r.id), { low_credits_notified: true })
-			: Promise.resolve(),
+			? creditsService.updateByQuery({
+				filter: {
+					_and: [
+						{ id: { _in: toNotify.map(r => r.id) } },
+						{ low_credits_notified: { _eq: false } },
+					],
+				},
+			}, { low_credits_notified: true }) as Promise<number[]>
+			: Promise.resolve([] as number[]),
 		toReset.length > 0
-			? creditsService.updateMany(toReset.map(r => r.id), { low_credits_notified: false })
-			: Promise.resolve(),
+			? creditsService.updateByQuery({
+				filter: {
+					_and: [
+						{ id: { _in: toReset.map(r => r.id) } },
+						{ low_credits_notified: { _eq: true } },
+					],
+				},
+			}, { low_credits_notified: false }) as Promise<number[]>
+			: Promise.resolve([] as number[]),
 	]);
+
+	return new Set(flippedIds);
 };

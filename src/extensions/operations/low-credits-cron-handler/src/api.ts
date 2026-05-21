@@ -5,6 +5,6 @@ export default defineOperationApi({
 	id: 'low-credits-cron-handler',
 	handler: async (_operationData, context) => {
 		const { notified, reset } = await checkLowCredits(context);
-		return `Notified users: ${notified.toString() || '[]'}. Reset users: ${reset.toString() || '[]'}.`;
+		return `Notified users: ${notified.join(', ') || '[]'}. Reset users: ${reset.join(', ') || '[]'}.`;
 	},
 });
