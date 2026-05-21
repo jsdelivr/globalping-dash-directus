@@ -38,7 +38,7 @@ const addUserProbes = async (user: User) => {
 		userId: user.id,
 		uuid: randomUUID(),
 		version: '0.28.0',
-		nodeVersion: 'v22.16.0',
+		nodeVersion: 'v22.22.3',
 		allowedCountries: JSON.stringify([ 'CZ' ]),
 		customLocation: null,
 	}, {
@@ -67,7 +67,7 @@ const addUserProbes = async (user: User) => {
 		userId: user.id,
 		uuid: randomUUID(),
 		version: '0.28.0',
-		nodeVersion: 'v22.16.0',
+		nodeVersion: 'v22.22.3',
 		hardwareDevice: null,
 		customLocation: JSON.stringify({
 			city: 'Naples',
@@ -101,7 +101,7 @@ const defaultProbe = {
 	status: 'ready',
 	userId: null,
 	version: '0.28.0',
-	nodeVersion: 'v22.16.0',
+	nodeVersion: 'v22.22.3',
 	hardwareDevice: null,
 	allowedCountries: JSON.stringify([ 'BF' ]),
 	customLocation: null,
@@ -273,7 +273,7 @@ test('Adoption of a probe with different data in SQL and API', async ({ page, us
 			city: 'Bobo Dioulasso',
 			latitude: 11.17,
 			longitude: -1.27,
-			nodeVersion: 'v22.16.0',
+			nodeVersion: 'v22.22.3',
 		},
 		user: { id: user.id },
 	}, {
