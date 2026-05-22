@@ -112,6 +112,11 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 
 	await triggerLowCreditsCron();
 
+	let notifications = await sql('directus_notifications')
+		.where({ recipient: user.id, type: 'low_credits' })
+		.select('id');
+	expect(notifications).toHaveLength(1);
+
 	let credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
 	expect(Boolean(credits.low_credits_notified)).toBe(true);
 
@@ -123,6 +128,12 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 10000 });
 	await triggerLowCreditsCron();
+
+	notifications = await sql('directus_notifications')
+		.where({ recipient: user.id, type: 'low_credits' })
+		.select('id');
+
+	expect(notifications).toHaveLength(1);
 
 	credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
 	expect(Boolean(credits.low_credits_notified)).toBe(false);
@@ -137,12 +148,17 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 
 	await triggerLowCreditsCron();
 
+	notifications = await sql('directus_notifications')
+		.where({ recipient: user.id, type: 'low_credits' })
+		.select('id');
+
+	expect(notifications).toHaveLength(2);
+
 	const notification = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
 		.orderBy('id', 'desc')
 		.first();
 
-	expect(notification).toBeTruthy();
 	expect(notification.message).toContain('You have 100 credits remaining');
 
 	credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
