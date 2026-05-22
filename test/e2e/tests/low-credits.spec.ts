@@ -99,8 +99,52 @@ test('does not notify a user who disabled low_credits notifications', async ({ u
 		.first();
 	expect(notification).toBeUndefined();
 
-	// Flag stays false: user is excluded from the bulk path and has no custom threshold,
-	// so they never enter either branch.
 	const credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
 	expect(Boolean(credits.low_credits_notified)).toBe(false);
+});
+
+test('resets the flag while disabled, then notifies again after re-enabling', async ({ user }) => {
+	await sql('gp_credits').insert({
+		user_id: user.id,
+		amount: 100,
+		low_credits_notified: false,
+	});
+
+	await triggerLowCreditsCron();
+
+	let credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
+	expect(Boolean(credits.low_credits_notified)).toBe(true);
+
+	await sql('directus_users').where({ id: user.id }).update({
+		notification_preferences: JSON.stringify({
+			low_credits: { enabled: false },
+		}),
+	});
+
+	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 10000 });
+	await triggerLowCreditsCron();
+
+	credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
+	expect(Boolean(credits.low_credits_notified)).toBe(false);
+
+	await sql('directus_users').where({ id: user.id }).update({
+		notification_preferences: JSON.stringify({
+			low_credits: { enabled: true },
+		}),
+	});
+
+	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 100 });
+
+	await triggerLowCreditsCron();
+
+	const notification = await sql('directus_notifications')
+		.where({ recipient: user.id, type: 'low_credits' })
+		.orderBy('id', 'desc')
+		.first();
+
+	expect(notification).toBeTruthy();
+	expect(notification.message).toContain('You have 100 credits remaining');
+
+	credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
+	expect(Boolean(credits.low_credits_notified)).toBe(true);
 });

@@ -33,9 +33,8 @@ const findCreditsToUpdate = async (ctx: OperationContext): Promise<{ toNotify: C
 			FROM gp_credits c
 			JOIN directus_users u ON u.id = c.user_id
 		) candidates
-		WHERE low_credits_enabled != 'false'
-			AND (
-				(low_credits_notified = false AND amount <= threshold)
+		WHERE (
+				(low_credits_enabled != 'false' AND low_credits_notified = false AND amount <= threshold)
 				OR (low_credits_notified = true AND amount > threshold)
 			)
 	`, [ LOW_CREDITS_DEFAULT_THRESHOLD ]))[0] as CreditsRow[];
