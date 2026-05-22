@@ -44,7 +44,7 @@ COPY src/extensions/operations/remove-expired-adoptions-cron-handler/package.jso
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
 # END: EXTENSIONS-BUILD-BLOCK
 
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 COPY src src
 RUN pnpm -r build
 
