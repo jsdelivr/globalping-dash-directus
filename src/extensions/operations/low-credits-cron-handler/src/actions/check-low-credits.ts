@@ -10,10 +10,13 @@ type CreditsRow = {
 
 export const checkLowCredits = async (ctx: OperationContext): Promise<{ notified: string[]; reset: string[] }> => {
 	const { toNotify, toReset } = await findCreditsToUpdate(ctx);
-	const notified = await notifyAndFlipFlags(ctx, toNotify);
+	await notifyAndFlipFlags(ctx, toNotify);
 	await resetFlags(ctx, toReset);
 
-	return { notified, reset: toReset.map(r => r.user_id) };
+	return {
+		notified: toNotify.map(r => r.user_id),
+		reset: toReset.map(r => r.user_id),
+	};
 };
 
 const findCreditsToUpdate = async (ctx: OperationContext): Promise<{ toNotify: CreditsRow[]; toReset: CreditsRow[] }> => {
@@ -43,39 +46,25 @@ const findCreditsToUpdate = async (ctx: OperationContext): Promise<{ toNotify: C
 	};
 };
 
-const notifyAndFlipFlags = async (ctx: OperationContext, toNotify: CreditsRow[]): Promise<string[]> => {
-	if (toNotify.length === 0) { return []; }
+const notifyAndFlipFlags = async (ctx: OperationContext, toNotify: CreditsRow[]): Promise<void> => {
+	if (toNotify.length === 0) { return; }
 
 	const { database, services, getSchema } = ctx;
 	const schema = await getSchema();
 
-	return database.transaction(async (trx) => {
+	await database.transaction(async (trx) => {
 		const { NotificationsService, ItemsService } = services;
 		const creditsService = new ItemsService('gp_credits', { schema, knex: trx });
 		const notificationsService = new NotificationsService({ schema, knex: trx });
 
-		const flippedIds = await creditsService.updateByQuery({
-			filter: {
-				_and: [
-					{ id: { _in: toNotify.map(r => r.id) } },
-					{ low_credits_notified: { _eq: false } },
-				],
-			},
-		}, { low_credits_notified: true }) as number[];
-
-		if (flippedIds.length === 0) { return []; }
-
-		const flippedSet = new Set(flippedIds);
-		const updated = toNotify.filter(r => flippedSet.has(r.id));
-
-		await notificationsService.createMany(updated.map(row => ({
+		await notificationsService.createMany(toNotify.map(row => ({
 			recipient: row.user_id,
 			type: 'low_credits',
 			subject: 'Your Globalping credits are running low',
 			message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
 		})));
 
-		return updated.map(r => r.user_id);
+		await creditsService.updateMany(toNotify.map(r => r.id), { low_credits_notified: true });
 	});
 };
 
