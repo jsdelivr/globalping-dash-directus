@@ -7,8 +7,15 @@ packages:
   - src/extensions/operations/*
   - src/extensions/bytes-value
 
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: true
+  vue-demi: true
+
 ignore-workspace-root-check: true
 
-onlyBuiltDependencies:
-  - esbuild
-  - vue-demi
+overrides:
+  '@directus/errors': ^2.3.1
+  '@directus/extensions': ^3.0.25
+  '@directus/types': ^15.0.3
+  '@directus/extensions-sdk': ^17.1.4

@@ -44,14 +44,6 @@
 		"relative-day-utc": "^1.3.0",
 		"typescript": "~5.8.3"
 	},
-	"pnpm": {
-		"overrides": {
-			"@directus/errors": "^2.3.1",
-			"@directus/extensions": "^3.0.25",
-			"@directus/types": "^15.0.3",
-			"@directus/extensions-sdk": "^17.1.4"
-		}
-	},
 	"scripts": {
 		"lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint --cache .",
 		"lint:fix": "pnpm lint --fix",
@@ -90,5 +82,5 @@
 	"engines": {
 		"node": "22"
 	},
-	"packageManager": "pnpm@10.12.1"
+	"packageManager": "pnpm@11.2.2"
 }
