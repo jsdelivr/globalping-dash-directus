@@ -1,8 +1,5 @@
 FROM node:22-alpine AS builder
 
-# Temp corepack fix: https://github.com/nodejs/corepack/issues/612
-RUN corepack install -g pnpm@9.15.2
-
 RUN corepack enable
 WORKDIR /builder
 COPY package.json pnpm-*.yaml ./
@@ -47,11 +44,11 @@ COPY src/extensions/operations/remove-expired-adoptions-cron-handler/package.jso
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
 # END: EXTENSIONS-BUILD-BLOCK
 
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 COPY src src
 RUN pnpm -r build
 
-FROM directus/directus:11.12.0
+FROM directus/directus:11.17.4
 
 # Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK

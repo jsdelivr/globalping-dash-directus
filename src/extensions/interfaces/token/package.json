@@ -23,9 +23,9 @@
 		"test:dev": "echo 'No tests for that extension'"
 	},
 	"devDependencies": {
-		"@directus/extensions": "^3.0.11",
-		"@directus/extensions-sdk": "16.0.2",
-		"@directus/types": "^13.2.3",
+		"@directus/extensions": "^3.0.25",
+		"@directus/extensions-sdk": "^17.1.4",
+		"@directus/types": "^15.0.3",
 		"@types/node": "^22.13.14",
 		"sass": "^1.93.2",
 		"typescript": "^5.8.3",
