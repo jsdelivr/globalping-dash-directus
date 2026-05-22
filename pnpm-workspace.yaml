@@ -12,7 +12,7 @@ allowBuilds:
   esbuild: true
   vue-demi: true
 
-ignore-workspace-root-check: true
+ignoreWorkspaceRootCheck: true
 
 overrides:
   '@directus/errors': ^2.3.1
