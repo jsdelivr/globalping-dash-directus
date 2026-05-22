@@ -8,155 +8,81 @@ type CreditsRow = {
 	low_credits_notified: boolean;
 };
 
-type LowCreditsPref = {
-	enabled?: boolean;
-	parameter?: number;
-};
-
-type User = {
-	id: string;
-	notification_preferences: Record<string, LowCreditsPref> | null;
-};
-
 export const checkLowCredits = async (ctx: OperationContext): Promise<{ notified: string[]; reset: string[] }> => {
-	const { disabledUserIds, customThresholds } = await getUsersWithCustomPreferences(ctx);
-	const { toNotify, toReset } = await findCandidates(ctx, disabledUserIds, customThresholds);
-	const flippedIds = await flipFlags(ctx, toNotify, toReset);
-	const filteredToNotify = toNotify.filter(r => flippedIds.has(r.id));
-	await sendNotifications(ctx, filteredToNotify);
+	const { toNotify, toReset } = await findCreditsToUpdate(ctx);
+	const notified = await notifyAndFlipFlags(ctx, toNotify);
+	await resetFlags(ctx, toReset);
+
+	return { notified, reset: toReset.map(r => r.user_id) };
+};
+
+const findCreditsToUpdate = async (ctx: OperationContext): Promise<{ toNotify: CreditsRow[]; toReset: CreditsRow[] }> => {
+	const rows = (await ctx.database.raw(`
+		SELECT id, user_id, amount, low_credits_notified
+		FROM (
+			SELECT
+				c.id,
+				c.user_id,
+				c.amount,
+				c.low_credits_notified,
+				COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(u.notification_preferences, '$.low_credits.parameter')) AS UNSIGNED), ?) AS threshold,
+				COALESCE(JSON_UNQUOTE(JSON_EXTRACT(u.notification_preferences, '$.low_credits.enabled')), 'true') AS low_credits_enabled
+			FROM gp_credits c
+			JOIN directus_users u ON u.id = c.user_id
+		) candidates
+		WHERE low_credits_enabled != 'false'
+			AND (
+				(low_credits_notified = false AND amount <= threshold)
+				OR (low_credits_notified = true AND amount > threshold)
+			)
+	`, [ LOW_CREDITS_DEFAULT_THRESHOLD ]))[0] as CreditsRow[];
 
 	return {
-		notified: filteredToNotify.map(r => r.user_id),
-		reset: toReset.map(r => r.user_id),
+		toNotify: rows.filter(r => !r.low_credits_notified),
+		toReset: rows.filter(r => r.low_credits_notified),
 	};
 };
 
-const getUsersWithCustomPreferences = async (ctx: OperationContext) => {
-	const { ItemsService } = ctx.services;
-	const usersService = new ItemsService('directus_users', { schema: await ctx.getSchema() });
+const notifyAndFlipFlags = async (ctx: OperationContext, toNotify: CreditsRow[]): Promise<string[]> => {
+	if (toNotify.length === 0) { return []; }
 
-	const prefsRows = await usersService.readByQuery({
-		filter: { notification_preferences: { _nnull: true } },
-		fields: [ 'id', 'notification_preferences' ],
-	}) as User[];
+	const { database, services, getSchema } = ctx;
+	const schema = await getSchema();
 
-	const disabledUserIds = new Set<string>();
-	const customThresholds = new Map<string, number>();
+	return database.transaction(async (trx) => {
+		const { NotificationsService, ItemsService } = services;
+		const creditsService = new ItemsService('gp_credits', { schema, knex: trx });
+		const notificationsService = new NotificationsService({ schema, knex: trx });
 
-	for (const row of prefsRows) {
-		const lowCredits = row.notification_preferences?.low_credits;
-
-		if (!lowCredits) { continue; }
-
-		if (lowCredits.enabled === false) {
-			disabledUserIds.add(row.id);
-		} else if (typeof lowCredits.parameter === 'number' && lowCredits.parameter !== LOW_CREDITS_DEFAULT_THRESHOLD) {
-			customThresholds.set(row.id, lowCredits.parameter);
-		}
-	}
-
-	return { disabledUserIds, customThresholds };
-};
-
-const findCandidates = async (
-	ctx: OperationContext,
-	disabledUserIds: Set<string>,
-	customThresholds: Map<string, number>,
-): Promise<{ toNotify: CreditsRow[]; toReset: CreditsRow[] }> => {
-	const { ItemsService } = ctx.services;
-	const creditsService = new ItemsService('gp_credits', { schema: await ctx.getSchema() });
-
-	const specialUserIds = [ ...disabledUserIds, ...customThresholds.keys() ];
-	const fields = [ 'id', 'user_id', 'amount', 'low_credits_notified' ];
-
-	const [ notifyCandidates, resetCandidates, customRows ] = await Promise.all([
-		creditsService.readByQuery({
+		const flippedIds = await creditsService.updateByQuery({
 			filter: {
 				_and: [
+					{ id: { _in: toNotify.map(r => r.id) } },
 					{ low_credits_notified: { _eq: false } },
-					{ amount: { _lte: LOW_CREDITS_DEFAULT_THRESHOLD } },
-					{ user_id: { _nin: specialUserIds } },
-					{ user_id: { id: { _nnull: true } } },
 				],
 			},
-			fields,
-		}) as Promise<CreditsRow[]>,
-		creditsService.readByQuery({
-			filter: {
-				_and: [
-					{ low_credits_notified: { _eq: true } },
-					{ amount: { _gt: LOW_CREDITS_DEFAULT_THRESHOLD } },
-					{ user_id: { _nin: specialUserIds } },
-				],
-			},
-			fields,
-		}) as Promise<CreditsRow[]>,
-		customThresholds.size > 0
-			? creditsService.readByQuery({
-				filter: { user_id: { _in: [ ...customThresholds.keys() ] } },
-				fields,
-			}) as Promise<CreditsRow[]>
-			: Promise.resolve([] as CreditsRow[]),
-	]);
+		}, { low_credits_notified: true }) as number[];
 
-	const toNotify: CreditsRow[] = [ ...notifyCandidates ];
-	const toReset: CreditsRow[] = [ ...resetCandidates ];
+		if (flippedIds.length === 0) { return []; }
 
-	for (const row of customRows) {
-		const threshold = customThresholds.get(row.user_id)!;
+		const flippedSet = new Set(flippedIds);
+		const updated = toNotify.filter(r => flippedSet.has(r.id));
 
-		if (!row.low_credits_notified && row.amount <= threshold) {
-			toNotify.push(row);
-		} else if (row.low_credits_notified && row.amount > threshold) {
-			toReset.push(row);
-		}
-	}
+		await notificationsService.createMany(updated.map(row => ({
+			recipient: row.user_id,
+			type: 'low_credits',
+			subject: 'Your Globalping credits are running low',
+			message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
+		})));
 
-	return { toNotify, toReset };
-};
-
-const sendNotifications = async (ctx: OperationContext, toNotify: CreditsRow[]): Promise<void> => {
-	if (toNotify.length === 0) { return; }
-
-	const { NotificationsService } = ctx.services;
-	const notificationsService = new NotificationsService({
-		schema: await ctx.getSchema(),
+		return updated.map(r => r.user_id);
 	});
-
-	await notificationsService.createMany(toNotify.map(row => ({
-		recipient: row.user_id,
-		type: 'low_credits',
-		subject: 'Your Globalping credits are running low',
-		message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
-	})));
 };
 
-const flipFlags = async (ctx: OperationContext, toNotify: CreditsRow[], toReset: CreditsRow[]): Promise<Set<number>> => {
+const resetFlags = async (ctx: OperationContext, toReset: CreditsRow[]): Promise<void> => {
+	if (toReset.length === 0) { return; }
+
 	const { ItemsService } = ctx.services;
 	const creditsService = new ItemsService('gp_credits', { schema: await ctx.getSchema() });
-
-	const [ flippedIds ] = await Promise.all([
-		toNotify.length > 0
-			? creditsService.updateByQuery({
-				filter: {
-					_and: [
-						{ id: { _in: toNotify.map(r => r.id) } },
-						{ low_credits_notified: { _eq: false } },
-					],
-				},
-			}, { low_credits_notified: true }) as Promise<number[]>
-			: Promise.resolve([] as number[]),
-		toReset.length > 0
-			? creditsService.updateByQuery({
-				filter: {
-					_and: [
-						{ id: { _in: toReset.map(r => r.id) } },
-						{ low_credits_notified: { _eq: true } },
-					],
-				},
-			}, { low_credits_notified: false }) as Promise<number[]>
-			: Promise.resolve([] as number[]),
-	]);
-
-	return new Set(flippedIds);
+	await creditsService.updateMany(toReset.map(r => r.id), { low_credits_notified: false });
 };
