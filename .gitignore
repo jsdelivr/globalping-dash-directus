@@ -13,5 +13,6 @@ config/local*
 /playwright/.cache/
 /test/e2e/globalping-dash/
 /src/extensions/*/*/lib
+/src/extensions/hooks/elastic-apm/apm/LAST_COMMIT_HASH.txt
 .claude/
 CLAUDE.md
