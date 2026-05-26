@@ -19,6 +19,7 @@ COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/en
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
+COPY src/extensions/hooks/elastic-apm/package.json src/extensions/hooks/elastic-apm/
 COPY src/extensions/hooks/email-sender/package.json src/extensions/hooks/email-sender/
 COPY src/extensions/hooks/gp-tokens/package.json src/extensions/hooks/gp-tokens/
 COPY src/extensions/hooks/location-overrides/package.json src/extensions/hooks/location-overrides/
@@ -48,7 +49,18 @@ RUN pnpm install --frozen-lockfile
 COPY src src
 RUN pnpm -r build
 
+FROM node:22-alpine AS elastic-apm-agent
+
+WORKDIR /apm
+COPY src/extensions/hooks/elastic-apm/package.json ./
+RUN npm install --omit=dev
+COPY src/extensions/hooks/elastic-apm/apm/ ./
+
 FROM directus/directus:11.17.4
+
+ENV ELASTIC_APM_CONFIG_FILE=/directus/apm/elastic-apm-node.cjs
+COPY --from=elastic-apm-agent /apm /directus/apm
+ENV NODE_OPTIONS="--experimental-loader /directus/apm/node_modules/elastic-apm-node/loader.mjs -r /directus/apm/node_modules/elastic-apm-node/start.js -r /directus/apm/elastic-apm-filters.cjs"
 
 # Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
@@ -78,6 +90,8 @@ COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/package.json /directus/extensions/adopted-probe/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/dist/* /directus/extensions/directus-users/dist/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/package.json /directus/extensions/directus-users/
+COPY --from=builder /builder/src/extensions/hooks/elastic-apm/dist/* /directus/extensions/elastic-apm/dist/
+COPY --from=builder /builder/src/extensions/hooks/elastic-apm/package.json /directus/extensions/elastic-apm/
 COPY --from=builder /builder/src/extensions/hooks/email-sender/dist/* /directus/extensions/email-sender/dist/
 COPY --from=builder /builder/src/extensions/hooks/email-sender/package.json /directus/extensions/email-sender/
 COPY --from=builder /builder/src/extensions/hooks/gp-tokens/dist/* /directus/extensions/gp-tokens/dist/
