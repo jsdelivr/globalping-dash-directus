@@ -1,21 +1,27 @@
 {
-	"name": "email-unsubscribe",
-	"description": "Please enter a description for your extension",
+	"name": "low-credits-cron-handler",
+	"description": "Sends a notification when a user's Globalping credits drop below their threshold.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
 		"directus",
 		"directus-extension",
-		"directus-extension-endpoint"
+		"directus-extension-operation"
 	],
 	"type": "module",
 	"files": [
 		"dist"
 	],
 	"directus:extension": {
-		"type": "endpoint",
-		"path": "dist/index.js",
-		"source": "src/index.ts",
+		"type": "operation",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"source": {
+			"app": "src/app.ts",
+			"api": "src/api.ts"
+		},
 		"host": "^10.10.0"
 	},
 	"scripts": {
@@ -31,22 +37,17 @@
 		"@directus/extensions-sdk": "^17.1.4",
 		"@directus/types": "^15.0.3",
 		"@types/chai": "^5.2.3",
-		"@types/express": "^4.17.21",
-		"@types/jsonwebtoken": "^9.0.10",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.5.0",
 		"@types/sinon": "^17.0.4",
-		"@types/supertest": "^6.0.3",
 		"chai": "^6.2.0",
 		"mocha": "^11.7.4",
 		"sinon": "^21.0.0",
-		"supertest": "^7.1.4",
 		"ts-node": "^10.9.2",
-		"typescript": "^6.0.2"
+		"typescript": "^6.0.2",
+		"vue": "^3.5.34"
 	},
 	"dependencies": {
-		"@directus/errors": "^2.3.1",
-		"express": "^4.21.2",
-		"jsonwebtoken": "^9.0.3"
+		"@directus/errors": "^2.3.1"
 	}
 }

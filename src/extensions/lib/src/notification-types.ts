@@ -1,5 +1,7 @@
 import Joi from 'joi';
 
+export const LOW_CREDITS_DEFAULT_THRESHOLD = 5000;
+
 export type NotificationTypeKey = keyof typeof notificationTypes;
 
 export type NotificationType = {
@@ -14,6 +16,7 @@ export type NotificationType = {
 	sendEmail: boolean;
 	hasParameter: true;
 	defaultParameter: number;
+	min: number;
 	description: string;
 };
 
@@ -62,15 +65,15 @@ const notificationTypes = {
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
-	// Sending of low_credits notifications is not implemented. Keeping it to document the structure of notifications with parameters.
-	// low_credits: {
-	// 	configurableByUser: true,
-	// 	readOnly: false,
-	// 	sendEmail: false,
-	// 	hasParameter: true,
-	// 	defaultParameter: 1000,
-	// 	description: 'Credits are running low',
-	// },
+	low_credits: {
+		configurableByUser: true,
+		readOnly: false,
+		sendEmail: true,
+		hasParameter: true,
+		defaultParameter: LOW_CREDITS_DEFAULT_THRESHOLD,
+		min: 500,
+		description: 'Credits are running low',
+	},
 } satisfies Record<string, string | NotificationType>;
 
 export const configurableNotifications = Object.fromEntries((Object.entries(notificationTypes).filter(([ , value ]) => typeof value === 'object' && value.configurableByUser) as [string, NotificationType][])

@@ -1,8 +1,5 @@
 FROM node:22-alpine AS builder
 
-# Temp corepack fix: https://github.com/nodejs/corepack/issues/612
-RUN corepack install -g pnpm@9.15.2
-
 RUN corepack enable
 WORKDIR /builder
 COPY package.json pnpm-*.yaml ./
@@ -40,17 +37,18 @@ COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/p
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
 COPY src/extensions/operations/check-outdated-firmware-cron-handler/package.json src/extensions/operations/check-outdated-firmware-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
+COPY src/extensions/operations/low-credits-cron-handler/package.json src/extensions/operations/low-credits-cron-handler/
 COPY src/extensions/operations/probes-status-cron-handler/package.json src/extensions/operations/probes-status-cron-handler/
 COPY src/extensions/operations/remove-banned-users-cron-handler/package.json src/extensions/operations/remove-banned-users-cron-handler/
 COPY src/extensions/operations/remove-expired-adoptions-cron-handler/package.json src/extensions/operations/remove-expired-adoptions-cron-handler/
 COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions/operations/sponsors-cron-handler/
 # END: EXTENSIONS-BUILD-BLOCK
 
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 COPY src src
 RUN pnpm -r build
 
-FROM directus/directus:11.12.0
+FROM directus/directus:11.17.4
 
 # Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-RUN-BLOCK
@@ -114,6 +112,8 @@ COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-c
 COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/package.json /directus/extensions/check-outdated-firmware-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/dist/* /directus/extensions/gh-webhook-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/package.json /directus/extensions/gh-webhook-handler/
+COPY --from=builder /builder/src/extensions/operations/low-credits-cron-handler/dist/* /directus/extensions/low-credits-cron-handler/dist/
+COPY --from=builder /builder/src/extensions/operations/low-credits-cron-handler/package.json /directus/extensions/low-credits-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/dist/* /directus/extensions/probes-status-cron-handler/dist/
 COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/package.json /directus/extensions/probes-status-cron-handler/
 COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/remove-banned-users-cron-handler/dist/

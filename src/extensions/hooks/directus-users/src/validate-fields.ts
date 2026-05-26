@@ -14,7 +14,17 @@ const validateNotificationParameter = (value: { enabled: boolean; parameter?: nu
 	const notificationType = pathSegments[pathSegments.length - 1] as string;
 	const notification = getNotificationType(notificationType);
 
-	if (notification?.hasParameter && value.enabled && typeof value.parameter !== 'number') {
+	if (!notification?.hasParameter) {
+		return value;
+	}
+
+	if (typeof value.parameter === 'number' && value.parameter < notification.min) {
+		return helpers.message({
+			custom: `"${notificationType}" parameter must be greater than or equal to ${notification.min}`,
+		});
+	}
+
+	if (value.enabled && typeof value.parameter !== 'number') {
 		return { ...value, parameter: notification.defaultParameter };
 	}
 

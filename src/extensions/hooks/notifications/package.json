@@ -27,9 +27,9 @@
 		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
 	},
 	"devDependencies": {
-		"@directus/extensions": "^3.0.11",
-		"@directus/extensions-sdk": "17.0.10",
-		"@directus/types": "^14.3.0",
+		"@directus/extensions": "^3.0.25",
+		"@directus/extensions-sdk": "^17.1.4",
+		"@directus/types": "^15.0.3",
 		"@types/chai": "^5.2.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.3.3",
@@ -41,7 +41,7 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@directus/errors": "^2.2.0",
+		"@directus/errors": "^2.3.1",
 		"joi": "^18.0.1"
 	}
 }

@@ -1,5 +1,5 @@
 version: 1
-directus: 11.12.0
+directus: 11.17.4
 vendor: mysql
 collections:
   - collection: gp_apps
@@ -295,6 +295,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -334,6 +335,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 2
       special: null
       translations: null
@@ -386,6 +388,7 @@ fields:
             value: failed
       readonly: false
       required: false
+      searchable: true
       sort: 3
       special: null
       translations: null
@@ -426,6 +429,7 @@ fields:
         relative: true
       readonly: false
       required: false
+      searchable: true
       sort: 4
       special: null
       translations: null
@@ -465,6 +469,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 5
       special:
         - cast-json
@@ -506,6 +511,7 @@ fields:
         lineNumber: false
       readonly: false
       required: false
+      searchable: true
       sort: 2
       special:
         - cast-json
@@ -546,6 +552,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 3
       special: null
       translations: null
@@ -592,6 +599,7 @@ fields:
             value: special
       readonly: false
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -631,6 +639,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 4
       special:
         - cast-boolean
@@ -671,6 +680,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 5
       special: null
       translations: null
@@ -710,6 +720,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 6
       special: null
       translations: null
@@ -749,6 +760,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -788,6 +800,7 @@ fields:
       options: {}
       readonly: true
       required: false
+      searchable: true
       sort: null
       special: null
       translations: null
@@ -827,6 +840,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 8
       special:
         - cast-json
@@ -867,6 +881,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special:
         - uuid
@@ -908,6 +923,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 10
       special:
         - user-created
@@ -949,6 +965,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 11
       special:
         - date-created
@@ -990,6 +1007,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 12
       special:
         - user-updated
@@ -1031,6 +1049,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 13
       special:
         - date-updated
@@ -1071,6 +1090,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 2
       special: null
       translations: null
@@ -1110,6 +1130,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special:
         - cast-json
@@ -1150,6 +1171,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special:
         - cast-json
@@ -1190,6 +1212,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 8
       special: null
       translations: null
@@ -1229,6 +1252,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -1268,6 +1292,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 3
       special: null
       translations: null
@@ -1307,6 +1332,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 4
       special: null
       translations: null
@@ -1346,6 +1372,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 5
       special:
         - cast-json
@@ -1386,6 +1413,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special:
         - uuid
@@ -1427,6 +1455,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - date-created
@@ -1468,6 +1497,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - date-updated
@@ -1510,6 +1540,7 @@ fields:
         template: '{{github_username}}'
       readonly: false
       required: true
+      searchable: true
       sort: 4
       special:
         - m2o
@@ -1552,6 +1583,7 @@ fields:
         template: '{{name}}'
       readonly: false
       required: true
+      searchable: true
       sort: 5
       special:
         - m2o
@@ -1592,6 +1624,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special:
         - cast-json
@@ -1632,6 +1665,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -1672,6 +1706,7 @@ fields:
         min: 0
       readonly: false
       required: false
+      searchable: true
       sort: 5
       special: null
       translations: null
@@ -1712,6 +1747,7 @@ fields:
         enableCreate: false
       readonly: false
       required: true
+      searchable: true
       sort: 4
       special:
         - m2o
@@ -1736,6 +1772,47 @@ fields:
       has_auto_increment: false
       foreign_key_table: directus_users
       foreign_key_column: id
+  - collection: gp_credits
+    field: low_credits_notified
+    type: boolean
+    meta:
+      collection: gp_credits
+      conditions: null
+      display: null
+      display_options: null
+      field: low_credits_notified
+      group: null
+      hidden: false
+      interface: boolean
+      note: null
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special:
+        - cast-boolean
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: low_credits_notified
+      table: gp_credits
+      data_type: boolean
+      default_value: false
+      max_length: null
+      numeric_precision: 3
+      numeric_scale: 0
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: gp_credits_additions
     field: amount
     type: bigInteger
@@ -1752,6 +1829,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 5
       special: null
       translations: null
@@ -1792,6 +1870,7 @@ fields:
         label: Consumed
       readonly: false
       required: false
+      searchable: true
       sort: 8
       special:
         - cast-boolean
@@ -1833,6 +1912,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - date-created
@@ -1875,6 +1955,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 4
       special: null
       translations: null
@@ -1914,6 +1995,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -1954,6 +2036,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - user-updated
@@ -2005,6 +2088,7 @@ fields:
             value: other
       readonly: false
       required: true
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -2047,6 +2131,7 @@ fields:
         lineNumber: false
       readonly: false
       required: true
+      searchable: true
       sort: 10
       special:
         - cast-json
@@ -2088,6 +2173,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 11
       special: null
       translations: null
@@ -2128,6 +2214,7 @@ fields:
         min: 0
       readonly: false
       required: true
+      searchable: true
       sort: 5
       special: null
       translations: null
@@ -2167,6 +2254,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special: null
       translations: null
@@ -2206,6 +2294,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -2246,6 +2335,7 @@ fields:
         enableCreate: false
       readonly: false
       required: true
+      searchable: true
       sort: 4
       special:
         - m2o
@@ -2286,6 +2376,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -2326,6 +2417,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - user-created
@@ -2367,6 +2459,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - date-created
@@ -2408,6 +2501,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 4
       special:
         - user-updated
@@ -2449,6 +2543,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 5
       special:
         - date-updated
@@ -2489,6 +2584,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special: null
       translations: null
@@ -2528,6 +2624,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -2567,6 +2664,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -2606,6 +2704,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 8
       special: null
       translations: null
@@ -2645,6 +2744,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 10
       special: null
       translations: null
@@ -2684,6 +2784,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 11
       special: null
       translations: null
@@ -2723,6 +2824,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 27
       special: null
       translations: null
@@ -2767,6 +2869,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -2808,6 +2911,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 8
       special: null
       translations: null
@@ -2848,6 +2952,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - date-created
@@ -2889,6 +2994,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - date-updated
@@ -2929,6 +3035,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special:
         - uuid
@@ -2969,6 +3076,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 17
       special: null
       translations: null
@@ -3010,6 +3118,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 16
       special: null
       translations: null
@@ -3049,6 +3158,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 25
       special: null
       translations: null
@@ -3088,6 +3198,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 26
       special: null
       translations: null
@@ -3129,6 +3240,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 4
       special: null
       translations: null
@@ -3168,6 +3280,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 28
       special: null
       translations: null
@@ -3207,6 +3320,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 29
       special: null
       translations: null
@@ -3246,6 +3360,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 10
       special: null
       translations: null
@@ -3285,6 +3400,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 24
       special: null
       translations: null
@@ -3329,6 +3445,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 5
       special:
         - cast-json
@@ -3370,6 +3487,7 @@ fields:
         enableCreate: false
       readonly: false
       required: false
+      searchable: true
       sort: 15
       special:
         - m2o
@@ -3410,6 +3528,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 19
       special: null
       translations: null
@@ -3449,6 +3568,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 20
       special: null
       translations: null
@@ -3488,6 +3608,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 22
       special: null
       translations: null
@@ -3527,6 +3648,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 21
       special: null
       translations: null
@@ -3566,6 +3688,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 30
       special:
         - cast-boolean
@@ -3606,6 +3729,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 31
       special:
         - cast-boolean
@@ -3647,6 +3771,7 @@ fields:
         lineNumber: false
       readonly: false
       required: false
+      searchable: true
       sort: 18
       special:
         - cast-json
@@ -3689,6 +3814,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 6
       special:
         - cast-json
@@ -3729,6 +3855,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 23
       special: null
       translations: null
@@ -3769,6 +3896,7 @@ fields:
         lineNumber: false
       readonly: false
       required: false
+      searchable: true
       sort: 32
       special:
         - cast-json
@@ -3813,6 +3941,7 @@ fields:
         lineNumber: false
       readonly: false
       required: false
+      searchable: true
       sort: 33
       special:
         - cast-json
@@ -3853,6 +3982,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -3892,6 +4022,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 11
       special: null
       translations: null
@@ -3931,6 +4062,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 12
       special: null
       translations: null
@@ -3970,6 +4102,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 13
       special: null
       translations: null
@@ -4009,6 +4142,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 14
       special: null
       translations: null
@@ -4048,6 +4182,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 35
       special: null
       translations: null
@@ -4087,6 +4222,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 34
       special:
         - cast-json
@@ -4127,6 +4263,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 36
       special:
         - cast-boolean
@@ -4167,6 +4304,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 37
       special:
         - cast-json
@@ -4207,6 +4345,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special:
         - uuid
@@ -4248,6 +4387,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - user-created
@@ -4289,6 +4429,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 4
       special:
         - user-updated
@@ -4330,6 +4471,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - date-created
@@ -4371,6 +4513,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 5
       special:
         - date-updated
@@ -4411,6 +4554,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special: null
       translations: null
@@ -4455,6 +4599,7 @@ fields:
             value: stream
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -4494,6 +4639,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 8
       special: null
       translations: null
@@ -4503,7 +4649,7 @@ fields:
     schema:
       name: interval
       table: gp_schedule
-      data_type: int unsigned
+      data_type: int
       default_value: null
       max_length: null
       numeric_precision: 10
@@ -4533,6 +4679,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -4542,7 +4689,7 @@ fields:
     schema:
       name: probe_limit
       table: gp_schedule
-      data_type: int unsigned
+      data_type: int
       default_value: null
       max_length: null
       numeric_precision: 10
@@ -4572,6 +4719,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 10
       special:
         - cast-json
@@ -4612,6 +4760,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 11
       special:
         - cast-boolean
@@ -4652,6 +4801,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 12
       special:
         - cast-boolean
@@ -4692,6 +4842,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 13
       special: null
       translations: null
@@ -4732,6 +4883,7 @@ fields:
         enableCreate: false
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special:
         - m2o
@@ -4783,6 +4935,7 @@ fields:
             value: mtr
       readonly: false
       required: true
+      searchable: true
       sort: 8
       special: null
       translations: null
@@ -4822,6 +4975,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special:
         - uuid
@@ -4862,6 +5016,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -4902,6 +5057,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - user-created
@@ -4943,6 +5099,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 4
       special:
         - user-updated
@@ -4984,6 +5141,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - date-created
@@ -5025,6 +5183,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 5
       special:
         - date-updated
@@ -5065,6 +5224,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -5104,6 +5264,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 10
       special:
         - cast-json
@@ -5144,6 +5305,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 11
       special:
         - cast-boolean
@@ -5184,6 +5346,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 12
       special: null
       translations: null
@@ -5224,6 +5387,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - cast-timestamp
@@ -5265,6 +5429,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 11
       special: null
       translations: null
@@ -5305,6 +5470,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 5
       special:
         - cast-timestamp
@@ -5346,6 +5512,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 10
       special: null
       translations: null
@@ -5385,6 +5552,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -5424,6 +5592,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -5466,6 +5635,7 @@ fields:
       options: {}
       readonly: false
       required: false
+      searchable: true
       sort: 9
       special:
         - cast-json
@@ -5507,6 +5677,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - user-created
@@ -5548,6 +5719,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 4
       special:
         - user-updated
@@ -5588,6 +5760,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 8
       special: null
       translations: null
@@ -5628,6 +5801,7 @@ fields:
         enableCreate: false
       readonly: false
       required: false
+      searchable: true
       sort: 13
       special:
         - m2o
@@ -5671,6 +5845,7 @@ fields:
       options: {}
       readonly: false
       required: false
+      searchable: true
       sort: 12
       special:
         - cast-json
@@ -5712,6 +5887,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 6
       special: null
       translations: null
@@ -5751,6 +5927,7 @@ fields:
       options: null
       readonly: false
       required: false
+      searchable: true
       sort: 14
       special:
         - m2o
@@ -5792,6 +5969,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 3
       special:
         - date-created
@@ -5833,6 +6011,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 5
       special:
         - date-updated
@@ -5873,6 +6052,7 @@ fields:
       options: null
       readonly: true
       required: false
+      searchable: true
       sort: 1
       special: null
       translations: null
@@ -5913,6 +6093,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 2
       special:
         - user-created
@@ -5954,6 +6135,7 @@ fields:
         template: '{{avatar.$thumbnail}} {{first_name}} {{last_name}}'
       readonly: true
       required: false
+      searchable: true
       sort: 4
       special:
         - user-updated
@@ -5996,6 +6178,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 9
       special: null
       translations: null
@@ -6035,6 +6218,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 7
       special: null
       translations: null
@@ -6074,6 +6258,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 13
       special: null
       translations: null
@@ -6113,6 +6298,7 @@ fields:
       options: null
       readonly: false
       required: true
+      searchable: true
       sort: 11
       special: null
       translations: null
@@ -6136,6 +6322,215 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+systemFields:
+  - collection: directus_access
+    field: policy
+    schema:
+      is_indexed: true
+  - collection: directus_access
+    field: role
+    schema:
+      is_indexed: true
+  - collection: directus_access
+    field: user
+    schema:
+      is_indexed: true
+  - collection: directus_activity
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_activity
+    field: timestamp
+    schema:
+      is_indexed: true
+  - collection: directus_collections
+    field: group
+    schema:
+      is_indexed: true
+  - collection: directus_comments
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_comments
+    field: user_updated
+    schema:
+      is_indexed: true
+  - collection: directus_dashboards
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_deployment_projects
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_deployment_runs
+    field: project
+    schema:
+      is_indexed: true
+  - collection: directus_deployment_runs
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_deployments
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_fields
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_files
+    field: folder
+    schema:
+      is_indexed: true
+  - collection: directus_files
+    field: modified_by
+    schema:
+      is_indexed: true
+  - collection: directus_files
+    field: uploaded_by
+    schema:
+      is_indexed: true
+  - collection: directus_flows
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_folders
+    field: parent
+    schema:
+      is_indexed: true
+  - collection: directus_notifications
+    field: recipient
+    schema:
+      is_indexed: true
+  - collection: directus_notifications
+    field: sender
+    schema:
+      is_indexed: true
+  - collection: directus_operations
+    field: flow
+    schema:
+      is_indexed: true
+  - collection: directus_operations
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_panels
+    field: dashboard
+    schema:
+      is_indexed: true
+  - collection: directus_panels
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_permissions
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_permissions
+    field: policy
+    schema:
+      is_indexed: true
+  - collection: directus_presets
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_presets
+    field: role
+    schema:
+      is_indexed: true
+  - collection: directus_presets
+    field: user
+    schema:
+      is_indexed: true
+  - collection: directus_relations
+    field: many_collection
+    schema:
+      is_indexed: true
+  - collection: directus_relations
+    field: one_collection
+    schema:
+      is_indexed: true
+  - collection: directus_revisions
+    field: activity
+    schema:
+      is_indexed: true
+  - collection: directus_revisions
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_revisions
+    field: parent
+    schema:
+      is_indexed: true
+  - collection: directus_revisions
+    field: version
+    schema:
+      is_indexed: true
+  - collection: directus_roles
+    field: parent
+    schema:
+      is_indexed: true
+  - collection: directus_sessions
+    field: share
+    schema:
+      is_indexed: true
+  - collection: directus_sessions
+    field: user
+    schema:
+      is_indexed: true
+  - collection: directus_settings
+    field: project_logo
+    schema:
+      is_indexed: true
+  - collection: directus_settings
+    field: public_background
+    schema:
+      is_indexed: true
+  - collection: directus_settings
+    field: public_favicon
+    schema:
+      is_indexed: true
+  - collection: directus_settings
+    field: public_foreground
+    schema:
+      is_indexed: true
+  - collection: directus_settings
+    field: public_registration_role
+    schema:
+      is_indexed: true
+  - collection: directus_settings
+    field: storage_default_folder
+    schema:
+      is_indexed: true
+  - collection: directus_shares
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_shares
+    field: role
+    schema:
+      is_indexed: true
+  - collection: directus_shares
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_users
+    field: role
+    schema:
+      is_indexed: true
+  - collection: directus_versions
+    field: collection
+    schema:
+      is_indexed: true
+  - collection: directus_versions
+    field: user_created
+    schema:
+      is_indexed: true
+  - collection: directus_versions
+    field: user_updated
+    schema:
+      is_indexed: true
 relations:
   - collection: gp_apps
     field: user_created
@@ -6449,7 +6844,7 @@ relations:
       column: schedule_id
       foreign_key_table: gp_schedule
       foreign_key_column: id
-      constraint_name: gp_schedule_configuration_schedule_fk
+      constraint_name: gp_schedule_configuration_schedule_id_foreign
       on_update: RESTRICT
       on_delete: CASCADE
   - collection: gp_tokens
