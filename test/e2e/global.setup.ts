@@ -18,7 +18,7 @@ const DASH_INDEX_FILE_PATH = process.env.DASH_INDEX_FILE_PATH as string;
 
 const pm2Start = promisify(pm2.start.bind(pm2)) as (options: StartOptions) => Promise<void>;
 
-const waitFor = (url: string, timeout = 30000) => waitOn({ resources: [ url ], timeout });
+const waitFor = (url: string, timeout = 60000) => waitOn({ resources: [ url ], timeout });
 
 const getIsRunning = async (url: string) => {
 	try {
