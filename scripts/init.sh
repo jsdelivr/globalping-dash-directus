@@ -11,6 +11,7 @@ log_status() {
     echo ""
     echo "[$(date '+%H:%M:%S')] === $* ==="
     free -h 2>/dev/null | awk 'NR<=2' || true
+    ps -eo pid,user,rss,comm --sort=-rss 2>/dev/null | head -15 || true
     dmesg 2>/dev/null | grep -iE "out of memory|killed process|oom-kill" | tail -3 || true
 }
 
