@@ -7,14 +7,6 @@ if ! command -v jq >/dev/null; then
     exit 1
 fi
 
-log_status() {
-    echo ""
-    echo "[$(date '+%H:%M:%S')] === $* ==="
-    free -h 2>/dev/null | awk 'NR<=2' || true
-    ps -eo pid,user,rss,comm --sort=-rss 2>/dev/null | head -15 || true
-    dmesg 2>/dev/null | grep -iE "out of memory|killed process|oom-kill" | tail -3 || true
-}
-
 function get_token {
   local response=$(curl --fail --retry 5 -X POST -H "Content-Type: application/json" -d '{"email": "'"$ADMIN_EMAIL"'", "password": "'"$ADMIN_PASSWORD"'"}' $DIRECTUS_URL/auth/login)
   local token=$(echo "$response" | jq -r '.data.access_token')
@@ -38,8 +30,7 @@ if [[ ("$DIRECTUS_URL" != *"localhost"* && "$DIRECTUS_URL" != *"127.0.0.1"*) || 
 	exit 1
 fi
 
-log_status "waiting for directus (initial)"
-time npx wait-on -t 90s -l "$DIRECTUS_URL/admin/login"
+npx wait-on -t 90s -l "$DIRECTUS_URL/admin/login"
 
 token=$(get_token)
 
@@ -50,25 +41,20 @@ fi
 
 perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" ".env.scripts.$1"
 
-log_status "before schema:apply"
-time pnpm run schema:apply:$1
+pnpm run schema:apply:$1
 
-log_status "before migrate"
-time pnpm run migrate:$1
+pnpm run migrate:$1
 
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 
 perl -pi -e "s/AUTH_GITHUB_DEFAULT_ROLE_ID=.*/AUTH_GITHUB_DEFAULT_ROLE_ID=$user_role_id/" ".env.docker.$1"
 
-log_status "before seed"
-time pnpm run seed:$1
+pnpm run seed:$1
 
-log_status "final directus restart to pick up updated env"
 docker compose --file "$compose_file" stop directus
 
 docker compose --file "$compose_file" up -d directus
 
-time npx wait-on -t 90s -l "$DIRECTUS_URL/admin/login"
+npx wait-on -t 90s -l "$DIRECTUS_URL/admin/login"
 
-log_status "finished"
 echo "Finished"
