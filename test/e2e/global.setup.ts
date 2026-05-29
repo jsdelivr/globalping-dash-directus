@@ -41,7 +41,7 @@ const startDirectus = async () => {
 
 	if (isDirectusRunning) { return; }
 
-	await execa({ stdout: 'inherit' })`docker compose -f docker-compose.e2e.yml start`;
+	await execa({ stdio: 'inherit' })`docker compose -f docker-compose.e2e.yml start`;
 	await waitFor(DIRECTUS_URL);
 	console.log('Directus started.');
 };

@@ -29,7 +29,11 @@ jobs:
           cp .env.scripts.e2e.example .env.scripts.e2e
       - name: Build docker compose
         run: |
-          pnpm run test:e2e:build:directus
+          docker compose -f docker-compose.e2e.yml build
+          sudo systemctl restart docker
+          docker compose -f docker-compose.e2e.yml up -d
+          pnpm run init:e2e
+          docker compose -f docker-compose.e2e.yml stop
       - name: Build dashboard repo
         env:
             CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
