@@ -39,6 +39,10 @@ export default defineHook(({ filter, action }, context) => {
 		if (fields.default_prefix) {
 			await validateDefaultPrefix(fields.default_prefix, keys, accountability, context);
 		}
+
+		if (Object.hasOwn(fields, 'default_prefix') && !Object.hasOwn(fields, 'deprecated_prefix')) {
+			fields.deprecated_prefix = null;
+		}
 	});
 
 	filter('users.delete', async (userIds, _payload, { accountability }) => {

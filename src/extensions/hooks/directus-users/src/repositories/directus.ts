@@ -7,6 +7,7 @@ export type DirectusUser = {
 	github_username: string;
 	github_organizations: string[];
 	default_prefix: string | null;
+	deprecated_prefix: string | null;
 	github_oauth_token: string | null;
 };
 

@@ -6,6 +6,7 @@ import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
+import { getEmailGenerator } from '../../../lib/src/email-generator.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { syncGithubData } from './actions/sync-github-data.js';
@@ -19,6 +20,7 @@ export type Request = ExpressRequest & {
 };
 
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
+const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'Invalid confirmation link.', 400);
 
 const rateLimiter = new RateLimiterMemory({
 	points: 10,
@@ -54,5 +56,25 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 				throw error;
 			}
 		}
+	}, context));
+
+	router.get('/username-change', asyncWrapper(async (req, res) => {
+		const data = req.query.data;
+
+		if (!data || typeof data !== 'string') {
+			throw new InvalidPayloadError();
+		}
+
+		const tokenPayload = getEmailGenerator(context).verifyToken(data);
+
+		if (!tokenPayload) {
+			throw new InvalidPayloadError();
+		}
+
+		const { UsersService } = context.services;
+		const usersService = new UsersService({ schema: await context.getSchema() });
+		await usersService.updateOne(tokenPayload.userId, { deprecated_prefix: null });
+
+		res.redirect(`${context.env.DASH_URL}/username-change/success`);
 	}, context));
 });

@@ -33,6 +33,13 @@ export class EmailGenerator {
 		return `${this.getNormalizedDashUrl()}/settings`;
 	}
 
+	public generateUsernameChangeLink (userId: string): string {
+		const query = new URLSearchParams({
+			data: this.createToken({ userId }),
+		});
+		return `${this.getNormalizedDirectusUrl()}/sync-github-data/username-change?${query.toString()}`;
+	}
+
 	public verifyToken (data: string): { userId: string; type?: string } | null {
 		try {
 			const payload = jwt.verify(data, this.context.env.SECRET!) as { userId: string; type?: string };

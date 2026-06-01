@@ -1,6 +1,7 @@
 import { createError } from '@directus/errors';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
+import { checkDefaultPrefix } from '../../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations } from '../../../../lib/src/github-api-client.js';
 import { getDirectusUser, updateDirectusUser } from '../repositories/directus.js';
 import { getGithubUsername } from '../repositories/github.js';
@@ -11,6 +12,8 @@ export type User = {
 	github_username: string | null;
 	github_organizations: string[];
 	github_oauth_token: string | null;
+	default_prefix: string | null;
+	deprecated_prefix: string | null;
 };
 
 const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data to sync with GitHub', 400);
@@ -34,7 +37,12 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 			github_username: githubUsername,
 			github_organizations: githubOrgs,
 		}, context);
+
+		user.github_username = githubUsername;
+		user.github_organizations = githubOrgs;
 	}
+
+	await checkDefaultPrefix(user, context);
 
 	return {
 		github_username: githubUsername,

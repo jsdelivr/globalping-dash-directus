@@ -1,6 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
+import { checkDefaultPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
 
 type User = {
@@ -10,6 +11,8 @@ type User = {
 	github_organizations: string[];
 	github_oauth_token: string | null;
 	user_type: string;
+	default_prefix: string | null;
+	deprecated_prefix: string | null;
 };
 
 type AuthPayload = {
@@ -97,6 +100,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 	}
 
 	await syncGitHubOrganizations(user, context);
+	await checkDefaultPrefix(user, context);
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
@@ -104,6 +108,7 @@ const syncGitHubOrganizations = async (user: User, context: HookExtensionContext
 
 	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
 		await updateUser(user, { github_organizations: githubOrgs }, context);
+		user.github_organizations = githubOrgs;
 	}
 };
 
