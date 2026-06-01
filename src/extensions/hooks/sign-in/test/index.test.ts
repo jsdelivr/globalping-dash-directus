@@ -24,6 +24,10 @@ describe('Sign-in hook', () => {
 	};
 	const usersService = {
 		updateOne: sinon.stub(),
+		updateByQuery: sinon.stub(),
+	};
+	const notificationsService = {
+		createOne: sinon.stub(),
 	};
 	const context = {
 		services: {
@@ -33,11 +37,19 @@ describe('Sign-in hook', () => {
 			UsersService: sinon.stub().callsFake(() => {
 				return usersService;
 			}),
+			NotificationsService: sinon.stub().callsFake(() => {
+				return notificationsService;
+			}),
 		},
 		env: {
 			GITHUB_ACCESS_TOKEN: 'default-github-token',
+			DASH_URL: 'https://dash.globalping.io',
+			PUBLIC_URL: 'https://dash-directus.globalping.io',
+			SECRET: 'test-secret',
 		},
-		database: {},
+		database: {
+			transaction: async (callback: (trx: unknown) => unknown) => callback({}),
+		},
 		getSchema: () => Promise.resolve({}),
 		logger: {
 			error: () => {},
@@ -142,6 +154,66 @@ describe('Sign-in hook', () => {
 			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
 			expect(nock.isDone()).to.equal(true);
 			expect(usersService.updateOne.callCount).to.equal(0);
+		});
+
+		it('should deprecate an invalid default_prefix on login and notify the user', async () => {
+			itemsService.readOne.resolves({
+				id: '123',
+				external_identifier: '456',
+				github_username: 'newUsername',
+				github_organizations: [ 'jsdelivr' ],
+				github_oauth_token: 'user-github-token',
+				default_prefix: 'oldUsername',
+				deprecated_prefix: null,
+			});
+
+			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer user-github-token')
+				.get(`/user/orgs`)
+				.reply(200, [{ login: 'jsdelivr' }]);
+
+			hook(events, context);
+
+			await callbacks.action['auth.login']?.({ user: '123', provider: 'github' });
+
+			expect(nock.isDone()).to.equal(true);
+			expect(usersService.updateOne.callCount).to.equal(1);
+
+			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', {
+				default_prefix: 'newUsername',
+				deprecated_prefix: 'oldUsername',
+			}]);
+
+			expect(notificationsService.createOne.args[0]?.[0]).to.include({
+				recipient: '123',
+				type: 'prefix_changed',
+			});
+		});
+
+		it('should not deprecate when default_prefix is a still-valid org on login', async () => {
+			itemsService.readOne.resolves({
+				id: '123',
+				external_identifier: '456',
+				github_username: 'newUsername',
+				github_organizations: [ 'jsdelivr' ],
+				github_oauth_token: 'user-github-token',
+				default_prefix: 'jsdelivr',
+				deprecated_prefix: null,
+			});
+
+			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer user-github-token')
+				.get(`/user/orgs`)
+				.reply(200, [{ login: 'jsdelivr' }]);
+
+			hook(events, context);
+
+			await callbacks.action['auth.login']?.({ user: '123', provider: 'github' });
+
+			expect(nock.isDone()).to.equal(true);
+			expect(usersService.updateOne.callCount).to.equal(0);
+			expect(usersService.updateByQuery.callCount).to.equal(0);
+			expect(notificationsService.createOne.callCount).to.equal(0);
 		});
 
 		it('should fallback to default github token if user token is invalid', async () => {

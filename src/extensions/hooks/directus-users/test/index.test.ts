@@ -120,6 +120,42 @@ describe('users hooks', () => {
 			}]);
 		});
 
+		it('should clear deprecated_prefix when default_prefix is changed manually', async () => {
+			usersService.readByQuery.resolves([{
+				id: '1-1-1-1-1',
+				github_username: 'testuser',
+				github_organizations: [ 'org1', 'org2' ],
+			}]);
+
+			const payload: Record<string, unknown> = { default_prefix: 'testuser' };
+
+			await callbacks.filter['users.update']?.(
+				payload,
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			);
+
+			expect(payload.deprecated_prefix).to.equal(null);
+		});
+
+		it('should not clear deprecated_prefix when it is set together with default_prefix', async () => {
+			usersService.readByQuery.resolves([{
+				id: '1-1-1-1-1',
+				github_username: 'testuser',
+				github_organizations: [ 'org1', 'org2' ],
+			}]);
+
+			const payload: Record<string, unknown> = { default_prefix: 'testuser', deprecated_prefix: 'old-name' };
+
+			await callbacks.filter['users.update']?.(
+				payload,
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			);
+
+			expect(payload.deprecated_prefix).to.equal('old-name');
+		});
+
 		it('should throw error if default_prefix is not valid', async () => {
 			usersService.readByQuery.resolves([{
 				id: '1-1-1-1-1',
@@ -173,14 +209,17 @@ describe('users hooks', () => {
 			expect(payload.notification_preferences.outdated_software.emailEnabled).to.equal(false);
 		});
 
-		it('should do nothing if default_prefix is not being updated', async () => {
+		it('should not clear deprecated_prefix if default_prefix is not being updated', async () => {
+			const payload: Record<string, unknown> = { email: 'test@example.com' };
+
 			await callbacks.filter['users.update']?.(
-				{ email: 'test@example.com' },
+				payload,
 				{ keys: [ '1-1-1-1-1' ] },
 				{ accountability: { user: 'userIdValue' } },
 			);
 
 			expect(usersService.readByQuery.callCount).to.equal(0);
+			expect(Object.hasOwn(payload, 'deprecated_prefix')).to.equal(false);
 		});
 
 		it('should do nothing if user is not authenticated', async () => {

@@ -4,16 +4,23 @@ import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
+import { getEmailGenerator } from '../../../lib/src/email-generator.js';
 import endpoint from '../src/index.js';
 
 describe('/sync-github-data endpoint', () => {
 	const updateOne = sinon.stub();
+	const updateByQuery = sinon.stub();
+	const createNotification = sinon.stub();
 	const readOne = sinon.stub();
 	const itemsServiceStub = sinon.stub().returns({
 		readOne,
 	});
 	const usersServiceStub = sinon.stub().returns({
 		updateOne,
+		updateByQuery,
+	});
+	const notificationsServiceStub = sinon.stub().returns({
+		createOne: createNotification,
 	});
 	const endpointContext = {
 		logger: {
@@ -21,12 +28,18 @@ describe('/sync-github-data endpoint', () => {
 		},
 		env: {
 			GITHUB_ACCESS_TOKEN: 'default-github-token',
+			DASH_URL: 'https://dash.globalping.io',
+			PUBLIC_URL: 'https://dash-directus.globalping.io',
+			SECRET: 'test-secret',
 		},
 		services: {
 			ItemsService: itemsServiceStub,
 			UsersService: usersServiceStub,
+			NotificationsService: notificationsServiceStub,
 		},
-		database: {},
+		database: {
+			transaction: async (callback: (trx: unknown) => unknown) => callback({}),
+		},
 		getSchema: sinon.stub().resolves({}),
 	} as unknown as EndpointExtensionContext;
 
@@ -255,6 +268,129 @@ describe('/sync-github-data endpoint', () => {
 		});
 
 		expect(readOne.callCount).to.equal(1);
+		expect(updateOne.callCount).to.equal(0);
+	});
+
+	it('should deprecate an invalid default_prefix and notify the user', async () => {
+		readOne.resolves({
+			id: 'directus-id',
+			external_identifier: 'github-id',
+			github_username: 'old-username',
+			github_organizations: [ 'old-org' ],
+			github_oauth_token: 'user-github-token',
+			default_prefix: 'old-username',
+			deprecated_prefix: null,
+		});
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'new-username' });
+		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'new-org' }]);
+
+		const res = await request(app).post('/').send({ userId: 'directus-id' });
+
+		expect(nock.isDone()).to.equal(true);
+		expect(res.status).to.equal(200);
+
+		expect(updateOne.callCount).to.equal(2);
+
+		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', {
+			github_username: 'new-username',
+			github_organizations: [ 'new-org' ],
+		}]);
+
+		expect(updateOne.args[1]).to.deep.equal([ 'directus-id', {
+			default_prefix: 'new-username',
+			deprecated_prefix: 'old-username',
+		}]);
+
+		expect(updateByQuery.args[0]).to.deep.equal([
+			{ filter: { deprecated_prefix: { _eq: 'new-username' } } },
+			{ deprecated_prefix: null },
+		]);
+
+		expect(createNotification.callCount).to.equal(1);
+
+		expect(createNotification.args[0]?.[0]).to.include({
+			recipient: 'directus-id',
+			type: 'prefix_changed',
+		});
+
+		expect(createNotification.args[0]?.[0].message).to.include('username-change');
+	});
+
+	it('should not deprecate when default_prefix is still valid', async () => {
+		readOne.resolves({
+			id: 'directus-id',
+			external_identifier: 'github-id',
+			github_username: 'old-username',
+			github_organizations: [ 'old-org' ],
+			github_oauth_token: 'user-github-token',
+			default_prefix: 'old-username',
+			deprecated_prefix: null,
+		});
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'old-username' });
+		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'old-org' }]);
+
+		const res = await request(app).post('/').send({ userId: 'directus-id' });
+
+		expect(nock.isDone()).to.equal(true);
+		expect(res.status).to.equal(200);
+		expect(updateOne.callCount).to.equal(0);
+		expect(createNotification.callCount).to.equal(0);
+	});
+
+	it('should not deprecate when default_prefix is an unchanged org and only the username changed', async () => {
+		readOne.resolves({
+			id: 'directus-id',
+			external_identifier: 'github-id',
+			github_username: 'old-username',
+			github_organizations: [ 'my-org' ],
+			github_oauth_token: 'user-github-token',
+			default_prefix: 'my-org',
+			deprecated_prefix: null,
+		});
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'new-username' });
+		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'my-org' }]);
+
+		const res = await request(app).post('/').send({ userId: 'directus-id' });
+
+		expect(nock.isDone()).to.equal(true);
+		expect(res.status).to.equal(200);
+
+		expect(updateOne.callCount).to.equal(1);
+
+		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', {
+			github_username: 'new-username',
+			github_organizations: [ 'my-org' ],
+		}]);
+
+		expect(updateByQuery.callCount).to.equal(0);
+		expect(createNotification.callCount).to.equal(0);
+	});
+
+	it('should confirm the prefix update and clear deprecated_prefix', async () => {
+		const link = getEmailGenerator(endpointContext).generateUsernameChangeLink('directus-id');
+		const data = new URL(link).searchParams.get('data')!;
+
+		const res = await request(app).get('/username-change').query({ data });
+
+		expect(res.status).to.equal(302);
+		expect(res.headers.location).to.equal('https://dash.globalping.io/username-change/success');
+		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { deprecated_prefix: null }]);
+	});
+
+	it('should reject an invalid confirmation token', async () => {
+		const res = await request(app).get('/username-change').query({ data: 'not-a-valid-token' });
+
+		expect(res.status).to.equal(400);
+		expect(updateOne.callCount).to.equal(0);
+	});
+
+	it('should reject a confirmation request without a token', async () => {
+		const res = await request(app).get('/username-change');
+
+		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);
 	});
 
