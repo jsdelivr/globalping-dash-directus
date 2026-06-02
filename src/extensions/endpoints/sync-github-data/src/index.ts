@@ -22,7 +22,7 @@ export type Request = ExpressRequest & {
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
 const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'Invalid confirmation link.', 400);
 
-const rateLimiter = new RateLimiterMemory({
+export const rateLimiter = new RateLimiterMemory({
 	points: 10,
 	duration: 60 * 60,
 });

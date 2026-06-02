@@ -5,7 +5,7 @@ import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
 import { getEmailGenerator } from '../../../lib/src/email-generator.js';
-import endpoint from '../src/index.js';
+import endpoint, { rateLimiter } from '../src/index.js';
 
 describe('/sync-github-data endpoint', () => {
 	const updateOne = sinon.stub();
@@ -60,8 +60,13 @@ describe('/sync-github-data endpoint', () => {
 		nock.enableNetConnect('127.0.0.1');
 	});
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		sinon.resetHistory();
+
+		await Promise.all([
+			rateLimiter.delete('directus-id'),
+			rateLimiter.delete('admin-id'),
+		]);
 
 		readOne.reset();
 
@@ -318,7 +323,7 @@ describe('/sync-github-data endpoint', () => {
 		expect(createNotification.args[0]?.[0].message).to.include('default-tag-change');
 	});
 
-	it('should reset an invalid default_prefix without deprecating it for `public_probes: false`', async () => {
+	it('should update an invalid default_prefix without moving it to deprecated_prefix for `public_probes: false`', async () => {
 		readOne.resolves({
 			id: 'directus-id',
 			external_identifier: 'github-id',

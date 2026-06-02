@@ -25,13 +25,11 @@ export const releaseDeprecatedPrefix = async (username: string, context: Context
 };
 
 export const checkDefaultPrefix = async (user: User, context: Context): Promise<void> => {
-	const { id, github_username: githubUsername, github_organizations: githubOrganizations, default_prefix: defaultPrefix, public_probes: publicProbes } = user;
-
-	if (!defaultPrefix || !githubUsername) {
+	if (!user.default_prefix || !user.github_username) {
 		return;
 	}
 
-	if ([ githubUsername, ...githubOrganizations ].includes(defaultPrefix)) {
+	if ([ user.github_username, ...user.github_organizations ].includes(user.default_prefix)) {
 		return;
 	}
 
@@ -39,32 +37,32 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 	const { UsersService, NotificationsService } = services;
 	const schema = await getSchema();
 
-	await releaseDeprecatedPrefix(githubUsername, context);
+	await releaseDeprecatedPrefix(user.github_username, context);
 
-	if (!publicProbes) {
+	if (!user.public_probes) {
 		const usersService = new UsersService({ schema });
-		await usersService.updateOne(id, { default_prefix: githubUsername }, { emitEvents: false });
+		await usersService.updateOne(user.id, { default_prefix: user.github_username }, { emitEvents: false });
 		return;
 	}
 
 	const emailGenerator = getEmailGenerator(context);
-	const defaultTagChangeLink = emailGenerator.generateDefaultTagChangeLink(id);
+	const defaultTagChangeLink = emailGenerator.generateDefaultTagChangeLink(user.id);
 	const settingsLink = emailGenerator.generateSettingsLink();
 
 	await database.transaction(async (trx) => {
 		const usersService = new UsersService({ schema, knex: trx });
 		const notificationsService = new NotificationsService({ schema, knex: trx });
 
-		await usersService.updateOne(id, {
-			default_prefix: githubUsername,
-			deprecated_prefix: defaultPrefix,
+		await usersService.updateOne(user.id, {
+			default_prefix: user.github_username,
+			deprecated_prefix: user.default_prefix,
 		}, { emitEvents: false });
 
 		await notificationsService.createOne({
-			recipient: id,
+			recipient: user.id,
 			type: 'default_tag_change',
 			subject: 'Action required: confirm your probe\'s default tag change',
-			message: `Your current default probe tag \`u-${defaultPrefix}\` is no longer valid, so it was updated to \`u-${githubUsername}\`.\n\nThe old \`u-${defaultPrefix}\` tag still works for measurement targeting for now. [Confirm the new tag](${defaultTagChangeLink}) to stop using the old one, or [choose a different tag prefix](${settingsLink}) in settings.`,
+			message: `Your current default probe tag \`u-${user.default_prefix}\` is no longer valid, so it was updated to \`u-${user.github_username}\`.\n\nThe old \`u-${user.default_prefix}\` tag still works for measurement targeting for now. [Confirm the new tag](${defaultTagChangeLink}) to stop using the old one, or [choose a different tag prefix](${settingsLink}) in settings.`,
 		});
 	});
 };

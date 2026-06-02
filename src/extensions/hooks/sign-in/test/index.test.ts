@@ -165,6 +165,7 @@ describe('Sign-in hook', () => {
 				github_oauth_token: 'user-github-token',
 				default_prefix: 'oldUsername',
 				deprecated_prefix: null,
+				public_probes: true,
 			});
 
 			nock('https://api.github.com')
