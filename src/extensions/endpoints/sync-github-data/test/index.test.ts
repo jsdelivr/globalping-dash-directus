@@ -345,6 +345,11 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(updateOne.callCount).to.equal(2);
 
+		expect(updateByQuery.args[0]).to.deep.equal([
+			{ filter: { deprecated_prefix: { _eq: 'new-username' } } },
+			{ deprecated_prefix: null },
+		]);
+
 		expect(updateOne.args[1]).to.deep.equal([ 'directus-id', {
 			default_prefix: 'new-username',
 		}, { emitEvents: false }]);
