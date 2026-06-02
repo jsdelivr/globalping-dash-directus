@@ -4,6 +4,8 @@ type Context = {
 	env: Record<string, string>;
 };
 
+type Audience = 'email-unsubscribe' | 'username-change';
+
 export class EmailGenerator {
 	public constructor (private readonly context: Context) {
 		if (!context.env.DASH_URL) {
@@ -17,14 +19,14 @@ export class EmailGenerator {
 
 	public generateListUnsubscribeLink (userId: string): string {
 		const query = new URLSearchParams({
-			data: this.createToken({ userId }),
+			data: this.createToken({ userId }, 'email-unsubscribe'),
 		});
 		return `${this.getNormalizedDirectusUrl()}/email-unsubscribe/unsubscribe?${query.toString()}`;
 	}
 
 	public generateTypeUnsubscribeLink (userId: string, type: string): string {
 		const query = new URLSearchParams({
-			data: this.createToken({ userId, type }),
+			data: this.createToken({ userId, type }, 'email-unsubscribe'),
 		});
 		return `${this.getNormalizedDashUrl()}/emails/unsubscribe?${query.toString()}`;
 	}
@@ -35,16 +37,21 @@ export class EmailGenerator {
 
 	public generateUsernameChangeLink (userId: string): string {
 		const query = new URLSearchParams({
-			data: this.createToken({ userId }),
+			data: this.createToken({ userId }, 'username-change'),
 		});
-		return `${this.getNormalizedDirectusUrl()}/sync-github-data/username-change?${query.toString()}`;
+		return `${this.getNormalizedDashUrl()}/username-change?${query.toString()}`;
 	}
 
-	public verifyToken (data: string): { userId: string; type?: string } | null {
+	// TODO: `allowLegacyNoAudience` is only for legacy no-aud tokens, so previous email links still work. Should be removed after 01.07.2026.
+	public verifyToken (data: string, audience: string, allowLegacyNoAudience = false): { userId: string; type?: string } | null {
 		try {
-			const payload = jwt.verify(data, this.context.env.SECRET!) as { userId: string; type?: string };
+			const payload = jwt.verify(data, this.context.env.SECRET!, allowLegacyNoAudience ? {} : { audience }) as { userId: string; type?: string; aud?: string };
 
 			if (!payload || typeof payload !== 'object') {
+				return null;
+			}
+
+			if (allowLegacyNoAudience && payload.aud !== undefined && payload.aud !== audience) {
 				return null;
 			}
 
@@ -54,8 +61,8 @@ export class EmailGenerator {
 		}
 	}
 
-	private createToken (payload: Record<string, unknown>): string {
-		return jwt.sign(payload, this.context.env.SECRET!);
+	private createToken (payload: Record<string, unknown>, audience: Audience): string {
+		return jwt.sign(payload, this.context.env.SECRET!, { audience });
 	}
 
 	private getNormalizedDashUrl () {

@@ -97,7 +97,7 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidPayloadError();
 		}
 
-		const tokenPayload = emailGenerator.verifyToken(data);
+		const tokenPayload = emailGenerator.verifyToken(data, 'email-unsubscribe', true);
 
 		if (!tokenPayload) {
 			throw new InvalidTokenError();

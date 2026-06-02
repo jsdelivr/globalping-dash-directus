@@ -58,14 +58,14 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 		}
 	}, context));
 
-	router.get('/username-change', asyncWrapper(async (req, res) => {
+	router.post('/username-change', asyncWrapper(async (req, res) => {
 		const data = req.query.data;
 
 		if (!data || typeof data !== 'string') {
 			throw new InvalidPayloadError();
 		}
 
-		const tokenPayload = getEmailGenerator(context).verifyToken(data);
+		const tokenPayload = getEmailGenerator(context).verifyToken(data, 'username-change');
 
 		if (!tokenPayload) {
 			throw new InvalidPayloadError();
@@ -75,6 +75,6 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 		const usersService = new UsersService({ schema: await context.getSchema() });
 		await usersService.updateOne(tokenPayload.userId, { deprecated_prefix: null });
 
-		res.redirect(`${context.env.DASH_URL}/username-change/success`);
+		res.status(200).send();
 	}, context));
 });

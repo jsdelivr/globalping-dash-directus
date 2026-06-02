@@ -51,7 +51,7 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 		await usersService.updateOne(id, {
 			default_prefix: githubUsername,
 			deprecated_prefix: defaultPrefix,
-		});
+		}, { emitEvents: false });
 
 		await notificationsService.createOne({
 			recipient: id,

@@ -182,7 +182,7 @@ describe('Sign-in hook', () => {
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', {
 				default_prefix: 'newUsername',
 				deprecated_prefix: 'oldUsername',
-			}]);
+			}, { emitEvents: false }]);
 
 			expect(notificationsService.createOne.args[0]?.[0]).to.include({
 				recipient: '123',

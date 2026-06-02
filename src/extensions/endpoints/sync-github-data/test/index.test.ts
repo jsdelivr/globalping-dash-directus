@@ -300,7 +300,7 @@ describe('/sync-github-data endpoint', () => {
 		expect(updateOne.args[1]).to.deep.equal([ 'directus-id', {
 			default_prefix: 'new-username',
 			deprecated_prefix: 'old-username',
-		}]);
+		}, { emitEvents: false }]);
 
 		expect(updateByQuery.args[0]).to.deep.equal([
 			{ filter: { deprecated_prefix: { _eq: 'new-username' } } },
@@ -373,22 +373,21 @@ describe('/sync-github-data endpoint', () => {
 		const link = getEmailGenerator(endpointContext).generateUsernameChangeLink('directus-id');
 		const data = new URL(link).searchParams.get('data')!;
 
-		const res = await request(app).get('/username-change').query({ data });
+		const res = await request(app).post('/username-change').query({ data });
 
-		expect(res.status).to.equal(302);
-		expect(res.headers.location).to.equal('https://dash.globalping.io/username-change/success');
+		expect(res.status).to.equal(200);
 		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { deprecated_prefix: null }]);
 	});
 
 	it('should reject an invalid confirmation token', async () => {
-		const res = await request(app).get('/username-change').query({ data: 'not-a-valid-token' });
+		const res = await request(app).post('/username-change').query({ data: 'not-a-valid-token' });
 
 		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should reject a confirmation request without a token', async () => {
-		const res = await request(app).get('/username-change');
+		const res = await request(app).post('/username-change');
 
 		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);

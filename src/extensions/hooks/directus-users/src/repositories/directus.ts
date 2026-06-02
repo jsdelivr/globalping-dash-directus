@@ -27,6 +27,18 @@ export const getDirectusUsers = async (userIds: string[], accountability: Accoun
 	return users;
 };
 
+export const clearDeprecatedPrefix = async (userIds: string[], { services, getSchema }: HookExtensionContext) => {
+	const { UsersService } = services;
+	const usersService = new UsersService({ schema: await getSchema() });
+
+	await usersService.updateByQuery({
+		filter: {
+			id: { _in: userIds },
+			deprecated_prefix: { _nnull: true },
+		},
+	}, { deprecated_prefix: null });
+};
+
 export const deleteCreditsAdditions = async (githubIds: string[], accountability: Accountability | null, { services, getSchema }: HookExtensionContext) => {
 	if (githubIds.length === 0) {
 		return;

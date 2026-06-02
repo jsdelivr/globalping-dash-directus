@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import TTLCache from '@isaacs/ttlcache';
 import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
-import { getDirectusUsers, deleteCreditsAdditions, type DirectusUser } from './repositories/directus.js';
+import { getDirectusUsers, deleteCreditsAdditions, clearDeprecatedPrefix, type DirectusUser } from './repositories/directus.js';
 import { joiValidateUser, validateDefaultPrefix } from './validate-fields.js';
 
 export type Fields = Partial<DirectusUser>;
@@ -39,9 +39,14 @@ export default defineHook(({ filter, action }, context) => {
 		if (fields.default_prefix) {
 			await validateDefaultPrefix(fields.default_prefix, keys, accountability, context);
 		}
+	});
 
-		if (Object.hasOwn(fields, 'default_prefix') && !Object.hasOwn(fields, 'deprecated_prefix')) {
-			fields.deprecated_prefix = null;
+	// Updating deprecated_prefix in 'action' because user doesn't have access to it.
+	action('users.update', async ({ payload, keys }) => {
+		const fields = payload as Fields;
+
+		if (Object.hasOwn(fields, 'default_prefix')) {
+			await clearDeprecatedPrefix(keys as string[], context);
 		}
 	});
 
