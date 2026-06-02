@@ -9,6 +9,7 @@ type User = {
 	github_organizations: string[];
 	default_prefix: string | null;
 	deprecated_prefix: string | null;
+	public_probes: boolean;
 };
 
 export const releaseDeprecatedPrefix = async (username: string, context: Context) => {
@@ -24,7 +25,7 @@ export const releaseDeprecatedPrefix = async (username: string, context: Context
 };
 
 export const checkDefaultPrefix = async (user: User, context: Context): Promise<void> => {
-	const { id, github_username: githubUsername, github_organizations: githubOrganizations, default_prefix: defaultPrefix } = user;
+	const { id, github_username: githubUsername, github_organizations: githubOrganizations, default_prefix: defaultPrefix, public_probes: publicProbes } = user;
 
 	if (!defaultPrefix || !githubUsername) {
 		return;
@@ -39,6 +40,12 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 	const schema = await getSchema();
 
 	await releaseDeprecatedPrefix(githubUsername, context);
+
+	if (!publicProbes) {
+		const usersService = new UsersService({ schema });
+		await usersService.updateOne(id, { default_prefix: githubUsername }, { emitEvents: false });
+		return;
+	}
 
 	const emailGenerator = getEmailGenerator(context);
 	const defaultTagChangeLink = emailGenerator.generateDefaultTagChangeLink(id);

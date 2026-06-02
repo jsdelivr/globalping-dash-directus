@@ -14,6 +14,7 @@ export type User = {
 	github_oauth_token: string | null;
 	default_prefix: string | null;
 	deprecated_prefix: string | null;
+	public_probes: boolean;
 };
 
 const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data to sync with GitHub', 400);

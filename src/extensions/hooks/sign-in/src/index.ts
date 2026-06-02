@@ -13,6 +13,7 @@ type User = {
 	user_type: string;
 	default_prefix: string | null;
 	deprecated_prefix: string | null;
+	public_probes: boolean;
 };
 
 type AuthPayload = {
