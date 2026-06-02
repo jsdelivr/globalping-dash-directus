@@ -4,7 +4,7 @@ import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import { getEmailGenerator } from '../../../lib/src/email-generator.js';
+import { getLinkGenerator } from '../../../lib/src/link-generator.js';
 import endpoint, { rateLimiter } from '../src/index.js';
 
 describe('/sync-github-data endpoint', () => {
@@ -405,7 +405,7 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should confirm the prefix update and clear deprecated_prefix', async () => {
-		const link = getEmailGenerator(endpointContext).generateDefaultTagChangeLink('directus-id');
+		const link = getLinkGenerator(endpointContext).generateDefaultTagChangeLink('directus-id');
 		const data = new URL(link).searchParams.get('data')!;
 
 		const res = await request(app).post('/default-tag-change').query({ data });

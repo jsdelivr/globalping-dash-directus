@@ -1,5 +1,5 @@
 import type { EndpointExtensionContext, HookExtensionContext } from '@directus/extensions';
-import { getEmailGenerator } from './email-generator.js';
+import { getLinkGenerator } from './link-generator.js';
 
 type Context = HookExtensionContext | EndpointExtensionContext;
 
@@ -45,9 +45,9 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 		return;
 	}
 
-	const emailGenerator = getEmailGenerator(context);
-	const defaultTagChangeLink = emailGenerator.generateDefaultTagChangeLink(user.id);
-	const settingsLink = emailGenerator.generateSettingsLink();
+	const linkGenerator = getLinkGenerator(context);
+	const defaultTagChangeLink = linkGenerator.generateDefaultTagChangeLink(user.id);
+	const settingsLink = linkGenerator.generateSettingsLink();
 
 	await database.transaction(async (trx) => {
 		const usersService = new UsersService({ schema, knex: trx });

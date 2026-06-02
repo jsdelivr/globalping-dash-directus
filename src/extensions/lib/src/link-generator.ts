@@ -6,7 +6,7 @@ type Context = {
 
 type Audience = 'email-unsubscribe' | 'default-tag-change';
 
-export class EmailGenerator {
+export class LinkGenerator {
 	public constructor (private readonly context: Context) {
 		if (!context.env.DASH_URL) {
 			throw new Error('DASH_URL is not set.');
@@ -74,12 +74,12 @@ export class EmailGenerator {
 	}
 }
 
-let emailGenerator: EmailGenerator | null = null;
+let linkGenerator: LinkGenerator | null = null;
 
-export const getEmailGenerator = (context: Context): EmailGenerator => {
-	if (!emailGenerator) {
-		emailGenerator = new EmailGenerator(context);
+export const getLinkGenerator = (context: Context): LinkGenerator => {
+	if (!linkGenerator) {
+		linkGenerator = new LinkGenerator(context);
 	}
 
-	return emailGenerator;
+	return linkGenerator;
 };

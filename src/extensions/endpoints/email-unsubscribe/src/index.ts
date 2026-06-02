@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { getEmailGenerator } from '../../../lib/src/email-generator.js';
+import { getLinkGenerator } from '../../../lib/src/link-generator.js';
 import { areAllDisabled, configurableNotifications, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
@@ -22,7 +22,7 @@ const InvalidTokenError = createError('INVALID_TOKEN', 'Invalid token.', 400);
 const UserNotFoundError = createError('NOT_FOUND', 'User not found.', 404);
 
 export default defineEndpoint((router, context) => {
-	const emailGenerator = getEmailGenerator(context);
+	const linkGenerator = getLinkGenerator(context);
 
 	const unsubscribeAllEmails = async (userId: string) => {
 		const { UsersService } = context.services;
@@ -97,7 +97,7 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidPayloadError();
 		}
 
-		const tokenPayload = emailGenerator.verifyToken(data, 'email-unsubscribe', true);
+		const tokenPayload = linkGenerator.verifyToken(data, 'email-unsubscribe', true);
 
 		if (!tokenPayload) {
 			throw new InvalidTokenError();

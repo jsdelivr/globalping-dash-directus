@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import express from 'express';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import { EmailGenerator } from '../../../lib/src/email-generator.js';
+import { LinkGenerator } from '../../../lib/src/link-generator.js';
 import { configurableNotifications, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 import endpoint from '../src/index.js';
 
@@ -43,7 +43,7 @@ describe('email-unsubscribe endpoint', () => {
 	app.use(router);
 
 	const getData = (userId: string) => {
-		const links = new EmailGenerator({
+		const links = new LinkGenerator({
 			env: {
 				DASH_URL: 'https://dash.globalping.io',
 				PUBLIC_URL: 'https://dash-directus.globalping.io',
@@ -55,7 +55,7 @@ describe('email-unsubscribe endpoint', () => {
 	};
 
 	const getTypeData = (userId: string, type: string) => {
-		const links = new EmailGenerator({
+		const links = new LinkGenerator({
 			env: {
 				DASH_URL: 'https://dash.globalping.io',
 				PUBLIC_URL: 'https://dash-directus.globalping.io',

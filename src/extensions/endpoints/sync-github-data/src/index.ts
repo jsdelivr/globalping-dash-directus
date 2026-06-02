@@ -6,8 +6,8 @@ import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { getEmailGenerator } from '../../../lib/src/email-generator.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
+import { getLinkGenerator } from '../../../lib/src/link-generator.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { syncGithubData } from './actions/sync-github-data.js';
 
@@ -65,7 +65,7 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 			throw new InvalidPayloadError();
 		}
 
-		const tokenPayload = getEmailGenerator(context).verifyToken(data, 'default-tag-change');
+		const tokenPayload = getLinkGenerator(context).verifyToken(data, 'default-tag-change');
 
 		if (!tokenPayload) {
 			throw new InvalidPayloadError();
