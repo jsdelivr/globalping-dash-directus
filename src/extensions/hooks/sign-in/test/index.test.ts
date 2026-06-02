@@ -186,7 +186,7 @@ describe('Sign-in hook', () => {
 
 			expect(notificationsService.createOne.args[0]?.[0]).to.include({
 				recipient: '123',
-				type: 'prefix_changed',
+				type: 'default_tag_change',
 			});
 		});
 

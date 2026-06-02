@@ -41,7 +41,7 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 	await releaseDeprecatedPrefix(githubUsername, context);
 
 	const emailGenerator = getEmailGenerator(context);
-	const confirmLink = emailGenerator.generateUsernameChangeLink(id);
+	const defaultTagChangeLink = emailGenerator.generateDefaultTagChangeLink(id);
 	const settingsLink = emailGenerator.generateSettingsLink();
 
 	await database.transaction(async (trx) => {
@@ -55,9 +55,9 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 
 		await notificationsService.createOne({
 			recipient: id,
-			type: 'prefix_changed',
-			subject: 'Action required: confirm your probe tag prefix change',
-			message: `Your GitHub username changed to **${githubUsername}**, so your default probe tag prefix was updated from \`u-${defaultPrefix}\` to \`u-${githubUsername}\`.\n\nThe old \`u-${defaultPrefix}\` tag still works for measurement targeting for now. [Confirm the new prefix](${confirmLink}) to stop using the old one, or [choose a different prefix](${settingsLink}) in your settings.`,
+			type: 'default_tag_change',
+			subject: 'Action required: confirm your probe\'s default tag change',
+			message: `Your current default probe tag \`u-${defaultPrefix}\` is no longer valid, so it was updated to \`u-${githubUsername}\`.\n\nThe old \`u-${defaultPrefix}\` tag still works for measurement targeting for now. [Confirm the new tag](${defaultTagChangeLink}) to stop using the old one, or [choose a different tag prefix](${settingsLink}) in settings.`,
 		});
 	});
 };

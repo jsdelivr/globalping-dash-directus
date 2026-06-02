@@ -311,10 +311,10 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(createNotification.args[0]?.[0]).to.include({
 			recipient: 'directus-id',
-			type: 'prefix_changed',
+			type: 'default_tag_change',
 		});
 
-		expect(createNotification.args[0]?.[0].message).to.include('username-change');
+		expect(createNotification.args[0]?.[0].message).to.include('default-tag-change');
 	});
 
 	it('should not deprecate when default_prefix is still valid', async () => {
@@ -370,24 +370,24 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should confirm the prefix update and clear deprecated_prefix', async () => {
-		const link = getEmailGenerator(endpointContext).generateUsernameChangeLink('directus-id');
+		const link = getEmailGenerator(endpointContext).generateDefaultTagChangeLink('directus-id');
 		const data = new URL(link).searchParams.get('data')!;
 
-		const res = await request(app).post('/username-change').query({ data });
+		const res = await request(app).post('/default-tag-change').query({ data });
 
 		expect(res.status).to.equal(200);
 		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { deprecated_prefix: null }]);
 	});
 
 	it('should reject an invalid confirmation token', async () => {
-		const res = await request(app).post('/username-change').query({ data: 'not-a-valid-token' });
+		const res = await request(app).post('/default-tag-change').query({ data: 'not-a-valid-token' });
 
 		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should reject a confirmation request without a token', async () => {
-		const res = await request(app).post('/username-change');
+		const res = await request(app).post('/default-tag-change');
 
 		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);

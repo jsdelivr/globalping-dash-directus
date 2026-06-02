@@ -4,7 +4,7 @@ type Context = {
 	env: Record<string, string>;
 };
 
-type Audience = 'email-unsubscribe' | 'username-change';
+type Audience = 'email-unsubscribe' | 'default-tag-change';
 
 export class EmailGenerator {
 	public constructor (private readonly context: Context) {
@@ -35,15 +35,15 @@ export class EmailGenerator {
 		return `${this.getNormalizedDashUrl()}/settings`;
 	}
 
-	public generateUsernameChangeLink (userId: string): string {
+	public generateDefaultTagChangeLink (userId: string): string {
 		const query = new URLSearchParams({
-			data: this.createToken({ userId }, 'username-change'),
+			data: this.createToken({ userId }, 'default-tag-change'),
 		});
-		return `${this.getNormalizedDashUrl()}/username-change?${query.toString()}`;
+		return `${this.getNormalizedDashUrl()}/default-tag-change?${query.toString()}`;
 	}
 
 	// TODO: `allowLegacyNoAudience` is only for legacy no-aud tokens, so previous email links still work. Should be removed after 01.07.2026.
-	public verifyToken (data: string, audience: string, allowLegacyNoAudience = false): { userId: string; type?: string } | null {
+	public verifyToken (data: string, audience: Audience, allowLegacyNoAudience = false): { userId: string; type?: string } | null {
 		try {
 			const payload = jwt.verify(data, this.context.env.SECRET!, allowLegacyNoAudience ? {} : { audience }) as { userId: string; type?: string; aud?: string };
 

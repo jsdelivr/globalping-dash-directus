@@ -65,7 +65,7 @@ const notificationTypes = {
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
-	prefix_changed: {
+	default_tag_change: {
 		configurableByUser: false,
 		readOnly: false,
 		sendEmail: true,

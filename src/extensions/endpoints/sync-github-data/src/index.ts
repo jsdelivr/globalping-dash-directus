@@ -58,14 +58,14 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 		}
 	}, context));
 
-	router.post('/username-change', asyncWrapper(async (req, res) => {
+	router.post('/default-tag-change', asyncWrapper(async (req, res) => {
 		const data = req.query.data;
 
 		if (!data || typeof data !== 'string') {
 			throw new InvalidPayloadError();
 		}
 
-		const tokenPayload = getEmailGenerator(context).verifyToken(data, 'username-change');
+		const tokenPayload = getEmailGenerator(context).verifyToken(data, 'default-tag-change');
 
 		if (!tokenPayload) {
 			throw new InvalidPayloadError();
