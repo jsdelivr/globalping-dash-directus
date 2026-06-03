@@ -61,8 +61,8 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 		await notificationsService.createOne({
 			recipient: user.id,
 			type: 'default_tag_change',
-			subject: 'Action required: confirm your probe\'s default tag change',
-			message: `Your current default probe tag **u-${user.default_prefix}** is no longer valid, so it was updated to **u-${user.github_username}**.\n\nThe old **u-${user.default_prefix}** tag still works for measurement targeting for now. [Confirm the new tag](${defaultTagChangeLink}) to stop using the old one, or [choose a different tag prefix](${settingsLink}) in settings.`,
+			subject: 'Action required: confirm the default tag change',
+			message: `The current default tag **u-${user.default_prefix}** of your probes is no longer valid, so it was updated to **u-${user.github_username}**.\n\nThe old **u-${user.default_prefix}** tag still works for measurement targeting for now. [Confirm the new tag](${defaultTagChangeLink}) to stop using the old one, or [choose a different tag prefix](${settingsLink}) in settings.`,
 		});
 	});
 };
