@@ -70,7 +70,7 @@ const notificationTypes = {
 		readOnly: false,
 		sendEmail: true,
 		hasParameter: false,
-		description: 'GitHub username changed, confirm new probe tag prefix',
+		description: 'Default tag prefix is no longer valid (e.g. GitHub username changed), confirm the new tag prefix',
 	},
 	low_credits: {
 		configurableByUser: true,
