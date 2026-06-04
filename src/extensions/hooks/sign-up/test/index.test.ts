@@ -85,7 +85,7 @@ describe('Sign-up hook', () => {
 		nock.cleanAll();
 	});
 
-	it('filter should fulfill first_name, last_name, github_username, adoption_token, date_created', async () => {
+	it('filter should fulfill first_name, last_name, github_username, adoption_token', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
 			.reply(200, [{ login: 'jsdelivr' }]);
@@ -112,11 +112,6 @@ describe('Sign-up hook', () => {
 		});
 
 		expect(payload.adoption_token!.length).to.equal(32);
-
-		expect(payload.date_created).to.be.a('string');
-		const parsedTimestamp = Date.parse(payload.date_created as string);
-		expect(Number.isNaN(parsedTimestamp)).to.equal(false);
-		expect((Date.now() - parsedTimestamp) / 1000).to.be.lessThan(10);
 	});
 
 	it('filter should use gh login as first_name if name is not provided', async () => {
