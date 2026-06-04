@@ -1827,6 +1827,9 @@ importers:
 
   src/extensions/operations/remove-banned-users-cron-handler:
     dependencies:
+      '@octokit/graphql':
+        specifier: ^9.0.2
+        version: 9.0.2
       axios:
         specifier: ^1.12.2
         version: 1.12.2
@@ -1836,6 +1839,9 @@ importers:
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
+      knex:
+        specifier: ^3.1.0
+        version: 3.1.0(mysql@2.18.1)
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.25
@@ -1849,6 +1855,9 @@ importers:
       '@types/chai':
         specifier: ^5.2.2
         version: 5.2.2
+      '@types/knex':
+        specifier: ^0.16.1
+        version: 0.16.1(mysql@2.18.1)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -3638,6 +3647,10 @@ packages:
 
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
+
+  '@types/knex@0.16.1':
+    resolution: {integrity: sha512-54gWD1HWwdVx5iLHaJ1qxH3I6KyBsj5fFqzRpXFn7REWiEB2jwspeVCombNsocSrqPd7IRPqKrsIME7/cD+TFQ==}
+    deprecated: This is a stub types definition. knex provides its own type definitions, so you do not need this installed.
 
   '@types/linkify-it@5.0.0':
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
@@ -10772,6 +10785,19 @@ snapshots:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 25.9.0
+
+  '@types/knex@0.16.1(mysql@2.18.1)':
+    dependencies:
+      knex: 3.1.0(mysql@2.18.1)
+    transitivePeerDependencies:
+      - better-sqlite3
+      - mysql
+      - mysql2
+      - pg
+      - pg-native
+      - sqlite3
+      - supports-color
+      - tedious
 
   '@types/linkify-it@5.0.0': {}
 

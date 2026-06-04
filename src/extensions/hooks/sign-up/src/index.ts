@@ -18,7 +18,6 @@ export type User = {
 	email_notifications: boolean;
 	adoption_token?: string;
 	default_prefix?: string;
-	date_created?: string;
 };
 
 type CreditsAdditions = {
@@ -38,7 +37,6 @@ export default defineHook(({ filter, action }, context) => {
 
 		user.email_notifications = false;
 		user.adoption_token = await generateBytes();
-		user.date_created = new Date().toISOString();
 	});
 
 	action('users.create', async (payload) => {

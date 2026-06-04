@@ -1,6 +1,6 @@
 {
 	"name": "remove-banned-users-cron-handler",
-	"description": "Handle banned users CRON job. Reads directus users, users not found on github are deleted.",
+	"description": "Handle banned users CRON job. Reads directus users; users not found on github are suspended (and deleted after a year), restored if they reappear.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
@@ -33,6 +33,7 @@
 		"@directus/extensions-sdk": "^17.1.4",
 		"@directus/types": "^15.0.3",
 		"@types/chai": "^5.2.2",
+		"@types/knex": "^0.16.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^22.13.14",
 		"@types/sinon": "^17.0.4",
@@ -45,8 +46,10 @@
 		"vue": "^3.5.18"
 	},
 	"dependencies": {
+		"@octokit/graphql": "^9.0.2",
 		"axios": "^1.12.2",
 		"axios-retry": "^4.5.0",
-		"bluebird": "^3.7.2"
+		"bluebird": "^3.7.2",
+		"knex": "^3.1.0"
 	}
 }

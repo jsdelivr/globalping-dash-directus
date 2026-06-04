@@ -1,4 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
+import type { Knex } from 'knex';
 import type { DirectusUser } from '../types.js';
 
 export const getDirectusUsers = async ({ services, getSchema }: OperationContext): Promise<DirectusUser[]> => {
@@ -8,17 +9,59 @@ export const getDirectusUsers = async ({ services, getSchema }: OperationContext
 		schema: await getSchema(),
 	});
 
-	const result = await usersService.readByQuery({}) as DirectusUser[];
+	const result = await usersService.readByQuery({
+		fields: [ 'id', 'external_identifier', 'github_username', 'status', 'suspended_at' ],
+	}) as DirectusUser[];
 	return result;
 };
 
-export const deleteUser = async (user: DirectusUser, { services, getSchema }: OperationContext) => {
-	const { UsersService } = services;
+export const suspendUsers = async (users: DirectusUser[], context: OperationContext) => {
+	if (!users.length) {
+		return;
+	}
 
-	const usersService = new UsersService({
+	const { services, getSchema, database } = context;
+	const { UsersService } = services;
+	const schema = await getSchema();
+	const ids = users.map(user => user.id);
+
+	await database.transaction(async (trx) => {
+		const usersService = new UsersService({ schema, knex: trx });
+
+		await usersService.updateMany(ids, { status: 'suspended', suspended_at: new Date().toISOString() });
+		await deleteUsersTokens(ids, trx, context);
+	});
+};
+
+const deleteUsersTokens = async (userIds: string[], trx: Knex.Transaction, { services, getSchema }: OperationContext) => {
+	const { ItemsService } = services;
+
+	const tokensService = new ItemsService('gp_tokens', {
 		schema: await getSchema(),
+		knex: trx,
 	});
 
-	const result = await usersService.deleteOne(user.id) as string;
-	return result;
+	await tokensService.deleteByQuery({ filter: { user_created: { _in: userIds } } });
+};
+
+export const activateUsers = async (users: DirectusUser[], { services, getSchema }: OperationContext) => {
+	if (!users.length) {
+		return;
+	}
+
+	const { UsersService } = services;
+	const usersService = new UsersService({ schema: await getSchema() });
+
+	await usersService.updateMany(users.map(user => user.id), { status: 'active', suspended_at: null });
+};
+
+export const deleteUsers = async (users: DirectusUser[], { services, getSchema }: OperationContext) => {
+	if (!users.length) {
+		return;
+	}
+
+	const { UsersService } = services;
+	const usersService = new UsersService({ schema: await getSchema() });
+
+	await usersService.deleteMany(users.map(user => user.id));
 };
