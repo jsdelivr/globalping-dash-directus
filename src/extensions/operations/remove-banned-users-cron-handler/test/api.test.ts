@@ -18,11 +18,11 @@ describe('Remove banned users CRON handler', () => {
 
 	const readByQuery = sinon.stub();
 	const deleteByQuery = sinon.stub().resolves([]);
-	const updateOne = sinon.stub().resolves('1');
-	const deleteOne = sinon.stub().resolves('1');
+	const updateMany = sinon.stub().resolves([ '1' ]);
+	const deleteMany = sinon.stub().resolves([ '1' ]);
 	const services = {
 		ItemsService: sinon.stub().returns({ readByQuery, deleteByQuery }),
-		UsersService: sinon.stub().returns({ updateOne, deleteOne }),
+		UsersService: sinon.stub().returns({ updateMany, deleteMany }),
 	} as any;
 
 	const context = { data, database, env, getSchema, services, logger, accountability };
@@ -80,9 +80,9 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.calledOnceWith('2', sinon.match({ status: 'suspended', suspended_at: sinon.match.string }))).to.equal(true);
-		expect(deleteByQuery.calledOnceWithExactly({ filter: { user_created: { _eq: '2' } } })).to.equal(true);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.calledOnceWith([ '2' ], sinon.match({ status: 'suspended', suspended_at: sinon.match.string }))).to.equal(true);
+		expect(deleteByQuery.calledOnceWithExactly({ filter: { user_created: { _in: [ '2' ] } } })).to.equal(true);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: [2]; activated: []; deleted: [].');
 	});
 
@@ -100,8 +100,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.calledOnceWithExactly('2', { status: 'active', suspended_at: null })).to.equal(true);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.calledOnceWithExactly([ '2' ], { status: 'active', suspended_at: null })).to.equal(true);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: [2]; deleted: [].');
 	});
 
@@ -120,8 +120,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(deleteOne.calledOnceWithExactly('2')).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
+		expect(deleteMany.calledOnceWithExactly([ '2' ])).to.equal(true);
+		expect(updateMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [2].');
 	});
 
@@ -140,8 +140,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.callCount).to.equal(0);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 
@@ -160,8 +160,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.callCount).to.equal(0);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 
@@ -180,8 +180,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.callCount).to.equal(0);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 
@@ -203,8 +203,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.callCount).to.equal(0);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 
@@ -219,8 +219,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.callCount).to.equal(0);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 
@@ -235,8 +235,8 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.callCount).to.equal(0);
-		expect(deleteOne.callCount).to.equal(0);
+		expect(updateMany.callCount).to.equal(0);
+		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 });

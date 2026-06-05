@@ -1,6 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
-import Bluebird from 'bluebird';
-import { getDirectusUsers, suspendUser, activateUser, deleteUser } from '../repositories/directus.js';
+import { getDirectusUsers, suspendUsers, activateUsers, deleteUsers } from '../repositories/directus.js';
 import { getExistingGithubIds } from '../repositories/github.js';
 import type { DirectusUser } from '../types.js';
 
@@ -9,28 +8,34 @@ const SUSPENSION_PERIOD = 365 * 24 * 60 * 60 * 1000;
 
 export const removeBannedUsers = async (context: OperationContext) => {
 	const directusUsers = await getDirectusUsers(context);
-	const result = { suspended: [] as string[], activated: [] as string[], deleted: [] as string[] };
-
 	const users = directusUsers.filter(user => !!user.external_identifier && !SEEDED_USERS.includes(user.external_identifier));
 	const existingGithubIds = await getExistingGithubIds(users, context);
 
-	await Bluebird.map(users, async (user) => {
+	const toSuspend: DirectusUser[] = [];
+	const toActivate: DirectusUser[] = [];
+	const toDelete: DirectusUser[] = [];
+
+	users.forEach((user) => {
 		if (!existingGithubIds.has(user.external_identifier)) {
-			// Suspend a freshly banned user, delete it once the suspension has lasted long enough.
 			if (user.status !== 'suspended') {
-				await suspendUser(user, context);
-				result.suspended.push(user.id);
+				toSuspend.push(user);
 			} else if (isSuspensionExpired(user)) {
-				await deleteUser(user, context);
-				result.deleted.push(user.id);
+				toDelete.push(user);
 			}
 		} else if (user.status === 'suspended') {
-			await activateUser(user, context);
-			result.activated.push(user.id);
+			toActivate.push(user);
 		}
-	}, { concurrency: 4 });
+	});
 
-	return result;
+	await suspendUsers(toSuspend, context);
+	await activateUsers(toActivate, context);
+	await deleteUsers(toDelete, context);
+
+	return {
+		suspended: toSuspend.map(user => user.id),
+		activated: toActivate.map(user => user.id),
+		deleted: toDelete.map(user => user.id),
+	};
 };
 
 const isSuspensionExpired = (user: DirectusUser) => {
