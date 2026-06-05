@@ -63,6 +63,7 @@ const fetchUsersByLogin = async (logins: string[], { env }: OperationContext): P
 		data = await graphql<GraphqlData>(query, {
 			...variables,
 			headers: { Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}` },
+			request: { signal: AbortSignal.timeout(5000) },
 		});
 	} catch (error) {
 		if (!(error instanceof GraphqlResponseError)) {
@@ -85,7 +86,7 @@ const fetchUsersByLogin = async (logins: string[], { env }: OperationContext): P
 const githubUserExistsById = async (githubId: string, { env }: OperationContext): Promise<boolean> => {
 	try {
 		await axios.get(`${GITHUB_API_URL}/user/${githubId}`, {
-			timeout: 15000,
+			timeout: 5000,
 			headers: { Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}` },
 		});
 
