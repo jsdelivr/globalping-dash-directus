@@ -1,24 +1,21 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import { getDirectusUsers, suspendUser, activateUser, deleteUser } from '../repositories/directus.js';
-import { getGithubUser } from '../repositories/github.js';
+import { getExistingGithubIds } from '../repositories/github.js';
 import type { DirectusUser } from '../types.js';
 
 const SEEDED_USERS = [ '1234567890', '1234567892' ];
 const SUSPENSION_PERIOD = 365 * 24 * 60 * 60 * 1000;
 
 export const removeBannedUsers = async (context: OperationContext) => {
-	const users = await getDirectusUsers(context);
+	const directusUsers = await getDirectusUsers(context);
 	const result = { suspended: [] as string[], activated: [] as string[], deleted: [] as string[] };
 
+	const users = directusUsers.filter(user => !!user.external_identifier && !SEEDED_USERS.includes(user.external_identifier));
+	const existingGithubIds = await getExistingGithubIds(users, context);
+
 	await Bluebird.map(users, async (user) => {
-		if (!user.external_identifier || SEEDED_USERS.includes(user.external_identifier)) {
-			return;
-		}
-
-		const githubUser = await getGithubUser(user, context);
-
-		if (githubUser === null) {
+		if (!existingGithubIds.has(user.external_identifier)) {
 			// Suspend a freshly banned user, delete it once the suspension has lasted long enough.
 			if (user.status !== 'suspended') {
 				await suspendUser(user, context);
@@ -31,7 +28,7 @@ export const removeBannedUsers = async (context: OperationContext) => {
 			await activateUser(user, context);
 			result.activated.push(user.id);
 		}
-	}, { concurrency: 2 });
+	}, { concurrency: 4 });
 
 	return result;
 };

@@ -13,7 +13,7 @@ describe('Remove banned users CRON handler', () => {
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 	const env = {
-		GITHUB_WEBHOOK_SECRET: '77a9a254554d458f5025bb38ad1648a3bb5795e8',
+		GITHUB_ACCESS_TOKEN: 'system-github-token',
 	};
 
 	const readByQuery = sinon.stub();
@@ -28,6 +28,26 @@ describe('Remove banned users CRON handler', () => {
 	const context = { data, database, env, getSchema, services, logger, accountability };
 
 	const yearAgo = () => new Date(Date.now() - (366 * 24 * 60 * 60 * 1000)).toISOString();
+
+	// Bulk login lookup: each node maps to alias uN; a null node produces a NOT_FOUND error like the real API.
+	const nockGithubLogins = (nodes: ({ databaseId: number } | null)[]) => {
+		const responseData: Record<string, unknown> = {};
+		const errors: unknown[] = [];
+
+		nodes.forEach((node, index) => {
+			responseData[`u${index}`] = node;
+
+			if (!node) {
+				errors.push({ type: 'NOT_FOUND', message: 'Could not resolve to a User with the login', path: [ `u${index}` ] });
+			}
+		});
+
+		nock('https://api.github.com').post('/graphql').reply(200, { data: responseData, ...errors.length ? { errors } : {} });
+	};
+
+	const nockGithubUserById = (id: string, status: number, body: object = {}) => {
+		nock('https://api.github.com').get(`/user/${id}`).reply(status, body);
+	};
 
 	before(() => {
 		nock.disableNetConnect();
@@ -46,23 +66,16 @@ describe('Remove banned users CRON handler', () => {
 			id: '1',
 			github_username: 'valid_user',
 			external_identifier: '1',
-			github_oauth_token: 'user-1-github-token',
 			status: 'active',
 		}, {
 			id: '2',
 			github_username: 'banned_user',
 			external_identifier: '2',
-			github_oauth_token: 'user-2-github-token',
 			status: 'active',
 		}]);
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-1-github-token')
-			.get('/user/1').reply(200, { login: 'valid_user' });
-
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-2-github-token')
-			.get('/user/2').reply(404);
+		nockGithubLogins([{ databaseId: 1 }, null ]);
+		nockGithubUserById('2', 404);
 
 		const result = await operationApi.handler({}, context);
 
@@ -78,14 +91,11 @@ describe('Remove banned users CRON handler', () => {
 			id: '2',
 			github_username: 'restored_user',
 			external_identifier: '2',
-			github_oauth_token: 'user-2-github-token',
 			status: 'suspended',
 			date_updated: new Date().toISOString(),
 		}]);
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-2-github-token')
-			.get('/user/2').reply(200, { login: 'restored_user' });
+		nockGithubLogins([{ databaseId: 2 }]);
 
 		const result = await operationApi.handler({}, context);
 
@@ -100,14 +110,12 @@ describe('Remove banned users CRON handler', () => {
 			id: '2',
 			github_username: 'banned_user',
 			external_identifier: '2',
-			github_oauth_token: 'user-2-github-token',
 			status: 'suspended',
 			date_updated: yearAgo(),
 		}]);
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-2-github-token')
-			.get('/user/2').reply(404);
+		nockGithubLogins([ null ]);
+		nockGithubUserById('2', 404);
 
 		const result = await operationApi.handler({}, context);
 
@@ -122,14 +130,52 @@ describe('Remove banned users CRON handler', () => {
 			id: '2',
 			github_username: 'banned_user',
 			external_identifier: '2',
-			github_oauth_token: 'user-2-github-token',
 			status: 'suspended',
 			date_updated: new Date().toISOString(),
 		}]);
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-2-github-token')
-			.get('/user/2').reply(404);
+		nockGithubLogins([ null ]);
+		nockGithubUserById('2', 404);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(updateOne.callCount).to.equal(0);
+		expect(deleteOne.callCount).to.equal(0);
+		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
+	});
+
+	it('should not suspend a user who only changed their github username', async () => {
+		readByQuery.resolves([{
+			id: '2',
+			github_username: 'old_name',
+			external_identifier: '2',
+			status: 'active',
+		}]);
+
+		// Old login no longer resolves, but the user still exists under the same id.
+		nockGithubLogins([ null ]);
+		nockGithubUserById('2', 200, { login: 'new_name' });
+
+		const result = await operationApi.handler({}, context);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(updateOne.callCount).to.equal(0);
+		expect(deleteOne.callCount).to.equal(0);
+		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
+	});
+
+	it('should not suspend a user whose old login was reused by another account', async () => {
+		readByQuery.resolves([{
+			id: '2',
+			github_username: 'reused_name',
+			external_identifier: '2',
+			status: 'active',
+		}]);
+
+		// The login resolves, but to a different account, so it must be confirmed by id.
+		nockGithubLogins([{ databaseId: 999 }]);
+		nockGithubUserById('2', 200, { login: 'new_name' });
 
 		const result = await operationApi.handler({}, context);
 
@@ -152,8 +198,7 @@ describe('Remove banned users CRON handler', () => {
 			status: 'active',
 		}]);
 
-		nock('https://api.github.com').get('/user/1').reply(200, { login: 'valid_user' });
-		nock('https://api.github.com').get('/user/2').reply(200, { login: 'valid_user_2' });
+		nockGithubLogins([{ databaseId: 1 }, { databaseId: 2 }]);
 
 		const result = await operationApi.handler({}, context);
 
@@ -163,14 +208,25 @@ describe('Remove banned users CRON handler', () => {
 		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
 	});
 
-	it('should ignore seeded users and users without external_identifier', async () => {
+	it('should ignore seeded users', async () => {
 		readByQuery.resolves([{
 			id: '1',
 			github_username: 'seeded_user',
 			external_identifier: '1234567890',
 			status: 'active',
-		}, {
-			id: '2',
+		}]);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(updateOne.callCount).to.equal(0);
+		expect(deleteOne.callCount).to.equal(0);
+		expect(result).to.equal('Users suspended: []; activated: []; deleted: [].');
+	});
+
+	it('should do nothing if user doesn\'t have external_identifier', async () => {
+		readByQuery.resolves([{
+			id: '1',
 			github_username: 'no_identifier_user',
 			external_identifier: null,
 			status: 'active',

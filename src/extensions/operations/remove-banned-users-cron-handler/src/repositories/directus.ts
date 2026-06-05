@@ -10,7 +10,7 @@ export const getDirectusUsers = async ({ services, getSchema }: OperationContext
 	});
 
 	const result = await usersService.readByQuery({
-		fields: [ 'id', 'external_identifier', 'github_oauth_token', 'status', 'date_updated' ],
+		fields: [ 'id', 'external_identifier', 'github_username', 'status', 'date_updated' ],
 	}) as DirectusUser[];
 	return result;
 };
