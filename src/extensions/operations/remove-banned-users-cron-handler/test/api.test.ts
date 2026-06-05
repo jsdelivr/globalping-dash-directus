@@ -80,7 +80,7 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.calledOnceWithExactly('2', { status: 'suspended' })).to.equal(true);
+		expect(updateOne.calledOnceWith('2', sinon.match({ status: 'suspended', suspended_at: sinon.match.string }))).to.equal(true);
 		expect(deleteByQuery.calledOnceWithExactly({ filter: { user_created: { _eq: '2' } } })).to.equal(true);
 		expect(deleteOne.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: [2]; activated: []; deleted: [].');
@@ -92,7 +92,7 @@ describe('Remove banned users CRON handler', () => {
 			github_username: 'restored_user',
 			external_identifier: '2',
 			status: 'suspended',
-			date_updated: new Date().toISOString(),
+			suspended_at: new Date().toISOString(),
 		}]);
 
 		nockGithubLogins([{ databaseId: 2 }]);
@@ -100,7 +100,7 @@ describe('Remove banned users CRON handler', () => {
 		const result = await operationApi.handler({}, context);
 
 		expect(nock.isDone()).to.equal(true);
-		expect(updateOne.calledOnceWithExactly('2', { status: 'active' })).to.equal(true);
+		expect(updateOne.calledOnceWithExactly('2', { status: 'active', suspended_at: null })).to.equal(true);
 		expect(deleteOne.callCount).to.equal(0);
 		expect(result).to.equal('Users suspended: []; activated: [2]; deleted: [].');
 	});
@@ -111,7 +111,7 @@ describe('Remove banned users CRON handler', () => {
 			github_username: 'banned_user',
 			external_identifier: '2',
 			status: 'suspended',
-			date_updated: yearAgo(),
+			suspended_at: yearAgo(),
 		}]);
 
 		nockGithubLogins([ null ]);
@@ -131,7 +131,7 @@ describe('Remove banned users CRON handler', () => {
 			github_username: 'banned_user',
 			external_identifier: '2',
 			status: 'suspended',
-			date_updated: new Date().toISOString(),
+			suspended_at: new Date().toISOString(),
 		}]);
 
 		nockGithubLogins([ null ]);

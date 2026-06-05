@@ -34,5 +34,5 @@ export const removeBannedUsers = async (context: OperationContext) => {
 };
 
 const isSuspensionExpired = (user: DirectusUser) => {
-	return !!user.date_updated && Date.now() - new Date(user.date_updated).getTime() > SUSPENSION_PERIOD;
+	return !!user.suspended_at && Date.now() - new Date(user.suspended_at).getTime() > SUSPENSION_PERIOD;
 };

@@ -10,7 +10,7 @@ export const getDirectusUsers = async ({ services, getSchema }: OperationContext
 	});
 
 	const result = await usersService.readByQuery({
-		fields: [ 'id', 'external_identifier', 'github_username', 'status', 'date_updated' ],
+		fields: [ 'id', 'external_identifier', 'github_username', 'status', 'suspended_at' ],
 	}) as DirectusUser[];
 	return result;
 };
@@ -23,7 +23,7 @@ export const suspendUser = async (user: DirectusUser, context: OperationContext)
 	await database.transaction(async (trx) => {
 		const usersService = new UsersService({ schema, knex: trx });
 
-		await usersService.updateOne(user.id, { status: 'suspended' });
+		await usersService.updateOne(user.id, { status: 'suspended', suspended_at: new Date().toISOString() });
 		await deleteUserTokens(user, trx, context);
 	});
 };
@@ -46,7 +46,7 @@ export const activateUser = async (user: DirectusUser, { services, getSchema }: 
 		schema: await getSchema(),
 	});
 
-	await usersService.updateOne(user.id, { status: 'active' });
+	await usersService.updateOne(user.id, { status: 'active', suspended_at: null });
 };
 
 export const deleteUser = async (user: DirectusUser, { services, getSchema }: OperationContext) => {
