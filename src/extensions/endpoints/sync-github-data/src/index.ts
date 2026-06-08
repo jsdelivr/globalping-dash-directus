@@ -58,7 +58,7 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 		}
 	}, context));
 
-	router.post('/default-tag-change', asyncWrapper(async (req, res) => {
+	router.post('/default-tag/confirm', asyncWrapper(async (req, res) => {
 		const data = req.query.data;
 
 		if (!data || typeof data !== 'string') {

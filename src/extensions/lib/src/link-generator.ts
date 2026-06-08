@@ -39,7 +39,7 @@ export class LinkGenerator {
 		const query = new URLSearchParams({
 			data: this.createToken({ userId }, 'default-tag-change'),
 		});
-		return `${this.getNormalizedDashUrl()}/default-tag-change?${query.toString()}`;
+		return `${this.getNormalizedDashUrl()}/default-tag/confirm?${query.toString()}`;
 	}
 
 	// TODO: `allowLegacyNoAudience` is only for legacy no-aud tokens, so previous email links still work. Should be removed after 01.07.2026.

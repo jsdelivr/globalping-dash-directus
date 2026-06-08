@@ -320,7 +320,7 @@ describe('/sync-github-data endpoint', () => {
 			type: 'default_tag_change',
 		});
 
-		expect(createNotification.args[0]?.[0].message).to.include('default-tag-change');
+		expect(createNotification.args[0]?.[0].message).to.include('default-tag/confirm');
 	});
 
 	it('should update an invalid default_prefix without moving it to deprecated_prefix for `public_probes: false`', async () => {
@@ -413,21 +413,21 @@ describe('/sync-github-data endpoint', () => {
 		const link = getLinkGenerator(endpointContext).generateDefaultTagChangeLink('directus-id');
 		const data = new URL(link).searchParams.get('data')!;
 
-		const res = await request(app).post('/default-tag-change').query({ data });
+		const res = await request(app).post('/default-tag/confirm').query({ data });
 
 		expect(res.status).to.equal(200);
 		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { deprecated_prefix: null }]);
 	});
 
 	it('should reject an invalid confirmation token', async () => {
-		const res = await request(app).post('/default-tag-change').query({ data: 'not-a-valid-token' });
+		const res = await request(app).post('/default-tag/confirm').query({ data: 'not-a-valid-token' });
 
 		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should reject a confirmation request without a token', async () => {
-		const res = await request(app).post('/default-tag-change');
+		const res = await request(app).post('/default-tag/confirm');
 
 		expect(res.status).to.equal(400);
 		expect(updateOne.callCount).to.equal(0);
