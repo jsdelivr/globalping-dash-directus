@@ -4,7 +4,7 @@ import axios, { isAxiosError } from 'axios';
 import Bluebird from 'bluebird';
 
 const GITHUB_API_URL = 'https://api.github.com';
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 500;
 
 type User = { external_identifier: string; github_username: string | null };
 
