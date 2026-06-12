@@ -16,3 +16,4 @@ config/local*
 /src/extensions/hooks/elastic-apm/apm/LAST_COMMIT_HASH.txt
 .claude/
 CLAUDE.md
+docs/

@@ -33,6 +33,7 @@ describe('Sign-up hook', () => {
 	};
 	const usersService = {
 		updateOne: sinon.stub(),
+		updateByQuery: sinon.stub(),
 	};
 	const notificationsService = {
 		createOne: sinon.stub(),
@@ -214,6 +215,31 @@ describe('Sign-up hook', () => {
 		});
 
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { user_type: 'sponsor' }]);
+	});
+
+	it('action should release a matching deprecated prefix from other users', async () => {
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-github-token')
+			.get(`/user/orgs`)
+			.reply(200, [{ login: 'jsdelivr' }]);
+
+		hook(events, context);
+
+		await callbacks.action['users.create']?.({
+			key: '1-1-1-1',
+			payload: {
+				provider: 'github',
+				external_identifier: '1834071',
+				github_username: 'jimaek',
+				github_organizations: null,
+				github_oauth_token: 'user-github-token',
+			},
+		});
+
+		expect(usersService.updateByQuery.args[0]).to.deep.equal([
+			{ filter: { deprecated_prefix: { _eq: 'jimaek' } } },
+			{ deprecated_prefix: null },
+		]);
 	});
 
 	it('action send welcome notification', async () => {
