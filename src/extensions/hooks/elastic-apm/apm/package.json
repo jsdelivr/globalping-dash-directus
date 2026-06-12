@@ -1,9 +1,0 @@
-{
-	"name": "elastic-apm-agent",
-	"description": "Standalone install of the APM agent preloaded via NODE_OPTIONS, see Dockerfile",
-	"private": true,
-	"dependencies": {
-		"elastic-apm-node": "4.15.0",
-		"elastic-apm-utils": "4.2.2"
-	}
-}
