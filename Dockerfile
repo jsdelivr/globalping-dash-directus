@@ -18,6 +18,7 @@ COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/red
 COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/endpoints/sponsorship-details/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
+COPY src/extensions/hooks/cors/package.json src/extensions/hooks/cors/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
 COPY src/extensions/hooks/elastic-apm/package.json src/extensions/hooks/elastic-apm/
 COPY src/extensions/hooks/email-sender/package.json src/extensions/hooks/email-sender/
@@ -88,6 +89,8 @@ COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/dist/* /d
 COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/package.json /directus/extensions/sync-github-data/
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus/extensions/adopted-probe/dist/
 COPY --from=builder /builder/src/extensions/hooks/adopted-probe/package.json /directus/extensions/adopted-probe/
+COPY --from=builder /builder/src/extensions/hooks/cors/dist/* /directus/extensions/cors/dist/
+COPY --from=builder /builder/src/extensions/hooks/cors/package.json /directus/extensions/cors/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/dist/* /directus/extensions/directus-users/dist/
 COPY --from=builder /builder/src/extensions/hooks/directus-users/package.json /directus/extensions/directus-users/
 COPY --from=builder /builder/src/extensions/hooks/elastic-apm/dist/* /directus/extensions/elastic-apm/dist/
