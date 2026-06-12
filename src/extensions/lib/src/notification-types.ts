@@ -65,6 +65,13 @@ const notificationTypes = {
 		description: 'Probe location has changed',
 	},
 	probe_location_changed_back: 'probe_location_changed',
+	default_tag_change: {
+		configurableByUser: false,
+		readOnly: false,
+		sendEmail: true,
+		hasParameter: false,
+		description: 'Default tag prefix is no longer valid (e.g. GitHub username changed), confirm the new tag prefix',
+	},
 	low_credits: {
 		configurableByUser: true,
 		readOnly: false,

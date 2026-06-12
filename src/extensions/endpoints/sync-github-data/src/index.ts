@@ -7,6 +7,7 @@ import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
+import { getLinkGenerator } from '../../../lib/src/link-generator.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { syncGithubData } from './actions/sync-github-data.js';
 
@@ -19,8 +20,9 @@ export type Request = ExpressRequest & {
 };
 
 const TooManyRequestsError = createError('TOO_MANY_REQUESTS', 'Too many requests', 429);
+const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'Invalid confirmation link.', 400);
 
-const rateLimiter = new RateLimiterMemory({
+export const rateLimiter = new RateLimiterMemory({
 	points: 10,
 	duration: 60 * 60,
 });
@@ -54,5 +56,25 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 				throw error;
 			}
 		}
+	}, context));
+
+	router.post('/default-tag/confirm', asyncWrapper(async (req, res) => {
+		const data = req.query.data;
+
+		if (!data || typeof data !== 'string') {
+			throw new InvalidPayloadError();
+		}
+
+		const tokenPayload = getLinkGenerator(context).verifyToken(data, 'default-tag-change');
+
+		if (!tokenPayload) {
+			throw new InvalidPayloadError();
+		}
+
+		const { UsersService } = context.services;
+		const usersService = new UsersService({ schema: await context.getSchema() });
+		await usersService.updateOne(tokenPayload.userId, { deprecated_prefix: null });
+
+		res.status(200).send();
 	}, context));
 });

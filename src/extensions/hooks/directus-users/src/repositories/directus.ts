@@ -7,6 +7,7 @@ export type DirectusUser = {
 	github_username: string;
 	github_organizations: string[];
 	default_prefix: string | null;
+	deprecated_prefix: string | null;
 	github_oauth_token: string | null;
 };
 
@@ -24,6 +25,18 @@ export const getDirectusUsers = async (userIds: string[], accountability: Accoun
 		},
 	}) as DirectusUser[];
 	return users;
+};
+
+export const clearDeprecatedPrefix = async (userIds: string[], { services, getSchema }: HookExtensionContext) => {
+	const { UsersService } = services;
+	const usersService = new UsersService({ schema: await getSchema() });
+
+	await usersService.updateByQuery({
+		filter: {
+			id: { _in: userIds },
+			deprecated_prefix: { _nnull: true },
+		},
+	}, { deprecated_prefix: null });
 };
 
 export const deleteCreditsAdditions = async (githubIds: string[], accountability: Accountability | null, { services, getSchema }: HookExtensionContext) => {

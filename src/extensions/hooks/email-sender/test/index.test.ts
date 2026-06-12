@@ -129,7 +129,7 @@ describe('EmailService', () => {
 	it('should map alias notification type to canonical key in unsubscribe link', () => {
 		const context = createContext();
 		const service = new EmailService(context as any);
-		const spy = sinon.spy((service as any).emailGenerator, 'generateTypeUnsubscribeLink');
+		const spy = sinon.spy((service as any).linkGenerator, 'generateTypeUnsubscribeLink');
 
 		try {
 			const html = (service as any).formatMessage({

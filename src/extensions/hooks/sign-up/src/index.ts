@@ -1,6 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import { generateBytes } from '../../../lib/src/bytes.js';
+import { releaseDeprecatedPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
 
 export type User = {
@@ -48,6 +49,7 @@ export default defineHook(({ filter, action }, context) => {
 			user.provider === 'github' && fulfillOrganizations(userId, user, context),
 			user.provider === 'github' && assignCredits(userId, user, context),
 			user.provider === 'github' && fulfillUserType(userId, user, context),
+			user.provider === 'github' && user.github_username && releaseDeprecatedPrefix(user.github_username, context),
 			sendWelcomeNotification(userId, user, context),
 		]);
 	});
