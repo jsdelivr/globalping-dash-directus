@@ -17,7 +17,7 @@ const errorFilter = (payload) => {
 	return payload;
 };
 
-if (apmAgent) {
+if (apmAgent && apmUtils) {
 	globalThis.__elasticApmAgent = apmAgent;
 
 	apmAgent.addTransactionFilter(apmUtils.transactionFilter());

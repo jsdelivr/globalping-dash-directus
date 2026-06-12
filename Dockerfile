@@ -52,8 +52,8 @@ RUN pnpm -r build
 FROM node:22-alpine AS elastic-apm-agent
 
 WORKDIR /apm
-COPY src/extensions/hooks/elastic-apm/package.json ./
-RUN npm install --omit=dev
+COPY src/extensions/hooks/elastic-apm/apm/package.json src/extensions/hooks/elastic-apm/apm/package-lock.json ./
+RUN npm ci
 COPY src/extensions/hooks/elastic-apm/apm/ ./
 
 FROM directus/directus:11.17.4
