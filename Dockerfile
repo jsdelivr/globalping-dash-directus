@@ -49,18 +49,13 @@ COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions
 RUN pnpm install --frozen-lockfile
 COPY src src
 RUN pnpm -r build
-
-FROM node:22-alpine AS elastic-apm-agent
-
-WORKDIR /apm
-COPY src/extensions/hooks/elastic-apm/package.json ./
-RUN npm install --omit=dev
-COPY src/extensions/hooks/elastic-apm/apm/ ./
+RUN pnpm --filter elastic-apm deploy --prod --legacy /apm-deploy
 
 FROM directus/directus:11.17.4
 
 ENV ELASTIC_APM_CONFIG_FILE=/directus/apm/elastic-apm-node.cjs
-COPY --from=elastic-apm-agent /apm /directus/apm
+COPY --from=builder /apm-deploy/node_modules /directus/apm/node_modules
+COPY src/extensions/hooks/elastic-apm/apm/ /directus/apm/
 ENV NODE_OPTIONS="--experimental-loader /directus/apm/node_modules/elastic-apm-node/loader.mjs -r /directus/apm/node_modules/elastic-apm-node/start.js -r /directus/apm/elastic-apm-filters.cjs"
 
 # Update via `pnpm run docker:ls:update`
