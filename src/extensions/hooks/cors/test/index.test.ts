@@ -40,7 +40,7 @@ describe('cors hook', () => {
 				headers: { origin: 'https://dash.globalping.io' },
 				method: 'GET',
 			} as Request;
-			const res = { setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
+			const res = { getHeader: sinon.stub(), setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
 			const next = sinon.stub() as unknown as NextFunction;
 
 			middleware(req, res, next);
@@ -62,7 +62,7 @@ describe('cors hook', () => {
 				headers: { origin: 'https://globalping.io' },
 				method: 'OPTIONS',
 			} as Request;
-			const res = { setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
+			const res = { getHeader: sinon.stub(), setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
 			const next = sinon.stub() as unknown as NextFunction;
 
 			middleware(req, res, next);
@@ -77,13 +77,65 @@ describe('cors hook', () => {
 				headers: { origin: 'https://globalping.io.evil.com' },
 				method: 'GET',
 			} as Request;
-			const res = { setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
+			const res = { getHeader: sinon.stub(), setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
 			const next = sinon.stub() as unknown as NextFunction;
 
 			middleware(req, res, next);
 
-			expect((res.setHeader as sinon.SinonStub).callCount).to.equal(0);
+			expect((res.setHeader as sinon.SinonStub).calledOnceWith('Vary', 'Origin')).to.equal(true);
 			expect((next as sinon.SinonStub).callCount).to.equal(1);
+		});
+
+		it('adds Vary Origin for untrusted origins', () => {
+			const middleware = createCorsMiddleware();
+			const req = {
+				headers: { origin: 'https://globalping.io.evil.com' },
+				method: 'GET',
+			} as Request;
+			const res = { getHeader: sinon.stub(), setHeader: sinon.stub(), sendStatus: sinon.stub() } as unknown as Response;
+			const next = sinon.stub() as unknown as NextFunction;
+
+			middleware(req, res, next);
+
+			expect((res.setHeader as sinon.SinonStub).calledOnceWith('Vary', 'Origin')).to.equal(true);
+			expect((res.setHeader as sinon.SinonStub).neverCalledWith('Access-Control-Allow-Origin')).to.equal(true);
+			expect((next as sinon.SinonStub).callCount).to.equal(1);
+		});
+
+		it('preserves existing Vary values when adding Origin', () => {
+			const middleware = createCorsMiddleware();
+			const req = {
+				headers: { origin: 'https://dash.globalping.io' },
+				method: 'GET',
+			} as Request;
+			const res = {
+				getHeader: sinon.stub().withArgs('Vary').returns('Accept-Encoding'),
+				setHeader: sinon.stub(),
+				sendStatus: sinon.stub(),
+			} as unknown as Response;
+			const next = sinon.stub() as unknown as NextFunction;
+
+			middleware(req, res, next);
+
+			expect((res.setHeader as sinon.SinonStub).calledWith('Vary', 'Accept-Encoding, Origin')).to.equal(true);
+		});
+
+		it('does not duplicate existing Vary Origin values', () => {
+			const middleware = createCorsMiddleware();
+			const req = {
+				headers: { origin: 'https://dash.globalping.io' },
+				method: 'GET',
+			} as Request;
+			const res = {
+				getHeader: sinon.stub().withArgs('Vary').returns([ 'Accept-Encoding', 'origin' ]),
+				setHeader: sinon.stub(),
+				sendStatus: sinon.stub(),
+			} as unknown as Response;
+			const next = sinon.stub() as unknown as NextFunction;
+
+			middleware(req, res, next);
+
+			expect((res.setHeader as sinon.SinonStub).neverCalledWith('Vary')).to.equal(true);
 		});
 	});
 

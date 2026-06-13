@@ -24,8 +24,29 @@ export const isTrustedOrigin = (origin: string | undefined): boolean => {
 	return TRUSTED_ORIGINS.some(pattern => pattern.test(origin));
 };
 
+export const addVaryOrigin = (res: Response) => {
+	const currentVary = res.getHeader('Vary');
+
+	if (!currentVary) {
+		res.setHeader('Vary', 'Origin');
+		return;
+	}
+
+	const values = (Array.isArray(currentVary) ? currentVary.join(',') : String(currentVary))
+		.split(',')
+		.map(value => value.trim())
+		.filter(Boolean);
+
+	if (values.some(value => value.toLowerCase() === 'origin')) {
+		return;
+	}
+
+	res.setHeader('Vary', [ ...values, 'Origin' ].join(', '));
+};
+
 export const createCorsMiddleware = () => (req: Request, res: Response, next: NextFunction) => {
 	const origin = req.headers.origin;
+	addVaryOrigin(res);
 
 	if (!isTrustedOrigin(origin)) {
 		next();
@@ -38,7 +59,6 @@ export const createCorsMiddleware = () => (req: Request, res: Response, next: Ne
 	res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 	res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
 	res.setHeader('Access-Control-Max-Age', '300');
-	res.setHeader('Vary', 'Origin');
 
 	if (req.method === 'OPTIONS') {
 		res.sendStatus(204);
