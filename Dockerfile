@@ -51,6 +51,17 @@ COPY src src
 RUN pnpm -r build
 RUN pnpm --filter elastic-apm deploy --prod --legacy /apm-deploy
 
+# Gathering all extensions into one folder to copy in a single COPY command.
+RUN set -eux; \
+	mkdir -p /out/extensions; \
+	for dist in $(find src/extensions -type d -name dist ! -path '*/node_modules/*' ! -path '*/dist/*'); do \
+		dir=$(dirname "$dist"); name=$(basename "$dir"); \
+		mkdir -p "/out/extensions/$name/dist"; \
+		cp -r "$dist/." "/out/extensions/$name/dist/"; \
+		cp "$dir/package.json" "/out/extensions/$name/package.json"; \
+	done; \
+	cp -r src/extensions/endpoints/city-autocomplete/data /out/extensions/city-autocomplete/data
+
 FROM directus/directus:11.17.4
 
 USER root
@@ -61,82 +72,4 @@ ENV ELASTIC_APM_CONFIG_FILE=/directus/apm/elastic-apm-node.cjs
 COPY --from=builder /apm-deploy/node_modules /directus/apm/node_modules
 COPY src/extensions/hooks/elastic-apm/apm/ /directus/apm/
 ENV NODE_OPTIONS="--experimental-loader /directus/apm/node_modules/elastic-apm-node/loader.mjs -r /directus/apm/node_modules/elastic-apm-node/start.js -r /directus/apm/elastic-apm-filters.cjs"
-
-# Update via `pnpm run docker:ls:update`
-# START: EXTENSIONS-RUN-BLOCK
-COPY --from=builder /builder/src/extensions/bytes-value/dist/* /directus/extensions/bytes-value/dist/
-COPY --from=builder /builder/src/extensions/bytes-value/package.json /directus/extensions/bytes-value/
-COPY --from=builder /builder/src/extensions/endpoints/adoption-code/dist/* /directus/extensions/adoption-code/dist/
-COPY --from=builder /builder/src/extensions/endpoints/adoption-code/package.json /directus/extensions/adoption-code/
-COPY --from=builder /builder/src/extensions/endpoints/applications/dist/* /directus/extensions/applications/dist/
-COPY --from=builder /builder/src/extensions/endpoints/applications/package.json /directus/extensions/applications/
-COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/dist/* /directus/extensions/city-autocomplete/dist/
-COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/package.json /directus/extensions/city-autocomplete/
-COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/dist/* /directus/extensions/credits-timeline/dist/
-COPY --from=builder /builder/src/extensions/endpoints/credits-timeline/package.json /directus/extensions/credits-timeline/
-COPY --from=builder /builder/src/extensions/endpoints/email-unsubscribe/dist/* /directus/extensions/email-unsubscribe/dist/
-COPY --from=builder /builder/src/extensions/endpoints/email-unsubscribe/package.json /directus/extensions/email-unsubscribe/
-COPY --from=builder /builder/src/extensions/endpoints/local-adoption/dist/* /directus/extensions/local-adoption/dist/
-COPY --from=builder /builder/src/extensions/endpoints/local-adoption/package.json /directus/extensions/local-adoption/
-COPY --from=builder /builder/src/extensions/endpoints/metadata/dist/* /directus/extensions/metadata/dist/
-COPY --from=builder /builder/src/extensions/endpoints/metadata/package.json /directus/extensions/metadata/
-COPY --from=builder /builder/src/extensions/endpoints/redirect/dist/* /directus/extensions/redirect/dist/
-COPY --from=builder /builder/src/extensions/endpoints/redirect/package.json /directus/extensions/redirect/
-COPY --from=builder /builder/src/extensions/endpoints/sponsorship-details/dist/* /directus/extensions/sponsorship-details/dist/
-COPY --from=builder /builder/src/extensions/endpoints/sponsorship-details/package.json /directus/extensions/sponsorship-details/
-COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/dist/* /directus/extensions/sync-github-data/dist/
-COPY --from=builder /builder/src/extensions/endpoints/sync-github-data/package.json /directus/extensions/sync-github-data/
-COPY --from=builder /builder/src/extensions/hooks/adopted-probe/dist/* /directus/extensions/adopted-probe/dist/
-COPY --from=builder /builder/src/extensions/hooks/adopted-probe/package.json /directus/extensions/adopted-probe/
-COPY --from=builder /builder/src/extensions/hooks/cors/dist/* /directus/extensions/cors/dist/
-COPY --from=builder /builder/src/extensions/hooks/cors/package.json /directus/extensions/cors/
-COPY --from=builder /builder/src/extensions/hooks/directus-users/dist/* /directus/extensions/directus-users/dist/
-COPY --from=builder /builder/src/extensions/hooks/directus-users/package.json /directus/extensions/directus-users/
-COPY --from=builder /builder/src/extensions/hooks/elastic-apm/dist/* /directus/extensions/elastic-apm/dist/
-COPY --from=builder /builder/src/extensions/hooks/elastic-apm/package.json /directus/extensions/elastic-apm/
-COPY --from=builder /builder/src/extensions/hooks/email-sender/dist/* /directus/extensions/email-sender/dist/
-COPY --from=builder /builder/src/extensions/hooks/email-sender/package.json /directus/extensions/email-sender/
-COPY --from=builder /builder/src/extensions/hooks/gp-tokens/dist/* /directus/extensions/gp-tokens/dist/
-COPY --from=builder /builder/src/extensions/hooks/gp-tokens/package.json /directus/extensions/gp-tokens/
-COPY --from=builder /builder/src/extensions/hooks/location-overrides/dist/* /directus/extensions/location-overrides/dist/
-COPY --from=builder /builder/src/extensions/hooks/location-overrides/package.json /directus/extensions/location-overrides/
-COPY --from=builder /builder/src/extensions/hooks/notifications/dist/* /directus/extensions/notifications/dist/
-COPY --from=builder /builder/src/extensions/hooks/notifications/package.json /directus/extensions/notifications/
-COPY --from=builder /builder/src/extensions/hooks/notifications-format/dist/* /directus/extensions/notifications-format/dist/
-COPY --from=builder /builder/src/extensions/hooks/notifications-format/package.json /directus/extensions/notifications-format/
-COPY --from=builder /builder/src/extensions/hooks/sign-in/dist/* /directus/extensions/sign-in/dist/
-COPY --from=builder /builder/src/extensions/hooks/sign-in/package.json /directus/extensions/sign-in/
-COPY --from=builder /builder/src/extensions/hooks/sign-up/dist/* /directus/extensions/sign-up/dist/
-COPY --from=builder /builder/src/extensions/hooks/sign-up/package.json /directus/extensions/sign-up/
-COPY --from=builder /builder/src/extensions/interfaces/github-username/dist/* /directus/extensions/github-username/dist/
-COPY --from=builder /builder/src/extensions/interfaces/github-username/package.json /directus/extensions/github-username/
-COPY --from=builder /builder/src/extensions/interfaces/gp-tags/dist/* /directus/extensions/gp-tags/dist/
-COPY --from=builder /builder/src/extensions/interfaces/gp-tags/package.json /directus/extensions/gp-tags/
-COPY --from=builder /builder/src/extensions/interfaces/secrets/dist/* /directus/extensions/secrets/dist/
-COPY --from=builder /builder/src/extensions/interfaces/secrets/package.json /directus/extensions/secrets/
-COPY --from=builder /builder/src/extensions/interfaces/tag-prefix-selector/dist/* /directus/extensions/tag-prefix-selector/dist/
-COPY --from=builder /builder/src/extensions/interfaces/tag-prefix-selector/package.json /directus/extensions/tag-prefix-selector/
-COPY --from=builder /builder/src/extensions/interfaces/token/dist/* /directus/extensions/token/dist/
-COPY --from=builder /builder/src/extensions/interfaces/token/package.json /directus/extensions/token/
-COPY --from=builder /builder/src/extensions/interfaces/visible-token/dist/* /directus/extensions/visible-token/dist/
-COPY --from=builder /builder/src/extensions/interfaces/visible-token/package.json /directus/extensions/visible-token/
-COPY --from=builder /builder/src/extensions/modules/probes-adapter/dist/* /directus/extensions/probes-adapter/dist/
-COPY --from=builder /builder/src/extensions/modules/probes-adapter/package.json /directus/extensions/probes-adapter/
-COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/dist/* /directus/extensions/adopted-probes-credits-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/adopted-probes-credits-cron-handler/package.json /directus/extensions/adopted-probes-credits-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/dist/* /directus/extensions/check-outdated-firmware-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/check-outdated-firmware-cron-handler/package.json /directus/extensions/check-outdated-firmware-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/dist/* /directus/extensions/gh-webhook-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/gh-webhook-handler/package.json /directus/extensions/gh-webhook-handler/
-COPY --from=builder /builder/src/extensions/operations/low-credits-cron-handler/dist/* /directus/extensions/low-credits-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/low-credits-cron-handler/package.json /directus/extensions/low-credits-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/dist/* /directus/extensions/probes-status-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/probes-status-cron-handler/package.json /directus/extensions/probes-status-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/dist/* /directus/extensions/remove-banned-users-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/remove-banned-users-cron-handler/package.json /directus/extensions/remove-banned-users-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-cron-handler/dist/* /directus/extensions/remove-expired-adoptions-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/remove-expired-adoptions-cron-handler/package.json /directus/extensions/remove-expired-adoptions-cron-handler/
-COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/dist/* /directus/extensions/sponsors-cron-handler/dist/
-COPY --from=builder /builder/src/extensions/operations/sponsors-cron-handler/package.json /directus/extensions/sponsors-cron-handler/
-# END: EXTENSIONS-RUN-BLOCK
-COPY --from=builder /builder/src/extensions/endpoints/city-autocomplete/data/* /directus/extensions/city-autocomplete/data/
+COPY --from=builder /out/extensions /directus/extensions
