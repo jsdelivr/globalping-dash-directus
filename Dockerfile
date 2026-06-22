@@ -50,6 +50,8 @@ RUN pnpm install --frozen-lockfile
 COPY src src
 RUN pnpm -r build
 RUN pnpm --filter elastic-apm deploy --prod --legacy /apm-deploy
+
+# Gathering all extensions into one folder to copy in a single COPY command.
 RUN set -eux; \
 	mkdir -p /out/extensions; \
 	for dist in $(find src/extensions -type d -name dist ! -path '*/node_modules/*' ! -path '*/dist/*'); do \
