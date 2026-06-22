@@ -53,6 +53,10 @@ RUN pnpm --filter elastic-apm deploy --prod --legacy /apm-deploy
 
 FROM directus/directus:11.17.4
 
+USER root
+RUN apk add --no-cache curl
+USER node
+
 ENV ELASTIC_APM_CONFIG_FILE=/directus/apm/elastic-apm-node.cjs
 COPY --from=builder /apm-deploy/node_modules /directus/apm/node_modules
 COPY src/extensions/hooks/elastic-apm/apm/ /directus/apm/
