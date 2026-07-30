@@ -24,6 +24,7 @@ export type Probe = {
 	tags: { value: string; prefix: string }[];
 	systemTags: string[];
 	userId: string | null;
+	account_id: string | null;
 	allowedCountries: string[];
 	settings: {
 		meteredConnection: boolean;
@@ -55,8 +56,14 @@ export default defineHook(({ filter, action }, context) => {
 			(fields.tags && fields.tags.length > 0) && validateTags(fields, keys, accountability, context),
 			(Object.hasOwn(fields, 'name') && !fields.name) && resetProbeName(fields, keys, accountability, context),
 		]);
-		// `userId` can't be set to null here, as this will break the further Directus item update with no permissions.
-		await updateProbeWithUserPermissions(_.omit(fields, 'userId'), keys, accountability, context);
+		// Calling updateProbeWithUserPermissions instead of native Directus update to check user permissions before updateProbeWithRootPermissions.
+		await updateProbeWithUserPermissions(
+			// `userId`/`account_id` can't be set to null here, as this will break the further native Directus update with no permissions.
+			_.omit(fields, [ 'userId', 'account_id' ]),
+			keys,
+			accountability,
+			context,
+		);
 
 		const rootFields: Partial<Probe> = {};
 		isUpdatingLocation && patchCustomLocationRootFields(rootFields, keys, newLocation!, originalProbe!);
@@ -69,7 +76,7 @@ export default defineHook(({ filter, action }, context) => {
 		const fields = payload as Fields;
 
 		// In case of removing adoption, reset all user affected fields.
-		if (fields.userId === null) {
+		if (fields.userId === null || fields.account_id === null) {
 			await resetUserDefinedData(fields, keys, context);
 		}
 	});

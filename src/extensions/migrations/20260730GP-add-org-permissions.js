@@ -50,43 +50,46 @@ export async function up () {
 	console.log('gp_credits* permissions updated');
 
 	const policyId = await getUserPolicyId();
-	const orgs = await getUserPermissions('gp_orgs');
-	const members = await getUserPermissions('gp_org_members');
-	const newPermissions = [
-		!orgs.readPermissions && {
+
+	const orgPermissions = [
+		{
 			collection: 'gp_orgs',
 			action: 'read',
 			policy: policyId,
 			permissions: { members: { user: { _eq: '$CURRENT_USER' } } },
 			fields: [ 'id', 'name', 'github_id', 'adoption_token', 'account', 'members' ],
 		},
-		!orgs.updatePermissions && {
+		{
 			collection: 'gp_orgs',
 			action: 'update',
 			policy: policyId,
 			permissions: { members: { user: { _eq: '$CURRENT_USER' }, role: { _eq: 'admin' } } },
 			fields: [ 'adoption_token' ],
 		},
-		!members.readPermissions && {
+		{
 			collection: 'gp_org_members',
 			action: 'read',
 			policy: policyId,
 			permissions: { _or: [{ user: { _eq: '$CURRENT_USER' } }, ORG_ADMIN ] },
 			fields: [ 'id', 'org', 'user', 'role', 'notification_preferences' ],
 		},
-		!members.updatePermissions && {
+		{
 			collection: 'gp_org_members',
 			action: 'update',
 			policy: policyId,
 			permissions: { _or: [{ user: { _eq: '$CURRENT_USER' } }, ORG_ADMIN ] },
 			fields: [ 'role', 'notification_preferences' ],
 		},
-	].filter(Boolean);
+	];
 
-	if (newPermissions.length > 0) {
-		await createPermissions(newPermissions);
+	const orgs = await getUserPermissions('gp_orgs');
+	const members = await getUserPermissions('gp_org_members');
+
+	if (orgs.readPermissions || orgs.updatePermissions || members.readPermissions || members.updatePermissions) {
+		throw new Error('gp_orgs/gp_org_members permissions already exist.');
 	}
 
+	await createPermissions(orgPermissions);
 	console.log('gp_orgs and gp_org_members permissions created');
 }
 
