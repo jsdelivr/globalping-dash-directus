@@ -86,9 +86,8 @@ describe('Sign-up hook', () => {
 	});
 
 	it('filter should fulfill first_name, last_name, github_username, adoption_token', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
+		nock('https://api.github.com').get(`/user/memberships/orgs`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+		nock('https://api.github.com').get(`/user/1834071/orgs`).reply(200, []);
 
 		hook(events, context);
 
@@ -115,9 +114,8 @@ describe('Sign-up hook', () => {
 	});
 
 	it('filter should use gh login as first_name if name is not provided', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
+		nock('https://api.github.com').get(`/user/memberships/orgs`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+		nock('https://api.github.com').get(`/user/1834071/orgs`).reply(200, []);
 
 		hook(events, context);
 
@@ -189,9 +187,8 @@ describe('Sign-up hook', () => {
 	});
 
 	it('action should fulfill user type', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
+		nock('https://api.github.com').get(`/user/memberships/orgs`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+		nock('https://api.github.com').get(`/user/1834071/orgs`).reply(200, []);
 
 		sponsorsService.readByQuery.resolves([{
 			github_id: 1834071,
@@ -208,6 +205,7 @@ describe('Sign-up hook', () => {
 				last_name: 'jimaek',
 				github_username: null,
 				github_organizations: null,
+				github_oauth_token: 'user-github-token',
 			},
 		});
 
@@ -242,9 +240,8 @@ describe('Sign-up hook', () => {
 	});
 
 	it('action send welcome notification', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
+		nock('https://api.github.com').get(`/user/memberships/orgs`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+		nock('https://api.github.com').get(`/user/1834071/orgs`).reply(200, []);
 
 		sponsorsService.readByQuery.resolves([{
 			github_id: '1834071',
@@ -261,6 +258,7 @@ describe('Sign-up hook', () => {
 				last_name: 'jimaek',
 				github_username: null,
 				github_organizations: null,
+				github_oauth_token: 'user-github-token',
 			},
 		});
 

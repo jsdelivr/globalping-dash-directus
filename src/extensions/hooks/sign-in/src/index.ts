@@ -96,7 +96,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 
 	const user = await itemsService.readOne(userId, {}, {
 		// `emitEvents: false` keeps `github_oauth_token` unmasked by the directus-users users.read hook.
-		emitEvents: false
+		emitEvents: false,
 	}) as User | undefined;
 
 	if (!user || !user.external_identifier) {
@@ -108,7 +108,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
-	const organizations = await getGithubOrganizations(user, context);
+	const organizations = await getGithubOrganizations(user);
 	const githubOrgs = organizations.map(org => org.login);
 
 	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {

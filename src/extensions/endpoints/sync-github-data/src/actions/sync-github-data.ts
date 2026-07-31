@@ -30,7 +30,7 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 
 	const [ githubUsername, organizations ] = await Promise.all([
 		getGithubUsername(user, context),
-		getGithubOrganizations(user, context),
+		getGithubOrganizations(user),
 	]);
 
 	const githubOrgs = organizations.map(org => org.login);

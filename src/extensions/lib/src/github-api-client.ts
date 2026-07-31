@@ -1,3 +1,4 @@
+import { createError, ErrorCode } from '@directus/errors';
 import type { ApiExtensionContext } from '@directus/extensions';
 import axios from 'axios';
 import axiosRetry, { type AxiosRetry } from 'axios-retry';
@@ -27,9 +28,11 @@ export type GithubOrganization = {
 	role: 'admin' | 'member';
 };
 
-export class GithubTokenRejectedError extends Error {}
-
-const isTokenError = (error: { response?: { status?: number } }) => error.response?.status === 401 || error.response?.status === 403;
+export const githubSyncError = (status?: number) => new (createError(
+	ErrorCode.InvalidToken,
+	`Failed to get the GitHub data${status ? ` (${status})` : ''}. Please sign out and sign in again.`,
+	400,
+))();
 
 const githubRequest = <T>(path: string, token: string | null) => {
 	return axios.get<T>(`https://api.github.com${path}`, {
@@ -45,11 +48,6 @@ const toOrganization = (org: { id: number; login: string }, role: 'admin' | 'mem
 	login: org.login,
 	role,
 });
-
-// Public memberships of any user, so it also lists the orgs restricting our OAuth app.
-const getPublicOrganizations = (user: User, token: string | null) => {
-	return githubRequest<GithubOrgsResponse>(`/user/${user.external_identifier}/orgs`, token);
-};
 
 export const getGithubApiClient = (userToken: string | null, context: ApiExtensionContext) => {
 	if (!userToken) {
@@ -83,21 +81,14 @@ export const getGithubApiClient = (userToken: string | null, context: ApiExtensi
 
 // Both sources are incomplete on their own: the memberships list is the only one with roles and private memberships, but orgs
 // restricting our OAuth app are silently missing from it. Those are visible in the public list, without a role, so they become members.
-export const getGithubOrganizations = async (user: User, context: ApiExtensionContext): Promise<GithubOrganization[]> => {
-	if (!user.github_oauth_token) {
-		const publicOrgs = await getPublicOrganizations(user, context.env.GITHUB_ACCESS_TOKEN);
-		return publicOrgs.data.map(org => toOrganization(org, 'member'));
-	}
-
+export const getGithubOrganizations = async (user: User): Promise<GithubOrganization[]> => {
 	const [ memberships, publicOrgs ] = await Promise.all([
-		githubRequest<GithubMembershipsResponse>('/user/memberships/orgs', user.github_oauth_token)
-			.catch((error) => {
-				throw isTokenError(error) ? new GithubTokenRejectedError() : error;
-			}),
-		getPublicOrganizations(user, user.github_oauth_token)
-			.catch(error => isTokenError(error) ? getPublicOrganizations(user, context.env.GITHUB_ACCESS_TOKEN) : Promise.reject(error))
-			.catch(() => ({ data: [] as GithubOrgsResponse })),
-	]);
+		githubRequest<GithubMembershipsResponse>('/user/memberships/orgs', user.github_oauth_token),
+		// Public memberships of any user, so this one also lists the orgs restricting our OAuth app.
+		githubRequest<GithubOrgsResponse>(`/user/${user.external_identifier}/orgs`, user.github_oauth_token),
+	]).catch((error) => {
+		throw githubSyncError(error.response?.status);
+	});
 
 	const organizations = memberships.data
 		.filter(membership => membership.state === 'active')
@@ -112,10 +103,9 @@ export const getGithubOrganizations = async (user: User, context: ApiExtensionCo
 	];
 };
 
-// An org missing from getGithubOrganizations() doesn't mean the user left it. It also disappears when:
-// - the membership is private and the org restricts our OAuth app, so it is in neither of the two lists;
-// - the user has no token, leaving only the public list, where every private membership is missing.
-// So a membership is removed only on a 404 here; 403 and the errors (including the missing token) keep it.
+// Asks GitHub about one specific org, to be sure before removing a membership.
+// An org can be missing from getGithubOrganizations() even when the user is still in it: that happens when the org restricts
+// our OAuth app => missing from /user/memberships/orgs and the user hides the membership => missing from /user/${user.external_identifier}/orgs. Here only a 404 means "not a member"; anything else means "we don't know".
 export const isStillGithubOrganizationMember = async (user: User, orgLogin: string): Promise<boolean | null> => {
 	return githubRequest(`/user/memberships/orgs/${orgLogin}`, user.github_oauth_token)
 		.then(() => true)

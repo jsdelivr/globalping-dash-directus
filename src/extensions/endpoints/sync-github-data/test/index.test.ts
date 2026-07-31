@@ -155,15 +155,14 @@ describe('/sync-github-data endpoint', () => {
 			login: 'new-username',
 		});
 
-		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
-			id: 1,
-			login: 'new-org',
-		}]);
+		nock('https://api.github.com').get('/user/memberships/orgs').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, []);
 
 		readOne.resolves({
 			external_identifier: 'github-id',
 			github_username: null,
 			github_organizations: [],
+			github_oauth_token: 'user-github-token',
 		});
 
 		const res = await request(app).post('/').send({
@@ -227,11 +226,12 @@ describe('/sync-github-data endpoint', () => {
 			userId: 'directus-id',
 		});
 
-		expect(res.status).to.equal(500);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
 		expect(updateOne.callCount).to.equal(0);
 	});
 
-	it('should use default github token if user token is null', async () => {
+	it('should fail without updating anything if the user has no token', async () => {
 		readOne.resolves({
 			external_identifier: 'github-id',
 			github_username: 'old-username',
@@ -246,20 +246,16 @@ describe('/sync-github-data endpoint', () => {
 				login: 'new-username',
 			});
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id/orgs')
-			.reply(200, [{
-				id: 1,
-				login: 'new-org',
-			}]);
+		nock('https://api.github.com').get('/user/memberships/orgs').reply(401);
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(401);
 
 		const res = await request(app).post('/').send({
 			userId: 'directus-id',
 		});
 
-		expect(nock.isDone()).to.equal(true);
-		expect(res.status).to.equal(200);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
+		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should not call update if data is the same', async () => {

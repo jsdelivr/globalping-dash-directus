@@ -78,7 +78,7 @@ const fulfillFirstNameAndLastName = (user: User) => {
 };
 
 const fulfillOrganizations = async (userId: string, user: User, context: HookExtensionContext) => {
-	const organizations = await getGithubOrganizations(user, context);
+	const organizations = await getGithubOrganizations(user);
 	await updateUser(userId, { github_organizations: organizations.map(org => org.login) }, context);
 };
 

@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
-import { GithubTokenRejectedError } from '../../../lib/src/github-api-client.js';
 import hook from '../src/index.js';
 
 type ActionCallback = (meta: any) => Promise<void>;
@@ -226,7 +225,7 @@ describe('Sign-in hook', () => {
 			expect(notificationsService.createOne.callCount).to.equal(0);
 		});
 
-		it('should reject the user token and not update the orgs if it is invalid', async () => {
+		it('should fail without updating the orgs if the user token is invalid', async () => {
 			const userId = '123';
 			const githubId = '456';
 
@@ -243,7 +242,7 @@ describe('Sign-in hook', () => {
 
 			const error = await callbacks.action['auth.login']?.({ user: userId, provider: 'github' }).catch((error: unknown) => error);
 
-			expect(error).to.be.instanceOf(GithubTokenRejectedError);
+			expect((error as Error).message).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
 			expect(usersService.updateOne.callCount).to.equal(0);
 		});
 
