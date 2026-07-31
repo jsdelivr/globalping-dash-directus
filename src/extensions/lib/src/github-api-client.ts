@@ -1,11 +1,13 @@
 import { createError, ErrorCode } from '@directus/errors';
-import type { ApiExtensionContext } from '@directus/extensions';
 import axios from 'axios';
-import axiosRetry, { type AxiosRetry } from 'axios-retry';
 
 type User = {
 	external_identifier: string | null;
 	github_oauth_token: string | null;
+};
+
+type GithubUserResponse = {
+	login: string;
 };
 
 type GithubOrgsResponse = {
@@ -49,36 +51,6 @@ const toOrganization = (org: { id: number; login: string }, role: 'admin' | 'mem
 	role,
 });
 
-export const getGithubApiClient = (userToken: string | null, context: ApiExtensionContext) => {
-	if (!userToken) {
-		return axios.create({
-			timeout: 5000,
-			headers: {
-				Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-			},
-		});
-	}
-
-	const client = axios.create({
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${userToken}`,
-		},
-	});
-
-	(axiosRetry as unknown as AxiosRetry)(client, {
-		retries: 1,
-		retryCondition: (error) => {
-			return error.response?.status === 401 || error.response?.status === 403;
-		},
-		onRetry: (_retryCount, _error, request) => {
-			request.headers!.Authorization = `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`;
-		},
-	});
-
-	return client;
-};
-
 // Both sources are incomplete on their own: the memberships list is the only one with roles and private memberships, but orgs
 // restricting our OAuth app are silently missing from it. Those are visible in the public list, without a role, so they become members.
 export const getGithubOrganizations = async (user: User): Promise<GithubOrganization[]> => {
@@ -110,4 +82,13 @@ export const isStillGithubOrganizationMember = async (user: User, orgLogin: stri
 	return githubRequest(`/user/memberships/orgs/${orgLogin}`, user.github_oauth_token)
 		.then(() => true)
 		.catch(error => error.response?.status === 404 ? false : null);
+};
+
+export const getGithubUsername = async (user: User): Promise<string> => {
+	const response = await githubRequest<GithubUserResponse>(`/user/${user.external_identifier}`, user.github_oauth_token)
+		.catch((error) => {
+			throw githubSyncError(error.response?.status);
+		});
+
+	return response.data.login;
 };

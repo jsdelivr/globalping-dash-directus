@@ -186,18 +186,11 @@ describe('/sync-github-data endpoint', () => {
 		});
 	});
 
-	it('should retry the username with the default github token if the user token failed', async () => {
+	it('should fail without updating anything if the username request is rejected', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
 			.get('/user/github-id')
 			.reply(401);
-
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id')
-			.reply(200, {
-				login: 'new-username',
-			});
 
 		nock('https://api.github.com').get('/user/memberships/orgs').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
 		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, []);
@@ -206,8 +199,9 @@ describe('/sync-github-data endpoint', () => {
 			userId: 'directus-id',
 		});
 
-		expect(nock.isDone()).to.equal(true);
-		expect(res.status).to.equal(200);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
+		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should fail without updating anything if the user token is rejected', async () => {
@@ -239,13 +233,7 @@ describe('/sync-github-data endpoint', () => {
 			github_oauth_token: null,
 		});
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id')
-			.reply(200, {
-				login: 'new-username',
-			});
-
+		nock('https://api.github.com').get('/user/github-id').reply(401);
 		nock('https://api.github.com').get('/user/memberships/orgs').reply(401);
 		nock('https://api.github.com').get('/user/github-id/orgs').reply(401);
 
