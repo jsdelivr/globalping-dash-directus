@@ -28,10 +28,12 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 		throw new NotEnoughDataError();
 	}
 
-	const [ githubUsername, githubOrgs ] = await Promise.all([
+	const [ githubUsername, organizations ] = await Promise.all([
 		getGithubUsername(user, context),
 		getGithubOrganizations(user, context),
 	]);
+
+	const githubOrgs = organizations.map(org => org.login);
 
 	if (username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
 		await updateDirectusUser(user, {

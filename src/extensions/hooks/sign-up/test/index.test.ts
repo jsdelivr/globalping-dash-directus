@@ -88,7 +88,7 @@ describe('Sign-up hook', () => {
 	it('filter should fulfill first_name, last_name, github_username, adoption_token', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 		hook(events, context);
 
@@ -117,7 +117,7 @@ describe('Sign-up hook', () => {
 	it('filter should use gh login as first_name if name is not provided', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 		hook(events, context);
 
@@ -146,8 +146,10 @@ describe('Sign-up hook', () => {
 	it('action should fulfill organizations, credits', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.get(`/user/memberships/orgs`)
+			.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+		nock('https://api.github.com').get(`/user/1834071/orgs`).reply(200, []);
 
 		creditsAdditionsService.readByQuery.resolves([{
 			amount: 10,
@@ -189,7 +191,7 @@ describe('Sign-up hook', () => {
 	it('action should fulfill user type', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 		sponsorsService.readByQuery.resolves([{
 			github_id: 1834071,
@@ -215,8 +217,10 @@ describe('Sign-up hook', () => {
 	it('action should release a matching deprecated prefix from other users', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.get(`/user/memberships/orgs`)
+			.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+		nock('https://api.github.com').get(`/user/1834071/orgs`).reply(200, []);
 
 		hook(events, context);
 
@@ -240,7 +244,7 @@ describe('Sign-up hook', () => {
 	it('action send welcome notification', async () => {
 		nock('https://api.github.com')
 			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 		sponsorsService.readByQuery.resolves([{
 			github_id: '1834071',

@@ -94,7 +94,10 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 		schema: await getSchema(),
 	});
 
-	const user = await itemsService.readOne(userId) as User | undefined;
+	const user = await itemsService.readOne(userId, {}, {
+		// `emitEvents: false` keeps `github_oauth_token` unmasked by the directus-users users.read hook.
+		emitEvents: false
+	}) as User | undefined;
 
 	if (!user || !user.external_identifier) {
 		throw new Error('Not enough data to sync with GitHub');
@@ -105,7 +108,8 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 };
 
 const syncGitHubOrganizations = async (user: User, context: HookExtensionContext) => {
-	const githubOrgs = await getGithubOrganizations(user, context);
+	const organizations = await getGithubOrganizations(user, context);
+	const githubOrgs = organizations.map(org => org.login);
 
 	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
 		await updateUser(user, { github_organizations: githubOrgs }, context);

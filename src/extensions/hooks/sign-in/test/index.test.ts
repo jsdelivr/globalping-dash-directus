@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import { GithubTokenRejectedError } from '../../../lib/src/github-api-client.js';
 import hook from '../src/index.js';
 
 type ActionCallback = (meta: any) => Promise<void>;
@@ -121,15 +122,17 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs`)
+				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
 
 			hook(events, context);
 
 			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ userId, {}, { emitEvents: false }]);
 			expect(nock.isDone()).to.equal(true);
 			expect(usersService.updateOne.callCount).to.equal(1);
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
@@ -143,15 +146,17 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs`)
+				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
 
 			hook(events, context);
 
 			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ userId, {}, { emitEvents: false }]);
 			expect(nock.isDone()).to.equal(true);
 			expect(usersService.updateOne.callCount).to.equal(0);
 		});
@@ -170,8 +175,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs`)
+				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
 
 			hook(events, context);
 
@@ -204,8 +211,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs`)
+				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
 
 			hook(events, context);
 
@@ -217,7 +226,7 @@ describe('Sign-in hook', () => {
 			expect(notificationsService.createOne.callCount).to.equal(0);
 		});
 
-		it('should fallback to default github token if user token is invalid', async () => {
+		it('should reject the user token and not update the orgs if it is invalid', async () => {
 			const userId = '123';
 			const githubId = '456';
 
@@ -225,19 +234,17 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
+				.get(`/user/memberships/orgs`)
 				.reply(401);
 
-			nock('https://api.github.com')
-				.matchHeader('Authorization', 'Bearer default-github-token')
-				.get(`/user/${githubId}/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+			nock('https://api.github.com').get(`/user/${githubId}/orgs`).reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 			hook(events, context);
 
-			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
+			const error = await callbacks.action['auth.login']?.({ user: userId, provider: 'github' }).catch((error: unknown) => error);
 
-			expect(nock.isDone()).to.equal(true);
+			expect(error).to.be.instanceOf(GithubTokenRejectedError);
+			expect(usersService.updateOne.callCount).to.equal(0);
 		});
 
 		it('should send error if there is no enough data to check username', async () => {
@@ -251,7 +258,7 @@ describe('Sign-in hook', () => {
 			expect(error.message).to.equal('Not enough data to sync with GitHub');
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ userId, {}, { emitEvents: false }]);
 		});
 	});
 
