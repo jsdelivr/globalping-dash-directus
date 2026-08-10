@@ -95,7 +95,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 	});
 
 	const user = await itemsService.readOne(userId, {}, {
-		// `emitEvents: false` keeps `github_oauth_token` unmasked by the directus-users users.read hook.
+		// `emitEvents: false` keeps `github_oauth_token` from being masked by the directus-users users.read hook.
 		emitEvents: false,
 	}) as User | undefined;
 

@@ -121,10 +121,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/memberships/orgs`)
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
 				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
 
-			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
@@ -145,10 +145,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/memberships/orgs`)
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
 				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
 
-			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
@@ -174,10 +174,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/memberships/orgs`)
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
 				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
 
-			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
@@ -210,10 +210,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/memberships/orgs`)
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
 				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
 
-			nock('https://api.github.com').get(`/user/456/orgs`).reply(200, []);
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
@@ -233,10 +233,10 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/memberships/orgs`)
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
 				.reply(401);
 
-			nock('https://api.github.com').get(`/user/${githubId}/orgs`).reply(200, [{ id: 1, login: 'jsdelivr' }]);
+			nock('https://api.github.com').get(`/user/${githubId}/orgs?per_page=100&page=1`).reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 			hook(events, context);
 

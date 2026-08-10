@@ -40,6 +40,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.
 - An org that hasn't approved our OAuth app is only visible through the public memberships list, which has no roles, so all of its members are synced as `member` and it has no admins at all (it stays usable for member actions). To get admins, the org has to approve the `globalping` app in its GitHub settings. The dash shows a hint about it when an org has no admins.
+- Members who hide their membership in such an org are invisible to us entirely: they don't get the org, and an existing membership is removed on the next sync, so that everyone in the same position ends up the same (the sync never removes anything when GitHub is unreachable: a failed request aborts it). Making the membership public, or having the org approve the app, brings it back.
 
 **Probes**
 - A probe has a single owner: `account_id` (personal or org account).

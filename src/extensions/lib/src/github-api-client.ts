@@ -10,19 +10,16 @@ type GithubUserResponse = {
 	login: string;
 };
 
-type GithubOrgsResponse = {
+type GithubOrg = {
 	id: number;
 	login: string;
-}[];
+};
 
-type GithubMembershipsResponse = {
+type GithubMembership = {
 	state: string;
 	role: string;
-	organization: {
-		id: number;
-		login: string;
-	};
-}[];
+	organization: GithubOrg;
+};
 
 export type GithubOrganization = {
 	githubId: string;
@@ -45,6 +42,20 @@ const githubRequest = <T>(path: string, token: string | null) => {
 	});
 };
 
+// Paginate the list to get all items.
+const githubListRequest = async <T>(path: string, token: string | null): Promise<T[]> => {
+	const items: T[] = [];
+
+	for (let page = 1; ; page++) {
+		const response = await githubRequest<T[]>(`${path}?per_page=100&page=${page}`, token);
+		items.push(...response.data);
+
+		if (!response.headers['link']?.includes('rel="next"')) {
+			return items;
+		}
+	}
+};
+
 const toOrganization = (org: { id: number; login: string }, role: 'admin' | 'member'): GithubOrganization => ({
 	githubId: org.id.toString(),
 	login: org.login,
@@ -55,14 +66,14 @@ const toOrganization = (org: { id: number; login: string }, role: 'admin' | 'mem
 // restricting our OAuth app are silently missing from it. Those are visible in the public list, without a role, so they become members.
 export const getGithubOrganizations = async (user: User): Promise<GithubOrganization[]> => {
 	const [ memberships, publicOrgs ] = await Promise.all([
-		githubRequest<GithubMembershipsResponse>('/user/memberships/orgs', user.github_oauth_token),
+		githubListRequest<GithubMembership>('/user/memberships/orgs', user.github_oauth_token),
 		// Public memberships of any user, so this one also lists the orgs restricting our OAuth app.
-		githubRequest<GithubOrgsResponse>(`/user/${user.external_identifier}/orgs`, user.github_oauth_token),
+		githubListRequest<GithubOrg>(`/user/${user.external_identifier}/orgs`, user.github_oauth_token),
 	]).catch((error) => {
 		throw githubSyncError(error.response?.status);
 	});
 
-	const organizations = memberships.data
+	const organizations = memberships
 		.filter(membership => membership.state === 'active')
 		// GitHub also has the `billing_manager` role, which is treated as `member`.
 		.map(membership => toOrganization(membership.organization, membership.role === 'admin' ? 'admin' : 'member'));
@@ -71,17 +82,8 @@ export const getGithubOrganizations = async (user: User): Promise<GithubOrganiza
 
 	return [
 		...organizations,
-		...publicOrgs.data.filter(org => !knownIds.has(org.id.toString())).map(org => toOrganization(org, 'member')),
+		...publicOrgs.filter(org => !knownIds.has(org.id.toString())).map(org => toOrganization(org, 'member')),
 	];
-};
-
-// Asks GitHub about one specific org, to be sure before removing a membership.
-// An org can be missing from getGithubOrganizations() even when the user is still in it: that happens when the org restricts
-// our OAuth app => missing from /user/memberships/orgs and the user hides the membership => missing from /user/${user.external_identifier}/orgs. Here only a 404 means "not a member"; anything else means "we don't know".
-export const isStillGithubOrganizationMember = async (user: User, orgLogin: string): Promise<boolean | null> => {
-	return githubRequest(`/user/memberships/orgs/${orgLogin}`, user.github_oauth_token)
-		.then(() => true)
-		.catch(error => error.response?.status === 404 ? false : null);
 };
 
 export const getGithubUsername = async (user: User): Promise<string> => {
