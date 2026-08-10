@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { getResetLocationFields } from '../../../lib/src/reset-fields.js';
 import { updateProbeWithRootPermissions, updateProbeWithUserPermissions } from './repositories/directus.js';
 import { patchCustomLocationRootFields, resetUserDefinedData } from './update-with-root.js';
-import { patchCustomLocationAllowedFields, resetProbeName, resetCustomLocationAllowedFields, validateTags } from './update-with-user.js';
+import { patchCustomLocationAllowedFields, resetProbeName, resetCustomLocationAllowedFields, validateSettings, validateTags } from './update-with-user.js';
 
 export type Probe = {
 	id: string;
@@ -25,6 +25,9 @@ export type Probe = {
 	systemTags: string[];
 	userId: string | null;
 	allowedCountries: string[];
+	settings: {
+		meteredConnection?: boolean;
+	};
 };
 
 export type Fields = Partial<Probe>;
@@ -34,12 +37,18 @@ export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
 export default defineHook(({ filter, action }, context) => {
+	filter('gp_probes.items.create', (payload) => {
+		validateSettings(payload as Fields);
+	});
+
 	filter('gp_probes.items.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
 
 		if (!accountability || !accountability.user) {
 			throw new UserNotFoundError();
 		}
+
+		validateSettings(fields);
 
 		const isResettingLocation = Object.hasOwn(fields, 'city') && !fields.city;
 		const isUpdatingLocation = Boolean(fields.city || Object.hasOwn(fields, 'country') || Object.hasOwn(fields, 'state')) && !isResettingLocation;
