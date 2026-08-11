@@ -44,16 +44,17 @@ User-visible org support.
 
 Remove the transition scaffolding. Only after phases 1-3 have soaked in prod.
 
+- Drop the `*_fulfill_account` triggers FIRST, with `migrate:one`, and only then let `schema:apply` drop the columns. Dropping a column a trigger reads does not disable the trigger - every write to the table fails with `Unknown column ... in 'NEW'` until it is gone, and `schema:apply` runs before `migrate`.
 - Drop old columns: `gp_probes.userId`, `gp_credits.user_id`, `gp_credits_deductions.user_id`, `gp_apps_approvals.user`.
 - Remove dual-write / dual-read support from extensions and gp-api.
 - Drop `default_prefix`, `deprecated_prefix`, `github_organizations` from `directus_users`; remove the tag-prefix-selector interface, simplify gp-tags.
-- `SOURCE_ID_TO_TARGET_ID` redirect is NOT removed (kept forever for now).
+- `SOURCE_ID_TO_TARGET_ID` redirect is NOT removed (kept forever for now), but new org sponsorships no longer need an entry: the org claims its own credits.
 
 Added while implementing phase 1 (remove or update in phase 4):
 
-- Triggers `gp_probes_fulfill_account`, `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260801GP`) - fulfill `account_id` for rows created outside our extensions. Drop once every writer sets it.
+- Triggers `gp_probes_fulfill_account_insert` / `_update`, `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260731GP`) - fulfill `account_id` for rows written outside our extensions. The probe update one also moves the account along when a probe is adopted away from its owner. Drop once every writer sets it.
 - `gp_apps_approvals_fulfill_account` also copies `user` -> `user_created`; drop together with the `user` column.
-- Credits triggers (`20260729GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
+- Credits triggers (`20260731GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
 - `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.
 - `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns.
 - `gp_probes` update permission validation keeps the `userId _null` clause next to `account_id _null`; `userId` stays in the allowed update fields (dash sends it until phase 2).

@@ -2197,7 +2197,7 @@ fields:
       options:
         enableCreate: false
       readonly: false
-      required: true
+      required: false
       searchable: true
       sort: 4
       special:
@@ -2827,7 +2827,7 @@ fields:
       options:
         enableCreate: false
       readonly: false
-      required: true
+      required: false
       searchable: true
       sort: 4
       special:
@@ -2844,7 +2844,7 @@ fields:
       max_length: 36
       numeric_precision: null
       numeric_scale: null
-      is_nullable: false
+      is_nullable: true
       is_unique: false
       is_indexed: true
       is_primary_key: false

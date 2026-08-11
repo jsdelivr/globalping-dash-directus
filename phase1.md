@@ -30,7 +30,7 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 5. **GitHub client**:
    - `getGithubOrganizations()` merges two sources, both incomplete alone: `/user/memberships/orgs` (roles + private memberships, but orgs restricting our OAuth app are silently missing) and `/user/{id}/orgs` (includes the restricted ones, public memberships only, no roles - added as `member`). Both go with the user's token, there is no fallback to ours. Any failure, including a missing token, throws an explicit error asking the user to sign in again.
    - Both lists are paginated (`per_page=100` + the `Link` header), because an org missing from them means the membership is removed - a truncated first page would delete the rest.
-6. **Sync lib** (`lib/src/sync-orgs.ts`): upsert gp_orgs (+account via trigger) and gp_org_members from memberships; members of an org that restricts our OAuth app are synced as `member` and nobody there can become admin until the org approves the app (org still usable for member actions: create tokens, approve apps; adopting probes stays unavailable there since it is admin-only); promote to admin, never demote; a membership missing from the list is removed: with a complete list that only happens when the user left or the org cut off our app, and a failed list throws before any of this; on leave: delete membership + that member's org tokens and approvals; init org credits from unconsumed additions on first org creation
+6. **Sync lib** (`lib/src/sync-orgs.ts`): upsert gp_orgs (+account via trigger) and gp_org_members from memberships; members of an org that restricts our OAuth app are synced as `member` and nobody there can become admin until the org approves the app (org still usable for member actions: create tokens, approve apps; adopting probes stays unavailable there since it is admin-only); promote to admin, never demote; a membership missing from the list is removed: with a complete list that only happens when the user left or the org cut off our app, and a failed list throws before any of this; on leave: delete membership + that member's org tokens and approvals (database trigger); unconsumed sponsorship additions are claimed when the org is created (database trigger)
 
 6a. **Unmask the GitHub token for internal reads**: the `directus-users` hook masks `github_oauth_token` in `action('users.read')`, and Directus emits it for internal `ItemsService` reads too - so the sync was sending `Bearer ********`, getting a 401 and silently falling back to the public orgs list (verified on the dev instance; explains the stale prod data). Fixed with `readOne(id, {}, { emitEvents: false })` in the sign-in hook and the sync-github-data repository. Without it the new code would throw `GithubTokenRejectedError` for every user.
 
@@ -42,9 +42,9 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 
 9. **adopted-probe hook**: tag prefix from account owner (org name or github_username); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
 
-10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row
+10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
 
-10a. **gp-orgs read hook**: strip `adoption_token` unless the requester is an admin of that org (permission fields can't differ per role; pattern = `github_oauth_token` masking in directus-users hook)
+10a. **gp-orgs read hook**: strip `adoption_token` unless the requester is an admin of that org. Until it lands every member reads the org's adoption token (confirmed on the dev instance) - permission fields can't differ per role, so the hook is the only place for it; pattern = `github_oauth_token` masking in directus-users hook
 
 11. **Notifications**: org-event fan-out to members per `notification_preferences` (most org notifications off by default)
 
@@ -55,3 +55,15 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits notifies org members
 
 15. **e2e** for permissions and sync
+
+**Deploy**: three steps, in this order.
+
+1. `pnpm migrate:one:production` - applies `20260728GP` alone: it converts `gp_credits_deductions.user_id` to varchar. Directus can't
+   make that column nullable itself, because it rewrites a char column as varchar whenever it alters one, and a type change is
+   rejected on a foreign key column. Runs Directus's `migrate:up`, which applies the first migration above the last applied one.
+2. `pnpm schema:apply:production` - adds the org collections and the `account_id` columns, and makes `user_id` nullable, which it
+   can now do because the column is varchar.
+3. `pnpm migrate:production` - the remaining migrations, then restart Directus.
+
+A fresh database needs no special steps - `init.sh` order works as is. The snapshot creates the column nullable right away, so
+nothing has to alter it, and `20260728GP` only converts the type, which keeps every environment on the same column.
