@@ -4,6 +4,23 @@ Process: one step at a time. TDD where applicable (per-extension mocha), verify 
 
 Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/`orgId` columns on data tables). Step 1's `schema:apply` removes them automatically (the snapshot is the source of truth).
 
+## Compatibility contract
+
+Phase 1 is deployed while every other service still runs its old version, and each of them switches to accounts on its own
+schedule. So both shapes have to work at the same time, in both directions:
+
+- a writer that still sends only `userId` / `user_id` / `user` must end up with `account_id` filled;
+- a writer that already sends only `account_id` must end up with the legacy column filled too, so the old readers keep seeing
+  the row - and must not be rejected by a NOT NULL column or an input schema that only knows the old parameter;
+- a reader of either shape sees the same data.
+
+How the code is written for it:
+
+- account-first: the real logic resolves and stores `account_id`, and reads it back;
+- everything that exists only to keep the old shape alive - dual-writes, legacy input parameters, fulfillment triggers - is a
+  separate block marked `// PHASE4: remove`, never woven into the main path;
+- phase 4 is then a grep for the marker and a delete, not a rewrite.
+
 ## Steps
 
 1. **Schema (snapshot yml)**
@@ -19,6 +36,7 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
    - insert-triggers on `directus_users`/`gp_orgs` creating account rows
    - XOR check on gp_accounts; `UNIQUE(org, user)` on gp_org_members; `UNIQUE(account_id)` on gp_credits
    - FK actions: accounts cascade from user/org; `gp_tokens.user_created` ON DELETE CASCADE
+   - replace `gp_apps_approvals` `UNIQUE(user, app)` with `UNIQUE(user_created, app, account_id)`, so the same person can approve an app for themselves and for an org separately; the `user` foreign key needs a plain index of its own first
 
 3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch)
 
@@ -48,9 +66,16 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 
 11. **Notifications**: org-event fan-out to members per `notification_preferences` (most org notifications off by default)
 
-12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`
+12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
 
-13. **Applications endpoint**: `accountId` scoping for list and revoke
+    Org adoption ships here but stays dormant: only the phase 3 dashboard sends `activeOrg`, and Directus is not deployed again in
+    between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in
+    phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before
+    phase 2, same class as an org token created via raw API.
+
+13. **Applications endpoint**: list and revoke scope by `account_id`. Also fixes a phase-2 hazard: today revoke deletes by `user` + `app`, which would take an org approval down together with the personal one once gp-auth starts creating them.
+
+13a. **Legacy `userId` shim in endpoints**: adoption-code (`send-code`, `verify-code`, `adopt-by-token`), applications and credits-timeline accept `accountId` as the primary parameter; `userId` stays as a `// PHASE4: remove` shim resolved into the personal account via `getUserAccountId`, exactly one of the two is required. Ships in phase 1 because Directus is not deployed again before the callers switch.
 
 14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits notifies org members
 
@@ -64,6 +89,10 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 2. `pnpm schema:apply:production` - adds the org collections and the `account_id` columns, and makes `user_id` nullable, which it
    can now do because the column is varchar.
 3. `pnpm migrate:production` - the remaining migrations, then restart Directus.
+
+After the deploy, `SELECT COUNT(*) FROM gp_probes WHERE userId IS NOT NULL AND account_id IS NULL` must be 0, and stay 0 - phase 2
+resolves a probe's owner through the account alone, so a probe with an owner but no account is invisible to it. Nothing writes such a
+row: the backfill fixed the old ones and `createAdoptedProbe` sets both. Editing `userId` by hand in the admin app would.
 
 A fresh database needs no special steps - `init.sh` order works as is. The snapshot creates the column nullable right away, so
 nothing has to alter it, and `20260728GP` only converts the type, which keeps every environment on the same column.

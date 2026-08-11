@@ -2,7 +2,7 @@
 export async function up (knex) {
 	await knex.raw(`ALTER TABLE gp_credits_deductions ADD UNIQUE INDEX IF NOT EXISTS gp_credits_deductions_account_id_date_unique (account_id, date);`);
 
-	// Removed on phase 4.
+	// PHASE4: remove.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER gp_tokens_fulfill_account BEFORE INSERT ON gp_tokens
 		FOR EACH ROW
@@ -13,13 +13,17 @@ export async function up (knex) {
 		END;
 	`);
 
-	// Removed on phase 4.
+	// PHASE4: remove.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER gp_apps_approvals_fulfill_account BEFORE INSERT ON gp_apps_approvals
 		FOR EACH ROW
 		BEGIN
 			IF NEW.user_created IS NULL THEN
 				SET NEW.user_created = NEW.user;
+			END IF;
+
+			IF NEW.user IS NULL THEN
+				SET NEW.user = NEW.user_created;
 			END IF;
 
 			IF NEW.account_id IS NULL AND NEW.user_created IS NOT NULL THEN
@@ -86,6 +90,12 @@ export async function up (knex) {
 	await knex.raw(`UPDATE gp_credits_deductions d JOIN gp_accounts a ON a.user = d.user_id SET d.account_id = a.id WHERE d.account_id IS NULL;`);
 
 	console.log('account_id backfilled');
+
+	await knex.raw(`ALTER TABLE gp_apps_approvals ADD INDEX IF NOT EXISTS gp_apps_approvals_user_index (user);`);
+	await knex.raw(`ALTER TABLE gp_apps_approvals DROP INDEX IF EXISTS unique_user_app;`);
+	await knex.raw(`ALTER TABLE gp_apps_approvals ADD UNIQUE INDEX IF NOT EXISTS gp_apps_approvals_account_app_unique (user_created, app, account_id);`);
+
+	console.log('gp_apps_approvals unique key moved to the account');
 }
 
 export async function down () {
