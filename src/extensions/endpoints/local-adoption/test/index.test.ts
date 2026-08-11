@@ -9,6 +9,7 @@ describe('local-adoption endpoint', () => {
 	const sandbox = sinon.createSandbox();
 
 	let knexQueryBuilder: any;
+	let accountsQueryBuilder: any;
 	let databaseStub: any;
 	let updateOne: any;
 	let readOne: any;
@@ -76,7 +77,10 @@ describe('local-adoption endpoint', () => {
 		knexQueryBuilder.transacting.returns(knexQueryBuilder);
 		knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
 
-		databaseStub = sandbox.stub().returns(knexQueryBuilder);
+		accountsQueryBuilder = { where: sandbox.stub(), first: sandbox.stub().resolves({ id: 'account-id' }) };
+		accountsQueryBuilder.where.returns(accountsQueryBuilder);
+
+		databaseStub = sandbox.stub().callsFake((table: string) => table === 'gp_accounts' ? accountsQueryBuilder : knexQueryBuilder);
 		databaseStub.transaction = sandbox.stub().callsFake(async (callback: any) => callback(knexQueryBuilder));
 
 		updateOne = sandbox.stub();
@@ -201,6 +205,7 @@ describe('local-adoption endpoint', () => {
 			expect(updateOne.args[0]?.[1]).to.deep.include({
 				name: 'probe-us-new-york-01',
 				userId: 'user-id',
+				account_id: 'account-id',
 				ip: clientIp,
 			});
 

@@ -48,7 +48,7 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 
 11. **Notifications**: org-event fan-out to members per `notification_preferences` (most org notifications off by default)
 
-12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets the org `account_id` when adopting into an org (personal one is fulfilled by the DB trigger), dual-writes `userId`
+12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`
 
 13. **Applications endpoint**: `accountId` scoping for list and revoke
 

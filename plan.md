@@ -52,7 +52,7 @@ Remove the transition scaffolding. Only after phases 1-3 have soaked in prod.
 
 Added while implementing phase 1 (remove or update in phase 4):
 
-- Triggers `gp_probes_fulfill_account_insert` / `_update`, `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260731GP`) - fulfill `account_id` for rows written outside our extensions. The probe update one also moves the account along when a probe is adopted away from its owner. Drop once every writer sets it.
+- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260731GP`) - fulfill `account_id` for the rows gp-auth writes. Drop once it sets the account itself, in phase 2.
 - `gp_apps_approvals_fulfill_account` also copies `user` -> `user_created`; drop together with the `user` column.
 - Credits triggers (`20260731GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
 - `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.

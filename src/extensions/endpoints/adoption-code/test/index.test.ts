@@ -31,12 +31,17 @@ describe('adoption code endpoints', () => {
 	sql.orWhere.returns(sql);
 	sql.orWhereRaw.returns(sql);
 	sql.orderByRaw.returns(sql);
+	const accountsSql = {
+		where: sinon.stub(),
+		first: sinon.stub().resolves({ id: 'account-id' }),
+	};
+	accountsSql.where.returns(accountsSql);
 	const endpointContext = {
 		logger: {
 			error: console.error,
 		},
 		getSchema: () => {},
-		database: () => sql,
+		database: (table: string) => table === 'gp_accounts' ? accountsSql : sql,
 		env: {
 			GLOBALPING_URL: 'https://api.globalping.io/v1',
 			GP_SYSTEM_KEY: 'system',
@@ -67,6 +72,7 @@ describe('adoption code endpoints', () => {
 
 	const adoptionCodeGPApiResponse: ProbeToAdopt = {
 		userId: null,
+		account_id: null,
 		ip: '1.1.1.1',
 		name: null,
 		altIps: [],
@@ -329,6 +335,7 @@ describe('adoption code endpoints', () => {
 				asn: 12876,
 				network: 'SCALEWAY S.A.S.',
 				userId: 'first-user-id',
+				account_id: 'account-id',
 				lastSyncDate: new Date(),
 				isIPv4Supported: true,
 				isIPv6Supported: false,
@@ -411,7 +418,7 @@ describe('adoption code endpoints', () => {
 				customLocation: null,
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
-				account_id: null,
+				account_id: 'account-id',
 				tags: [],
 				settings: { meteredConnection: false },
 				ip: '1.1.1.1',
@@ -509,7 +516,7 @@ describe('adoption code endpoints', () => {
 				customLocation: null,
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
-				account_id: null,
+				account_id: 'account-id',
 				tags: [],
 				settings: { meteredConnection: false },
 				localAdoptionServer: null,
@@ -614,7 +621,7 @@ describe('adoption code endpoints', () => {
 				customLocation: null,
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
-				account_id: null,
+				account_id: 'account-id',
 				tags: [],
 				settings: { meteredConnection: false },
 				localAdoptionServer: null,
@@ -712,6 +719,7 @@ describe('adoption code endpoints', () => {
 				latitude: 48.85,
 				longitude: 2.35,
 				userId: 'first-user-id',
+				account_id: 'account-id',
 				name: 'probe-fr-paris-01',
 				localAdoptionServer: null,
 			});
@@ -1111,7 +1119,7 @@ describe('adoption code endpoints', () => {
 					customLocation: null,
 					name: 'probe-fr-paris-01',
 					userId: 'first-user-id',
-					account_id: null,
+					account_id: 'account-id',
 					tags: [],
 					settings: { meteredConnection: false },
 					localAdoptionServer: null,

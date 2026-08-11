@@ -88,15 +88,13 @@ export async function up (knex) {
 		for (const event of [ 'insert', 'update' ]) {
 			await trx.raw(`DROP TRIGGER IF EXISTS gp_probes_searchIndex_before_${event};`);
 
-			// The owner is resolved here rather than taken from NEW.account_id alone: gp_probes_fulfill_account fills that column in
-			// its own trigger, and triggers on the same event run in creation order, which no migration should have to depend on.
 			await trx.raw(`
 				CREATE TRIGGER gp_probes_searchIndex_before_${event}
 				BEFORE ${event.toUpperCase()} ON gp_probes
 				FOR EACH ROW
 				BEGIN
 					SET NEW.searchIndex = generate_search_index(
-						COALESCE(NEW.account_id, (SELECT id FROM gp_accounts WHERE user = NEW.userId LIMIT 1)),
+						NEW.account_id,
 						NEW.name,
 						NEW.city,
 						NEW.country,

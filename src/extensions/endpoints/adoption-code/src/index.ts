@@ -83,6 +83,7 @@ export default defineEndpoint((router, context) => {
 						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
 						name: null,
 						userId: null,
+						account_id: null,
 						version: '0.28.0',
 						nodeVersion: 'v22.22.3',
 						hardwareDevice: null,

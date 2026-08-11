@@ -1,4 +1,5 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
+import { getUserAccountId } from './accounts.js';
 import { escapeMdSymbols, getDefaultProbeName } from './probe-name.js';
 import { getResetUserFields } from './reset-fields.js';
 
@@ -6,6 +7,7 @@ export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
 
 export type ProbeToAdopt = {
 	userId: string | null;
+	account_id: string | null;
 	ip: string;
 	name: string | null;
 	altIps: string[];
@@ -69,6 +71,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		schema: await getSchema(),
 	});
 
+	const accountId = await getUserAccountId(userId, context);
 	let existingProbe: Probe | null = null;
 
 	const row = await database('gp_probes')
@@ -121,11 +124,12 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	// Probe exists but not assigned to the user (may be already assigned to another user).
 	if (existingProbe) {
-		const adoption: Override<ProbeToAdopt, { userId: string; name: string | null }> = {
+		const adoption: Override<ProbeToAdopt, { userId: string; account_id: string; name: string | null }> = {
 			...metadata,
 			...location,
 			...getResetUserFields(existingProbe),
 			userId,
+			account_id: accountId,
 		};
 		adoption.name = await getDefaultProbeName(userId, adoption, context);
 
@@ -154,6 +158,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 			...metadata,
 			...location,
 			userId,
+			account_id: accountId,
 		}, { emitEvents: false });
 
 		return await itemsService.readOne(probeByAsn.id) as Probe;
@@ -161,7 +166,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 
 	// Probe not exists.
 	const name = await getDefaultProbeName(userId, location, context);
-	const adoption = { ...metadata, ...location, userId, name };
+	const adoption = { ...metadata, ...location, userId, account_id: accountId, name };
 	const id = await itemsService.createOne(adoption, { emitEvents: false }) as string;
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	return await itemsService.readOne(id) as Probe;

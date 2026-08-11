@@ -1,19 +1,8 @@
-// Point every data item at its owner account. Runs after 20260729GP, so every user and org already has one.
+// Point every data item at its owner account.
 export async function up (knex) {
 	await knex.raw(`ALTER TABLE gp_credits_deductions ADD UNIQUE INDEX IF NOT EXISTS gp_credits_deductions_account_id_date_unique (account_id, date);`);
 
-	// The triggers are created before the backfill, so a row added while it runs is not missed. They also stay as a fallback
-	// for the rows created outside our extensions (gp-auth) or before the hooks are deployed.
-	await knex.raw(`
-		CREATE OR REPLACE TRIGGER gp_probes_fulfill_account BEFORE INSERT ON gp_probes
-		FOR EACH ROW
-		BEGIN
-			IF NEW.account_id IS NULL AND NEW.userId IS NOT NULL THEN
-				SET NEW.account_id = (SELECT id FROM gp_accounts WHERE user = NEW.userId LIMIT 1);
-			END IF;
-		END;
-	`);
-
+	// Removed on phase 4.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER gp_tokens_fulfill_account BEFORE INSERT ON gp_tokens
 		FOR EACH ROW
@@ -24,6 +13,7 @@ export async function up (knex) {
 		END;
 	`);
 
+	// Removed on phase 4.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER gp_apps_approvals_fulfill_account BEFORE INSERT ON gp_apps_approvals
 		FOR EACH ROW
