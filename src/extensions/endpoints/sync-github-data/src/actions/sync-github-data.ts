@@ -3,6 +3,7 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { checkDefaultPrefix } from '../../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations, getGithubUsername } from '../../../../lib/src/github-api-client.js';
+import { syncOrganizations } from '../../../../lib/src/sync-orgs.js';
 import { getDirectusUser, updateDirectusUser } from '../repositories/directus.js';
 
 export type User = {
@@ -32,6 +33,9 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 		getGithubOrganizations(user),
 	]);
 
+	await syncOrganizations(user, organizations, context);
+
+	// PHASE4: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
 	const githubOrgs = organizations.map(org => org.login);
 
 	if (username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {

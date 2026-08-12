@@ -1264,12 +1264,18 @@ importers:
 
   src/extensions/hooks/sign-in:
     dependencies:
+      '@directus/errors':
+        specifier: ^2.3.1
+        version: 2.3.1
+      '@isaacs/ttlcache':
+        specifier: ^1.4.1
+        version: 1.4.1
+      '@scure/base':
+        specifier: ^2.0.0
+        version: 2.0.0
       axios:
         specifier: ^1.12.2
         version: 1.12.2
-      axios-retry:
-        specifier: ^4.5.0
-        version: 4.5.0(axios@1.12.2)
       lodash:
         specifier: ^4.17.21
         version: 4.17.21

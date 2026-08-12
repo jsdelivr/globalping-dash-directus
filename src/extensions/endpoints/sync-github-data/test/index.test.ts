@@ -12,8 +12,16 @@ describe('/sync-github-data endpoint', () => {
 	const updateByQuery = sinon.stub();
 	const createNotification = sinon.stub();
 	const readOne = sinon.stub();
+	const readByQuery = sinon.stub();
+	const itemsCreateOne = sinon.stub();
+	const itemsUpdateOne = sinon.stub();
+	const deleteMany = sinon.stub();
 	const itemsServiceStub = sinon.stub().returns({
 		readOne,
+		readByQuery,
+		createOne: itemsCreateOne,
+		updateOne: itemsUpdateOne,
+		deleteMany,
 	});
 	const usersServiceStub = sinon.stub().returns({
 		updateOne,
@@ -69,6 +77,10 @@ describe('/sync-github-data endpoint', () => {
 		]);
 
 		readOne.reset();
+		readByQuery.reset();
+		readByQuery.resolves([]);
+		itemsCreateOne.resolves('created-id');
+		deleteMany.resolves();
 
 		readOne.resolves({
 			external_identifier: '123456',

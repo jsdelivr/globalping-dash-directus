@@ -54,7 +54,9 @@ How the code is written for it:
 
 6b. **Allow filtering `gp_tokens` by `account_id`**: the `gp_tokens.items.read` filter hook throws `Filtering is not available` for anything but `id`/`user_created`/`app_id` (verified live), which would break the org tokens page and the org token cleanup. `account_id` added to the allowed list.
 
-7. **Sync wiring**: sign-in hook (login), sign-up hook (registration), sync-github-data endpoint. A failed sync throws: the login path only logs it (Directus swallows action errors), the endpoint shows the message to the user, who can sign in again to get a fresh token. Note: `auth.login` is not emitted on session refresh, so a permanently logged-in user never re-syncs - decide on a cron or a throttled sync.
+7. **Sync wiring**: the sync is triggered from the `auth.jwt` filter, which fires on login and on every session refresh (~once a day per active tab) - `auth.login` alone would never re-sync a permanently logged-in user. It runs in the background: the token is issued immediately, a failure is only logged, the next login/refresh retries. Syncs on every login and refresh; concurrent syncs of the same user are deduped. The sync-github-data endpoint (manual button) also runs `syncOrganizations` and shows the error to the user. A separate sign-up sync is not needed: the first login emits `auth.jwt` too.
+
+7a. **Members cron (pending)**: a user who never opens the dashboard never re-syncs, so their org tokens survive leaving the org. Planned: a daily cron over `gp_org_members` users only (not all users); a failed GitHub token is logged and skipped, never treated as "left every org".
 
 8. **gp-tokens hook**: on create, validate `account_id` - must be my personal account or an org where my role is admin/member (viewer excluded). Fulfillment is done by a DB trigger, not the hook
 
