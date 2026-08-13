@@ -37,10 +37,6 @@ export const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
 export default defineHook(({ filter, action }, context) => {
-	filter('gp_probes.items.create', (payload) => {
-		validateSettings(payload as Fields);
-	});
-
 	filter('gp_probes.items.update', async (payload, { keys }, { accountability }) => {
 		const fields = payload as Fields;
 
