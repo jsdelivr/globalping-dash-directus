@@ -91,7 +91,6 @@ export async function up (knex) {
 
 	console.log('account_id backfilled');
 
-	await knex.raw(`ALTER TABLE gp_apps_approvals ADD INDEX IF NOT EXISTS gp_apps_approvals_user_index (user);`);
 	await knex.raw(`ALTER TABLE gp_apps_approvals DROP INDEX IF EXISTS unique_user_app;`);
 	await knex.raw(`ALTER TABLE gp_apps_approvals ADD UNIQUE INDEX IF NOT EXISTS gp_apps_approvals_account_app_unique (user_created, app, account_id);`);
 

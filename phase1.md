@@ -85,9 +85,10 @@ How the code is written for it:
 
 **Deploy**: three steps, in this order.
 
-1. `pnpm migrate:one:production` - applies `20260728GP` alone: it converts `gp_credits_deductions.user_id` to varchar. Directus can't
-   make that column nullable itself, because it rewrites a char column as varchar whenever it alters one, and a type change is
-   rejected on a foreign key column. Runs Directus's `migrate:up`, which applies the first migration above the last applied one.
+1. `pnpm migrate:one:production` - applies `20260728GP` alone: it converts `gp_credits_deductions.user_id` to varchar and adds the
+   `gp_apps_approvals.user` index. Both are column changes the snapshot declares but Directus can't apply itself: it rewrites a
+   char column as varchar whenever it alters one, and a type change is rejected on a foreign key column. Runs Directus's
+   `migrate:up`, which applies the first migration above the last applied one.
 2. `pnpm schema:apply:production` - adds the org collections and the `account_id` columns, and makes `user_id` nullable, which it
    can now do because the column is varchar.
 3. `pnpm migrate:production` - the remaining migrations, then restart Directus.

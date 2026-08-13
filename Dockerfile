@@ -37,6 +37,7 @@ COPY src/extensions/interfaces/visible-token/package.json src/extensions/interfa
 COPY src/extensions/lib/package.json src/extensions/lib/
 COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/probes-adapter/
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
+COPY src/extensions/operations/check-members-cron-handler/package.json src/extensions/operations/check-members-cron-handler/
 COPY src/extensions/operations/check-outdated-firmware-cron-handler/package.json src/extensions/operations/check-outdated-firmware-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
 COPY src/extensions/operations/low-credits-cron-handler/package.json src/extensions/operations/low-credits-cron-handler/

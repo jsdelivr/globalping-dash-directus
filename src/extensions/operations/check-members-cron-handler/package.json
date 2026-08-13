@@ -1,6 +1,6 @@
 {
 	"name": "check-members-cron-handler",
-	"description": "Please enter a description for your extension",
+	"description": "Handle org members CRON job. Verifies memberships of orgs that have org tokens or app approvals against GitHub, using the members' own OAuth tokens; memberships of users who left are removed.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
@@ -36,18 +36,22 @@
 		"@directus/extensions": "^3.0.25",
 		"@directus/extensions-sdk": "18.0.2",
 		"@directus/types": "^15.0.3",
+		"@types/bluebird": "^3.5.42",
 		"@types/chai": "^5.2.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^26.2.0",
 		"@types/sinon": "^17.0.4",
 		"chai": "^6.2.0",
 		"mocha": "^11.7.4",
+		"nock": "^14.0.10",
 		"sinon": "^21.0.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^7.0.2",
+		"typescript": "^5.8.3",
 		"vue": "^3.5.41"
 	},
 	"dependencies": {
-		"@directus/errors": "^2.3.1"
+		"@octokit/graphql": "^9.0.2",
+		"axios": "^1.12.2",
+		"bluebird": "^3.7.2"
 	}
 }
