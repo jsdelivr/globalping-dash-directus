@@ -29,7 +29,7 @@ export type City = {
 };
 
 const settingsSchema = Joi.object({
-	meteredConnection: Joi.boolean().strict().optional(),
+	meteredConnection: Joi.boolean().strict().required(),
 }).unknown(false).required();
 
 export const validateSettings = (fields: Fields) => {

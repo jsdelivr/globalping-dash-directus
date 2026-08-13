@@ -26,7 +26,7 @@ export type Probe = {
 	userId: string | null;
 	allowedCountries: string[];
 	settings: {
-		meteredConnection?: boolean;
+		meteredConnection: boolean;
 	};
 };
 
