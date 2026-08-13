@@ -412,6 +412,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
 				tags: [],
+				settings: { meteredConnection: false },
 				ip: '1.1.1.1',
 				altIps: [],
 				uuid: '35cadbfd-2079-4b1f-a4e6-5d220035132a',
@@ -508,6 +509,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
 				tags: [],
+				settings: { meteredConnection: false },
 				localAdoptionServer: null,
 			});
 
@@ -611,6 +613,7 @@ describe('adoption code endpoints', () => {
 				name: 'probe-fr-paris-01',
 				userId: 'first-user-id',
 				tags: [],
+				settings: { meteredConnection: false },
 				localAdoptionServer: null,
 			});
 
@@ -1106,6 +1109,7 @@ describe('adoption code endpoints', () => {
 					name: 'probe-fr-paris-01',
 					userId: 'first-user-id',
 					tags: [],
+					settings: { meteredConnection: false },
 					localAdoptionServer: null,
 				},
 				{ emitEvents: false },
