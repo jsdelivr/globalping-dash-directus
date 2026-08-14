@@ -60,7 +60,7 @@ How the code is written for it:
 
 8. **gp-tokens hook**: on create, validate `account_id` - must be my personal account or an org where my role is admin/member (viewer excluded). Fulfillment is done by a DB trigger, not the hook
 
-9. **adopted-probe hook**: tag prefix from account owner (org name or github_username); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
+9. **adopted-probe hook**: tag validation keeps working off `userId` and `github_organizations` as today (phase 4 stops reading the stored prefix and generates it from the probe's account owner); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
 
 10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
 

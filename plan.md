@@ -70,7 +70,7 @@ Remove the transition scaffolding. Only after phases 1-3 have soaked in prod.
 - Drop the `*_fulfill_account` triggers FIRST, with `migrate:one`, and only then let `schema:apply` drop the columns. Dropping a column a trigger reads does not disable the trigger - every write to the table fails with `Unknown column ... in 'NEW'` until it is gone, and `schema:apply` runs before `migrate`.
 - Drop old columns: `gp_probes.userId`, `gp_credits.user_id`, `gp_credits_deductions.user_id`, `gp_apps_approvals.user`.
 - Remove dual-write / dual-read support from extensions and gp-api.
-- Drop `default_prefix`, `deprecated_prefix`, `github_organizations` from `directus_users`; remove the tag-prefix-selector interface, simplify gp-tags.
+- Drop `default_prefix`, `deprecated_prefix`, `github_organizations` from `directus_users`; remove the tag-prefix-selector interface, simplify gp-tags. Tag prefixes stop being stored/validated: the prefix is generated from the probe's account owner (org name or github_username) when the tag is built.
 
 Added while implementing phase 1 (remove or update in phase 4):
 
