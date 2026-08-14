@@ -85,34 +85,27 @@ describe('token hooks', () => {
 	});
 
 	describe('account validation on create', () => {
-		const first = sinon.stub();
-		const queryBuilder = {
-			leftJoin: sinon.stub(),
-			where: sinon.stub(),
-			first,
-		};
-		queryBuilder.leftJoin.returns(queryBuilder);
-		queryBuilder.where.returns(queryBuilder);
-		const database = sinon.stub().returns(queryBuilder);
+		const raw = sinon.stub();
+		const database = { raw };
 		const accountability = { user: 'user-id', admin: false };
 
-		const create = (payload: any, eventContext: any = { accountability, database }) => {
-			return callbacks.filter['gp_tokens.items.create']?.(payload, {}, eventContext);
+		const create = (payload: any, context: any = { accountability, database }) => {
+			return callbacks.filter['gp_tokens.items.create']?.(payload, {}, context);
 		};
 
 		beforeEach(() => {
-			first.resolves({ id: 'account-id' });
+			raw.resolves([ [{ id: 'account-id' }] ]);
 		});
 
 		it('should pass when the account is available to the user', async () => {
 			await create({ name: 'name', value: 'value', account_id: 'account-id' });
 
-			expect(database.callCount).to.equal(1);
-			expect(first.callCount).to.equal(1);
+			expect(raw.callCount).to.equal(1);
+			expect(raw.args[0]?.[1]).to.deep.equal({ user: 'user-id', account: 'account-id' });
 		});
 
 		it('should reject when the account is not available to the user', async () => {
-			first.resolves(undefined);
+			raw.resolves([ [] ]);
 
 			const error = await Promise.resolve(create({ name: 'name', value: 'value', account_id: 'foreign-account-id' })).catch(err => err);
 
@@ -122,23 +115,23 @@ describe('token hooks', () => {
 		it('should skip the check when account_id is not in the payload', async () => {
 			await create({ name: 'name', value: 'value' });
 
-			expect(database.callCount).to.equal(0);
+			expect(raw.callCount).to.equal(0);
 		});
 
 		it('should skip the check when account_id is null', async () => {
 			await create({ name: 'name', value: 'value', account_id: null });
 
-			expect(database.callCount).to.equal(0);
+			expect(raw.callCount).to.equal(0);
 		});
 
 		it('should skip the check for an admin', async () => {
 			await create({ name: 'name', value: 'value', account_id: 'any-account-id' }, { accountability: { user: 'admin-id', admin: true }, database });
 
-			expect(database.callCount).to.equal(0);
+			expect(raw.callCount).to.equal(0);
 		});
 
 		it('should validate the account on update too', async () => {
-			first.resolves(undefined);
+			raw.resolves([ [] ]);
 
 			const error = await Promise.resolve(callbacks.filter['gp_tokens.items.update']?.({ account_id: 'foreign-account-id' }, {}, { accountability, database })).catch(err => err);
 
@@ -148,7 +141,7 @@ describe('token hooks', () => {
 		it('should skip the check on update without account_id', async () => {
 			await callbacks.filter['gp_tokens.items.update']?.({ name: 'renamed' }, {}, { accountability, database });
 
-			expect(database.callCount).to.equal(0);
+			expect(raw.callCount).to.equal(0);
 		});
 	});
 });

@@ -34,8 +34,25 @@ keys, permissions, endpoint parameters - has to be in phase 1. Accepted: until t
 
 ## Phase 3: gp-dash org UI
 
-User-visible org support.
+User-visible org support. Directus is deployed here too: a data migration converts the redirect accounts into orgs, and the
+redirect code ships removed in the same deploy.
 
+- Directus migration - sponsor account -> org conversion, one-off for the six `SOURCE_ID_TO_TARGET_ID` entries (railwayapp,
+  iplocate, vidalytics, arexico, fbw-networks, recurvelabs). Runs before the dash deploy, so the owners see the result in the org
+  UI immediately. Per org, in order:
+  1. create the org if the phase 1 sync has not already (create-if-missing by `github_id`; the account trigger claims any
+     unconsumed additions);
+  2. vidalytics only: re-point additions from the deleted redirect target (`github_id` 219827779 -> 21207279) before the org is
+     created - its user is gone from GitHub and from our DB, so there is nothing else to move;
+  3. move the addition history to the org `github_id` (keeps the sponsor bonus continuity and the sponsors-cron matching);
+  4. merge the balance into the org account (the org may already hold claimed credits; `UNIQUE(account_id)` allows one row) and
+     move the deductions;
+  5. move ALL tokens - personal and app ones together with their approvals, so consent and billing stay on the same account;
+  6. move all probes (`account_id` -> org account, `userId` kept until phase 4);
+  7. add the user as an org admin (or promote the existing membership). Safe against the sync: all five living users are public
+     members of their orgs, and the sync never demotes.
+- Remove `SOURCE_ID_TO_TARGET_ID` and `redirectGithubId` from the code - new sponsorships resolve to the orgs natively. Works only
+  together with the migration above: removing the code alone would strand new org sponsorships as unconsumed additions.
 - Org store: memberships + roles loaded on login, own account id resolved via `readMe` expansion, `activeOrg` in store + cookie.
 - Header: "Act as organization" button + select modal, active org shown instead of the username.
 - Probes list + detail: org view, edit controls and adopt only for admin (role-gated).
@@ -54,7 +71,6 @@ Remove the transition scaffolding. Only after phases 1-3 have soaked in prod.
 - Drop old columns: `gp_probes.userId`, `gp_credits.user_id`, `gp_credits_deductions.user_id`, `gp_apps_approvals.user`.
 - Remove dual-write / dual-read support from extensions and gp-api.
 - Drop `default_prefix`, `deprecated_prefix`, `github_organizations` from `directus_users`; remove the tag-prefix-selector interface, simplify gp-tags.
-- `SOURCE_ID_TO_TARGET_ID` redirect is NOT removed (kept forever for now), but new org sponsorships no longer need an entry: the org claims its own credits.
 
 Added while implementing phase 1 (remove or update in phase 4):
 

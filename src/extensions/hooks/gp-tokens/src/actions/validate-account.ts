@@ -16,17 +16,14 @@ export const validateAccount = async (token: Partial<Token>, context: EventConte
 		return;
 	}
 
-	const account = await database('gp_accounts as a')
-		.leftJoin('gp_org_members as m', function () {
-			this.on('m.org', 'a.org').andOnVal('m.user', '=', accountability?.user ?? null);
-		})
-		.where('a.id', token.account_id)
-		.where((query) => {
-			query.where('a.user', accountability?.user ?? null).orWhereIn('m.role', [ 'admin', 'member' ]);
-		})
-		.first('a.id');
+	// The account is available to its own user, and to the admins and members (but not viewers) of its org.
+	const [ rows ] = await database.raw(`
+		SELECT a.id FROM gp_accounts a
+		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user AND m.role IN ('admin', 'member')
+		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
+	`, { user: accountability?.user ?? null, account: token.account_id });
 
-	if (!account) {
+	if (rows.length === 0) {
 		throw new ForbiddenAccountError();
 	}
 };

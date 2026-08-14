@@ -1,25 +1,10 @@
 import { defineOperationApp } from '@directus/extensions-sdk';
 
 export default defineOperationApp({
-	id: 'custom',
-	name: 'Custom',
-	icon: 'box',
-	description: 'This is my custom operation!',
-	overview: ({ text }) => [
-		{
-			label: 'Text',
-			text,
-		},
-	],
-	options: [
-		{
-			field: 'text',
-			name: 'Text',
-			type: 'string',
-			meta: {
-				width: 'full',
-				interface: 'input',
-			},
-		},
-	],
+	id: 'check-members-cron-handler',
+	name: 'Check org members CRON handler',
+	icon: 'schedule',
+	description: 'Removes memberships of users who left the org.',
+	overview: () => [],
+	options: [],
 });

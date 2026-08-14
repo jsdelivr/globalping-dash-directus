@@ -29,10 +29,10 @@ export default defineHook(({ action, filter }) => {
 		await validateAccount(token, context);
 	});
 
-	filter('gp_tokens.items.update', async (payload, _meta, eventContext) => {
+	filter('gp_tokens.items.update', async (payload, _meta, context) => {
 		const token = payload as Partial<Token>;
 		validateToken(token);
-		await validateAccount(token, eventContext);
+		await validateAccount(token, context);
 	});
 
 	filter('gp_tokens.items.query', (query) => {

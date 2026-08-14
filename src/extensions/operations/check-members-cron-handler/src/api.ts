@@ -1,12 +1,11 @@
 import { defineOperationApi } from '@directus/extensions-sdk';
+import { checkMembers } from './actions/check-members.js';
 
-type Options = {
-	text: string;
-};
+export default defineOperationApi({
+	id: 'check-members-cron-handler',
+	handler: async (_operationData, context) => {
+		const { checked, removed, errors } = await checkMembers(context);
 
-export default defineOperationApi<Options>({
-	id: 'custom',
-	handler: ({ text }) => {
-		console.log(text);
+		return `Checked ${checked} orgs. Removed memberships: [${removed.toString()}]. Errors: [${errors.toString()}].`;
 	},
 });
