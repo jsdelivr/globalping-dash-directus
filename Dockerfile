@@ -23,6 +23,7 @@ COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/direc
 COPY src/extensions/hooks/elastic-apm/package.json src/extensions/hooks/elastic-apm/
 COPY src/extensions/hooks/email-sender/package.json src/extensions/hooks/email-sender/
 COPY src/extensions/hooks/gp-org-members/package.json src/extensions/hooks/gp-org-members/
+COPY src/extensions/hooks/gp-orgs/package.json src/extensions/hooks/gp-orgs/
 COPY src/extensions/hooks/gp-tokens/package.json src/extensions/hooks/gp-tokens/
 COPY src/extensions/hooks/location-overrides/package.json src/extensions/hooks/location-overrides/
 COPY src/extensions/hooks/notifications/package.json src/extensions/hooks/notifications/
