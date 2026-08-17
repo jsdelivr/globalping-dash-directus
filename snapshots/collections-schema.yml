@@ -3495,7 +3495,13 @@ fields:
       sort: 4
       special: null
       translations: null
-      validation: null
+      validation:
+        _and:
+          - role:
+              _in:
+                - viewer
+                - member
+                - admin
       validation_message: null
       width: full
     schema:
