@@ -212,7 +212,7 @@ describe('local-adoption endpoint', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				recipient: 'user-id',
+				account: 'account-id',
 				subject: 'New probe adopted',
 				message: 'A new probe [probe-us-new-york-01](/probes/probe-1) with IP address **192.168.1.10** has been assigned to your account.',
 			});

@@ -1,16 +1,16 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import { checkFirmwareVersions, getAlreadyNotifiedProbes } from '../../../../lib/src/check-firmware-versions.js';
-import { getAllUserIdsToCheck, getOutdatedProbesForUsers } from '../repositories/directus.js';
+import { getAllAccountIdsToCheck, getOutdatedProbesForAccount } from '../repositories/directus.js';
 
 export const checkOutdatedFirmware = async (context: OperationContext): Promise<string[]> => {
-	const userIds = await getAllUserIdsToCheck(context);
+	const accountIds = await getAllAccountIdsToCheck(context);
 	const alreadyNotifiedIds = await getAlreadyNotifiedProbes(context);
 
-	const ids = await Bluebird.map(userIds, async (userId) => {
-		const probes = await getOutdatedProbesForUsers(userId, context);
+	const ids = await Bluebird.map(accountIds, async (accountId) => {
+		const probes = await getOutdatedProbesForAccount(accountId, context);
 		const notNotified = probes.filter(p => !alreadyNotifiedIds.has(p.id));
-		return notNotified.length === 0 ? [] : checkFirmwareVersions(notNotified, userId, context);
+		return notNotified.length === 0 ? [] : checkFirmwareVersions(notNotified, accountId, context);
 	}, { concurrency: 4 });
 
 	return ids.flat();

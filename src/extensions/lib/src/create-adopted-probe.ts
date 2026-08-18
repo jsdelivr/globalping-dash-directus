@@ -65,7 +65,9 @@ export type Probe = Override<Row, {
 	systemTags: string[];
 }>;
 
-export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<Probe> => {
+export type AdoptedProbe = Override<Probe, { account_id: string }>;
+
+export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
 	const { services, database, getSchema } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: await getSchema(),
@@ -119,7 +121,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	// Probe is already assigned to the user.
 	if (existingProbe && existingProbe.userId === userId) {
 		await itemsService.updateOne(existingProbe.id, metadata, { emitEvents: false });
-		return await itemsService.readOne(existingProbe.id) as Probe;
+		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe exists but not assigned to the user (may be already assigned to another user).
@@ -136,10 +138,10 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		await Promise.all([
 			itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false }),
 			sendNotificationProbeAdopted({ ...adoption, id: existingProbe.id }, context),
-			existingProbe.userId && existingProbe.userId !== userId && sendNotificationProbeUnassigned(existingProbe as Override<Probe, { userId: string }>, context),
+			existingProbe.account_id && existingProbe.account_id !== accountId && sendNotificationProbeUnassigned(existingProbe as AdoptedProbe, context),
 		]);
 
-		return await itemsService.readOne(existingProbe.id) as Probe;
+		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
 	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
@@ -161,7 +163,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 			account_id: accountId,
 		}, { emitEvents: false });
 
-		return await itemsService.readOne(probeByAsn.id) as Probe;
+		return await itemsService.readOne(probeByAsn.id) as AdoptedProbe;
 	}
 
 	// Probe not exists.
@@ -169,7 +171,7 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 	const adoption = { ...metadata, ...location, userId, account_id: accountId, name };
 	const id = await itemsService.createOne(adoption, { emitEvents: false }) as string;
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
-	return await itemsService.readOne(id) as Probe;
+	return await itemsService.readOne(id) as AdoptedProbe;
 };
 
 export const parseRow = (row: Row): Probe => ({
@@ -186,7 +188,7 @@ export const parseRow = (row: Row): Probe => ({
 });
 
 type NotificationInfo = {
-	userId: string;
+	account_id: string;
 	name: string | null;
 	id: string;
 	ip: string;
@@ -199,7 +201,7 @@ const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { servic
 	});
 
 	await notificationsService.createOne({
-		recipient: adoption.userId,
+		account: adoption.account_id,
 		type: 'probe_adopted',
 		subject: 'New probe adopted',
 		message: `A new ${adoption.name ? `probe [${escapeMdSymbols(adoption.name)}](/probes/${adoption.id})` : `[probe](/probes/${adoption.id})`} with IP address **${adoption.ip}** has been assigned to your account.`,
@@ -213,7 +215,7 @@ const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, 
 	});
 
 	await notificationsService.createOne({
-		recipient: existingProbe.userId,
+		account: existingProbe.account_id,
 		type: 'probe_unassigned',
 		subject: 'Probe unassigned',
 		message: `Your probe ${existingProbe.name ? `**${escapeMdSymbols(existingProbe.name)}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,

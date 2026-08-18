@@ -173,7 +173,7 @@ export default defineEndpoint((router, context) => {
 		probesToAdopt.delete(userId);
 		await rateLimiter.delete(req.accountability?.user ?? '');
 
-		await checkFirmwareVersions([ adoptedProbe ], userId, context).catch((error) => { context.logger.error(error); });
+		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });
 
 		res.send({
 			id: adoptedProbe.id,
@@ -220,7 +220,7 @@ export default defineEndpoint((router, context) => {
 		const probe = req.body.probe as ProbeToAdopt;
 		const user = req.body.user as { id: string };
 		const adoptedProbe = await createAdoptedProbe(user.id, probe, context);
-		await checkFirmwareVersions([ adoptedProbe ], user.id, context).catch((error) => { context.logger.error(error); });
+		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });
 
 		res.sendStatus(200);
 	}, context));

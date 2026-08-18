@@ -23,6 +23,7 @@ describe('Adopted probes status cron handler', () => {
 	sqlProbes.where.returns(sqlProbes);
 
 	const database = sinon.stub() as any;
+	database.raw = sinon.stub().resolves([ [{ user: 'user-id' }] ]);
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -47,8 +48,9 @@ describe('Adopted probes status cron handler', () => {
 	beforeEach(() => {
 		readByQuery.resolves([]);
 		database.reset();
+		database.raw = sinon.stub().resolves([ [{ user: 'user-id' }] ]);
 		sqlIds.orderBy.resetBehavior();
-		sqlIds.orderBy.resolves([{ userId: 'user-id' }]);
+		sqlIds.orderBy.resolves([{ account_id: 'account-id' }]);
 		mockProbesResult([]);
 		database.onFirstCall().returns(sqlIds);
 		database.onSecondCall().returns(sqlProbes);
@@ -71,7 +73,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
 		expect(createOne.args[0]?.[0]).to.deep.equal({
-			recipient: 'user-id',
+			account: 'account-id',
 			item: 'probe-id',
 			collection: 'gp_probes',
 			type: 'outdated_firmware',
@@ -97,7 +99,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
 		expect(createOne.args[0]?.[0]).to.deep.equal({
-			recipient: 'user-id',
+			account: 'account-id',
 			item: 'probe-id',
 			collection: 'gp_probes',
 			type: 'outdated_software',
@@ -124,7 +126,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
 		expect(createOne.args[0]?.[0]).to.deep.equal({
-			recipient: 'user-id',
+			account: 'account-id',
 			item: 'probe-id',
 			collection: 'gp_probes',
 			type: 'outdated_software',
@@ -200,7 +202,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(createOne.callCount).to.equal(1);
 
 		expect(createOne.args[0]?.[0]).to.deep.include({
-			recipient: 'user-id',
+			account: 'account-id',
 			collection: 'gp_probes',
 			metadata: [ 'probe-id-2', 'probe-id-3' ],
 			type: 'outdated_software',
@@ -246,14 +248,14 @@ describe('Adopted probes status cron handler', () => {
 		expect(createOne.callCount).to.equal(2);
 
 		expect(createOne.args[0]?.[0]).to.deep.include({
-			recipient: 'user-id',
+			account: 'account-id',
 			item: 'probe-sw',
 			type: 'outdated_software',
 			subject: 'Your probe container is running an outdated software version',
 		});
 
 		expect(createOne.args[1]?.[0]).to.deep.include({
-			recipient: 'user-id',
+			account: 'account-id',
 			collection: 'gp_probes',
 			metadata: [ 'probe-hw-1', 'probe-hw-2' ],
 			type: 'outdated_firmware',
