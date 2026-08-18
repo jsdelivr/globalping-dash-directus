@@ -71,7 +71,7 @@ describe('org members hooks', () => {
 	it('should allow changing own notification preferences', async () => {
 		select.onFirstCall().resolves([{ id: 'm-1', org: 'org-1', user: 'user-id' }]);
 
-		await update({ notification_preferences: { org_probe_offline: true } }, [ 'm-1' ]);
+		await update({ notification_preferences: { offline_probe: { enabled: true } } }, [ 'm-1' ]);
 
 		expect(select.callCount).to.equal(1);
 	});
@@ -103,5 +103,35 @@ describe('org members hooks', () => {
 		await update({ }, [ 'm-1' ]);
 
 		expect(database.callCount).to.equal(0);
+	});
+
+	describe('notification preferences shape', () => {
+		beforeEach(() => {
+			select.onFirstCall().resolves([{ id: 'm-1', org: 'org-1', user: 'user-id' }]);
+		});
+
+		it('should reject an unknown notification type', async () => {
+			const error = await Promise.resolve(update({ notification_preferences: { unknown_type: { enabled: true } } }, [ 'm-1' ])).catch(err => err);
+
+			expect((error as Error).message).to.include('"unknown_type" is not allowed');
+		});
+
+		it('should reject a value without enabled', async () => {
+			const error = await Promise.resolve(update({ notification_preferences: { probe_adopted: { emailEnabled: true } } }, [ 'm-1' ])).catch(err => err);
+
+			expect((error as Error).message).to.include('"probe_adopted.enabled" is required');
+		});
+
+		it('should fulfill the default parameter for enabled parameterized types', async () => {
+			const payload = { notification_preferences: { low_credits: { enabled: true } } };
+
+			await update(payload, [ 'm-1' ]);
+
+			expect((payload.notification_preferences.low_credits as { parameter?: number }).parameter).to.be.a('number');
+		});
+
+		it('should accept null to reset the preferences', async () => {
+			await update({ notification_preferences: null }, [ 'm-1' ]);
+		});
 	});
 });

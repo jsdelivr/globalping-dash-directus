@@ -35,12 +35,14 @@
 		"@types/node": "^26.2.0",
 		"@types/sinon": "^17.0.4",
 		"chai": "^6.2.0",
+		"knex": "^3.1.0",
 		"mocha": "^11.7.4",
 		"sinon": "^21.0.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
-		"@directus/errors": "^2.3.1"
+		"@directus/errors": "^2.3.1",
+		"joi": "^18.0.1"
 	}
 }
