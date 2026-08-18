@@ -70,8 +70,9 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - The `user -> org` credits redirect might be needed; it can be a new setting on the user page. Out of scope.
 
 **Notifications**
-- Notification settings are per org and per user: each member has their own notification config for each of their orgs, independent of their personal config.
-- Most org notifications are disabled by default, as there may be too many of them.
+- Org notifications go to the org admins only; members and viewers never receive them.
+- Notification settings are per org and per user: each admin has their own notification config for each of their orgs, independent of their personal config.
+- The types, the preferences shape, the defaults, and the validation are exactly the same as for the personal notifications.
 
 ### Dash UI updates
 

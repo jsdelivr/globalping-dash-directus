@@ -1,25 +1,14 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
-import { type NotificationTypeKey, areAllDisabled, areAllEmailsDisabled, joiNotificationTypeKey, mapNotificationTypeKey, getNotificationType } from '../../../lib/src/notification-types.js';
-
-type User = {
-	email: string | null;
-	notification_preferences: Partial<Record<NotificationTypeKey, {
-		enabled: boolean;
-		emailEnabled?: boolean;
-	}>> | null;
-};
-
-type NotificationPayload = {
-	type: NotificationTypeKey;
-	recipient: string;
-	subject: string;
-	message: string;
-	email_status?: 'not-required' | 'no-email' | 'disabled-by-user' | 'pending' | 'sent';
-};
+import { type NotificationTypeKey, joiNotificationTypeKey, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { getEmailStatus, getShouldSend } from './actions/status.js';
+import { getOrgAdmins } from './repositories/directus.js';
+import type { NotificationPayload, User } from './types.js';
 
 const UserNotFoundError = createError('NOT_FOUND', 'User for notification not found.', 404);
+
+const AccountNotFoundError = createError('NOT_FOUND', 'Account for notification not found.', 404);
 
 const CancelNotificationError = createError('CANCELLED', 'Notification cancelled by user preferences.', 202);
 
@@ -27,14 +16,17 @@ const notificationPayloadSchema = Joi.object({
 	type: joiNotificationTypeKey.required(),
 	subject: Joi.string().required(),
 	message: Joi.string().required(),
-	recipient: Joi.string().required(),
-}).unknown(true);
+	// PHASE4: remove `recipient` from the contract and make `account` required - every sender passes the account by then.
+	recipient: Joi.string(),
+	// The account of the item the notification is about; resolved into recipient(s) by this hook, never stored.
+	account: Joi.string(),
+}).xor('recipient', 'account').unknown(true);
 
-export default defineHook(({ filter }, context) => {
-	const { services, getSchema } = context;
-	const { UsersService } = services;
+export default defineHook(({ filter }, hookContext) => {
+	const { services, getSchema } = hookContext;
+	const { UsersService, NotificationsService } = services;
 
-	filter('notifications.create', async (payload: NotificationPayload) => {
+	filter('notifications.create', async (payload: NotificationPayload, _meta, context) => {
 		const { error, value } = notificationPayloadSchema.validate(payload);
 
 		if (error) {
@@ -42,6 +34,24 @@ export default defineHook(({ filter }, context) => {
 		}
 
 		const type = mapNotificationTypeKey(value.type)!;
+
+		// PHASE4: drop the direct `recipient` support - `account` becomes the only input and this block runs unconditionally.
+		if (value.account) {
+			const account = await context.database('gp_accounts').where({ id: value.account }).first('user', 'org');
+
+			if (!account) {
+				throw new AccountNotFoundError();
+			}
+
+			if (account.org) {
+				await notifyOrgAdmins(account.org, value, type);
+				throw new CancelNotificationError();
+			}
+
+			payload.recipient = account.user!;
+			value.recipient = account.user!;
+			delete payload.account;
+		}
 
 		const usersService = new UsersService({
 			schema: await getSchema(),
@@ -62,72 +72,26 @@ export default defineHook(({ filter }, context) => {
 		const emailStatus = getEmailStatus(type, user);
 		return { ...payload, email_status: emailStatus };
 	});
+
+	// Org notifications go to the org admins only, each per their own org notification preferences.
+	const notifyOrgAdmins = async (orgId: string, value: NotificationPayload, type: NotificationTypeKey) => {
+		const notificationsService = new NotificationsService({ schema: await getSchema() });
+		const admins = await getOrgAdmins(orgId, hookContext);
+
+		for (const admin of admins) {
+			const user: User = { email: admin.user.email, notification_preferences: admin.notification_preferences };
+
+			if (!getShouldSend(type, user)) {
+				continue;
+			}
+
+			await notificationsService.createOne({
+				recipient: admin.user.id,
+				type: value.type,
+				subject: value.subject,
+				message: value.message,
+				email_status: getEmailStatus(type, user),
+			}, { emitEvents: false });
+		}
+	};
 });
-
-const getShouldSend = (type: NotificationTypeKey, user: User): boolean => {
-	const notification = getNotificationType(type)!;
-
-	if (!notification.configurableByUser) {
-		return true;
-	}
-
-	if (notification.readOnly) {
-		return true;
-	}
-
-	if (user.notification_preferences === null) {
-		return true;
-	}
-
-	const notificationPreferences = user.notification_preferences;
-	const userEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.enabled : null;
-	const allDisabled = areAllDisabled(notificationPreferences);
-
-	if (typeof userEnabled === 'boolean') {
-		return userEnabled;
-	}
-
-	if (allDisabled) {
-		return false;
-	}
-
-	return true;
-};
-
-const getEmailStatus = (type: NotificationTypeKey, user: User): NotificationPayload['email_status'] => {
-	const notification = getNotificationType(type)!;
-
-	if (!notification.sendEmail) {
-		return 'not-required';
-	}
-
-	if (!user?.email) {
-		return 'no-email';
-	}
-
-	if (user.notification_preferences === null) {
-		return 'pending';
-	}
-
-	if (!notification.configurableByUser) {
-		return 'pending';
-	}
-
-	const notificationPreferences = user.notification_preferences;
-	const userEmailEnabled = Object.hasOwn(notificationPreferences, type) ? notificationPreferences[type]!.emailEnabled : null;
-	const allEmailsDisabled = areAllEmailsDisabled(notificationPreferences);
-
-	if (userEmailEnabled === true) {
-		return 'pending';
-	}
-
-	if (userEmailEnabled === false) {
-		return 'disabled-by-user';
-	}
-
-	if (allEmailsDisabled) {
-		return 'disabled-by-user';
-	}
-
-	return 'pending';
-};

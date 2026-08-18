@@ -66,7 +66,13 @@ How the code is written for it:
 
 10a. **gp-orgs read hook**: strip `adoption_token` unless the requester is an admin of that org. Until it lands every member reads the org's adoption token (confirmed on the dev instance) - permission fields can't differ per role, so the hook is the only place for it; pattern = `github_oauth_token` masking in directus-users hook
 
-11. **Notifications**: org-event fan-out to members per `notification_preferences` (most org notifications off by default)
+11. **Notifications**: senders address the owner, the hook resolves who actually gets notified.
+
+    11a. Senders pass a virtual `account` field instead of `recipient` (the row's `account_id`); the `notifications.create` filter resolves it: a user account becomes `recipient` and flows through the existing personal-preferences logic untouched; an org account fans out to the org ADMINS only (members and viewers never receive org notifications), one notification per admin, the original payload is cancelled. `account` never reaches the database - `recipient` stays a user FK. Payloads with `recipient` keep working unchanged (PHASE4: remove - `account` becomes the only input once every sender is switched).
+
+    11b. Admin org preferences live on their `gp_org_members.notification_preferences`, independent of their personal config; the types, the shape (`enabled`/`emailEnabled`/parameter), the defaults, and the validation are exactly the same as the personal ones - reuse `notification-types.ts` and share the joi schema; validated in the gp-org-members update hook. `email_status` of a fanned-out notification is computed from that admin's org preferences.
+
+    11c. Switch the senders to `account`: create-adopted-probe (adopted/unassigned), firmware check, expired adoptions. Credits senders are handled in step 14.
 
 12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
 

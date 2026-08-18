@@ -80,3 +80,4 @@ Added while implementing phase 1 (remove or update in phase 4):
 - `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.
 - `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20260731GP` only to free the `user` foreign key from the unique key being replaced.
 - `gp_probes` update permission validation keeps the `userId _null` clause next to `account_id _null`; `userId` stays in the allowed update fields (dash sends it until phase 2).
+- The notifications hook accepts both `recipient` and `account` payloads; drop `recipient` from the contract once every sender (incl. gp-api and the sign-up welcome) passes `account`. The stored `recipient` column stays - it is what the fan-out writes.

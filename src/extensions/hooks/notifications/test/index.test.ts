@@ -2,13 +2,29 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import hook from '../src/index.js';
 
-type FilterCallback = (payload: any) => Promise<any>;
+type FilterCallback = (payload: any, meta?: any, context?: any) => Promise<any>;
 
 describe('notifications hooks', () => {
 	const readOne = sinon.stub();
+	const createOne = sinon.stub();
 	const getSchema = sinon.stub().resolves({});
 
 	const UsersService = sinon.stub().returns({ readOne });
+	const NotificationsService = sinon.stub().returns({ createOne });
+	const readByQuery = sinon.stub();
+	const ItemsService = sinon.stub().returns({ readByQuery });
+
+	const first = sinon.stub();
+	const select = sinon.stub();
+	const queryBuilder = {
+		where: sinon.stub(),
+		join: sinon.stub(),
+		first,
+		select,
+	};
+	queryBuilder.where.returns(queryBuilder);
+	queryBuilder.join.returns(queryBuilder);
+	const database = sinon.stub().returns(queryBuilder);
 
 	const callbacks = {
 		filter: {} as Record<string, FilterCallback>,
@@ -17,7 +33,7 @@ describe('notifications hooks', () => {
 		filter: (name: string, cb: FilterCallback) => { callbacks.filter[name] = cb; },
 	} as any;
 
-	hook(events, { services: { UsersService }, getSchema } as any);
+	hook(events, { services: { UsersService, NotificationsService, ItemsService }, getSchema } as any);
 
 	beforeEach(() => {
 		sinon.resetHistory();
@@ -270,6 +286,106 @@ describe('notifications hooks', () => {
 			const payload = { type: 'outdated_firmware', message: 'body', recipient: 'user-1', subject: 'test' };
 			const result = await filter()(payload);
 			expect(result).to.deep.equal({ ...payload, email_status: 'pending' });
+		});
+	});
+
+	describe('filter notifications.create with account', () => {
+		const filter = () => callbacks.filter['notifications.create']!;
+		const eventContext = { database };
+
+		beforeEach(() => {
+			first.reset();
+			select.reset();
+			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
+			createOne.resolves('notification-id');
+		});
+
+		it('should reject a payload with both recipient and account', async () => {
+			try {
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', recipient: 'user-1', account: 'account-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.include('contains a conflict');
+			}
+		});
+
+		it('should reject a payload with neither recipient nor account', async () => {
+			try {
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.include('must contain at least one of');
+			}
+		});
+
+		it('should throw if the account is not found', async () => {
+			first.resolves(undefined);
+
+			try {
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'ghost' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Account for notification not found.');
+			}
+		});
+
+		it('should resolve a user account into the recipient', async () => {
+			first.resolves({ user: 'user-1', org: null });
+
+			const result = await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+
+			expect(result.recipient).to.equal('user-1');
+			expect(result.account).to.equal(undefined);
+			expect(result.email_status).to.equal('not-required');
+		});
+
+		it('should fan out an org account to the admins only and cancel the original', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+
+			readByQuery.resolves([
+				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: null },
+				{ user: { id: 'admin-2', email: 'a2@example.com' }, notification_preferences: { probe_adopted: { enabled: false } } },
+			]);
+
+			try {
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+
+			// admin-2 has the type disabled in the org preferences.
+			expect(createOne.callCount).to.equal(1);
+
+			expect(createOne.args[0]?.[0]).to.deep.equal({
+				recipient: 'admin-1',
+				type: 'probe_adopted',
+				subject: 'test',
+				message: 'test',
+				email_status: 'not-required',
+			});
+
+			expect(createOne.args[0]?.[1]).to.deep.equal({ emitEvents: false });
+		});
+
+		it('should compute the email status from the admin org preferences', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+
+			readByQuery.resolves([
+				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: { offline_probe: { enabled: true, emailEnabled: false } } },
+				{ user: { id: 'admin-2', email: null }, notification_preferences: null },
+			]);
+
+			try {
+				await filter()({ type: 'offline_probe', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+
+			expect(createOne.callCount).to.equal(2);
+			expect(createOne.args[0]?.[0].email_status).to.equal('disabled-by-user');
+			expect(createOne.args[1]?.[0].email_status).to.equal('no-email');
 		});
 	});
 });
