@@ -39,4 +39,5 @@ export const getResetUserFields = (probe: Probe) => ({
 	userId: null,
 	tags: [] as [],
 	systemTags: probe.systemTags.filter(tag => !tag.startsWith('u-')),
+	settings: { meteredConnection: false },
 });

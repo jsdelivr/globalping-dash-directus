@@ -28,6 +28,22 @@ export type City = {
 	adminName1: string;
 };
 
+const settingsSchema = Joi.object({
+	meteredConnection: Joi.boolean().strict().required(),
+}).unknown(false).required();
+
+export const validateSettings = (fields: Fields) => {
+	if (!Object.hasOwn(fields, 'settings')) {
+		return;
+	}
+
+	const { error } = settingsSchema.validate(fields.settings, { convert: false });
+
+	if (error) {
+		throw payloadError(error.message);
+	}
+};
+
 export const validateTags = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	if (!fields.tags) {
 		return;
