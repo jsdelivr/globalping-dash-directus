@@ -16,7 +16,7 @@ const notificationPayloadSchema = Joi.object({
 	type: joiNotificationTypeKey.required(),
 	subject: Joi.string().required(),
 	message: Joi.string().required(),
-	// PHASE4: remove `recipient` from the contract and make `account` required - every sender passes the account by then.
+	// A notification is addressed either to a specific user directly, or to the owner of an item (a user or an org).
 	recipient: Joi.string(),
 	// The account of the item the notification is about; resolved into recipient(s) by this hook, never stored.
 	account: Joi.string(),
@@ -35,7 +35,6 @@ export default defineHook(({ filter }, hookContext) => {
 
 		const type = mapNotificationTypeKey(value.type)!;
 
-		// PHASE4: drop the direct `recipient` support - `account` becomes the only input and this block runs unconditionally.
 		if (value.account) {
 			const account = await context.database('gp_accounts').where({ id: value.account }).first('user', 'org');
 
