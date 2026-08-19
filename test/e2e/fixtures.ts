@@ -1,4 +1,4 @@
-import { test as baseTest, request } from '@playwright/test';
+import { test as baseTest, request, type Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
 import { client as sql } from './client.ts';
@@ -6,7 +6,7 @@ import { clearUserData, generateUser } from './utils.ts';
 import { User } from './types.ts';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{ user: User; user2: User }>({
+export const test = baseTest.extend<{ user: User; user2: User; admin: User; adminPage: Page }>({
 	user: async ({}, use) => {
 		const user = await generateUser();
 		use(user);
@@ -14,6 +14,34 @@ export const test = baseTest.extend<{ user: User; user2: User }>({
 	user2: async ({}, use) => {
 		const user2 = await generateUser('2');
 		use(user2);
+	},
+	admin: async ({}, use) => {
+		const admin = await generateUser('Admin', 'Administrator');
+		use(admin);
+	},
+	adminPage: async ({ browser, admin, baseURL }, use) => {
+		await sql('directus_users').insert(admin);
+		const context = await browser.newContext({ baseURL });
+		const loginResponse = await context.request.post(`${process.env.DIRECTUS_URL}/auth/login`, {
+			data: {
+				email: admin.email,
+				password: 'user',
+				mode: 'session',
+			},
+		});
+
+		if (!loginResponse.ok()) {
+			throw new Error(`${loginResponse.status()} ${loginResponse.statusText()}`);
+		}
+
+		await context.addInitScript(() => {
+			sessionStorage.setItem('adminConfig', JSON.stringify({ adminMode: true, impersonation: null }));
+		});
+
+		const page = await context.newPage();
+		await use(page);
+		await context.close();
+		await clearUserData(admin);
 	},
 	storageState: async ({ user, user2 }, use) => {
 		await sql('directus_users').insert(user);

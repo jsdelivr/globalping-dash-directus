@@ -8,6 +8,7 @@ COPY package.json pnpm-*.yaml ./
 # START: EXTENSIONS-BUILD-BLOCK
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
+COPY src/extensions/endpoints/admin-sponsors/package.json src/extensions/endpoints/admin-sponsors/
 COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints/applications/
 COPY src/extensions/endpoints/city-autocomplete/package.json src/extensions/endpoints/city-autocomplete/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/

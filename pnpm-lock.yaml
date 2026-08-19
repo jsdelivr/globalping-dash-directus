@@ -185,6 +185,64 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
+  src/extensions/endpoints/admin-sponsors:
+    dependencies:
+      joi:
+        specifier: ^18.0.1
+        version: 18.0.1
+    devDependencies:
+      '@directus/extensions':
+        specifier: ^3.0.25
+        version: 3.0.25(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.34(typescript@5.9.3))
+      '@directus/extensions-sdk':
+        specifier: ^17.1.4
+        version: 17.1.4(@types/node@22.13.14)(@unhead/vue@1.11.20(vue@3.5.34(typescript@5.9.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.3.1(typescript@5.9.3)(vue@3.5.34(typescript@5.9.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.9.3)
+      '@directus/types':
+        specifier: ^15.0.3
+        version: 15.0.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.34(typescript@5.9.3))
+      '@types/chai':
+        specifier: ^5.2.2
+        version: 5.2.3
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.21
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^22.13.14
+        version: 22.13.14
+      '@types/sinon':
+        specifier: ^17.0.4
+        version: 17.0.4
+      '@types/supertest':
+        specifier: ^6.0.3
+        version: 6.0.3
+      chai:
+        specifier: ^6.2.0
+        version: 6.2.0
+      express:
+        specifier: ^4.21.2
+        version: 4.21.2
+      knex:
+        specifier: ^3.1.0
+        version: 3.1.0(mysql@2.18.1)
+      mocha:
+        specifier: ^11.7.4
+        version: 11.7.4
+      sinon:
+        specifier: ^21.0.0
+        version: 21.0.0
+      supertest:
+        specifier: ^7.1.4
+        version: 7.1.4
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.13.14)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
   src/extensions/endpoints/adoption-code:
     dependencies:
       '@directus/errors':
