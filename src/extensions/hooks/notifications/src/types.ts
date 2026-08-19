@@ -10,7 +10,7 @@ export type User = {
 
 export type NotificationPayload = {
 	type: NotificationTypeKey;
-	// PHASE4: drop the recipient field, account becomes required.
+	// Notification can be sent either to a user or an account (user or org).
 	recipient?: string;
 	account?: string;
 	subject: string;

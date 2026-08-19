@@ -33,7 +33,9 @@ describe('adoption code endpoints', () => {
 	sql.orderByRaw.returns(sql);
 	const accountsSql = {
 		where: sinon.stub(),
-		first: sinon.stub().resolves({ id: 'account-id' }),
+		first: sinon.stub().callsFake((field: string) => field === 'user'
+			? Promise.resolve({ user: 'first-user-id' })
+			: Promise.resolve({ id: 'account-id' })),
 	};
 	accountsSql.where.returns(accountsSql);
 	const databaseStub = Object.assign((table: string) => table === 'gp_accounts' ? accountsSql : sql, {
@@ -265,7 +267,7 @@ describe('adoption code endpoints', () => {
 			});
 
 			expect(res.status).to.equal(400);
-			expect(res.text).to.equal('"body.userId" is required');
+			expect(res.text).to.equal('"body" must contain at least one of [userId, accountId]');
 		});
 
 		it('should reject with wrong ip', async () => {
@@ -404,7 +406,7 @@ describe('adoption code endpoints', () => {
 				userId: 'first-user-id',
 			});
 
-			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null });
+			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null, account_id: null });
 
 			const res = await request(app).post('/verify-code').send({
 				userId: 'first-user-id',
@@ -477,7 +479,7 @@ describe('adoption code endpoints', () => {
 				userId: 'first-user-id',
 			});
 
-			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null });
+			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null, account_id: null });
 
 			const res = await request(app).post('/verify-code').send({
 				userId: 'first-user-id',
@@ -861,7 +863,7 @@ describe('adoption code endpoints', () => {
 
 			expect(nock.isDone()).to.equal(true);
 			expect(res.status).to.equal(400);
-			expect(res.text).to.deep.equal('"body.userId" is required');
+			expect(res.text).to.deep.equal('"body" must contain at least one of [userId, accountId]');
 			expect(createOne.callCount).to.equal(0);
 		});
 

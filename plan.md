@@ -55,7 +55,8 @@ redirect code ships removed in the same deploy.
   together with the migration above: removing the code alone would strand new org sponsorships as unconsumed additions.
 - Org store: memberships + roles loaded on login, own account id resolved via `readMe` expansion, `activeOrg` in store + cookie.
 - Header: "Act as organization" button + select modal, active org shown instead of the username.
-- Probes list + detail: org view, edit controls and adopt only for admin (role-gated).
+- Probes list + detail: org view, edit controls and adopt only for admin (role-gated). In org mode a non-admin is not offered adoption at all - neither the adoption code flow nor the local network adoption (the endpoints reject it, the UI must not show it).
+- Every adoption call passes `accountId` explicitly (the active account, personal or org): adoption-code `send-code`/`verify-code` and local-adoption `/adopt`. The legacy `userId` form and the implicit personal-account default stay only for the old dashboard and are dropped in phase 4.
 - Credits page: org stats and history in org view.
 - Tokens page: own tokens and approvals inside the org, generate token creates an org item, disabled for viewers.
 - Settings: "Organization" section (only admin sees, copies, and regenerates the org adoption token).

@@ -1,5 +1,5 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
-import { getUserAccountId } from './accounts.js';
+import { getAccountOwnerFields } from './accounts.js';
 import { escapeMdSymbols, getDefaultProbeName } from './probe-name.js';
 import { getResetUserFields } from './reset-fields.js';
 
@@ -67,13 +67,14 @@ export type Probe = Override<Row, {
 
 export type AdoptedProbe = Override<Probe, { account_id: string }>;
 
-export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
+export const createAdoptedProbe = async (accountId: string, probe: ProbeToAdopt, context: EndpointExtensionContext): Promise<AdoptedProbe> => {
 	const { services, database, getSchema } = context;
 	const itemsService = new services.ItemsService('gp_probes', {
 		schema: await getSchema(),
 	});
 
-	const accountId = await getUserAccountId(userId, context);
+	// PHASE4: drop `userId` from the owner fields - the account alone defines the owner.
+	const owner = await getAccountOwnerFields(accountId, context);
 	let existingProbe: Probe | null = null;
 
 	const row = await database('gp_probes')
@@ -118,22 +119,21 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		longitude: existingProbe?.longitude || probe.longitude,
 	};
 
-	// Probe is already assigned to the user.
-	if (existingProbe && existingProbe.userId === userId) {
+	// Probe is already assigned to the account.
+	if (existingProbe && existingProbe.account_id === accountId) {
 		await itemsService.updateOne(existingProbe.id, metadata, { emitEvents: false });
 		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
-	// Probe exists but not assigned to the user (may be already assigned to another user).
+	// Probe exists but not assigned to the account (may be already assigned to another account).
 	if (existingProbe) {
-		const adoption: Override<ProbeToAdopt, { userId: string; account_id: string; name: string | null }> = {
+		const adoption: Override<ProbeToAdopt, { account_id: string; name: string | null }> = {
 			...metadata,
 			...location,
 			...getResetUserFields(existingProbe),
-			userId,
-			account_id: accountId,
+			...owner,
 		};
-		adoption.name = await getDefaultProbeName(userId, adoption, context);
+		adoption.name = await getDefaultProbeName(accountId, adoption, context);
 
 		await Promise.all([
 			itemsService.updateOne(existingProbe.id, adoption, { emitEvents: false }),
@@ -144,11 +144,11 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		return await itemsService.readOne(existingProbe.id) as AdoptedProbe;
 	}
 
-	// Probe not found by ip/uuid, trying to find user's offline probe by city/asn.
+	// Probe not found by ip/uuid, trying to find the account's offline probe by city/asn.
 	const probeByAsn = await database('gp_probes')
 		.orderByRaw(`gp_probes.lastSyncDate DESC, gp_probes.id DESC`)
 		.where({
-			userId,
+			account_id: accountId,
 			status: 'offline',
 			asn: probe.asn,
 			city: probe.city,
@@ -159,16 +159,15 @@ export const createAdoptedProbe = async (userId: string, probe: ProbeToAdopt, co
 		await itemsService.updateOne(probeByAsn.id, {
 			...metadata,
 			...location,
-			userId,
-			account_id: accountId,
+			...owner,
 		}, { emitEvents: false });
 
 		return await itemsService.readOne(probeByAsn.id) as AdoptedProbe;
 	}
 
 	// Probe not exists.
-	const name = await getDefaultProbeName(userId, location, context);
-	const adoption = { ...metadata, ...location, userId, account_id: accountId, name };
+	const name = await getDefaultProbeName(accountId, location, context);
+	const adoption = { ...metadata, ...location, ...owner, name };
 	const id = await itemsService.createOne(adoption, { emitEvents: false }) as string;
 	await sendNotificationProbeAdopted({ ...adoption, id }, context);
 	return await itemsService.readOne(id) as AdoptedProbe;

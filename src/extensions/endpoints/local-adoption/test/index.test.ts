@@ -77,10 +77,17 @@ describe('local-adoption endpoint', () => {
 		knexQueryBuilder.transacting.returns(knexQueryBuilder);
 		knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
 
-		accountsQueryBuilder = { where: sandbox.stub(), first: sandbox.stub().resolves({ id: 'account-id' }) };
+		accountsQueryBuilder = {
+			where: sandbox.stub(),
+			first: sandbox.stub().callsFake((field: string) => field === 'user'
+				? Promise.resolve({ user: 'user-id' })
+				: Promise.resolve({ id: 'account-id' })),
+		};
+
 		accountsQueryBuilder.where.returns(accountsQueryBuilder);
 
 		databaseStub = sandbox.stub().callsFake((table: string) => table === 'gp_accounts' ? accountsQueryBuilder : knexQueryBuilder);
+		databaseStub.raw = sandbox.stub().resolves([ [{ id: 'account-id' }] ]);
 		databaseStub.transaction = sandbox.stub().callsFake(async (callback: any) => callback(knexQueryBuilder));
 
 		updateOne = sandbox.stub();
@@ -226,6 +233,7 @@ describe('local-adoption endpoint', () => {
 			knexQueryBuilder.first.onSecondCall().resolves({
 				...probeData,
 				userId: 'user-id',
+				account_id: 'account-id',
 			});
 
 			const res = await request(app)

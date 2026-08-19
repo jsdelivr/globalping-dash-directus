@@ -161,7 +161,7 @@ export const resetProbeName = async (fields: Fields, keys: string[], accountabil
 	const probes = await getProbes([ keys[0]! ], context, accountability);
 	const probe = probes[0]!;
 
-	const name = await getDefaultProbeName(probe.userId!, probe, context);
+	const name = await getDefaultProbeName(probe.account_id!, probe, context);
 	fields.name = name;
 };
 
