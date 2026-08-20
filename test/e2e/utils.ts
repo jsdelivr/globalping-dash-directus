@@ -7,7 +7,7 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 	const userId = randomUUID();
 	const userRole = await client('directus_roles').where({ name: 'User' }).select('id').first();
 
-	return {
+	const user = {
 		id: userId,
 		external_identifier: randomExternalId(),
 		email: `${userId.split('-')[0]}@example.com`,
@@ -23,6 +23,12 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
 		default_prefix: `elliot${suffix}`,
 	};
+
+	await client('directus_users').insert(user);
+
+	// The account row is created by a trigger when the user is inserted.
+	const account = await client('gp_accounts').where({ user: userId }).first('id') as { id: string };
+	return { ...user, account_id: account.id };
 };
 
 export const clearUserData = async (user: User) => {

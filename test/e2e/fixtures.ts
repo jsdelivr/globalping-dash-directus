@@ -1,7 +1,6 @@
 import { test as baseTest, request } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
-import { client as sql } from './client.ts';
 import { clearUserData, generateUser } from './utils.ts';
 import { User } from './types.ts';
 
@@ -16,9 +15,6 @@ export const test = baseTest.extend<{ user: User; user2: User }>({
 		use(user2);
 	},
 	storageState: async ({ user, user2 }, use) => {
-		await sql('directus_users').insert(user);
-		await sql('directus_users').insert(user2);
-
 		// Make sure we authenticate in a clean environment by unsetting storage state.
 		const context = await request.newContext({ storageState: undefined });
 		// Log in the user.

@@ -36,6 +36,7 @@ const addUserProbes = async (user: User) => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',
@@ -65,6 +66,7 @@ const addUserProbes = async (user: User) => {
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',
@@ -113,12 +115,10 @@ const addProbeWithoutUser = async (probeFields: Partial<typeof defaultProbe> = {
 };
 
 const addProbeWithUser = async (user2: User) => {
-	await sql('gp_probes').insert({
-		...defaultProbe,
-		userId: user2.id,
-	});
+	const owner = { userId: user2.id, account_id: user2.account_id };
+	await sql('gp_probes').insert({ ...defaultProbe, ...owner });
 
-	return { ...defaultProbe, userId: user2.id };
+	return { ...defaultProbe, ...owner };
 };
 
 const addOfflineProbeWithSameAsn = async (user: User) => {
@@ -129,6 +129,7 @@ const addOfflineProbeWithSameAsn = async (user: User) => {
 		uuid: 'outdatedUuid',
 		status: 'offline',
 		userId: user.id,
+		account_id: user.account_id,
 	});
 };
 
