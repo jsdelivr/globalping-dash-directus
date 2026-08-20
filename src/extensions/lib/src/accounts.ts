@@ -48,16 +48,27 @@ export const getRequestAccountId = async (
 	return accountId;
 };
 
-// The user ids an account's notifications are delivered to: the user itself, or the admins of the org.
-export const getAccountUserIds = async (accountId: string, { database }: ApiExtensionContext): Promise<string[]> => {
+export const getAccountUserIds = async (accountId: string, { database }: ApiExtensionContext, roles: string[] = [ 'admin' ]): Promise<string[]> => {
 	const [ rows ] = await database.raw(`
 		SELECT COALESCE(a.user, m.user) AS user
 		FROM gp_accounts a
-		LEFT JOIN gp_org_members m ON m.org = a.org AND m.role = 'admin'
+		LEFT JOIN gp_org_members m ON m.org = a.org AND m.role IN (:roles)
 		WHERE a.id = :account
-	`, { account: accountId }) as [{ user: string | null }[]];
+	`, { account: accountId, roles }) as [{ user: string | null }[]];
 
 	return rows.map(row => row.user).filter((user): user is string => Boolean(user));
+};
+
+export const getAccountGithubId = async (accountId: string, { database }: ApiExtensionContext): Promise<string | null> => {
+	const [ rows ] = await database.raw(`
+		SELECT COALESCE(u.external_identifier, o.github_id) AS github_id
+		FROM gp_accounts a
+		LEFT JOIN directus_users u ON a.user = u.id
+		LEFT JOIN gp_orgs o ON a.org = o.id
+		WHERE a.id = :account
+	`, { account: accountId }) as [{ github_id: string | null }[]];
+
+	return rows[0]?.github_id ?? null;
 };
 
 // A probe's owner columns for an account: the account itself, plus the user when the account is personal.

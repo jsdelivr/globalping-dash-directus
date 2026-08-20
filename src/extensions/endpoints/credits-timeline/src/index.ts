@@ -2,6 +2,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
+import { ALL_ACCOUNTS, getAccountGithubId, getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { queryParser } from '../../../lib/src/middlewares/query-parser.js';
@@ -30,7 +31,9 @@ const creditsTimelineSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		userId: Joi.string().required(),
+		// PHASE4: remove `userId`, `accountId` is the only owner input.
+		userId: Joi.string(),
+		accountId: Joi.string(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 		type: Joi.alternatives().try(
@@ -41,7 +44,7 @@ const creditsTimelineSchema = Joi.object<Request>({
 			Joi.array().items(Joi.string().valid(...ALLOWED_REASONS)),
 			Joi.string().valid(...ALLOWED_REASONS),
 		).optional().default(ALLOWED_REASONS),
-	}).required(),
+	}).xor('userId', 'accountId').required(),
 }).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
 
 const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
@@ -64,8 +67,10 @@ const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
 export default defineEndpoint((router, context) => {
 	const { database } = context;
 
-	router.get('/', queryParser({ keys: [ 'reason', 'type' ] }), validate(creditsTimelineSchema), asyncWrapper(async (req, res) => {
-		const query = req.query as unknown as { userId: string; offset: number; limit: number; reason: string | string[]; type: string | string[] };
+	router.get('/', queryParser({ keys: [ 'reason', 'type' ] }), validate(creditsTimelineSchema), asyncWrapper(async (_req, res) => {
+		const req = _req as Request;
+		const query = req.query as unknown as { userId?: string; accountId?: string; offset: number; limit: number; reason: string | string[]; type: string | string[] };
+		const accountId = await getRequestAccountId(query, req.accountability!, context, [ 'admin', 'member', 'viewer' ]);
 		const sqlQueries = [];
 
 		const typesInQuery = Array.isArray(query.type) ? query.type : [ query.type ];
@@ -73,7 +78,7 @@ export default defineEndpoint((router, context) => {
 
 		if (typesInQuery.includes('deductions')) {
 			sqlQueries.push(database('gp_credits_deductions')
-				.modify(q => query.userId === 'all' ? q : q.where('user_id', query.userId))
+				.modify(q => accountId === ALL_ACCOUNTS ? q : q.where('account_id', accountId))
 				.select(
 					database.raw('"deduction" as type'),
 					database.raw('DATE_FORMAT(date, "%Y-%m-%d") as date_created'),
@@ -84,10 +89,11 @@ export default defineEndpoint((router, context) => {
 		}
 
 		if (typesInQuery.includes('additions')) {
+			const githubId = accountId === ALL_ACCOUNTS ? null : await getAccountGithubId(accountId, context);
+
 			if (reasonsInQuery.includes('adopted-probes')) {
 				sqlQueries.push(database('gp_credits_additions')
-					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
-					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
+					.modify(q => accountId === ALL_ACCOUNTS ? q : q.where('gp_credits_additions.github_id', githubId))
 					.select(
 						database.raw('"addition" as type'),
 						database.raw('DATE_FORMAT(gp_credits_additions.date_created, "%Y-%m-%d") as date_created'),
@@ -104,8 +110,7 @@ export default defineEndpoint((router, context) => {
 
 			if (additionReasons.length) {
 				sqlQueries.push(database('gp_credits_additions')
-					.join('directus_users', 'gp_credits_additions.github_id', 'directus_users.external_identifier')
-					.modify(q => query.userId === 'all' ? q : q.where('directus_users.id', query.userId))
+					.modify(q => accountId === ALL_ACCOUNTS ? q : q.where('gp_credits_additions.github_id', githubId))
 					.select(
 						database.raw('"addition" as type'),
 						database.raw('DATE_FORMAT(gp_credits_additions.date_created, "%Y-%m-%d") as date_created'),

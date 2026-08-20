@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import relativeDayUtc from 'relative-day-utc';
 
 const ORGS = [
 	{
@@ -39,9 +40,9 @@ export const seed = async (knex) => {
 	const authCodeApp = await knex('gp_apps').where({ name: 'Auth Code App' }).first('id');
 	const discordApp = await knex('gp_apps').where({ name: 'Discord App' }).first('id');
 
-	for (const { name, github_id, adoption_token, members } of ORGS) {
+	for (const { name, github_id: githubId, adoption_token, members } of ORGS) {
 		const orgId = randomUUID();
-		await knex('gp_orgs').insert({ id: orgId, name, github_id, adoption_token });
+		await knex('gp_orgs').insert({ id: orgId, name, github_id: githubId, adoption_token });
 		const orgAccount = await knex('gp_accounts').where({ org: orgId }).first('id');
 
 		for (const member of members) {
@@ -134,7 +135,50 @@ export const seed = async (knex) => {
 				});
 			}
 		}
+
+		await seedOrgCredits(knex, { name, orgAccountId: orgAccount.id, githubId });
 	}
 
 	console.log('Mock organizations created: john-org, turk-org with admin/member/viewer users');
+};
+
+// Sponsorship and probe credits of the org itself, so the org credits page has a history to show.
+const seedOrgCredits = async (knex, { name, orgAccountId, githubId }) => {
+	const probe = await knex('gp_probes').where({ account_id: orgAccountId }).first('id', 'ip', 'name');
+
+	await knex('gp_credits_additions').insert([
+		{
+			amount: 60000,
+			reason: 'one_time_sponsorship',
+			meta: JSON.stringify({ amountInDollars: 30 }),
+			consumed: 1,
+			date_created: relativeDayUtc(-10),
+			github_id: githubId,
+		},
+		...Array.from(Array(12).keys()).map(i => ({
+			amount: 20000,
+			reason: 'recurring_sponsorship',
+			meta: JSON.stringify({ amountInDollars: 10 }),
+			consumed: 1,
+			date_created: relativeDayUtc(-i * 30),
+			github_id: githubId,
+		})),
+		...probe ? Array.from(Array(30).keys()).map(i => ({
+			amount: 150,
+			reason: 'adopted_probe',
+			meta: JSON.stringify({ id: probe.id, name: probe.name, ip: probe.ip }),
+			consumed: 1,
+			date_created: relativeDayUtc(-i),
+			github_id: githubId,
+			adopted_probe: probe.id,
+		})) : [],
+	]);
+
+	// Each update is turned into a deduction row by a database trigger; the dates are spread out afterwards.
+	for (const i of Array.from(Array(20).keys())) {
+		await knex('gp_credits').where({ account_id: orgAccountId }).update({ amount: knex.raw('amount - ?', [ 5000 ]) });
+		await knex('gp_credits_deductions').where({ account_id: orgAccountId }).orderBy('date', 'desc').limit(1).update({ date: relativeDayUtc((i + 1) * -3) });
+	}
+
+	console.log(`Mock credits created for ${name}`);
 };
