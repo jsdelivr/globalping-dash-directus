@@ -320,4 +320,3 @@ test('Adoption of a probe with old node version', async ({ page, user }) => {
 	await expect(page.getByText('New probe adopted').first()).toBeVisible();
 	await expect(page.getByText('outdated software').first()).toBeVisible();
 });
-

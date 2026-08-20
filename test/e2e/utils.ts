@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { randomUUID } from 'crypto';
+import axios from 'axios';
 import { client } from './client.ts';
-import { User } from './types.ts';
+import { Org, User } from './types.ts';
 
 export const generateUser = async (suffix = ''): Promise<User> => {
 	const userId = randomUUID();
@@ -30,6 +31,56 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 	const account = await client('gp_accounts').where({ user: userId }).first('id') as { id: string };
 	return { ...user, account_id: account.id };
 };
+
+export const generateOrg = async (suffix = ''): Promise<Org> => {
+	const [ admin, member, viewer ] = await Promise.all([
+		generateUser(`Admin${suffix}`),
+		generateUser(`Member${suffix}`),
+		generateUser(`Viewer${suffix}`),
+	]);
+
+	const org = {
+		id: randomUUID(),
+		name: `Sacred Heart ${randomExternalId()}`,
+		github_id: randomExternalId(),
+		adoption_token: randomBytes(16).toString('hex'),
+	};
+
+	await client('gp_orgs').insert(org);
+
+	await client('gp_org_members').insert([
+		{ id: randomUUID(), org: org.id, user: admin.id, role: 'admin' },
+		{ id: randomUUID(), org: org.id, user: member.id, role: 'member' },
+		{ id: randomUUID(), org: org.id, user: viewer.id, role: 'viewer' },
+	]);
+
+	// The account row is created by a trigger when the org is inserted.
+	const account = await client('gp_accounts').where({ org: org.id }).first('id');
+
+	return { ...org, account_id: account.id as string, admin, member, viewer };
+};
+
+// Deleting the org cascades to the memberships, the account and everything bound to it; probes only lose the account.
+export const clearOrgData = async (org: Org) => {
+	await client('gp_probes').where({ account_id: org.account_id }).delete();
+	await client('gp_orgs').where({ id: org.id }).delete();
+	await Promise.all([ clearUserData(org.admin), clearUserData(org.member), clearUserData(org.viewer) ]);
+};
+
+// A Directus client acting as the given account. Errors are returned, not thrown, so that tests can assert on the status.
+const login = async (email: string, password: string) => {
+	const { data } = await axios.post(`${process.env.DIRECTUS_URL}/auth/login`, { email, password });
+
+	return axios.create({
+		baseURL: process.env.DIRECTUS_URL,
+		headers: { Authorization: `Bearer ${data.data.access_token}` },
+		validateStatus: () => true,
+	});
+};
+
+export const loginUser = (user: User) => login(user.email, 'user');
+
+export const loginDirectusAdmin = () => login(process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
 
 export const clearUserData = async (user: User) => {
 	await client('gp_credits_additions').where({ github_id: user.external_identifier }).delete();

@@ -82,4 +82,6 @@ Added while implementing phase 1 (remove or update in phase 4):
 - `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20260731GP` only to free the `user` foreign key from the unique key being replaced.
 - `gp_probes` update permission validation keeps the `userId _null` clause next to `account_id _null`; `userId` stays in the allowed update fields (dash sends it until phase 2).
 - `getRequestAccountId` loses its legacy `userId` branch: with `accountId` the only input it stops resolving anything, so it becomes `validateAccountId(accountId, accountability, context, roles)` returning nothing, and the callers read `accountId` straight from the request.
+- The phase 1 org e2e drives Directus over REST because there is no org UI yet - move whatever the phase 3 dashboard covers to UI
+  tests, and keep REST only for what the UI can't reach.
 - Optional: a middleware that resolves the requester's accounts once per request (personal account id + org account ids with roles) and puts them on the request, so the endpoint checks become synchronous instead of each doing its own lookup. Must be a middleware, not JWT claims: static API tokens never go through `auth.jwt`, so claims would only cover the dashboard.
