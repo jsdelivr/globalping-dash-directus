@@ -3,7 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Accountability } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { getUserAccountId, validateAccountId } from '../../../lib/src/accounts.js';
+import { getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getIpFromRequest } from '../../../lib/src/client-ip.js';
 import { type Row, createAdoptedProbe, parseRow } from '../../../lib/src/create-adopted-probe.js';
@@ -79,8 +79,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const probe = parseRow(row);
-		const accountId = req.body.accountId ?? await getUserAccountId(req.accountability.user!, context);
-		await validateAccountId(accountId, req.accountability, context);
+		const accountId = await getRequestAccountId(req.body, req.accountability, context);
 		const updatedProbe = await createAdoptedProbe(accountId, probe, context);
 
 		res.json(updatedProbe);

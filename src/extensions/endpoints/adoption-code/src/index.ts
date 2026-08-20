@@ -8,7 +8,7 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { resolveLegacyAccountId, validateAccountId } from '../../../lib/src/accounts.js';
+import { getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
@@ -60,9 +60,7 @@ export default defineEndpoint((router, context) => {
 	router.post('/send-code', validate(sendCodeSchema), asyncWrapper(async (_req, res) => {
 		try {
 			const req = _req as Request;
-			// PHASE4: remove and use accountId from body.
-			const accountId = (await resolveLegacyAccountId(req.body, context))!;
-			await validateAccountId(accountId, req.accountability!, context);
+			const accountId = await getRequestAccountId(req.body, req.accountability!, context);
 			let ip: string;
 
 			try {
@@ -163,9 +161,7 @@ export default defineEndpoint((router, context) => {
 	router.post('/verify-code', validate(verifyCodeSchema), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 
-		// PHASE4: remove and use accountId from body.
-		const accountId = (await resolveLegacyAccountId(req.body, context))!;
-		await validateAccountId(accountId, req.accountability!, context);
+		const accountId = await getRequestAccountId(req.body, req.accountability!, context);
 		const userCode = req.body.code.replaceAll(' ', '');
 
 		await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
@@ -230,7 +226,7 @@ export default defineEndpoint((router, context) => {
 		// PHASE4: remove the legacy `user` input, gp-api passes the account.
 		const account = req.body.account as { id: string } | undefined;
 		const user = req.body.user as { id: string } | undefined;
-		const accountId = (await resolveLegacyAccountId({ accountId: account?.id, userId: user?.id }, context))!;
+		const accountId = await getRequestAccountId({ accountId: account?.id, userId: user?.id }, { admin: true }, context);
 		const adoptedProbe = await createAdoptedProbe(accountId, probe, context);
 		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });
 

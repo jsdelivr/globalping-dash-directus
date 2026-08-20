@@ -1,11 +1,51 @@
 import { createError } from '@directus/errors';
 import type { ApiExtensionContext } from '@directus/extensions';
 
-const ForbiddenAccountError = createError('INVALID_PAYLOAD_ERROR', 'You can not adopt a probe into this account.', 400);
+type AccountInput = { accountId?: string; userId?: string };
 
-export const getUserAccountId = async (userId: string, { database }: ApiExtensionContext) => {
+type Accountability = { user?: string | null; admin?: boolean };
+
+const ForbiddenAccountError = createError('INVALID_PAYLOAD_ERROR', 'You can not access this account.', 400);
+
+// The admin-only "show everything" mode of the dashboard lists.
+export const ALL_ACCOUNTS = 'all';
+
+const getUserAccountId = async (userId: string, { database }: ApiExtensionContext) => {
 	const account = await database('gp_accounts').where({ user: userId }).first<{ id: string }>('id');
 	return account!.id;
+};
+
+// The account a request acts on, checked against the requester: their own account, or an org account where they have one of
+// `roles`. `ALL_ACCOUNTS` is allowed for Directus admins only.
+// PHASE4: with `accountId` the only input there is nothing to resolve - rename to `validateAccountId` and return nothing.
+export const getRequestAccountId = async (
+	input: AccountInput,
+	accountability: Accountability,
+	context: ApiExtensionContext,
+	roles: string[] = [ 'admin' ],
+): Promise<string> => {
+	// PHASE4: remove the `userId` branch, `accountId` is the only input.
+	const accountId = input.accountId ?? await getUserAccountId(input.userId ?? accountability.user!, context);
+
+	if (accountability.admin) {
+		return accountId;
+	}
+
+	if (accountId === ALL_ACCOUNTS) {
+		throw new ForbiddenAccountError();
+	}
+
+	const [ rows ] = await context.database.raw(`
+		SELECT a.id FROM gp_accounts a
+		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user AND m.role IN (:roles)
+		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
+	`, { user: accountability.user, account: accountId, roles }) as [{ id: string }[]];
+
+	if (rows.length === 0) {
+		throw new ForbiddenAccountError();
+	}
+
+	return accountId;
 };
 
 // The user ids an account's notifications are delivered to: the user itself, or the admins of the org.
@@ -26,26 +66,4 @@ export const getAccountOwnerFields = async (accountId: string, { database }: Api
 	const account = await database('gp_accounts').where({ id: accountId }).first<{ user: string | null }>('user');
 
 	return { account_id: accountId, userId: account?.user ?? null };
-};
-
-// PHASE4: remove - `accountId` is the only owner input by then, there is nothing to resolve.
-export const resolveLegacyAccountId = async ({ accountId, userId }: { accountId?: string; userId?: string }, context: ApiExtensionContext): Promise<string | undefined> => {
-	return accountId ?? (userId ? getUserAccountId(userId, context) : undefined);
-};
-
-// Only allow user's own account or an org account where the user is an admin.
-export const validateAccountId = async (accountId: string, accountability: { user?: string | null; admin?: boolean }, context: ApiExtensionContext) => {
-	if (accountability.admin) {
-		return;
-	}
-
-	const [ rows ] = await context.database.raw(`
-		SELECT a.id FROM gp_accounts a
-		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user AND m.role = 'admin'
-		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
-	`, { user: accountability.user, account: accountId }) as [{ id: string }[]];
-
-	if (rows.length === 0) {
-		throw new ForbiddenAccountError();
-	}
 };
