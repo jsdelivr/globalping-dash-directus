@@ -2225,7 +2225,7 @@ fields:
       foreign_key_column: id
   - collection: gp_credits
     field: low_credits_notified
-    type: boolean
+    type: json
     meta:
       collection: gp_credits
       conditions: null
@@ -2234,15 +2234,14 @@ fields:
       field: low_credits_notified
       group: null
       hidden: false
-      interface: boolean
+      interface: input-code
       note: null
       options: null
       readonly: false
       required: false
       searchable: true
       sort: 6
-      special:
-        - cast-boolean
+      special: null
       translations: null
       validation: null
       validation_message: null
@@ -2250,11 +2249,11 @@ fields:
     schema:
       name: low_credits_notified
       table: gp_credits
-      data_type: boolean
-      default_value: false
+      data_type: longtext
+      default_value: '[]'
       max_length: null
-      numeric_precision: 3
-      numeric_scale: 0
+      numeric_precision: null
+      numeric_scale: null
       is_nullable: false
       is_unique: false
       is_indexed: false

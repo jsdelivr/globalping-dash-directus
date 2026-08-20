@@ -89,6 +89,11 @@ export async function up (knex) {
 	await knex.raw(`UPDATE gp_credits c JOIN gp_accounts a ON a.user = c.user_id SET c.account_id = a.id WHERE c.account_id IS NULL;`);
 	await knex.raw(`UPDATE gp_credits_deductions d JOIN gp_accounts a ON a.user = d.user_id SET d.account_id = a.id WHERE d.account_id IS NULL;`);
 
+	await knex.raw(`
+		UPDATE gp_credits
+		SET low_credits_notified = IF(low_credits_notified = 1 AND user_id IS NOT NULL, JSON_ARRAY(user_id), JSON_ARRAY())
+	`);
+
 	console.log('account_id backfilled');
 
 	await knex.raw(`ALTER TABLE gp_apps_approvals DROP INDEX IF EXISTS unique_user_app;`);
