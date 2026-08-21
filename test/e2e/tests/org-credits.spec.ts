@@ -19,6 +19,18 @@ test('org credits are readable by every member of that org and by nobody else', 
 	}
 });
 
+test('personal credits are readable by their owner only', async ({ org, actors }) => {
+	await sql('gp_credits').insert({ account_id: org.member.account_id, user_id: org.member.id, amount: 4321 });
+
+	for (const api of [ actors.member, actors.directusAdmin ]) {
+		expect(await countAccountItems(api, 'gp_credits', org.member.account_id)).toBe(1);
+	}
+
+	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect(await countAccountItems(api, 'gp_credits', org.member.account_id)).toBe(0);
+	}
+});
+
 test('the credits timeline is scoped to the account', async ({ org, actors }) => {
 	for (const api of [ actors.admin, actors.member, actors.viewer, actors.directusAdmin ]) {
 		expect((await api.get(`/credits-timeline?accountId=${org.account_id}`)).status).toBe(200);
@@ -33,4 +45,14 @@ test('the credits timeline is scoped to the account', async ({ org, actors }) =>
 	}
 
 	expect((await actors.directusAdmin.get('/credits-timeline?accountId=all')).status).toBe(200);
+});
+
+test('the credits timeline of a personal account is available to its owner only', async ({ org, actors }) => {
+	expect((await actors.member.get(`/credits-timeline?accountId=${org.member.account_id}`)).status).toBe(200);
+
+	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.get(`/credits-timeline?accountId=${org.member.account_id}`)).status).toBe(400);
+	}
+
+	expect((await actors.directusAdmin.get(`/credits-timeline?accountId=${org.member.account_id}`)).status).toBe(200);
 });

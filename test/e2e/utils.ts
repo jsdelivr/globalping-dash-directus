@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
 import { client } from './client.ts';
-import { Org, User } from './types.ts';
+import { Actors, Org, User } from './types.ts';
 
 export const generateUser = async (suffix = ''): Promise<User> => {
 	const userId = randomUUID();
@@ -67,6 +67,41 @@ export const clearOrgData = async (org: Org) => {
 	await Promise.all([ clearUserData(org.admin), clearUserData(org.member), clearUserData(org.viewer) ]);
 };
 
+// A minimal synced probe row; the owner columns and anything else a test cares about are passed in.
+export const addProbe = async (fields: Record<string, unknown>) => {
+	const id = randomUUID();
+
+	await client('gp_probes').insert({
+		id,
+		userId: null,
+		account_id: null,
+		ip: randomIP(),
+		altIps: JSON.stringify([]),
+		uuid: randomUUID(),
+		name: 'e2e-probe',
+		tags: JSON.stringify([]),
+		systemTags: JSON.stringify([ 'datacenter-network' ]),
+		status: 'ready',
+		version: '0.28.0',
+		nodeVersion: 'v22.22.3',
+		city: 'Prague',
+		country: 'CZ',
+		countryName: 'Czech Republic',
+		continent: 'EU',
+		continentName: 'Europe',
+		region: 'Eastern Europe',
+		latitude: 50.07,
+		longitude: 14.42,
+		asn: 16019,
+		network: 'Vodafone Czech Republic a.s.',
+		allowedCountries: JSON.stringify([ 'CZ' ]),
+		lastSyncDate: new Date(),
+		...fields,
+	});
+
+	return id;
+};
+
 // A Directus client acting as the given account. Errors are returned, not thrown, so that tests can assert on the status.
 const login = async (email: string, password: string) => {
 	const { data } = await axios.post(`${process.env.DIRECTUS_URL}/auth/login`, { email, password });
@@ -81,6 +116,9 @@ const login = async (email: string, password: string) => {
 export const loginUser = (user: User) => login(user.email, 'user');
 
 export const loginDirectusAdmin = () => login(process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
+
+// Every actor a permission applies to - the Directus admin is not one of them, it bypasses the permissions.
+export const allUsers = ({ admin, member, viewer, outsider, otherOrgAdmin }: Actors) => [ admin, member, viewer, outsider, otherOrgAdmin ];
 
 export const clearUserData = async (user: User) => {
 	await client('gp_credits_additions').where({ github_id: user.external_identifier }).delete();

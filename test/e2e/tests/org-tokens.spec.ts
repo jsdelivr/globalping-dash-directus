@@ -36,21 +36,44 @@ test('org tokens can be created by admins and members only, and stay private to 
 	// And only its creator - or a Directus admin - can edit it.
 	const memberToken = `/items/gp_tokens/${byMember.data.data.id}`;
 
-	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
-		expect((await api.patch(memberToken, { name: 'e2e-renamed-token' })).status).toBe(403);
+	for (const api of [ actors.member, actors.directusAdmin ]) {
+		expect((await api.patch(memberToken, { name: 'e2e-renamed-token' })).status).toBe(200);
 	}
 
-	expect((await actors.member.patch(memberToken, { name: 'e2e-renamed-token' })).status).toBe(200);
-	expect((await actors.directusAdmin.patch(memberToken, { name: 'e2e-renamed-by-admin' })).status).toBe(200);
+	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.patch(memberToken, { name: 'e2e-renamed-by-somebody-else' })).status).toBe(403);
+	}
 });
 
 test('a token can not be created for the personal account of somebody else', async ({ org, user: outsider, actors }) => {
-	expect((await actors.member.post('/items/gp_tokens', await newToken(actors.member, outsider.account_id))).status).toBe(400);
-	expect((await actors.outsider.post('/items/gp_tokens', await newToken(actors.outsider, org.admin.account_id))).status).toBe(400);
+	expect((await actors.outsider.post('/items/gp_tokens', await newToken(actors.outsider, outsider.account_id))).status).toBe(200);
+
+	// Nobody else reaches the personal account of the outsider.
+	for (const api of [ actors.admin, actors.member, actors.viewer, actors.otherOrgAdmin ]) {
+		expect((await api.post('/items/gp_tokens', await newToken(api, outsider.account_id))).status).toBe(400);
+	}
+
+	// And being an admin of the org the user belongs to gives no access to their personal account either.
+	expect((await actors.admin.post('/items/gp_tokens', await newToken(actors.admin, org.member.account_id))).status).toBe(400);
 
 	// A Directus admin acts on behalf of any account, including an org they are not a member of.
-	const byDirectusAdmin = await actors.directusAdmin.post('/items/gp_tokens', await newToken(actors.directusAdmin, org.account_id));
-	expect(byDirectusAdmin.status).toBe(200);
+	expect((await actors.directusAdmin.post('/items/gp_tokens', await newToken(actors.directusAdmin, org.account_id))).status).toBe(200);
+});
+
+test('a personal token is invisible to the org and can only be deleted by its owner', async ({ org, actors }) => {
+	const created = await actors.member.post('/items/gp_tokens', await newToken(actors.member, org.member.account_id));
+	expect(created.status).toBe(200);
+
+	const tokenId = created.data.data.id;
+	expect(await listedIds(actors.member, 'gp_tokens')).toEqual([ tokenId ]);
+
+	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect(await listedIds(api, 'gp_tokens')).toEqual([]);
+		expect((await api.delete(`/items/gp_tokens/${tokenId}`)).status).toBe(403);
+	}
+
+	expect(await listedIds(actors.directusAdmin, 'gp_tokens')).toEqual(expect.arrayContaining([ tokenId ]));
+	expect((await actors.member.delete(`/items/gp_tokens/${tokenId}`)).status).toBe(204);
 });
 
 test('the applications list is scoped to the account', async ({ org, actors }) => {

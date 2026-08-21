@@ -1,6 +1,7 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { getAccountOwnerFields } from './accounts.js';
 import { escapeMdSymbols, getDefaultProbeName } from './probe-name.js';
+import { sendNotification } from './send-notification.js';
 import { getResetUserFields } from './reset-fields.js';
 
 export type Override<Type, NewType> = Omit<Type, keyof NewType> & NewType;
@@ -193,30 +194,20 @@ type NotificationInfo = {
 	ip: string;
 };
 
-const sendNotificationProbeAdopted = async (adoption: NotificationInfo, { services, getSchema }: EndpointExtensionContext) => {
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
-
-	await notificationsService.createOne({
+const sendNotificationProbeAdopted = async (adoption: NotificationInfo, context: EndpointExtensionContext) => {
+	await sendNotification({
 		account: adoption.account_id,
 		type: 'probe_adopted',
 		subject: 'New probe adopted',
 		message: `A new ${adoption.name ? `probe [${escapeMdSymbols(adoption.name)}](/probes/${adoption.id})` : `[probe](/probes/${adoption.id})`} with IP address **${adoption.ip}** has been assigned to your account.`,
-	});
+	}, context);
 };
 
-const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, { services, getSchema }: EndpointExtensionContext) => {
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
-
-	await notificationsService.createOne({
+const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, context: EndpointExtensionContext) => {
+	await sendNotification({
 		account: existingProbe.account_id,
 		type: 'probe_unassigned',
 		subject: 'Probe unassigned',
 		message: `Your probe ${existingProbe.name ? `**${escapeMdSymbols(existingProbe.name)}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
-	});
+	}, context);
 };

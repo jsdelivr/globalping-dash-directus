@@ -1,5 +1,6 @@
 import type { EndpointExtensionContext, HookExtensionContext } from '@directus/extensions';
 import { getLinkGenerator } from './link-generator.js';
+import { sendNotification } from './send-notification.js';
 
 type Context = HookExtensionContext | EndpointExtensionContext;
 
@@ -34,7 +35,7 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 	}
 
 	const { services, database, getSchema } = context;
-	const { UsersService, NotificationsService } = services;
+	const { UsersService } = services;
 	const schema = await getSchema();
 
 	await releaseDeprecatedPrefix(user.github_username, context);
@@ -51,18 +52,17 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 
 	await database.transaction(async (trx) => {
 		const usersService = new UsersService({ schema, knex: trx });
-		const notificationsService = new NotificationsService({ schema, knex: trx });
 
 		await usersService.updateOne(user.id, {
 			default_prefix: user.github_username,
 			deprecated_prefix: user.default_prefix,
 		}, { emitEvents: false });
 
-		await notificationsService.createOne({
+		await sendNotification({
 			recipient: user.id,
 			type: 'default_tag_change',
 			subject: 'Action required: Confirm your default probe tag',
 			message: `Your default probe tag has been updated from **u-${user.default_prefix}** to **u-${user.github_username}**.\n\nThe old **u-${user.default_prefix}** tag will continue to work for measurement targeting until you [confirm the new tag](${defaultTagChangeLink}) or [choose a different default tag](${settingsLink}) in settings.`,
-		});
+		}, context, trx);
 	});
 };

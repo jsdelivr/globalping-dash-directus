@@ -1,6 +1,7 @@
 import type { ApiExtensionContext } from '@directus/extensions';
 import { getAccountUserIds } from './accounts.js';
 import { getProbeLink } from './probe-name.js';
+import { sendNotification } from './send-notification.js';
 
 type ProbeInfo = {
 	id: string;
@@ -85,14 +86,10 @@ export const getAlreadyNotifiedProbes = async (context: ApiExtensionContext, acc
 	return idsSet;
 };
 
-const notifySingleSoftwareProbe = async (probe: ProbeInfo, accountId: string, { services, getSchema, env }: ApiExtensionContext) => {
-	const { NotificationsService } = services;
+const notifySingleSoftwareProbe = async (probe: ProbeInfo, accountId: string, context: ApiExtensionContext) => {
+	const { env } = context;
 
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
-
-	await notificationsService.createOne({
+	await sendNotification({
 		account: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
@@ -100,19 +97,15 @@ const notifySingleSoftwareProbe = async (probe: ProbeInfo, accountId: string, { 
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Your probe container is running an outdated software version',
 		message: `Your ${getProbeLink(probe)} is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
-	});
+	}, context);
 
 	return probe.id;
 };
 
-const notifySingleHardwareProbe = async (probe: ProbeInfo, accountId: string, { services, getSchema, env }: ApiExtensionContext) => {
-	const { NotificationsService } = services;
+const notifySingleHardwareProbe = async (probe: ProbeInfo, accountId: string, context: ApiExtensionContext) => {
+	const { env } = context;
 
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
-
-	await notificationsService.createOne({
+	await sendNotification({
 		account: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
@@ -120,20 +113,16 @@ const notifySingleHardwareProbe = async (probe: ProbeInfo, accountId: string, { 
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Your hardware probe is running an outdated firmware',
 		message: `Your ${getProbeLink(probe)} is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
-	});
+	}, context);
 
 	return probe.id;
 };
 
 const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], accountId: string, context: ApiExtensionContext) => {
-	const { services, getSchema, env } = context;
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
+	const { env } = context;
 	const lines = probes.map(probe => `- ${getProbeLink(probe)}`);
 
-	await notificationsService.createOne({
+	await sendNotification({
 		account: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(({ id }) => id),
@@ -141,20 +130,16 @@ const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], accountId: stri
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Your probe containers are running an outdated software version',
 		message: `Some of your probes are running an outdated software version and we couldn't update them automatically. Please follow [our guide](/probes?view=update-a-probe) to update them manually:\n${lines.join('\n')}`,
-	});
+	}, context);
 
 	return probes.map(({ id }) => id);
 };
 
 const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], accountId: string, context: ApiExtensionContext) => {
-	const { services, getSchema, env } = context;
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
+	const { env } = context;
 	const lines = probes.map(probe => `- ${getProbeLink(probe)}`);
 
-	await notificationsService.createOne({
+	await sendNotification({
 		account: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(({ id }) => id),
@@ -162,7 +147,7 @@ const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], accountId: stri
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
 		subject: 'Your hardware probes are running an outdated firmware',
 		message: `Some of your hardware probes are running an outdated firmware and we couldn't update them automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually:\n${lines.join('\n')}`,
-	});
+	}, context);
 
 	return probes.map(({ id }) => id);
 };

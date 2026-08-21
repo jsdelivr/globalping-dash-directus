@@ -16,7 +16,7 @@ type CandidateRow = {
 
 describe('Low credits cron handler', () => {
 	const creditsUpdateOne = sinon.stub();
-	const createMany = sinon.stub();
+	const createOne = sinon.stub();
 
 	const ItemsService = sinon.stub().callsFake((collection: string) => {
 		if (collection === 'gp_credits') {
@@ -28,7 +28,7 @@ describe('Low credits cron handler', () => {
 
 	const services = {
 		ItemsService,
-		NotificationsService: sinon.stub().returns({ createMany }),
+		NotificationsService: sinon.stub().returns({ createOne }),
 	} as unknown as OperationContext['services'];
 
 	const accountability = {} as OperationContext['accountability'];
@@ -62,9 +62,9 @@ describe('Low credits cron handler', () => {
 
 	beforeEach(() => {
 		creditsUpdateOne.resetHistory();
-		createMany.resetHistory();
-		createMany.resetBehavior();
-		createMany.resolves([]);
+		createOne.resetHistory();
+		createOne.resetBehavior();
+		createOne.resolves('notification-id');
 		database.raw.resetHistory();
 		database.transaction.resetHistory();
 	});
@@ -77,9 +77,24 @@ describe('Low credits cron handler', () => {
 		const result = await checkLowCredits(ctx());
 
 		expect(result.notified).to.deep.equal([ 'user-1' ]);
-		expect(createMany.args[0]?.[0]).to.have.lengthOf(1);
-		expect(createMany.args[0]?.[0][0]).to.include({ recipient: 'user-1', type: 'low_credits' });
+		expect(createOne.callCount).to.equal(1);
+		expect(createOne.args[0]?.[0]).to.include({ recipient: 'user-1', type: 'low_credits' });
 		expect(creditsUpdateOne.args[0]).to.deep.equal([ 1, { low_credits_notified: [ 'user-1' ] }]);
+	});
+
+	it('notifies everybody it can and reports the failures together', async () => {
+		seed([
+			candidate({ recipient: 'admin-1' }),
+			candidate({ recipient: 'admin-2' }),
+		]);
+
+		createOne.onFirstCall().rejects(new Error('nope'));
+
+		const error = await checkLowCredits(ctx()).catch((error: Error) => error) as Error;
+		expect(error.message).to.equal('Failed to notify 1 of 2 recipients.');
+
+		expect(createOne.callCount).to.equal(2);
+		expect(createOne.args[1]?.[0]).to.include({ recipient: 'admin-2' });
 	});
 
 	it('does not notify a recipient twice within the same episode', async () => {
@@ -88,7 +103,7 @@ describe('Low credits cron handler', () => {
 		const result = await checkLowCredits(ctx());
 
 		expect(result.notified).to.deep.equal([]);
-		expect(createMany.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
 		expect(creditsUpdateOne.callCount).to.equal(0);
 	});
 
@@ -113,7 +128,7 @@ describe('Low credits cron handler', () => {
 		const result = await checkLowCredits(ctx());
 
 		// admin-2 is above their threshold again, admin-1 stays notified.
-		expect(createMany.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
 		expect(creditsUpdateOne.args[0]).to.deep.equal([ 1, { low_credits_notified: [ 'admin-1' ] }]);
 		expect(result.reset).to.deep.equal([]);
 	});
@@ -124,7 +139,7 @@ describe('Low credits cron handler', () => {
 		const result = await checkLowCredits(ctx());
 
 		expect(result.notified).to.deep.equal([]);
-		expect(createMany.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
 	});
 
 	it('does nothing when there are no candidates', async () => {
@@ -133,7 +148,7 @@ describe('Low credits cron handler', () => {
 		const result = await checkLowCredits(ctx());
 
 		expect(result).to.deep.equal({ notified: [], reset: [] });
-		expect(createMany.callCount).to.equal(0);
+		expect(createOne.callCount).to.equal(0);
 		expect(creditsUpdateOne.callCount).to.equal(0);
 	});
 });

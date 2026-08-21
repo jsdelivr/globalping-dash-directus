@@ -1,57 +1,15 @@
-import { randomUUID } from 'node:crypto';
 import type { AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
-import { Org } from '../types.ts';
-import { randomIP } from '../utils.ts';
-
-const defaultProbe = {
-	uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
-	asn: 3302,
-	city: 'Ouagadougou',
-	country: 'BF',
-	countryName: 'Burkina Faso',
-	continent: 'AF',
-	continentName: 'Africa',
-	region: 'Western Africa',
-	date_created: new Date(),
-	lastSyncDate: new Date(),
-	latitude: 12.37,
-	longitude: -1.53,
-	network: 'IRIDEOS S.P.A.',
-	onlineTimesToday: 50,
-	state: null,
-	status: 'ready',
-	userId: null,
-	version: '0.28.0',
-	nodeVersion: 'v22.22.3',
-	hardwareDevice: null,
-	allowedCountries: JSON.stringify([ 'BF' ]),
-	customLocation: null,
-};
+import { addProbe, randomIP } from '../utils.ts';
 
 const listedProbeIds = async (api: AxiosInstance) => {
 	const response = await api.get('/items/gp_probes');
 	return response.data.data.map((probe: { id: string }) => probe.id);
 };
 
-const addOrgProbe = async (org: Org) => {
-	const probeId = randomUUID();
-
-	await sql('gp_probes').insert({
-		...defaultProbe,
-		id: probeId,
-		ip: randomIP(),
-		uuid: randomUUID(),
-		name: 'e2e-org-probe',
-		account_id: org.account_id,
-	});
-
-	return probeId;
-};
-
 test('Org probes are readable by every member of that org and by nobody else', async ({ org, actors }) => {
-	const probeId = await addOrgProbe(org);
+	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
 
 	for (const api of [ actors.admin, actors.member, actors.viewer, actors.directusAdmin ]) {
 		expect(await listedProbeIds(api)).toContain(probeId);
@@ -62,16 +20,49 @@ test('Org probes are readable by every member of that org and by nobody else', a
 	}
 });
 
+test('Personal probes are readable by their owner only', async ({ org, actors }) => {
+	const orgProbeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
+	const personalProbeId = await addProbe({ account_id: org.member.account_id, userId: org.member.id, name: 'e2e-personal-probe' });
+
+	// The member sees both their own probe and the one of the org.
+	for (const api of [ actors.member, actors.directusAdmin ]) {
+		expect(await listedProbeIds(api)).toEqual(expect.arrayContaining([ orgProbeId, personalProbeId ]));
+	}
+
+	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect(await listedProbeIds(api)).not.toContain(personalProbeId);
+	}
+});
+
+test('A personal probe can only be edited by its owner, and never moved to another account', async ({ org, actors }) => {
+	const probeId = await addProbe({ account_id: org.member.account_id, userId: org.member.id, name: 'e2e-personal-probe' });
+
+	expect((await actors.member.patch(`/items/gp_probes/${probeId}`, { name: 'e2e-renamed-probe' })).status).toBe(200);
+
+	// Being an admin of the org the user belongs to gives no access to their personal probe.
+	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.patch(`/items/gp_probes/${probeId}`, { name: 'e2e-renamed-by-somebody-else' })).status).toBe(403);
+	}
+
+	// The owner can not give the probe away either.
+	expect((await actors.member.patch(`/items/gp_probes/${probeId}`, { account_id: org.account_id })).status).toBe(400);
+
+	const probe = await sql('gp_probes').where({ id: probeId }).first('name', 'account_id');
+	expect(probe.name).toBe('e2e-renamed-probe');
+	expect(probe.account_id).toBe(org.member.account_id);
+});
+
 test('Org probe adoption is available to admins only', async ({ org, actors }) => {
 	const ip = randomIP();
 
+	// Every check runs before the probe is adopted: afterwards the endpoint would reject the IP as already adopted instead.
 	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
 		expect((await api.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(400);
 	}
 
+	expect((await actors.admin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 	expect((await actors.directusAdmin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 
-	expect((await actors.admin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 	expect((await actors.admin.post('/adoption-code/verify-code', { accountId: org.account_id, code: '111111' })).status).toBe(200);
 
 	const probe = await sql('gp_probes').where({ ip }).first('account_id', 'userId');
@@ -87,14 +78,20 @@ test('Org probe adoption is available to admins only', async ({ org, actors }) =
 });
 
 test('An org probe can only be edited by an admin, and never moved to another account', async ({ org, org2, actors }) => {
-	const probeId = await addOrgProbe(org);
-
-	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
-		expect((await api.patch(`/items/gp_probes/${probeId}`, { name: 'e2e-renamed-probe' })).status).toBe(403);
-	}
+	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
 
 	expect((await actors.admin.patch(`/items/gp_probes/${probeId}`, { name: 'e2e-renamed-probe' })).status).toBe(200);
-	// Rejected by the permission validation, not by the permission itself - hence 400.
+
+	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.patch(`/items/gp_probes/${probeId}`, { name: 'e2e-renamed-by-somebody-else' })).status).toBe(403);
+	}
+
+	// Nobody moves a probe between accounts: the roles without an update permission are stopped by it, the admin by the
+	// validation that comes with it - hence 403 for them and 400 for the admin.
+	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.patch(`/items/gp_probes/${probeId}`, { account_id: org2.account_id })).status).toBe(403);
+	}
+
 	expect((await actors.admin.patch(`/items/gp_probes/${probeId}`, { account_id: org.admin.account_id })).status).toBe(400);
 
 	const probe = await sql('gp_probes').where({ id: probeId }).first('name', 'account_id');

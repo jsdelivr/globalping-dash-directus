@@ -2,24 +2,11 @@ import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
 import { escapeMdSymbols, getIPSuffix, getProbeLink } from '../../../../lib/src/probe-name.js';
+import { sendNotification } from '../../../../lib/src/send-notification.js';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
 const OFFLINE_PROBE_NOTIFICATION_TYPE = 'offline_probe';
-
-// The notifications hook cancels a create by throwing; for the sender that is a success, not an error.
-const createNotification = async (notification: Record<string, unknown>, { services, getSchema }: OperationContext) => {
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({ schema: await getSchema() });
-
-	try {
-		await notificationsService.createOne(notification);
-	} catch (error) {
-		if ((error as { code?: string }).code !== 'CANCELLED') {
-			throw error;
-		}
-	}
-};
 
 type OfflineNotification = {
 	item: string | null;
@@ -99,7 +86,7 @@ const formatExpirationDate = (lastSyncDate: Date) => {
 };
 
 const notifySingleProbe = async (probe: AdoptedProbe, accountId: string, context: OperationContext) => {
-	await createNotification({
+	await sendNotification({
 		account: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
@@ -112,7 +99,7 @@ const notifySingleProbe = async (probe: AdoptedProbe, accountId: string, context
 const notifyMultipleProbes = async (probes: AdoptedProbe[], accountId: string, context: OperationContext) => {
 	const lines = probes.map(probe => `- ${probe.name ? `[${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`}${getIPSuffix(probe.ip)} - **${formatExpirationDate(probe.lastSyncDate)}**`);
 
-	await createNotification({
+	await sendNotification({
 		account: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(p => p.id),
@@ -131,7 +118,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], context: Operation
 	});
 
 	await Bluebird.map(probes, async (probe) => {
-		await createNotification({
+		await sendNotification({
 			account: probe.account_id,
 			type: 'probe_unassigned',
 			subject: 'Your probe has been deleted',

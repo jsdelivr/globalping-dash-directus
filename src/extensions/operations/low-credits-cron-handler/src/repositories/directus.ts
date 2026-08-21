@@ -1,5 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import { LOW_CREDITS_DEFAULT_THRESHOLD } from '../../../../lib/src/notification-types.js';
+import { sendNotification } from '../../../../lib/src/send-notification.js';
 import type { NotifiedListUpdate, CandidateRow } from '../types.js';
 
 // The threshold and the switch come from the recipient's own preferences: the personal ones for a user account, the per-org ones
@@ -24,18 +25,27 @@ export const getCandidates = async ({ database }: OperationContext): Promise<Can
 	return rows.map(row => ({ ...row, allNotifiedUsers: JSON.parse(row.allNotifiedUsers) as string[], enabled: Boolean(row.enabled) }));
 };
 
-export const notifyRecipients = async ({ services, getSchema }: OperationContext, toNotify: CandidateRow[]): Promise<void> => {
-	if (toNotify.length === 0) { return; }
+export const notifyRecipients = async (context: OperationContext, toNotify: CandidateRow[]): Promise<void> => {
+	const { logger } = context;
+	const errors: unknown[] = [];
 
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({ schema: await getSchema() });
+	for (const row of toNotify) {
+		try {
+			await sendNotification({
+				recipient: row.recipient,
+				type: 'low_credits',
+				subject: 'Your Globalping credits are running low',
+				message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
+			}, context);
+		} catch (error) {
+			logger.error(error);
+			errors.push(error);
+		}
+	}
 
-	await notificationsService.createMany(toNotify.map(row => ({
-		recipient: row.recipient,
-		type: 'low_credits',
-		subject: 'Your Globalping credits are running low',
-		message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
-	})));
+	if (errors.length > 0) {
+		throw new AggregateError(errors, `Failed to notify ${errors.length} of ${toNotify.length} recipients.`);
+	}
 };
 
 export const saveNotifiedList = async ({ database, services, getSchema }: OperationContext, updates: NotifiedListUpdate[]): Promise<void> => {
