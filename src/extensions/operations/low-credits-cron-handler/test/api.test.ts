@@ -78,7 +78,7 @@ describe('Low credits cron handler', () => {
 
 		expect(result.notified).to.deep.equal([ 'user-1' ]);
 		expect(createOne.callCount).to.equal(1);
-		expect(createOne.args[0]?.[0]).to.include({ recipient: 'user-1', type: 'low_credits' });
+		expect(createOne.args[0]?.[0]).to.include({ account: 'account-1', recipient: 'user-1', type: 'low_credits' });
 		expect(creditsUpdateOne.args[0]).to.deep.equal([ 1, { low_credits_notified: [ 'user-1' ] }]);
 	});
 

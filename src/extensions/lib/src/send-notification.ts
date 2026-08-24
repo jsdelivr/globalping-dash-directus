@@ -11,10 +11,14 @@ type NotificationContent = {
 	metadata?: unknown;
 };
 
-// A notification is addressed either to a specific user, or to the account owning the item it is about - never to both.
+// A notification can be sent to:
+// - a specific user (recipient)
+// - the owner of an account (account)
+// - a member of an org (account + recipient)
 type Notification =
-	| NotificationContent & { recipient: string; account?: never }
-	| NotificationContent & { account: string; recipient?: never };
+	| NotificationContent & { recipient: string }
+	| NotificationContent & { account: string }
+	| NotificationContent & { account: string; recipient: string };
 
 // The notifications hook cancels a create by throwing; for the sender that is a success, not an error.
 const isCancelled = (error: unknown) => (error as { code?: string }).code === 'CANCELLED';

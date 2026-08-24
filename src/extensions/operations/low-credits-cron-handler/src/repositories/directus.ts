@@ -32,6 +32,7 @@ export const notifyRecipients = async (context: OperationContext, toNotify: Cand
 	for (const row of toNotify) {
 		try {
 			await sendNotification({
+				account: row.account_id,
 				recipient: row.recipient,
 				type: 'low_credits',
 				subject: 'Your Globalping credits are running low',

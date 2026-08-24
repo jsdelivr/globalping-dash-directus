@@ -152,3 +152,32 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 
 	expect(await getNotifiedUsers(user)).toEqual([ user.id ]);
 });
+
+test('notifies an org admin by their org preferences, whatever their personal ones say', async ({ org }) => {
+	// The admin muted the type for themselves and left it on in the org; the member did the opposite.
+	await sql('directus_users').whereIn('id', [ org.admin.id, org.member.id ]).update({
+		notification_preferences: JSON.stringify({ low_credits: { enabled: false } }),
+	});
+
+	await sql('gp_org_members').where({ org: org.id, user: org.admin.id }).update({
+		notification_preferences: JSON.stringify({ low_credits: { enabled: true, parameter: 8000 } }),
+	});
+
+	await sql('gp_credits').insert({
+		account_id: org.account_id,
+		amount: 4000,
+		low_credits_notified: JSON.stringify([]),
+	});
+
+	await triggerLowCreditsCron();
+
+	const notifications = await sql('directus_notifications')
+		.whereIn('recipient', [ org.admin.id, org.member.id, org.viewer.id ])
+		.where({ type: 'low_credits' })
+		.select('recipient');
+
+	expect(notifications.map(notification => notification.recipient)).toEqual([ org.admin.id ]);
+
+	const credits = await sql('gp_credits').where({ account_id: org.account_id }).select('low_credits_notified').first();
+	expect(JSON.parse(credits.low_credits_notified)).toEqual([ org.admin.id ]);
+});

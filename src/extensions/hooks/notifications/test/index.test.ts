@@ -300,15 +300,6 @@ describe('notifications hooks', () => {
 			createOne.resolves('notification-id');
 		});
 
-		it('should reject a payload with both recipient and account', async () => {
-			try {
-				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', recipient: 'user-1', account: 'account-1' }, {}, eventContext);
-				expect.fail('should throw');
-			} catch (err: any) {
-				expect(err.message).to.include('contains a conflict');
-			}
-		});
-
 		it('should reject a payload with neither recipient nor account', async () => {
 			try {
 				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test' }, {}, eventContext);
@@ -337,6 +328,66 @@ describe('notifications hooks', () => {
 			expect(result.recipient).to.equal('user-1');
 			expect(result.account).to.equal(undefined);
 			expect(result.email_status).to.equal('not-required');
+		});
+
+		it('should apply the org preferences of the recipient the sender picked', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+
+			readByQuery.resolves([
+				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: { low_credits: { enabled: true, parameter: 8000 } } },
+			]);
+
+			const result = await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+
+			// The personal preferences of that user are not read at all.
+			expect(readOne.callCount).to.equal(0);
+			expect(createOne.callCount).to.equal(0);
+
+			expect(result).to.deep.equal({
+				type: 'low_credits',
+				message: 'test',
+				subject: 'test',
+				recipient: 'admin-1',
+				email_status: 'pending',
+			});
+		});
+
+		it('should cancel when the picked recipient disabled the type in that org', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+
+			readByQuery.resolves([
+				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: { low_credits: { enabled: false } } },
+			]);
+
+			try {
+				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+		});
+
+		it('should cancel when the picked recipient is not a member of the org any more', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+			readByQuery.resolves([]);
+
+			try {
+				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+		});
+
+		it('should reject a recipient that is not the owner of a personal account', async () => {
+			first.resolves({ user: 'user-1', org: null });
+
+			try {
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1', recipient: 'user-2' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('The recipient does not belong to the account.');
+			}
 		});
 
 		it('should fan out an org account to the admins only and cancel the original', async () => {

@@ -10,7 +10,7 @@ export type User = {
 
 export type NotificationPayload = {
 	type: NotificationTypeKey;
-	// Notification can be sent either to a user or an account (user or org).
+	// Notification can be sent to a user, to an account, or to a user within an account.
 	recipient?: string;
 	account?: string;
 	subject: string;
@@ -18,7 +18,7 @@ export type NotificationPayload = {
 	email_status?: 'not-required' | 'no-email' | 'disabled-by-user' | 'pending' | 'sent';
 };
 
-export type OrgAdmin = {
+export type OrgMember = {
 	user: {
 		id: string;
 		email: string | null;
