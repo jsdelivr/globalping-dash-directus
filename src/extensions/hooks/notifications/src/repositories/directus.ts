@@ -8,6 +8,5 @@ export const getOrgAdmins = async (orgId: string, { services, getSchema }: HookE
 	return await membersService.readByQuery({
 		filter: { org: { _eq: orgId }, role: { _eq: 'admin' } },
 		fields: [ 'user.id', 'user.email', 'notification_preferences' ],
-		limit: -1,
 	}) as OrgAdmin[];
 };

@@ -33,14 +33,16 @@ test('org tokens can be created by admins and members only, and stay private to 
 	// A Directus admin is not scoped by the account at all.
 	expect(await listedIds(actors.directusAdmin, 'gp_tokens')).toEqual(expect.arrayContaining([ byAdmin.data.data.id, byMember.data.data.id ]));
 
-	// And only its creator - or a Directus admin - can edit it.
+	// And only its creator - or a Directus admin - can read it directly or edit it.
 	const memberToken = `/items/gp_tokens/${byMember.data.data.id}`;
 
 	for (const api of [ actors.member, actors.directusAdmin ]) {
+		expect((await api.get(memberToken)).status).toBe(200);
 		expect((await api.patch(memberToken, { name: 'e2e-renamed-token' })).status).toBe(200);
 	}
 
 	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.get(memberToken)).status).toBe(403);
 		expect((await api.patch(memberToken, { name: 'e2e-renamed-by-somebody-else' })).status).toBe(403);
 	}
 });

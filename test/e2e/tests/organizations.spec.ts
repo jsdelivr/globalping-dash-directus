@@ -60,18 +60,17 @@ test('notification preferences can only be changed on your own membership', asyn
 	expect((await actors.directusAdmin.patch(`/items/gp_org_members/${membershipId}`, { notification_preferences: preferences })).status).toBe(200);
 });
 
-test('memberships are visible to the whole org for an admin, and only their own row for the others', async ({ org, actors }) => {
+test('all memberships are visible to the org admin, and only their own membership for the others', async ({ org, org2, actors }) => {
 	const memberships = await sql('gp_org_members').where({ org: org.id }).select('id', 'user');
+	const otherOrgMemberships = await sql('gp_org_members').where({ org: org2.id }).select('id');
 	const ownMembership = (user: string) => memberships.filter(membership => membership.user === user).map(membership => membership.id);
+	const ids = (rows: { id: string }[]) => rows.map(row => row.id).sort();
 
-	expect(await listedIds(actors.admin, 'gp_org_members')).toEqual(expect.arrayContaining(memberships.map(membership => membership.id)));
+	expect((await listedIds(actors.admin, 'gp_org_members')).sort()).toEqual(ids(memberships));
 	expect(await listedIds(actors.member, 'gp_org_members')).toEqual(ownMembership(org.member.id));
 	expect(await listedIds(actors.viewer, 'gp_org_members')).toEqual(ownMembership(org.viewer.id));
 	expect(await listedIds(actors.outsider, 'gp_org_members')).toEqual([]);
-
-	for (const id of memberships.map(membership => membership.id)) {
-		expect(await listedIds(actors.otherOrgAdmin, 'gp_org_members')).not.toContain(id);
-	}
+	expect((await listedIds(actors.otherOrgAdmin, 'gp_org_members')).sort()).toEqual(ids(otherOrgMemberships));
 });
 
 test('an org is only visible to its own members, and its adoption token only to its admins', async ({ org, org2, actors }) => {
@@ -88,6 +87,19 @@ test('an org is only visible to its own members, and its adoption token only to 
 	for (const api of [ actors.outsider, actors.otherOrgAdmin ]) {
 		expect((await api.get(`/items/gp_orgs/${org.id}`)).status).toBe(403);
 	}
+
+	// The same holds for a list read, where the hook has to strip the token per row.
+	const listedTokens = async (api: AxiosInstance, fields: string) => {
+		const response = await api.get(`/items/gp_orgs?fields=${fields}`);
+		return response.data.data.map((item: { adoption_token?: string }) => item.adoption_token);
+	};
+
+	expect(await listedTokens(actors.admin, 'id,adoption_token')).toEqual([ org.adoption_token ]);
+	expect(await listedTokens(actors.member, 'id,adoption_token')).toEqual([ undefined ]);
+
+	// Without the id the hook can not tell whose org the row is, so it strips the token from everybody but a Directus admin.
+	expect(await listedTokens(actors.admin, 'adoption_token')).toEqual([ undefined ]);
+	expect(await listedTokens(actors.directusAdmin, 'adoption_token')).toEqual(expect.arrayContaining([ org.adoption_token ]));
 
 	expect(await listedIds(actors.admin, 'gp_orgs')).toEqual([ org.id ]);
 	expect(await listedIds(actors.member, 'gp_orgs')).toEqual([ org.id ]);

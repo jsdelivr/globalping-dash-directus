@@ -32,7 +32,6 @@ const createOrgs = async (githubOrgs: GithubOrganization[], context: ApiExtensio
 
 	const existingOrgs = await orgsService.readByQuery({
 		filter: { github_id: { _in: githubOrgs.map(githubOrg => githubOrg.githubId) } },
-		limit: -1,
 	}) as Org[];
 
 	const directusOrgs = new Map(existingOrgs.map(org => [ org.github_id, org ]));
@@ -63,7 +62,6 @@ const getMemberships = async (user: User, { services, getSchema }: ApiExtensionC
 	return await membersService.readByQuery({
 		filter: { user: { _eq: user.id } },
 		fields: [ 'id', 'role', 'org.github_id' ],
-		limit: -1,
 	}) as Membership[];
 };
 
