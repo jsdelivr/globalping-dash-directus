@@ -83,6 +83,7 @@ describe('/sync-github-data endpoint', () => {
 		deleteMany.resolves();
 
 		readOne.resolves({
+			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
@@ -171,6 +172,7 @@ describe('/sync-github-data endpoint', () => {
 		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		readOne.resolves({
+			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: null,
 			github_organizations: [],
@@ -195,6 +197,147 @@ describe('/sync-github-data endpoint', () => {
 		expect(updateOne.args[0]?.[1]).to.deep.equal({
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
+		});
+	});
+
+	describe('org sync', () => {
+		// The lists the sync reads: the orgs it already knows by github id, and the memberships of the user.
+		const seedDirectus = ({ orgs = [], memberships = [] }: { orgs?: unknown[]; memberships?: unknown[] }) => {
+			readByQuery.reset();
+
+			readByQuery.callsFake(async (query: { filter?: { github_id?: unknown; user?: unknown } }) => {
+				if (query?.filter?.github_id) { return orgs; }
+
+				if (query?.filter?.user) { return memberships; }
+
+				return [];
+			});
+		};
+
+		const seedGithub = (memberships: unknown[], publicOrgs: unknown[] = []) => {
+			nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
+			nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, memberships);
+			nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, publicOrgs);
+		};
+
+		const sync = () => request(app).post('/').send({ userId: 'directus-id' });
+
+		const createdMemberships = () => itemsCreateOne.args.map(args => args[0]).filter((payload: any) => payload.user);
+
+		const createdOrgs = () => itemsCreateOne.args.map(args => args[0]).filter((payload: any) => payload.github_id);
+
+		it('should create the org and the membership for a new org', async () => {
+			seedDirectus({});
+			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			expect(createdOrgs()[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
+			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'admin' });
+		});
+
+		it('should promote a member to admin', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
+				memberships: [{ id: 'membership-1', role: 'member', org: { github_id: '1' } }],
+			});
+
+			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(itemsUpdateOne.args[0]).to.deep.equal([ 'membership-1', { role: 'admin' }]);
+			expect(itemsCreateOne.callCount).to.equal(0);
+		});
+
+		it('should never demote an admin', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
+				memberships: [{ id: 'membership-1', role: 'admin', org: { github_id: '1' } }],
+			});
+
+			seedGithub([{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(itemsUpdateOne.callCount).to.equal(0);
+			expect(itemsCreateOne.callCount).to.equal(0);
+		});
+
+		it('should remove a membership that is gone from GitHub', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
+				memberships: [
+					{ id: 'membership-1', role: 'member', org: { github_id: '1' } },
+					{ id: 'membership-2', role: 'admin', org: { github_id: '2' } },
+				],
+			});
+
+			seedGithub([{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-2' ] ]);
+		});
+
+		it('should add an org that only the public list shows as a member', async () => {
+			// An org restricting our OAuth app is missing from the memberships list, so it comes without a role.
+			seedDirectus({});
+			seedGithub([], [{ id: 5, login: 'restricted-org' }]);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			expect(createdOrgs()[0]).to.deep.include({ name: 'restricted-org', github_id: '5' });
+			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'member' });
+			expect(res.body.github_organizations).to.deep.equal([ 'restricted-org' ]);
+		});
+
+		it('should prefer the membership role over the public list', async () => {
+			seedDirectus({});
+
+			seedGithub(
+				[{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }],
+				[{ id: 1, login: 'jsdelivr' }],
+			);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(createdMemberships()).to.deep.equal([{ org: 'created-id', user: 'directus-id', role: 'admin' }]);
+		});
+
+		it('should ignore a membership that is not active', async () => {
+			seedDirectus({});
+			seedGithub([{ state: 'pending', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			expect(itemsCreateOne.callCount).to.equal(0);
+			expect(res.body.github_organizations).to.deep.equal([]);
+		});
+
+		it('should treat a billing manager as a member', async () => {
+			seedDirectus({});
+			seedGithub([{ state: 'active', role: 'billing_manager', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'member' });
+		});
+
+		it('should update the org name when it changed on GitHub', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'old-name', github_id: '1' }],
+				memberships: [{ id: 'membership-1', role: 'admin', org: { github_id: '1' } }],
+			});
+
+			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(itemsUpdateOne.args[0]).to.deep.equal([ 'org-1', { name: 'jsdelivr' }]);
 		});
 	});
 
@@ -239,6 +382,7 @@ describe('/sync-github-data endpoint', () => {
 
 	it('should fail without updating anything if the user has no token', async () => {
 		readOne.resolves({
+			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
