@@ -101,7 +101,7 @@ describe('token hooks', () => {
 			await create({ name: 'name', value: 'value', account_id: 'account-id' });
 
 			expect(raw.callCount).to.equal(1);
-			expect(raw.args[0]?.[1]).to.deep.equal({ user: 'user-id', account: 'account-id' });
+			expect(raw.args[0]?.[1]).to.deep.equal({ user: 'user-id', account: 'account-id', roles: [ 'admin', 'member' ] });
 		});
 
 		it('should reject when the account is not available to the user', async () => {

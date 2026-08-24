@@ -1,5 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
-import type { Knex } from 'knex';
+import { filterOrgIdsByBeingAdmin } from '../../../lib/src/accounts.js';
 
 type Org = {
 	id?: string;
@@ -25,7 +25,7 @@ export default defineHook(({ filter }) => {
 
 		// A token read without the org id can not be checked, so it is stripped as well.
 		const orgIds = orgsWithToken.map(org => org.id).filter(Boolean) as string[];
-		const adminOrgIds = await getAdminOrgIds(orgIds, accountability.user, database);
+		const adminOrgIds = await filterOrgIdsByBeingAdmin(orgIds, accountability.user, database);
 
 		for (const org of orgsWithToken) {
 			if (!org.id || !adminOrgIds.has(org.id)) {
@@ -36,16 +36,3 @@ export default defineHook(({ filter }) => {
 		return payload;
 	});
 });
-
-const getAdminOrgIds = async (orgIds: string[], userId: string, database: Knex): Promise<Set<string>> => {
-	if (orgIds.length === 0) {
-		return new Set();
-	}
-
-	const memberships = await database('gp_org_members')
-		.whereIn('org', orgIds)
-		.where({ user: userId, role: 'admin' })
-		.select('org') as { org: string }[];
-
-	return new Set(memberships.map(membership => membership.org));
-};

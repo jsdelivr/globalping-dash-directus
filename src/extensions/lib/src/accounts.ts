@@ -15,6 +15,31 @@ const getUserAccountId = async (userId: string, { database }: ApiExtensionContex
 	return account!.id;
 };
 
+// The account is available to its own user, and to the members of its org whose role is one of `roles`.
+export const isAccountAvailable = async (accountId: string, userId: string, database: ApiExtensionContext['database'], roles: string[]): Promise<boolean> => {
+	const [ rows ] = await database.raw(`
+		SELECT a.id FROM gp_accounts a
+		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user AND m.role IN (:roles)
+		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
+	`, { user: userId, account: accountId, roles }) as [{ id: string }[]];
+
+	return rows.length > 0;
+};
+
+// The orgs, of the ones asked about, where the user is an admin.
+export const filterOrgIdsByBeingAdmin = async (orgIds: string[], userId: string, database: ApiExtensionContext['database']): Promise<Set<string>> => {
+	if (orgIds.length === 0) {
+		return new Set();
+	}
+
+	const memberships = await database('gp_org_members')
+		.whereIn('org', orgIds)
+		.where({ user: userId, role: 'admin' })
+		.select('org') as { org: string }[];
+
+	return new Set(memberships.map(membership => membership.org));
+};
+
 // The account a request acts on, checked against the requester: their own account, or an org account where they have one of
 // `roles`. `ALL_ACCOUNTS` is allowed for Directus admins only.
 // PHASE4: with `accountId` the only input there is nothing to resolve - rename to `validateAccountId` and return nothing.
@@ -35,13 +60,7 @@ export const getRequestAccountId = async (
 		throw new ForbiddenAccountError();
 	}
 
-	const [ rows ] = await context.database.raw(`
-		SELECT a.id FROM gp_accounts a
-		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user AND m.role IN (:roles)
-		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
-	`, { user: accountability.user, account: accountId, roles }) as [{ id: string }[]];
-
-	if (rows.length === 0) {
+	if (!await isAccountAvailable(accountId, accountability.user!, context.database, roles)) {
 		throw new ForbiddenAccountError();
 	}
 

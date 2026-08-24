@@ -1,7 +1,7 @@
 import { createError } from '@directus/errors';
 import type { Knex } from 'knex';
+import { filterOrgIdsByBeingAdmin } from '../../../../lib/src/accounts.js';
 import { joiNotificationPreferences } from '../../../../lib/src/notification-types.js';
-import { getAdminOrgIds } from '../repositories/directus.js';
 import type { Fields, Membership } from '../types.js';
 
 const ForbiddenPreferencesError = createError('INVALID_PAYLOAD_ERROR', 'Notification preferences can only be changed on your own membership.', 400);
@@ -23,7 +23,7 @@ export const validatePreferences = (fields: Fields, memberships: Membership[], u
 
 export const validateRole = async (memberships: Membership[], userId: string, database: Knex) => {
 	const orgIds = [ ...new Set(memberships.map(membership => membership.org)) ];
-	const adminOrgIds = await getAdminOrgIds(orgIds, userId, database);
+	const adminOrgIds = await filterOrgIdsByBeingAdmin(orgIds, userId, database);
 
 	if (orgIds.some(orgId => !adminOrgIds.has(orgId))) {
 		throw new ForbiddenRoleError();
