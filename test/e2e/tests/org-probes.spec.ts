@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
-import { addProbe, randomIP } from '../utils.ts';
+import { addProbe, getAdoptionCode, prepareMockProbeByIp, randomIP } from '../utils.ts';
 
 const listedProbeIds = async (api: AxiosInstance) => {
 	const response = await api.get('/items/gp_probes');
@@ -54,6 +54,7 @@ test('A personal probe can only be edited by its owner, and never moved to anoth
 
 test('Org probe adoption is available to admins only', async ({ org, actors }) => {
 	const ip = randomIP();
+	await prepareMockProbeByIp(ip);
 
 	// Every check runs before the probe is adopted: afterwards the endpoint would reject the IP as already adopted instead.
 	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
@@ -63,7 +64,7 @@ test('Org probe adoption is available to admins only', async ({ org, actors }) =
 	expect((await actors.admin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 	expect((await actors.directusAdmin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 
-	expect((await actors.admin.post('/adoption-code/verify-code', { accountId: org.account_id, code: '111111' })).status).toBe(200);
+	expect((await actors.admin.post('/adoption-code/verify-code', { accountId: org.account_id, code: await getAdoptionCode(ip) })).status).toBe(200);
 
 	const probe = await sql('gp_probes').where({ ip }).first('account_id', 'userId');
 	expect(probe.account_id).toBe(org.account_id);

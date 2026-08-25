@@ -15,6 +15,7 @@ import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { createAdoptedProbe, type ProbeToAdopt } from '../../../lib/src/create-adopted-probe.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
+import { getGlobalpingApiUrl } from '../../../lib/src/service-urls.js';
 import { findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
@@ -77,50 +78,8 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe with this IP address is already adopted', 400))();
 			}
 
-			if (env.ENABLE_E2E_MOCKS === true) {
-				probesToAdopt.set(accountId, {
-					code: '111111',
-					probe: {
-						ip,
-						altIps: [],
-						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
-						name: null,
-						userId: null,
-						account_id: null,
-						version: '0.28.0',
-						nodeVersion: 'v22.22.3',
-						hardwareDevice: null,
-						hardwareDeviceFirmware: null,
-						tags: [],
-						systemTags: [],
-						status: 'offline',
-						allowedCountries: [ 'BF' ],
-						city: 'Ouagadougou',
-						state: null,
-						stateName: null,
-						country: 'BF',
-						countryName: 'Burkina Faso',
-						continent: 'AF',
-						continentName: 'Africa',
-						region: 'Western Africa',
-						latitude: 12.37,
-						longitude: -1.53,
-						asn: 3302,
-						network: 'e2e network provider',
-						isIPv4Supported: true,
-						isIPv6Supported: false,
-						customLocation: null,
-						originalLocation: null,
-						localAdoptionServer: null,
-					},
-				});
-
-				res.send('Code was sent to the probe.');
-				return;
-			}
-
 			const code = generateRandomCode();
-			const { data: probe } = await axios.post<ProbeToAdopt>(`${env.GLOBALPING_URL}/adoption-code`, {
+			const { data: probe } = await axios.post<ProbeToAdopt>(`${getGlobalpingApiUrl(context)}/adoption-code`, {
 				ip,
 				code,
 			}, {

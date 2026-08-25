@@ -1,5 +1,7 @@
 import { createError, ErrorCode } from '@directus/errors';
+import type { ApiExtensionContext } from '@directus/extensions';
 import axios from 'axios';
+import { getGithubUrl } from './service-urls.js';
 
 type User = {
 	external_identifier: string | null;
@@ -33,8 +35,8 @@ export const githubSyncError = (status?: number) => new (createError(
 	400,
 ))();
 
-const githubRequest = <T>(path: string, token: string | null) => {
-	return axios.get<T>(`https://api.github.com${path}`, {
+const githubRequest = <T>(path: string, token: string | null, context: ApiExtensionContext) => {
+	return axios.get<T>(`${getGithubUrl(context)}${path}`, {
 		timeout: 5000,
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -43,11 +45,11 @@ const githubRequest = <T>(path: string, token: string | null) => {
 };
 
 // Paginate the list to get all items.
-const githubListRequest = async <T>(path: string, token: string | null): Promise<T[]> => {
+const githubListRequest = async <T>(path: string, token: string | null, context: ApiExtensionContext): Promise<T[]> => {
 	const items: T[] = [];
 
 	for (let page = 1; ; page++) {
-		const response = await githubRequest<T[]>(`${path}?per_page=100&page=${page}`, token);
+		const response = await githubRequest<T[]>(`${path}?per_page=100&page=${page}`, token, context);
 		items.push(...response.data);
 
 		if (!response.headers['link']?.includes('rel="next"')) {
@@ -64,11 +66,11 @@ const toOrganization = (org: { id: number; login: string }, role: 'admin' | 'mem
 
 // Both sources are incomplete on their own: the memberships list is the only one with roles and private memberships, but orgs
 // restricting our OAuth app are silently missing from it. Those are visible in the public list, without a role, so they become members.
-export const getGithubOrganizations = async (user: User): Promise<GithubOrganization[]> => {
+export const getGithubOrganizations = async (user: User, context: ApiExtensionContext): Promise<GithubOrganization[]> => {
 	const [ memberships, publicOrgs ] = await Promise.all([
-		githubListRequest<GithubMembership>('/user/memberships/orgs', user.github_oauth_token),
+		githubListRequest<GithubMembership>('/user/memberships/orgs', user.github_oauth_token, context),
 		// Public memberships of any user, so this one also lists the orgs restricting our OAuth app.
-		githubListRequest<GithubOrg>(`/user/${user.external_identifier}/orgs`, user.github_oauth_token),
+		githubListRequest<GithubOrg>(`/user/${user.external_identifier}/orgs`, user.github_oauth_token, context),
 	]).catch((error) => {
 		throw githubSyncError(error.response?.status);
 	});
@@ -86,8 +88,8 @@ export const getGithubOrganizations = async (user: User): Promise<GithubOrganiza
 	];
 };
 
-export const getGithubUsername = async (user: User): Promise<string> => {
-	const response = await githubRequest<GithubUserResponse>(`/user/${user.external_identifier}`, user.github_oauth_token)
+export const getGithubUsername = async (user: User, context: ApiExtensionContext): Promise<string> => {
+	const response = await githubRequest<GithubUserResponse>(`/user/${user.external_identifier}`, user.github_oauth_token, context)
 		.catch((error) => {
 			throw githubSyncError(error.response?.status);
 		});

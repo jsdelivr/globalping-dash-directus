@@ -14,7 +14,7 @@ export default defineHook(({ filter }) => {
 		const keys = meta.keys as string[];
 		const { accountability, database } = context;
 
-		if (accountability?.admin) {
+		if (!accountability || accountability.admin) {
 			return;
 		}
 

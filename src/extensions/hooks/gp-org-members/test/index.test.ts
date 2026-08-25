@@ -99,6 +99,11 @@ describe('org members hooks', () => {
 		expect(database.callCount).to.equal(0);
 	});
 
+	it('should skip the checks for an internal call without accountability', async () => {
+		await update({ role: 'admin' }, [ 'm-1' ], { accountability: null, database });
+		expect(database.callCount).to.equal(0);
+	});
+
 	it('should do nothing when neither field is in the payload', async () => {
 		await update({ }, [ 'm-1' ]);
 

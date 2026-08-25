@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { setTimeout } from 'node:timers/promises';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
 import { client } from './client.ts';
@@ -23,6 +24,9 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 		user_type: 'sponsor',
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
 		default_prefix: `elliot${suffix}`,
+		// Code sends sync request to GH with github_oauth_token as header, and e2e GH mock reads it to auth as user, so we need github_oauth_token === token.
+		github_oauth_token: `e2e-github-${userId}`,
+		token: `e2e-github-${userId}`,
 	};
 
 	await client('directus_users').insert(user);
@@ -65,6 +69,24 @@ export const clearOrgData = async (org: Org) => {
 	await client('gp_probes').where({ account_id: org.account_id }).delete();
 	await client('gp_orgs').where({ id: org.id }).delete();
 	await Promise.all([ clearUserData(org.admin), clearUserData(org.member), clearUserData(org.viewer) ]);
+};
+
+export const prepareMockProbeByIp = async (ip: string) => {
+	await axios.post(`${process.env.DIRECTUS_URL}/e2e-mocks/globalping/state`, { ip });
+};
+
+export const getAdoptionCode = async (ip: string) => {
+	for (let attempt = 0; attempt < 50; attempt++) {
+		const { data } = await axios.get<{ code: string | null }>(`${process.env.DIRECTUS_URL}/e2e-mocks/globalping/adoption-code`, { params: { ip } });
+
+		if (data.code) {
+			return data.code;
+		}
+
+		await setTimeout(100);
+	}
+
+	throw new Error(`No adoption code was sent to ${ip}.`);
 };
 
 // A minimal synced probe row; the owner columns and anything else a test cares about are passed in.

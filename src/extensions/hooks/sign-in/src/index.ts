@@ -103,7 +103,7 @@ const syncGithubData = async (userId: string, context: HookExtensionContext) => 
 		throw new Error('Not enough data to sync with GitHub');
 	}
 
-	const organizations = await getGithubOrganizations(user);
+	const organizations = await getGithubOrganizations(user, context);
 	await syncOrganizations(user, organizations, context);
 	await syncGithubOrganizationsList(user, organizations, context);
 	await checkDefaultPrefix(user, context);

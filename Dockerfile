@@ -11,6 +11,7 @@ COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoint
 COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints/applications/
 COPY src/extensions/endpoints/city-autocomplete/package.json src/extensions/endpoints/city-autocomplete/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
+COPY src/extensions/endpoints/e2e-mocks/package.json src/extensions/endpoints/e2e-mocks/
 COPY src/extensions/endpoints/email-unsubscribe/package.json src/extensions/endpoints/email-unsubscribe/
 COPY src/extensions/endpoints/local-adoption/package.json src/extensions/endpoints/local-adoption/
 COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/metadata/

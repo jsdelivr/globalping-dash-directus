@@ -29,8 +29,8 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 	}
 
 	const [ githubUsername, organizations ] = await Promise.all([
-		getGithubUsername(user),
-		getGithubOrganizations(user),
+		getGithubUsername(user, context),
+		getGithubOrganizations(user, context),
 	]);
 
 	await syncOrganizations(user, organizations, context);

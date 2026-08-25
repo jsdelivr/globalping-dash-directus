@@ -4,7 +4,11 @@ import _ from 'lodash';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { User } from '../types.ts';
-import { randomIP } from '../utils.ts';
+import { getAdoptionCode, prepareMockProbeByIp, randomIP } from '../utils.ts';
+
+test.beforeEach(async () => {
+	await prepareMockProbeByIp('2.2.2.2');
+});
 
 test.afterEach(async () => {
 	await sql('gp_probes').where({ ip: '2.2.2.2' }).delete();
@@ -190,7 +194,7 @@ test('Software probe adoption (code)', async ({ page }) => {
 	await page.getByLabel('Adopt the probe manually').click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
@@ -206,7 +210,7 @@ test('Hardware probe adoption', async ({ page }) => {
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
@@ -221,7 +225,7 @@ test('Probe adoption of non-synced probe', async ({ page }) => {
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
