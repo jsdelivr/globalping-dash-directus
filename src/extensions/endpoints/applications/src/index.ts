@@ -30,7 +30,7 @@ const getApplicationsSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		// PHASE4: remove `userId`, `accountId` is the only owner input.
+		// PHASE5: remove `userId`, `accountId` is the only owner input.
 		userId: Joi.string(),
 		accountId: Joi.string(),
 		offset: Joi.number().optional().default(0),
@@ -44,7 +44,7 @@ const revokeApplicationSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
-		// PHASE4: remove `userId`, `accountId` is the only owner input.
+		// PHASE5: remove `userId`, `accountId` is the only owner input.
 		userId: Joi.string(),
 		accountId: Joi.string(),
 		id: Joi.string().required(),
@@ -105,7 +105,7 @@ export default defineEndpoint((router, context) => {
 				date_last_used: token.date_last_used,
 				owner_name: token.owner_name || 'Globalping',
 				owner_url: validateUrl(token.owner_url),
-				// PHASE4: remove `user_id`, the account identifies the owner.
+				// PHASE5: remove `user_id`, the account identifies the owner.
 				user_id: token.user_created,
 				account_id: token.account_id,
 			};

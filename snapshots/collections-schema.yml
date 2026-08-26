@@ -3765,6 +3765,48 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_orgs
+    field: extra_adoption_tokens
+    type: json
+    meta:
+      collection: gp_orgs
+      conditions: null
+      display: null
+      display_options: null
+      field: extra_adoption_tokens
+      group: null
+      hidden: true
+      interface: input-code
+      note: Personal adoption tokens members handed over together with their probes.
+      options:
+        lineNumber: false
+      readonly: false
+      required: false
+      searchable: true
+      sort: 7
+      special:
+        - cast-json
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: extra_adoption_tokens
+      table: gp_orgs
+      data_type: longtext
+      default_value: []
+      max_length: 4294967295
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: false
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
+  - collection: gp_orgs
     field: account
     type: alias
     meta:

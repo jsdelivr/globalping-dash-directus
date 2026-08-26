@@ -13,7 +13,7 @@ export const validateAccount = async (token: Partial<Token>, context: EventConte
 		return;
 	}
 
-	// PHASE4: it should always be present.
+	// PHASE5: it should always be present.
 	if (!token.account_id) {
 		return;
 	}

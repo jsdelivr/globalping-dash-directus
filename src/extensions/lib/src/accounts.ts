@@ -42,14 +42,14 @@ export const filterOrgIdsByBeingAdmin = async (orgIds: string[], userId: string,
 
 // The account a request acts on, checked against the requester: their own account, or an org account where they have one of
 // `roles`. `ALL_ACCOUNTS` is allowed for Directus admins only.
-// PHASE4: with `accountId` the only input there is nothing to resolve - rename to `validateAccountId` and return nothing.
+// PHASE5: with `accountId` the only input there is nothing to resolve - rename to `validateAccountId` and return nothing.
 export const getRequestAccountId = async (
 	input: AccountInput,
 	accountability: Accountability,
 	context: ApiExtensionContext,
 	roles: string[] = [ 'admin' ],
 ): Promise<string> => {
-	// PHASE4: remove the `userId` branch, `accountId` is the only input.
+	// PHASE5: remove the `userId` branch, `accountId` is the only input.
 	const accountId = input.accountId ?? await getUserAccountId(input.userId ?? accountability.user!, context);
 
 	if (accountability.admin) {
@@ -91,7 +91,7 @@ export const getAccountGithubId = async (accountId: string, { database }: ApiExt
 };
 
 // A probe's owner columns for an account: the account itself, plus the user when the account is personal.
-// PHASE4: remove - `userId` is dropped and the account alone defines the owner.
+// PHASE5: remove - `userId` is dropped and the account alone defines the owner.
 export const getAccountOwnerFields = async (accountId: string, { database }: ApiExtensionContext) => {
 	const account = await database('gp_accounts').where({ id: accountId }).first<{ user: string | null }>('user');
 

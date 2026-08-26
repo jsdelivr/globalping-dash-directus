@@ -2,7 +2,7 @@
 export async function up (knex) {
 	await knex.raw(`ALTER TABLE gp_credits_deductions ADD UNIQUE INDEX IF NOT EXISTS gp_credits_deductions_account_id_date_unique (account_id, date);`);
 
-	// PHASE4: remove.
+	// PHASE5: remove.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER gp_tokens_fulfill_account BEFORE INSERT ON gp_tokens
 		FOR EACH ROW
@@ -13,7 +13,7 @@ export async function up (knex) {
 		END;
 	`);
 
-	// PHASE4: remove.
+	// PHASE5: remove.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER gp_apps_approvals_fulfill_account BEFORE INSERT ON gp_apps_approvals
 		FOR EACH ROW

@@ -19,7 +19,7 @@ const adoptLocalProbeSchema = Joi.object<Request>({
 	}).required().unknown(true),
 	body: Joi.object({
 		token: Joi.string().required(),
-		// PHASE4: make it required.
+		// PHASE5: make it required.
 		accountId: Joi.string(),
 	}).required(),
 }).unknown(true);

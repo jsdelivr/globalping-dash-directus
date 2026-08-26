@@ -18,8 +18,8 @@ How the code is written for it:
 
 - account-first: the real logic resolves and stores `account_id`, and reads it back;
 - everything that exists only to keep the old shape alive - dual-writes, legacy input parameters, fulfillment triggers - is a
-  separate block marked `// PHASE4: remove`, never woven into the main path;
-- phase 4 is then a grep for the marker and a delete, not a rewrite.
+  separate block marked `// PHASE5: remove`, never woven into the main path;
+- phase 5 is then a grep for the marker and a delete, not a rewrite.
 
 ## Steps
 
@@ -29,10 +29,14 @@ How the code is written for it:
    - `account_id` (m2o gp_accounts, indexed) in gp_probes, gp_tokens, gp_apps_approvals, gp_credits, gp_credits_deductions
    - `gp_apps_approvals.user_created` added alongside `user`
    - reverse o2m aliases: `directus_users.account`, `directus_users.memberships`, `gp_orgs.account`, `gp_orgs.members`
+   - `gp_orgs.extra_adoption_tokens` (json, default `[]`): the personal adoption tokens members hand over with their probes,
+     `{ github_username, token }` each. Nothing in this phase writes it - the account migration does, one phase later
+     (`account-migration.md`) - but the column ships here because gp-api reads it in phase 2 and Directus is not deployed in
+     between
    - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
      GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
-     the one they care about. Ships here because Directus is deployed once: the column and its permission have to be in place
-     before the phase 3 UI can write it.
+     the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the
+     UI can write them, and nothing else in the product touches the field.
    - apply + snapshot round-trip on dev
 
 2. **Knex migration: data + constraints**
@@ -64,7 +68,7 @@ How the code is written for it:
 
 8. **gp-tokens hook**: on create, validate `account_id` - must be my personal account or an org where my role is admin/member (viewer excluded). Fulfillment is done by a DB trigger, not the hook
 
-9. **adopted-probe hook**: tag validation keeps working off `userId` and `github_organizations` as today (phase 4 stops reading the stored prefix and generates it from the probe's account owner); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
+9. **adopted-probe hook**: tag validation keeps working off `userId` and `github_organizations` as today (phase 5 stops reading the stored prefix and generates it from the probe's account owner); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
 
 10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
 
@@ -80,16 +84,17 @@ How the code is written for it:
 
 12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
 
-    Org adoption ships here but stays dormant: only the phase 3 dashboard sends `activeOrg`, and Directus is not deployed again in
+    Org adoption ships here but stays dormant: only the phase 4 dashboard sends `activeOrg`, and Directus is not deployed again in
     between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in
     phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before
     phase 2, same class as an org token created via raw API.
 
 13. **Applications endpoint**: list and revoke scope by `account_id`. Also fixes a phase-2 hazard: today revoke deletes by `user` + `app`, which would take an org approval down together with the personal one once gp-auth starts creating them.
 
-13a. **Legacy `userId` shim in endpoints**: adoption-code (`send-code`, `verify-code`, `adopt-by-token`), applications and credits-timeline accept `accountId` as the primary parameter; `userId` stays as a `// PHASE4: remove` shim resolved into the personal account via `getUserAccountId`, exactly one of the two is required. Ships in phase 1 because Directus is not deployed again before the callers switch.
+13a. **Legacy `userId` shim in endpoints**: adoption-code (`send-code`, `verify-code`, `adopt-by-token`), applications and credits-timeline accept `accountId` as the primary parameter; `userId` stays as a `// PHASE5: remove` shim resolved into the personal account via `getUserAccountId`, exactly one of the two is required. Ships in phase 1 because Directus is not deployed again before the callers switch.
 
-14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits notifies org members
+14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits is addressed to the account,
+    so for an org it reaches its admins (11a)
 
 15. **e2e** for permissions and sync
 

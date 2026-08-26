@@ -31,7 +31,7 @@ const creditsTimelineSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		// PHASE4: remove `userId`, `accountId` is the only owner input.
+		// PHASE5: remove `userId`, `accountId` is the only owner input.
 		userId: Joi.string(),
 		accountId: Joi.string(),
 		offset: Joi.number().optional().default(0),

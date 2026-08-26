@@ -84,7 +84,7 @@ test('A new org claims the sponsorship credits that were waiting for its GitHub 
 	expect(Number(credits.amount)).toBe(1500);
 });
 
-// PHASE4: remove together with the fulfilling triggers.
+// PHASE5: remove together with the fulfilling triggers.
 test('A token written with the legacy user column alone lands on the personal account', async ({ user }) => {
 	const [ id ] = await sql('gp_tokens').insert({
 		name: 'e2e-legacy-token',
@@ -97,7 +97,7 @@ test('A token written with the legacy user column alone lands on the personal ac
 	expect(token.account_id).toBe(user.account_id);
 });
 
-// PHASE4: remove together with the fulfilling triggers.
+// PHASE5: remove together with the fulfilling triggers.
 test('An app approval is completed from whichever user column it was written with', async ({ user }) => {
 	const app = await addApp(user.id);
 	const otherApp = await addApp(user.id);

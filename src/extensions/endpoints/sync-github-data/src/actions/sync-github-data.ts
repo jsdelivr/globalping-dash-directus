@@ -35,7 +35,7 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 
 	await syncOrganizations(user, organizations, context);
 
-	// PHASE4: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
+	// PHASE5: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
 	const githubOrgs = organizations.map(org => org.login);
 
 	if (username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {

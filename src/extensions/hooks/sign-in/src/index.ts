@@ -109,7 +109,7 @@ const syncGithubData = async (userId: string, context: HookExtensionContext) => 
 	await checkDefaultPrefix(user, context);
 };
 
-// PHASE4: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
+// PHASE5: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
 const syncGithubOrganizationsList = async (user: User, organizations: GithubOrganization[], context: HookExtensionContext) => {
 	const githubOrgs = organizations.map(org => org.login);
 

@@ -74,7 +74,7 @@ export const createAdoptedProbe = async (accountId: string, probe: ProbeToAdopt,
 		schema: await getSchema(),
 	});
 
-	// PHASE4: drop `userId` from the owner fields - the account alone defines the owner.
+	// PHASE5: drop `userId` from the owner fields - the account alone defines the owner.
 	const owner = await getAccountOwnerFields(accountId, context);
 	let existingProbe: Probe | null = null;
 

@@ -49,7 +49,7 @@ const sendCodeSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
-		// PHASE4: remove `userId`, `accountId` is the only owner input.
+		// PHASE5: remove `userId`, `accountId` is the only owner input.
 		userId: Joi.string(),
 		accountId: Joi.string(),
 		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
@@ -110,7 +110,7 @@ export default defineEndpoint((router, context) => {
 			admin: Joi.boolean().required(),
 		}).required().unknown(true),
 		body: Joi.object({
-			// PHASE4: remove `userId`, `accountId` is the only owner input (required).
+			// PHASE5: remove `userId`, `accountId` is the only owner input (required).
 			userId: Joi.string(),
 			accountId: Joi.string(),
 			code: Joi.string().required(),
@@ -182,7 +182,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const probe = req.body.probe as ProbeToAdopt;
-		// PHASE4: remove the legacy `user` input, gp-api passes the account.
+		// PHASE5: remove the legacy `user` input, gp-api passes the account.
 		const account = req.body.account as { id: string } | undefined;
 		const user = req.body.user as { id: string } | undefined;
 		const accountId = await getRequestAccountId({ accountId: account?.id, userId: user?.id }, { admin: true }, context);

@@ -152,7 +152,7 @@ test('the selected orgs can only be set on your own row, and only to your orgs',
 	expect((await actors.outsider.patch(`/users/${org.member.id}`, selected)).status).toBe(403);
 });
 
-// PHASE4: remove together with the `userId` parameter.
+// PHASE5: remove together with the `userId` parameter.
 test('the legacy userId parameter is only accepted for yourself, or from a Directus admin', async ({ org, user: outsider, actors }) => {
 	// The own form is what the old dashboard sends.
 	expect((await actors.member.get(`/credits-timeline?userId=${org.member.id}`)).status).toBe(200);

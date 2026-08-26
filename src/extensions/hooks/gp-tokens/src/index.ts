@@ -13,7 +13,7 @@ export type Token = {
 	date_updated?: string;
 	user_created: string;
 	user_updated?: string;
-	// PHASE4: make it required.
+	// PHASE5: make it required.
 	account_id?: string | null;
 };
 
