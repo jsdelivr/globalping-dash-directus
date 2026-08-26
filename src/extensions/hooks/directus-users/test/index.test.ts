@@ -29,6 +29,10 @@ describe('users hooks', () => {
 	const creditsAdditionsService = {
 		deleteByQuery: sinon.stub(),
 	};
+
+	const membersService = {
+		readByQuery: sinon.stub(),
+	};
 	const updateSystemUserToken = sinon.stub();
 	const whereSystemUser = sinon.stub().returns({ update: updateSystemUserToken });
 
@@ -40,6 +44,8 @@ describe('users hooks', () => {
 						return usersService;
 					case 'gp_credits_additions':
 						return creditsAdditionsService;
+					case 'gp_org_members':
+						return membersService;
 					default:
 						throw new Error('Collection name wasn\'t provided');
 				}
@@ -120,6 +126,50 @@ describe('users hooks', () => {
 			expect(usersService.readByQuery.args[0]).to.deep.equal([{
 				filter: { id: { _in: [ '1-1-1-1-1' ] } },
 			}]);
+		});
+
+		it('should allow selecting an org the user is a member of', async () => {
+			membersService.readByQuery.resolves([{ org: '3e2b6b3a-0000-4000-8000-000000000001' }]);
+
+			await callbacks.filter['users.update']?.(
+				{ selected_orgs: [ '3e2b6b3a-0000-4000-8000-000000000001' ] },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: '1-1-1-1-1' } },
+			);
+		});
+
+		it('should reject an org the user is not a member of', async () => {
+			membersService.readByQuery.resolves([{ org: '3e2b6b3a-0000-4000-8000-000000000001' }]);
+
+			let error: any = null;
+
+			try {
+				await callbacks.filter['users.update']?.(
+					{ selected_orgs: [ '3e2b6b3a-0000-4000-8000-000000000002' ] },
+					{ keys: [ '1-1-1-1-1' ] },
+					{ accountability: { user: '1-1-1-1-1' } },
+				);
+			} catch (err) {
+				error = err;
+			}
+
+			expect(error?.message).to.equal('Not a member of the selected orgs: 3e2b6b3a-0000-4000-8000-000000000002.');
+		});
+
+		it('should reject a selected orgs value that is not a list of ids', async () => {
+			let error: any = null;
+
+			try {
+				await callbacks.filter['users.update']?.(
+					{ selected_orgs: [ 'not-an-id' ] },
+					{ keys: [ '1-1-1-1-1' ] },
+					{ accountability: { user: '1-1-1-1-1' } },
+				);
+			} catch (err) {
+				error = err;
+			}
+
+			expect(error?.message).to.include('must be a valid GUID');
 		});
 
 		it('should clear deprecated_prefix when default_prefix is changed manually', async () => {

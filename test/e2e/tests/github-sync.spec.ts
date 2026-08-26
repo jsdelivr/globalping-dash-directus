@@ -123,10 +123,16 @@ test('removes the membership of an org the user left, with their org tokens', as
 	});
 	expect(token.status).toBe(200);
 
+	await sql('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+
 	await prepareMockGithub(user, []);
 	await sync(user);
 
 	expect(await getMemberships(user)).toEqual([]);
+
+	// The org can not stay in the list the dashboard switcher is built from.
+	const { selected_orgs: selectedOrgs } = await sql('directus_users').where({ id: user.id }).first('selected_orgs');
+	expect(JSON.parse(selectedOrgs)).toEqual([]);
 	// The tokens and approvals of the member are removed by a database trigger, the org itself stays.
 	expect(await sql('gp_tokens').where({ id: token.data.data.id }).first('id')).toBeUndefined();
 	expect(await sql('gp_orgs').where({ id: org.id }).first('id')).toBeTruthy();

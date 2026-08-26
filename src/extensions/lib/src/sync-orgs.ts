@@ -5,6 +5,7 @@ import type { GithubOrganization } from './github-api-client.js';
 type User = {
 	id: string;
 	external_identifier: string | null;
+	selected_orgs?: string[];
 };
 
 type Org = {
@@ -16,14 +17,14 @@ type Org = {
 type Membership = {
 	id: string;
 	role: string;
-	org: Org;
+	org: Pick<Org, 'id' | 'github_id'>;
 };
 
 export const syncOrganizations = async (user: User, githubOrgs: GithubOrganization[], context: ApiExtensionContext) => {
 	const directusOrgs = await createOrgs(githubOrgs, context);
 	const memberships = await getMemberships(user, context);
 	await createMemberships(user, githubOrgs, directusOrgs, memberships, context);
-	await removeMemberships(githubOrgs, memberships, context);
+	await removeMemberships(user, githubOrgs, memberships, context);
 };
 
 const createOrgs = async (githubOrgs: GithubOrganization[], context: ApiExtensionContext) => {
@@ -61,7 +62,7 @@ const getMemberships = async (user: User, { services, getSchema }: ApiExtensionC
 
 	return await membersService.readByQuery({
 		filter: { user: { _eq: user.id } },
-		fields: [ 'id', 'role', 'org.github_id' ],
+		fields: [ 'id', 'role', 'org.id', 'org.github_id' ],
 	}) as Membership[];
 };
 
@@ -87,13 +88,32 @@ const createMemberships = async (user: User, githubOrgs: GithubOrganization[], d
 	}));
 };
 
-const removeMemberships = async (githubOrgs: GithubOrganization[], memberships: Membership[], context: ApiExtensionContext) => {
+const removeMemberships = async (user: User, githubOrgs: GithubOrganization[], memberships: Membership[], context: ApiExtensionContext) => {
 	const { services, getSchema } = context;
 	const membersService = new services.ItemsService('gp_org_members', { schema: await getSchema() });
 
 	const githubIds = new Set(githubOrgs.map(githubOrg => githubOrg.githubId));
 	const removed = memberships.filter(membership => !githubIds.has(membership.org.github_id));
 
-	await membersService.deleteMany(removed.map(membership => membership.id));
-	// The member's org tokens and approvals are removed by a database trigger.
+	if (removed.length === 0) {
+		return;
+	}
+
+	await Promise.all([
+		// The member's org tokens and approvals are removed by a database trigger.
+		membersService.deleteMany(removed.map(membership => membership.id)),
+		unselectOrgs(user, removed.map(membership => membership.org.id), context),
+	]);
+};
+
+const unselectOrgs = async (user: User, removedOrgIds: string[], { services, getSchema }: ApiExtensionContext) => {
+	const selectedOrgs = user.selected_orgs ?? [];
+	const remaining = selectedOrgs.filter(orgId => !removedOrgIds.includes(orgId));
+
+	if (remaining.length === selectedOrgs.length) {
+		return;
+	}
+
+	const usersService = new services.UsersService({ schema: await getSchema() });
+	await usersService.updateOne(user.id, { selected_orgs: remaining }, { emitEvents: false });
 };

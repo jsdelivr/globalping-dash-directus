@@ -240,7 +240,7 @@ describe('/sync-github-data endpoint', () => {
 		it('should promote a member to admin', async () => {
 			seedDirectus({
 				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
-				memberships: [{ id: 'membership-1', role: 'member', org: { github_id: '1' } }],
+				memberships: [{ id: 'membership-1', role: 'member', org: { id: 'org-1', github_id: '1' } }],
 			});
 
 			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
@@ -254,7 +254,7 @@ describe('/sync-github-data endpoint', () => {
 		it('should never demote an admin', async () => {
 			seedDirectus({
 				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
-				memberships: [{ id: 'membership-1', role: 'admin', org: { github_id: '1' } }],
+				memberships: [{ id: 'membership-1', role: 'admin', org: { id: 'org-1', github_id: '1' } }],
 			});
 
 			seedGithub([{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
@@ -269,8 +269,8 @@ describe('/sync-github-data endpoint', () => {
 			seedDirectus({
 				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
 				memberships: [
-					{ id: 'membership-1', role: 'member', org: { github_id: '1' } },
-					{ id: 'membership-2', role: 'admin', org: { github_id: '2' } },
+					{ id: 'membership-1', role: 'member', org: { id: 'org-1', github_id: '1' } },
+					{ id: 'membership-2', role: 'admin', org: { id: 'org-2', github_id: '2' } },
 				],
 			});
 
@@ -279,6 +279,29 @@ describe('/sync-github-data endpoint', () => {
 			expect((await sync()).status).to.equal(200);
 
 			expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-2' ] ]);
+		});
+
+		it('should drop an org the user left from their selected list', async () => {
+			readOne.resolves({
+				id: 'directus-id',
+				external_identifier: '123456',
+				github_username: 'new-username',
+				github_organizations: [ 'jsdelivr' ],
+				github_oauth_token: 'user-github-token',
+				selected_orgs: [ 'org-1', 'org-2' ],
+			});
+
+			seedDirectus({
+				orgs: [],
+				memberships: [{ id: 'membership-1', role: 'member', org: { id: 'org-1', github_id: '1' } }],
+			});
+
+			seedGithub([]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-1' ] ]);
+			expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { selected_orgs: [ 'org-2' ] }, { emitEvents: false }]);
 		});
 
 		it('should add an org that only the public list shows as a member', async () => {
@@ -330,7 +353,7 @@ describe('/sync-github-data endpoint', () => {
 		it('should update the org name when it changed on GitHub', async () => {
 			seedDirectus({
 				orgs: [{ id: 'org-1', name: 'old-name', github_id: '1' }],
-				memberships: [{ id: 'membership-1', role: 'admin', org: { github_id: '1' } }],
+				memberships: [{ id: 'membership-1', role: 'admin', org: { id: 'org-1', github_id: '1' } }],
 			});
 
 			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);

@@ -9,6 +9,7 @@ export type DirectusUser = {
 	default_prefix: string | null;
 	deprecated_prefix: string | null;
 	github_oauth_token: string | null;
+	selected_orgs: string[];
 };
 
 export const getDirectusUsers = async (userIds: string[], accountability: Accountability | null, { services, getSchema }: HookExtensionContext): Promise<DirectusUser[]> => {
@@ -25,6 +26,21 @@ export const getDirectusUsers = async (userIds: string[], accountability: Accoun
 		},
 	}) as DirectusUser[];
 	return users;
+};
+
+export const getMembershipOrgIds = async (userId: string, { services, getSchema }: HookExtensionContext): Promise<Set<string>> => {
+	const { ItemsService } = services;
+
+	const membersService = new ItemsService('gp_org_members', {
+		schema: await getSchema(),
+	});
+
+	const memberships = await membersService.readByQuery({
+		filter: { user: { _eq: userId } },
+		fields: [ 'org' ],
+	}) as { org: string }[];
+
+	return new Set(memberships.map(membership => membership.org));
 };
 
 export const clearDeprecatedPrefix = async (userIds: string[], { services, getSchema }: HookExtensionContext) => {

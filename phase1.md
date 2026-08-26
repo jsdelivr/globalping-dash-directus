@@ -29,6 +29,10 @@ How the code is written for it:
    - `account_id` (m2o gp_accounts, indexed) in gp_probes, gp_tokens, gp_apps_approvals, gp_credits, gp_credits_deductions
    - `gp_apps_approvals.user_created` added alongside `user`
    - reverse o2m aliases: `directus_users.account`, `directus_users.memberships`, `gp_orgs.account`, `gp_orgs.members`
+   - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
+     GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
+     the one they care about. Ships here because Directus is deployed once: the column and its permission have to be in place
+     before the phase 3 UI can write it.
    - apply + snapshot round-trip on dev
 
 2. **Knex migration: data + constraints**
