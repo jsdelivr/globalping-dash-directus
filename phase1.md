@@ -51,7 +51,7 @@ How the code is written for it:
    - FK actions: accounts cascade from user/org; `gp_tokens.user_created` ON DELETE CASCADE
    - replace `gp_apps_approvals` `UNIQUE(user, app)` with `UNIQUE(user_created, app, account_id)`, so the same person can approve an app for themselves and for an org separately; the `user` foreign key needs a plain index of its own first
 
-3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260805GP` (readable by members, writable by admins)
+3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260819GP` (readable by members, writable by admins)
 
 4. **Seeds** - org data to verify every later step against:
    - `john-org` and `turk-org`; existing john and turk are admins of their orgs
@@ -105,7 +105,7 @@ How the code is written for it:
 
 **Deploy**: three steps, in this order.
 
-1. `pnpm migrate:one:production` - applies `20260728GP` alone: it converts `gp_credits_deductions.user_id` to varchar and adds the
+1. `pnpm migrate:one:production` - applies `20260811GP` alone: it converts `gp_credits_deductions.user_id` to varchar and adds the
    `gp_apps_approvals.user` index. Both are column changes the snapshot declares but Directus can't apply itself: it rewrites a
    char column as varchar whenever it alters one, and a type change is rejected on a foreign key column. Runs Directus's
    `migrate:up`, which applies the first migration above the last applied one.
@@ -118,4 +118,4 @@ resolves a probe's owner through the account alone, so a probe with an owner but
 row: the backfill fixed the old ones and `createAdoptedProbe` sets both. Editing `userId` by hand in the admin app would.
 
 A fresh database needs no special steps - `init.sh` order works as is. The snapshot creates the column nullable right away, so
-nothing has to alter it, and `20260728GP` only converts the type, which keeps every environment on the same column.
+nothing has to alter it, and `20260811GP` only converts the type, which keeps every environment on the same column.

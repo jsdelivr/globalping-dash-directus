@@ -92,15 +92,15 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
 - Accepted with the freeze: a prefix outlives its owner's claim to it - if someone else takes the freed username, both accounts emit
   tags with that prefix. Already true today; generating the prefix from the owner would have been the only thing that ever healed it.
 - `format: 'v1'` is untouched - 39 probes keep the `u-prefix-value` separator until their owner saves the tags. Optional cleanup: the
-  `searchIndex` trigger (`20260801GP:29`) indexes them as `u-prefix:value`, so dashboard search and the API disagree on those.
+  `searchIndex` trigger (`20260815GP:29`) indexes them as `u-prefix:value`, so dashboard search and the API disagree on those.
 
 Added while implementing phase 1 (remove or update in phase 5):
 
-- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260731GP`) - fulfill `account_id` for the rows gp-auth writes. Drop once it sets the account itself, in phase 2.
+- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260814GP`) - fulfill `account_id` for the rows gp-auth writes. Drop once it sets the account itself, in phase 2.
 - `gp_apps_approvals_fulfill_account` also copies `user` -> `user_created`; drop together with the `user` column.
-- Credits triggers (`20260731GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
+- Credits triggers (`20260814GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
 - `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.
-- `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20260731GP` only to free the `user` foreign key from the unique key being replaced.
+- `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20260814GP` only to free the `user` foreign key from the unique key being replaced.
 - `gp_probes` update permission validation keeps the `userId _null` clause next to `account_id _null`; `userId` stays in the allowed update fields (dash sends it until phase 2).
 - `getRequestAccountId` loses its legacy `userId` branch: with `accountId` the only input it stops resolving anything, so it becomes `validateAccountId(accountId, accountability, context, roles)` returning nothing, and the callers read `accountId` straight from the request.
 - The phase 1 org e2e drives Directus over REST because there is no org UI yet - move whatever the phase 4 dashboard covers to UI

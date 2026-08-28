@@ -81,7 +81,7 @@ The redirects move out of the code into a `gp_credits_redirects` table (`source_
 `redirectGithubId` reads it instead of `SOURCE_ID_TO_TARGET_ID`. Github ids, not entity references: a redirect may point at
 someone who does not exist in our DB at all (`219827779`, the vidalytics target, is in no `directus_users` row), `addCredits` and
 the additions trigger already work in github ids, and the read rules can be written with `$CURRENT_USER.external_identifier` and
-`$CURRENT_USER.memberships.org.github_id`, as `20260802GP` already does. A user sees the redirects where they are the source, or
+`$CURRENT_USER.memberships.org.github_id`, as `20260816GP` already does. A user sees the redirects where they are the source, or
 where an org they administer is the target. Then:
 
 - if a redirect org -> user exists and the user migrates their credits anywhere, that redirect is disabled;
@@ -97,5 +97,5 @@ where an org they administer is the target. Then:
 
 Losing the membership revokes almost nothing by itself: the probes stay with the org, the adoption token stays in the array and
 the redirect stays in place, for an admin to undo when they want to. The exception is section 5 -
-`gp_org_members_clean_up_tokens` (`20260730GP`) deletes that member's org tokens and approvals on the way out, so migrated tokens
+`gp_org_members_clean_up_tokens` (`20260813GP`) deletes that member's org tokens and approvals on the way out, so migrated tokens
 do not survive the departure. Nothing is ever migrated back to the user.
