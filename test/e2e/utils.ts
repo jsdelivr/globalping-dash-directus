@@ -154,9 +154,7 @@ export const clearUserData = async (user: User) => {
 };
 
 const randomExternalId = () => {
-	const randomNumber = Math.floor(Math.random() * 10000000);
-	const randomCode = randomNumber.toString().padStart(7, '0');
-	return randomCode;
+	return Math.floor(Math.random() * 10000000).toString();
 };
 
 export const randomToken = () => {

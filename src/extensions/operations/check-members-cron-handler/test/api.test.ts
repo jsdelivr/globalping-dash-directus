@@ -44,8 +44,11 @@ describe('Check org members CRON handler', () => {
 	const database = sinon.stub().returns(query) as any;
 
 	const deleteMany = sinon.stub().resolves([]);
+	const readMany = sinon.stub().resolves([]);
+	const updateOne = sinon.stub().resolves();
 	const services = {
-		ItemsService: sinon.stub().returns({ deleteMany }),
+		ItemsService: sinon.stub().returns({ deleteMany, readMany }),
+		UsersService: sinon.stub().returns({ updateOne }),
 	} as any;
 
 	const context = { data, database, env, getSchema, services, logger, accountability };
@@ -97,6 +100,7 @@ describe('Check org members CRON handler', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 		deleteMany.resolves([]);
+		readMany.resolves([]);
 		rows = [];
 	});
 
@@ -131,6 +135,30 @@ describe('Check org members CRON handler', () => {
 		expect(deleteMany.callCount).to.equal(1);
 		expect(deleteMany.args[0]![0]).to.deep.equal([ 'membership-2' ]);
 		expect(result).to.equal('Checked 1 orgs. Removed memberships: [membership-2]. Errors: [].');
+	});
+
+	it('should drop the org from the selected orgs of the member who left', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 200);
+		nockGraphql({ 1: [ org.orgGithubId ], 2: [ '555' ] });
+		readMany.resolves([{ org: org.orgId, user: { id: 'user-2', selected_orgs: [ org.orgId, 'other-org' ] } }]);
+
+		await operationApi.handler({}, context as any);
+
+		expect(readMany.args[0]).to.deep.equal([ [ 'membership-2' ], { fields: [ 'org', 'user.id', 'user.selected_orgs' ] }]);
+		expect(updateOne.args[0]).to.deep.equal([ 'user-2', { selected_orgs: [ 'other-org' ] }, { emitEvents: false }]);
+	});
+
+	it('should not touch the selected orgs of a member who did not have the org selected', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 200);
+		nockGraphql({ 1: [ org.orgGithubId ], 2: [ '555' ] });
+		readMany.resolves([{ org: org.orgId, user: { id: 'user-2', selected_orgs: [ 'other-org' ] } }]);
+
+		await operationApi.handler({}, context as any);
+
+		expect(deleteMany.callCount).to.equal(1);
+		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should resolve a stale login by the member own token first', async () => {

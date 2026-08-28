@@ -10,7 +10,7 @@ export const checkMembers = async (context: OperationContext) => {
 
 	await Bluebird.map(orgs, async (org) => {
 		try {
-			const left = await findLeftMemberships(org);
+			const left = await findLeftMemberships(org, context);
 			await removeMemberships(left, context);
 			removed.push(...left);
 		} catch (error) {

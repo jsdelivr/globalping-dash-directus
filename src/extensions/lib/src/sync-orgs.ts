@@ -106,7 +106,7 @@ const removeMemberships = async (user: User, githubOrgs: GithubOrganization[], m
 	]);
 };
 
-const unselectOrgs = async (user: User, removedOrgIds: string[], { services, getSchema }: ApiExtensionContext) => {
+export const unselectOrgs = async (user: Pick<User, 'id' | 'selected_orgs'>, removedOrgIds: string[], { services, getSchema }: ApiExtensionContext) => {
 	const selectedOrgs = user.selected_orgs ?? [];
 	const remaining = selectedOrgs.filter(orgId => !removedOrgIds.includes(orgId));
 

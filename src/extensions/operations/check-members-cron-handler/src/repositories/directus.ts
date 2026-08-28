@@ -1,5 +1,11 @@
 import type { OperationContext } from '@directus/extensions';
+import { unselectOrgs } from '../../../../lib/src/sync-orgs.js';
 import type { Org } from '../types.js';
+
+type RemovedMembership = {
+	org: string;
+	user: { id: string; selected_orgs?: string[] };
+};
 
 type Row = {
 	orgId: string;
@@ -47,13 +53,18 @@ export const getOrgsToCheck = async ({ database }: OperationContext): Promise<Or
 	return [ ...orgs.values() ];
 };
 
-export const removeMemberships = async (membershipIds: string[], { services, getSchema }: OperationContext) => {
+export const removeMemberships = async (membershipIds: string[], context: OperationContext) => {
 	if (!membershipIds.length) {
 		return;
 	}
 
+	const { services, getSchema } = context;
 	const { ItemsService } = services;
 	const membersService = new ItemsService('gp_org_members', { schema: await getSchema() });
+	const removed = await membersService.readMany(membershipIds, { fields: [ 'org', 'user.id', 'user.selected_orgs' ] }) as RemovedMembership[];
+
 	await membersService.deleteMany(membershipIds);
 	// The members' org tokens and app approvals are removed by a database trigger.
+
+	await Promise.all(removed.map(membership => unselectOrgs(membership.user, [ membership.org ], context)));
 };
