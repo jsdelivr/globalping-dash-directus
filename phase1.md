@@ -33,6 +33,11 @@ How the code is written for it:
      `{ github_username, token }` each. Nothing in this phase writes it - the account migration does, one phase later
      (`account-migration.md`) - but the column ships here because gp-api reads it in phase 2 and Directus is not deployed in
      between
+   - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side
+     equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api
+     reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it
+     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 for the 49
+     users whose `default_prefix` is an org name today
    - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
      GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
      the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the
@@ -46,7 +51,7 @@ How the code is written for it:
    - FK actions: accounts cascade from user/org; `gp_tokens.user_created` ON DELETE CASCADE
    - replace `gp_apps_approvals` `UNIQUE(user, app)` with `UNIQUE(user_created, app, account_id)`, so the same person can approve an app for themselves and for an org separately; the `user` foreign key needs a plain index of its own first
 
-3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch)
+3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260805GP` (readable by members, writable by admins)
 
 4. **Seeds** - org data to verify every later step against:
    - `john-org` and `turk-org`; existing john and turk are admins of their orgs
@@ -68,7 +73,7 @@ How the code is written for it:
 
 8. **gp-tokens hook**: on create, validate `account_id` - must be my personal account or an org where my role is admin/member (viewer excluded). Fulfillment is done by a DB trigger, not the hook
 
-9. **adopted-probe hook**: tag validation keeps working off `userId` and `github_organizations` as today (phase 5 stops reading the stored prefix and generates it from the probe's account owner); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
+9. **adopted-probe hook**: tag validation keeps working off `userId` and `github_organizations` as today (phase 5 keeps reading the stored prefix and only narrows what a new tag may use); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
 
 10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
 

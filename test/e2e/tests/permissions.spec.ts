@@ -26,7 +26,7 @@ const WRITABLE_FIELDS = {
 	'gp_tokens.update': [ 'name', 'value', 'expire', 'origins' ],
 	// PHASE5: `userId` goes away with the column.
 	'gp_probes.update': [ 'name', 'tags', 'city', 'userId', 'country', 'state', 'account_id' ],
-	'gp_orgs.update': [ 'adoption_token' ],
+	'gp_orgs.update': [ 'adoption_token', 'public_probes' ],
 	'gp_org_members.update': [ 'role', 'notification_preferences' ],
 };
 

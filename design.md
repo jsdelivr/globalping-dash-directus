@@ -50,8 +50,8 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - Only admin can edit org probe metadata (city, name).
 - Only admin can unassign the probe from the org. But nothing prevents it from being assigned back, e.g. if adopted by an org token, it will be assigned again automatically.
 - If another user (not from org A) adopts a probe which belongs to org A, the probe is reassigned to the new owner.
-- The `default_prefix` setting is removed; the prefix is determined based on `account_id`.
-- The prefix select for probe tags is removed; the prefix is determined based on `account_id`.
+- The `default_prefix` setting keeps its stored value and its automatic rename when it goes stale; only the manual selector is removed (phase 5). An org account's global tag is the org name, switched on by `gp_orgs.public_probes`.
+- The prefix select for probe tags is removed (phase 5): existing tags keep the prefix stored in the row, new and edited ones always get the owner's name (org name or `github_username`).
 
 **Tokens**
 - Admin or member can create an org token to consume org credits; viewer can't.

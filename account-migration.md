@@ -30,9 +30,10 @@ against the sync, which only ever promotes: a manually assigned admin is never d
 ## 3. Probes
 
 `account_id` moves from the user's account to the org's. Everything else stays as it is - name, tags, custom location, settings -
-and `userId` is kept until phase 5, exactly like the one-off migration of the six. One thing does change on its own in phase 5:
-the tag prefix is generated from the account owner by then, so a migrated probe's tags start showing the org's prefix instead of
-the user's.
+and `userId` is kept until phase 5, exactly like the one-off migration of the six. Tags keep their names after the move, in phase 5
+too - the prefix stored in the row stays authoritative, and only tags created after the move carry the org's name. The one thing the
+move does change is the global tag: a probe that was targetable as `u-<owner's default_prefix>` through its owner's `public_probes`
+is now covered by the org's own `public_probes`, under the org's name.
 
 ## 4. Adoption token
 

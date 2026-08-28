@@ -71,8 +71,8 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	const newTags = fields.tags.filter(tag => existingTagsArrays
 		.some(existingTags => existingTags.findIndex(existingTag => tag.prefix === existingTag.prefix && tag.value === existingTag.value) === -1));
 
-	// PHASE5: remove the prefix validation. The stored prefix stops being read - it is generated from the probe's account owner
-	// (org name or github_username) when the tag is built.
+	// PHASE5: the list narrows to the account owner's name (org name or github_username). The stored prefix keeps being read -
+	// existing tags are never renamed, only new and edited ones are restricted.
 	const validPrefixes = [ user.github_username, ...user.github_organizations ];
 
 	const tagsSchema = Joi.array().items(Joi.object({
