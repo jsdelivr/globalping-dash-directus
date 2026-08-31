@@ -109,12 +109,11 @@ test('an org is only visible to its own members, and its adoption token only to 
 	expect(await listedIds(actors.otherOrgAdmin, 'gp_orgs')).toEqual([ org2.id ]);
 	expect(await listedIds(actors.directusAdmin, 'gp_orgs')).toEqual(expect.arrayContaining([ org.id, org2.id ]));
 
-	// The accounts themselves are not exposed to the users: they are only ever reached through the items they own.
-	for (const api of [ actors.admin, actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
-		expect((await api.get('/items/gp_accounts')).status).toBe(403);
-	}
-
-	expect((await actors.directusAdmin.get('/items/gp_accounts')).status).toBe(200);
+	// The dashboard filters every list by the account, so a user sees their own and the ones of the orgs they are in.
+	expect(await listedIds(actors.admin, 'gp_accounts')).toEqual(expect.arrayContaining([ org.admin.account_id, org.account_id ]));
+	expect(await listedIds(actors.viewer, 'gp_accounts')).toEqual(expect.arrayContaining([ org.viewer.account_id, org.account_id ]));
+	expect(await listedIds(actors.outsider, 'gp_accounts')).not.toContain(org.account_id);
+	expect(await listedIds(actors.otherOrgAdmin, 'gp_accounts')).not.toContain(org.account_id);
 });
 
 test('the org adoption token and the public probes switch can only be changed by an admin, and nothing else about the org is editable', async ({ org, actors }) => {

@@ -51,7 +51,7 @@ How the code is written for it:
    - FK actions: accounts cascade from user/org; `gp_tokens.user_created` ON DELETE CASCADE
    - replace `gp_apps_approvals` `UNIQUE(user, app)` with `UNIQUE(user_created, app, account_id)`, so the same person can approve an app for themselves and for an org separately; the `user` foreign key needs a plain index of its own first
 
-3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260819GP` (readable by members, writable by admins)
+3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260819GP` (readable by members, writable by admins). `20260820GP` opens `gp_accounts` for reading (own account, and the accounts of the orgs one is a member of) and adds the `account` and `memberships` aliases to the user read fields: without them the dashboard can not learn the account id it has to filter every list by, and phase 2 has no Directus deploy of its own to add it
 
 4. **Seeds** - org data to verify every later step against:
    - `john-org` and `turk-org`; existing john and turk are admins of their orgs

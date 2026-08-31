@@ -6,8 +6,8 @@ import { addProbe, allUsers, randomIP } from '../utils.ts';
 // Everything the dashboard only ever reads: the rows are written by the API, the crons and the database triggers.
 const READ_ONLY_COLLECTIONS = [ 'gp_credits', 'gp_credits_additions', 'gp_credits_deductions' ];
 
-// Not exposed to the users at all: accounts are reached through the items they own, apps through the applications endpoint.
-const CLOSED_COLLECTIONS = [ 'gp_accounts', 'gp_apps', 'gp_apps_approvals' ];
+// Not exposed to the users at all: apps are reached through the applications endpoint.
+const CLOSED_COLLECTIONS = [ 'gp_apps', 'gp_apps_approvals' ];
 
 // What the user policy grants on every gp collection, as Directus itself reports it. `partial` means the rows are filtered by a permission rule.
 const EXPECTED_ACCESS = {
@@ -16,6 +16,7 @@ const EXPECTED_ACCESS = {
 	gp_credits: { read: 'partial', create: 'none', update: 'none', delete: 'none', share: 'none' },
 	gp_credits_additions: { read: 'partial', create: 'none', update: 'none', delete: 'none', share: 'none' },
 	gp_credits_deductions: { read: 'partial', create: 'none', update: 'none', delete: 'none', share: 'none' },
+	gp_accounts: { read: 'partial', create: 'none', update: 'none', delete: 'none', share: 'none' },
 	gp_orgs: { read: 'partial', create: 'none', update: 'partial', delete: 'none', share: 'none' },
 	gp_org_members: { read: 'partial', create: 'none', update: 'partial', delete: 'none', share: 'none' },
 };

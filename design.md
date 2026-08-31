@@ -20,6 +20,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 | Table | Action | New rule |
 |---|---|---|
+| gp_accounts (new) | read | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" } } } } ] }` - the dashboard reads its own account id from here, and `directus_users` gains the `account` and `memberships` aliases for it |
 | gp_probes | read | filter => `MY_ACCOUNTS` |
 | gp_probes | update | filter => `MINE_OR_ADMIN` |
 | gp_tokens | create | Since validation is payload-only (no relational traversal), the payload check lives in the filter hook: `account_id` must be my personal account or an org where my role is admin/member. |
