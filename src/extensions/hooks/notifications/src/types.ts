@@ -10,7 +10,7 @@ export type User = {
 
 export type NotificationPayload = {
 	type: NotificationTypeKey;
-	// Notification can be sent to a user, to an account, or to a user within an account.
+	// Notification can be sent to a user (welcome), to an account (probe_adopted), or to a user within an account (low_credits - each admin has own threshold).
 	recipient?: string;
 	account?: string;
 	subject: string;

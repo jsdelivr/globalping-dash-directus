@@ -46,6 +46,15 @@ nothing at all. Full design in `account-migration.md`.
   sync has not, re-point vidalytics' additions from the deleted target (`219827779` -> `21207279`) first, then run the transfer
   and disable the old redirect. Whatever the owners do themselves through the UI later needs no conversion at all - decide how
   much of this to automate once the button exists.
+- `gp_orgs.user_type` (member | sponsor | special) and the tier moving to the account. Today the tier comes from the requesting
+  person: `auth.ts` joins it off `directus_users`, gp-api encodes it into the measurement id (`USER_TIER`) and the offloader
+  stores the result in `measurement_<tier>`. It grants nothing - no limits, no credits - it only picks the table. That is
+  harmless until this phase, because an org can not own a sponsorship yet; once the credits and the redirect move here, the org
+  is the sponsor while `user_type` stays on its members. Then a member who is not a sponsor writes org measurements into
+  `measurement_member`, and a sponsor who left the org keeps writing them into `measurement_sponsor`. Fix: take the tier from
+  the account owner - `COALESCE(org.user_type, user.user_type)`, the same shape already used for `default_prefix` and
+  `adoption_token` - and teach the sponsors cron to set it on the org: it matches sponsors by `external_identifier` today, and
+  an org has `github_id`.
 - Unit tests + e2e over REST.
 
 ## Phase 4: gp-dash org UI
@@ -86,9 +95,13 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
   prefix select disappears, a new or edited tag always gets the owner's name (org name or `github_username`), and old tags can only
   be deleted. `validateTags` shrinks to a comparison against that one name, which is what lets `github_organizations` go.
 - Editing an old tag renames its prefix, so the dialog has to say so before saving - the same trap `format: 'v1'` already has today.
-- `default_prefix` and `deprecated_prefix` stay. Only the settings selector goes; the automatic rename when the prefix goes stale
-  (`checkDefaultPrefix`) keeps running, otherwise a renamed user squats their old name forever and a user who left an org keeps its
-  name. Its validity check moves from `github_organizations` to the org names in `gp_org_members`, which the sync maintains anyway.
+- `default_prefix` and `deprecated_prefix` stay as columns, but the user stops choosing them: the settings selector goes and
+  `default_prefix` is dropped from the `directus_users.update` fields of the User policy. Without the permission change the freeze
+  is one UI deep - a plain `PATCH /users/me` still sets any prefix. The automatic rename when the prefix goes stale
+  (`checkDefaultPrefix`) keeps running - it writes through a service with no accountability, so the permission does not apply to it -
+  otherwise a renamed user squats their old name forever and a user who left an org keeps its name. Its validity check moves from
+  `github_organizations` to the org names in `gp_org_members`, which the sync maintains anyway. `tags` stays writable: the
+  restriction there is `validateTags`, not the permission.
 - Accepted with the freeze: a prefix outlives its owner's claim to it - if someone else takes the freed username, both accounts emit
   tags with that prefix. Already true today; generating the prefix from the owner would have been the only thing that ever healed it.
 - `format: 'v1'` is untouched - 39 probes keep the `u-prefix-value` separator until their owner saves the tags. Optional cleanup: the

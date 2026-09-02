@@ -15,6 +15,7 @@ type User = {
 	default_prefix: string | null;
 	deprecated_prefix: string | null;
 	public_probes: boolean;
+	account: string[];
 };
 
 type AuthPayload = {
@@ -24,6 +25,7 @@ type AuthPayload = {
 	admin_access: boolean;
 	github_username?: string;
 	user_type?: string;
+	user_account_id?: string;
 	session: string;
 };
 
@@ -72,7 +74,7 @@ export default defineHook(({ filter }, context) => {
 			schema: await getSchema(),
 		});
 
-		const user = await itemsService.readOne(userId) as User | undefined;
+		const user = await itemsService.readOne(userId, { fields: [ 'user_type', 'github_username', 'account' ] }) as User | undefined;
 
 		if (user?.user_type) {
 			payload.user_type = user.user_type;
@@ -80,6 +82,10 @@ export default defineHook(({ filter }, context) => {
 
 		if (user?.github_username) {
 			payload.github_username = user.github_username;
+		}
+
+		if (user?.account?.[0]) {
+			payload.user_account_id = user.account[0];
 		}
 
 		return payload;

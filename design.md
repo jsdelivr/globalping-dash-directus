@@ -37,7 +37,11 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
-- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in FE store + cookie.
+- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and in the
+  `gp_active_account` cookie on `.globalping.io` (the account id, not the org id). The cookie is unsigned, so gp-api and
+  gp-auth check the membership on every request and fall back to the personal account; it is per device, which is the point -
+  the same user can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id`
+  claim stays the personal account.
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.
 - An org that hasn't approved our OAuth app is only visible through the public memberships list, which has no roles, so all of its members are synced as `member` and it has no admins at all (it stays usable for member actions). To get admins, the org has to approve the `globalping` app in its GitHub settings. The dash shows a hint about it when an org has no admins.
@@ -51,7 +55,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - Only admin can edit org probe metadata (city, name).
 - Only admin can unassign the probe from the org. But nothing prevents it from being assigned back, e.g. if adopted by an org token, it will be assigned again automatically.
 - If another user (not from org A) adopts a probe which belongs to org A, the probe is reassigned to the new owner.
-- The `default_prefix` setting keeps its stored value and its automatic rename when it goes stale; only the manual selector is removed (phase 5). An org account's global tag is the org name, switched on by `gp_orgs.public_probes`.
+- The `default_prefix` setting keeps its stored value and its automatic rename when it goes stale; what goes in phase 5 is the manual choice - the settings selector and the field's write permission, so it can not be set through the API either. An org account's global tag is the org name, switched on by `gp_orgs.public_probes`.
 - The prefix select for probe tags is removed (phase 5): existing tags keep the prefix stored in the row, new and edited ones always get the owner's name (org name or `github_username`).
 
 **Tokens**

@@ -24,7 +24,13 @@ tests, verify on the dev instance (Directus 18055 with phase 1 applied, gp-api 3
 
 1. **`auth.ts`**: select `account_id` from `gp_tokens`, return it from `validate()`, carry it on `ctx.state.user` as
    `accountId`. A token whose `user_created` is NULL keeps a NULL account (client-credentials pairs) - stays
-   "no owner", never an error.
+   "no owner", never an error. A session cookie carries the user's own account as the `user_account_id` claim (phase 1); the sessions issued
+   before that do not, so a `gp_accounts` lookup stays as a `// PHASE5: remove` fallback for one session lifetime.
+1a. **Acting as an org**: the dashboard sets `gp_active_account` on `.globalping.io` when the user switches (phase 4 UI, the
+   readers ship now). It is a plain cookie - the browser can put anything in it - so it is authorized on every request:
+   the account must be the user's own or an org where their role is admin or member, cached for a minute, and anything that
+   does not pass silently falls back to the personal account. Per device by construction: the choice lives in the browser,
+   nothing is stored server-side, so a laptop can act as the org while the phone stays personal.
 2. **Credits**: `credits.consume` / `getRemainingCredits` and `CreditsMaster` key on `account_id` instead of `user_id`
    (`gp_credits.account_id` is unique). Callers: `rate-limiter-post.ts`, `get-limits.ts`. Deductions need no work - gp-api only
    decrements `gp_credits`, the `after_gp_credits_update` trigger writes the deduction row with both columns.
@@ -45,8 +51,9 @@ Verify: unit + integration suites; on dev - adopt a probe into an org, see its t
 
 ## 2. gp-auth (`globalping-auth`)
 
-1. Consent flow takes the account context (session cookie / request parameter, whatever the dash can already send), defaults to
-   the user's personal account.
+1. Consent flow takes the account from the session: `gp_active_account` when the user may act for it, the personal claim
+   otherwise (same `// PHASE5: remove` lookup fallback as gp-api), and the approval screen may override it with a request
+   parameter.
 2. Validate it before approving: the account must be the user's own or an org where they are admin or member - a viewer cannot
    approve for the org.
 3. `gp_apps_approvals`: write `account_id` + `user_created`; `user` may be left to the phase 1 trigger, but `user_created` is
@@ -60,7 +67,7 @@ personal account and for an org, check both rows and both tokens.
 
 1. `useUserFilter` learns the account: `account_id` for probes / credits / tokens / deductions / approvals, `recipient` stays a
    user id, `github_id` stays as is. The account comes from the user object Directus already returns.
-2. Every call site follows the field it filters on - 16 `userId`, 16 `user_id`, 4 `user_created` today.
+2. Every call site follows the field it filters on - 8 `userId`, 8 `user_id`, 2 `user_created` today.
 3. Requests that pass `userId` to the Directus endpoints (adoption, applications, credits timeline) pass `accountId` instead.
 
 Verify: `pnpm test`, then the dev dash on 13010 - probes, credits, tokens, applications and notifications pages show the same

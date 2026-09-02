@@ -153,7 +153,7 @@ test('Software probe adoption (token)', async ({ page, user }) => {
 
 	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
 		probe: _.omit(probe, 'id'),
-		user: { id: user.id },
+		account: { id: user.account_id },
 	}, {
 		headers: {
 			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,

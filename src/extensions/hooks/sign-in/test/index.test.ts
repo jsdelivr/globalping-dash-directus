@@ -277,7 +277,7 @@ describe('Sign-in hook', () => {
 			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
 			expect(result).to.deep.equal(payload);
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'non-existent-user-id' ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'non-existent-user-id', { fields: [ 'user_type', 'github_username', 'account' ] }]);
 		});
 
 		it('should not modify payload if user has no GitHub username', async () => {
@@ -295,7 +295,7 @@ describe('Sign-in hook', () => {
 			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
 			expect(result).to.deep.equal(payload); // Payload should remain unchanged
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-id-without-github-username' ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-id-without-github-username', { fields: [ 'user_type', 'github_username', 'account' ] }]);
 		});
 
 		it('should add github_username to payload if user has a GitHub username', async () => {
@@ -317,7 +317,7 @@ describe('Sign-in hook', () => {
 			});
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-github-username' ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-github-username', { fields: [ 'user_type', 'github_username', 'account' ] }]);
 		});
 
 		it('should add user_type to payload', async () => {
@@ -338,7 +338,25 @@ describe('Sign-in hook', () => {
 			});
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-user-type' ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-user-type', { fields: [ 'user_type', 'github_username', 'account' ] }]);
+		});
+
+		it('should add user_account_id to payload', async () => {
+			const payload = { id: '123' };
+			const meta = { user: 'user-with-account' };
+
+			itemsService.readOne.resolves({
+				id: 'user-id',
+				account: [ 'account-id' ],
+			});
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
+			expect(result).to.deep.equal({
+				...payload,
+				user_account_id: 'account-id',
+			});
 		});
 	});
 });
