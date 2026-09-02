@@ -9,6 +9,17 @@ const getMembershipId = async (org: Org, user: User) => {
 	return membership.id as string;
 };
 
+const createOrgToken = async (api: AxiosInstance, accountId: string) => {
+	const token = await api.post('/items/gp_tokens', {
+		name: 'e2e-org-token',
+		value: (await api.post('/bytes')).data.data,
+		account_id: accountId,
+	});
+
+	expect(token.status).toBe(200);
+	return token.data.data.id as number;
+};
+
 const listedIds = async (api: AxiosInstance, collection: string) => {
 	const response = await api.get(`/items/${collection}`);
 	return response.data.data.map((item: { id: string | number }) => item.id);
@@ -43,6 +54,23 @@ test('only an org admin can change roles', async ({ org, org2, actors }) => {
 
 	const otherMembership = await sql('gp_org_members').where({ id: otherMembershipId }).first('role');
 	expect(otherMembership.role).toBe('admin');
+});
+
+test('demoting a member to viewer takes their org tokens away', async ({ org, actors }) => {
+	const membershipId = await getMembershipId(org, org.member);
+	const [ memberToken, adminToken ] = await Promise.all([
+		createOrgToken(actors.member, org.account_id),
+		createOrgToken(actors.admin, org.account_id),
+	]);
+
+	expect((await actors.admin.patch(`/items/gp_org_members/${membershipId}`, { role: 'viewer' })).status).toBe(200);
+
+	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeUndefined();
+	expect(await sql('gp_tokens').where({ id: adminToken }).first('id')).toBeTruthy();
+
+	// Promoting them back does not bring the token back, and nothing else is touched.
+	expect((await actors.admin.patch(`/items/gp_org_members/${membershipId}`, { role: 'member' })).status).toBe(200);
+	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeUndefined();
 });
 
 test('notification preferences can only be changed on your own membership', async ({ org, actors }) => {

@@ -73,6 +73,8 @@ permissions migration below.
 - Every adoption call passes `accountId` explicitly (the active account, personal or org): adoption-code `send-code`/`verify-code` and local-adoption `/adopt`. The legacy `userId` form and the implicit personal-account default stay only for the old dashboard and are dropped in phase 5.
 - Credits page: org stats and history in org view.
 - Tokens page: own tokens and approvals inside the org, generate token creates an org item, disabled for viewers.
+- Members screen: demoting someone to viewer deletes their org tokens and app approvals (the database trigger does it), so the
+  role selector has to warn the admin before saving - it is irreversible and breaks whatever runs on those tokens.
 - Settings: "Organization" section (only admin sees, copies, and regenerates the org adoption token) plus the org's public-probes switch (`gp_orgs.public_probes`), which makes its probes globally targetable as `u-<org name>`. This is what replaces "point my personal `default_prefix` at an org name" for anyone who wants org-named probes from phase 5 on: move the probes into the org.
 - Admin-only "Organization" page: org info, members list, role management.
 - Permissions migration - `directus_users` read for co-members. Today the only read rule is `id _eq $CURRENT_USER`
