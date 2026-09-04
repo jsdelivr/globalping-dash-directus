@@ -17,3 +17,4 @@ config/local*
 .claude/
 CLAUDE.md
 docs/
+.worktrees/
