@@ -4,6 +4,7 @@ import { getOfflineAdoptions, getExistingNotifications, notifyAdoptions, deleteA
 import type { AdoptedProbe } from '../types.js';
 
 export const NOTIFY_AFTER_DAYS = 2;
+export const NOTIFY_BEFORE_DAYS = 7;
 export const REMOVE_AFTER_DAYS = 30;
 
 
@@ -15,7 +16,7 @@ export const removeExpiredAdoptions = async (context: OperationContext): Promise
 	for (const probe of offlineAdoptedProbes) {
 		if (isExpired(probe.lastSyncDate, REMOVE_AFTER_DAYS)) {
 			adoptionsToDelete.push(probe);
-		} else if (isExpired(probe.lastSyncDate, NOTIFY_AFTER_DAYS)) {
+		} else if (isExpired(probe.lastSyncDate, NOTIFY_AFTER_DAYS) && !isExpired(probe.lastSyncDate, NOTIFY_BEFORE_DAYS)) {
 			adoptionsToNotify.push(probe);
 		}
 	}

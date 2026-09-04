@@ -20,6 +20,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		createOne.resetBehavior();
 		sandbox = sinon.createSandbox({ useFakeTimers: { now: new Date('2023-04-25') } });
 	});
 
@@ -322,7 +323,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		await operationApi.handler({}, context);
 
-		expect(createOne.callCount).to.equal(1);
+		expect(createOne.callCount).to.equal(0);
 
 		expect(deleteByQuery.callCount).to.equal(1);
 
@@ -336,5 +337,76 @@ describe('Remove expired adoptions CRON handler', () => {
 			},
 			{ emitEvents: false },
 		]);
+	});
+
+	it('should not notify user if the probe went offline more than 7 days ago', async () => {
+		itemsReadByQuery.onFirstCall().resolves([{
+			id: 'probeId1',
+			ip: '1.1.1.1',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-8).toISOString(),
+		}]);
+
+		itemsReadByQuery.onSecondCall().resolves([]);
+		deleteByQuery.onFirstCall().resolves([]);
+		deleteByQuery.onSecondCall().resolves([]);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(createOne.callCount).to.equal(0);
+
+		expect(result).to.deep.equal('Removed adopted probes: []. Removed unassigned probes: []. Notified adoptions with ids: [].');
+	});
+
+	it('should keep removing probes when a notification is cancelled by user preferences', async () => {
+		itemsReadByQuery.onFirstCall().resolves([{
+			id: 'probeId1',
+			ip: '1.1.1.1',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-2).toISOString(),
+		}, {
+			id: 'probeId2',
+			ip: '2.2.2.2',
+			userId: 'userId2',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-30).toISOString(),
+		}]);
+
+		itemsReadByQuery.onSecondCall().resolves([]);
+		createOne.rejects(Object.assign(new Error('Notification cancelled by user preferences.'), { code: 'CANCELLED' }));
+		deleteByQuery.onFirstCall().resolves([ 'probeId2' ]);
+		deleteByQuery.onSecondCall().resolves([]);
+
+		const result = await operationApi.handler({}, context);
+
+		expect(createOne.callCount).to.equal(2);
+		expect(deleteByQuery.callCount).to.equal(2);
+
+		expect(result).to.deep.equal('Removed adopted probes: probeId2. Removed unassigned probes: []. Notified adoptions with ids: probeId1.');
+	});
+
+	it('should fail if the notification fails for any other reason', async () => {
+		itemsReadByQuery.onFirstCall().resolves([{
+			id: 'probeId1',
+			ip: '1.1.1.1',
+			userId: 'userId1',
+			status: 'offline',
+			lastSyncDate: relativeDayUtc(-2).toISOString(),
+		}]);
+
+		itemsReadByQuery.onSecondCall().resolves([]);
+		createOne.rejects(new Error('Some other error.'));
+
+		let error: Error | undefined;
+
+		try {
+			await operationApi.handler({}, context);
+		} catch (err) {
+			error = err as Error;
+		}
+
+		expect(error?.message).to.equal('Some other error.');
 	});
 });
