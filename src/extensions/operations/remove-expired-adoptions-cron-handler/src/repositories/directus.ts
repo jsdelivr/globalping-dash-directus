@@ -7,6 +7,20 @@ import type { AdoptedProbe } from '../types.js';
 
 const OFFLINE_PROBE_NOTIFICATION_TYPE = 'offline_probe';
 
+// The notifications hook cancels a create by throwing; for the sender that is a success, not an error.
+const createNotification = async (notification: Record<string, unknown>, { services, getSchema }: OperationContext) => {
+	const { NotificationsService } = services;
+	const notificationsService = new NotificationsService({ schema: await getSchema() });
+
+	try {
+		await notificationsService.createOne(notification);
+	} catch (error) {
+		if ((error as { code?: string }).code !== 'CANCELLED') {
+			throw error;
+		}
+	}
+};
+
 type OfflineNotification = {
 	item: string | null;
 	metadata: unknown;
@@ -87,56 +101,47 @@ const formatExpirationDate = (lastSyncDate: Date) => {
 	return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const notifySingleProbe = async (probe: AdoptedProbe, userId: string, { services, getSchema }: OperationContext) => {
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({ schema: await getSchema() });
-
-	await notificationsService.createOne({
+const notifySingleProbe = async (probe: AdoptedProbe, userId: string, context: OperationContext) => {
+	await createNotification({
 		recipient: userId,
 		item: probe.id,
 		collection: 'gp_probes',
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
 		subject: 'Your probe went offline',
 		message: `Your ${getProbeLink(probe)} has been offline for more than 24 hours. If it does not come back online before **${formatExpirationDate(probe.lastSyncDate)}** it will be removed from your account.`,
-	});
+	}, context);
 };
 
-const notifyMultipleProbes = async (probes: AdoptedProbe[], userId: string, { services, getSchema }: OperationContext) => {
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({ schema: await getSchema() });
-
+const notifyMultipleProbes = async (probes: AdoptedProbe[], userId: string, context: OperationContext) => {
 	const lines = probes.map(probe => `- ${probe.name ? `[${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`}${getIPSuffix(probe.ip)} - **${formatExpirationDate(probe.lastSyncDate)}**`);
 
-	await notificationsService.createOne({
+	await createNotification({
 		recipient: userId,
 		collection: 'gp_probes',
 		metadata: probes.map(p => p.id),
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
 		subject: 'Your probes went offline',
 		message: `Some of your probes have been offline for more than 24 hours and will be removed from your account unless they come back online by these dates:\n${lines.join('\n')}`,
-	});
+	}, context);
 };
 
-export const deleteAdoptions = async (probes: AdoptedProbe[], { services, getSchema }: OperationContext): Promise<string[]> => {
-	const { NotificationsService, ItemsService } = services;
-
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
+export const deleteAdoptions = async (probes: AdoptedProbe[], context: OperationContext): Promise<string[]> => {
+	const { services, getSchema } = context;
+	const { ItemsService } = services;
 
 	const probesService = new ItemsService('gp_probes', {
 		schema: await getSchema(),
 	});
 
 	await Bluebird.map(probes, async (probe) => {
-		await notificationsService.createOne({
+		await createNotification({
 			recipient: probe.userId,
 			type: 'probe_unassigned',
 			subject: 'Your probe has been deleted',
 			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'}${getIPSuffix(probe.ip)} has been deleted from your account due to being offline for more than ${REMOVE_AFTER_DAYS} days. You can adopt it again when it is back online.`,
 			item: probe.id,
 			collection: 'gp_probes',
-		});
+		}, context);
 	}, { concurrency: 4 });
 
 	let deletedAdoptionsIds: string[] = [];
