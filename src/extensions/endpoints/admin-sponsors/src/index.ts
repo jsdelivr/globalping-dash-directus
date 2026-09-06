@@ -4,6 +4,7 @@ import type { EventContext } from '@directus/types';
 import type { Request, RequestHandler, Router } from 'express';
 import Joi from 'joi';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
+import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { resolveSponsorsPeriod } from './period.js';
 import { getManualAdditions, getSponsorAccounts, getSponsorsSummary, getSponsorshipEvents } from './queries.js';
@@ -26,6 +27,13 @@ type QueryService = {
 	getAccounts: (database: EndpointExtensionContext['database'], range: SponsorsPeriodRange, query: AccountsQuery) => Promise<PageResult<SponsorAccount>>;
 	getManualAdditions: (database: EndpointExtensionContext['database'], query: ManualAdditionsQuery) => Promise<PageResult<ManualAddition>>;
 };
+
+type GithubAccount = {
+	id: number;
+	login: string;
+};
+
+type GithubAccountResolver = (githubId: string, context: EndpointExtensionContext) => Promise<GithubAccount>;
 
 const periodSchema = Joi.string().default('past-year').custom((value, helpers) => {
 	try {
@@ -91,12 +99,14 @@ const createManualAdditionSchema = Joi.object({
 		Joi.object({
 			type: Joi.string().valid('payment').required(),
 			githubId: Joi.string().pattern(/^\d+$/).max(255).required(),
+			githubLogin: Joi.string().trim().max(255).required(),
 			credits: Joi.number().integer().min(1).max(Number.MAX_SAFE_INTEGER).required(),
 			amountInDollars: Joi.number().positive().precision(2).required(),
 		}),
 		Joi.object({
 			type: Joi.string().valid('other').required(),
 			githubId: Joi.string().pattern(/^\d+$/).max(255).required(),
+			githubLogin: Joi.string().trim().max(255).required(),
 			credits: Joi.number().integer().min(1).max(Number.MAX_SAFE_INTEGER).required(),
 			comment: Joi.string().trim().max(500).pattern(/^[A-Z].*\.$/s).required(),
 		}),
@@ -106,16 +116,43 @@ const createManualAdditionSchema = Joi.object({
 type ManualAdditionInput = {
 	type: 'payment';
 	githubId: string;
+	githubLogin: string;
 	credits: number;
 	amountInDollars: number;
 } | {
 	type: 'other';
 	githubId: string;
+	githubLogin: string;
 	credits: number;
 	comment: string;
 };
 
-export const createAdminSponsorsEndpoint = (queryService: QueryService) => (router: Router, context: EndpointExtensionContext) => {
+const resolveGithubAccount: GithubAccountResolver = async (githubId, context) => {
+	const client = getGithubApiClient(null, context);
+
+	if (!context.env.GITHUB_ACCESS_TOKEN) {
+		delete client.defaults.headers.Authorization;
+	}
+
+	const response = await client.get<GithubAccount>(`https://api.github.com/user/${encodeURIComponent(githubId)}`);
+	return response.data;
+};
+
+const getHttpStatus = (error: unknown): number | undefined => {
+	if (typeof error !== 'object' || error === null || !('response' in error)) {
+		return;
+	}
+
+	const response = error.response;
+
+	if (typeof response !== 'object' || response === null || !('status' in response)) {
+		return;
+	}
+
+	return typeof response.status === 'number' ? response.status : undefined;
+};
+
+export const createAdminSponsorsEndpoint = (queryService: QueryService, githubAccountResolver: GithubAccountResolver = resolveGithubAccount) => (router: Router, context: EndpointExtensionContext) => {
 	const allowAdmin: RequestHandler = (req, res, next) => {
 		const accountability = (req as Request & { accountability?: EventContext['accountability'] }).accountability;
 
@@ -156,14 +193,37 @@ export const createAdminSponsorsEndpoint = (queryService: QueryService) => (rout
 		const accountability = (req as Request & { accountability: EventContext['accountability'] }).accountability;
 		const input = req.body as ManualAdditionInput;
 		const isPayment = input.type === 'payment';
+		let githubAccount: GithubAccount;
+
+		try {
+			githubAccount = await githubAccountResolver(input.githubId, context);
+		} catch (error) {
+			const status = getHttpStatus(error);
+
+			if (status === 404) {
+				res.status(400).send('GitHub account not found.');
+				return;
+			}
+
+			context.logger.error({ githubId: input.githubId, status }, 'GitHub account lookup failed.');
+			res.status(503).send('GitHub account lookup is temporarily unavailable.');
+			return;
+		}
+
+		if (String(githubAccount.id) !== input.githubId
+			|| typeof githubAccount.login !== 'string'
+			|| githubAccount.login.toLowerCase() !== input.githubLogin.toLowerCase()) {
+			res.status(400).send('GitHub account does not match the submitted ID and username.');
+			return;
+		}
 
 		await context.database('gp_credits_additions').insert({
 			github_id: input.githubId,
 			amount: input.credits,
 			reason: isPayment ? 'one_time_sponsorship' : 'other',
 			meta: JSON.stringify(isPayment
-				? { amountInDollars: input.amountInDollars, manual: true }
-				: { comment: input.comment, manual: true }),
+				? { amountInDollars: input.amountInDollars, githubLogin: githubAccount.login, manual: true }
+				: { comment: input.comment, githubLogin: githubAccount.login, manual: true }),
 			date_created: new Date(),
 			user_updated: accountability!.user,
 		});

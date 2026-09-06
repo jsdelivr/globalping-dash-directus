@@ -25,6 +25,7 @@ describe('/admin-sponsors endpoint', () => {
 	const insert = sinon.stub().resolves();
 	const databaseStub = sinon.stub().returns({ insert });
 	const database = databaseStub as unknown as EndpointExtensionContext['database'];
+	const githubAccountResolver = sinon.stub().callsFake(async (githubId: string) => ({ id: Number(githubId), login: 'jsDelivr' }));
 	const endpointContext = {
 		database,
 		logger: { error: console.error },
@@ -40,7 +41,7 @@ describe('/admin-sponsors endpoint', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	createAdminSponsorsEndpoint(queryService)(router, endpointContext);
+	createAdminSponsorsEndpoint(queryService, githubAccountResolver)(router, endpointContext);
 	app.use(router);
 
 	beforeEach(() => {
@@ -188,6 +189,7 @@ describe('/admin-sponsors endpoint', () => {
 		const body = {
 			type: 'payment',
 			githubId: '6191378',
+			githubLogin: 'JSDELIVR',
 			credits: 10_000,
 			amountInDollars: 5,
 		};
@@ -195,12 +197,13 @@ describe('/admin-sponsors endpoint', () => {
 
 		expect(response.status).to.equal(201);
 		expect(databaseStub.calledOnceWithExactly('gp_credits_additions')).to.equal(true);
+		expect(githubAccountResolver.calledOnceWithExactly('6191378', endpointContext)).to.equal(true);
 
 		expect(insert.firstCall.args[0]).to.deep.include({
 			github_id: '6191378',
 			amount: 10_000,
 			reason: 'one_time_sponsorship',
-			meta: JSON.stringify({ amountInDollars: 5, manual: true }),
+			meta: JSON.stringify({ amountInDollars: 5, githubLogin: 'jsDelivr', manual: true }),
 			user_updated: 'admin-id',
 		});
 
@@ -211,6 +214,7 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).post('/manual-additions').send({
 			type: 'other',
 			githubId: '6191378',
+			githubLogin: 'JSDELIVR',
 			credits: 10_000,
 			comment: 'Customer support adjustment.',
 		});
@@ -221,7 +225,7 @@ describe('/admin-sponsors endpoint', () => {
 			github_id: '6191378',
 			amount: 10_000,
 			reason: 'other',
-			meta: JSON.stringify({ comment: 'Customer support adjustment.', manual: true }),
+			meta: JSON.stringify({ comment: 'Customer support adjustment.', githubLogin: 'jsDelivr', manual: true }),
 			user_updated: 'admin-id',
 		});
 	});
@@ -230,6 +234,7 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).post('/manual-additions').send({
 			type: 'other',
 			githubId: '6191378',
+			githubLogin: 'JSDELIVR',
 			credits: 10_000,
 			comment: 'customer support adjustment',
 		});
