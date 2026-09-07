@@ -38,10 +38,14 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
 - Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and in the
-  `gp_active_account` cookie on `.globalping.io` (the account id, not the org id). The cookie is unsigned, so gp-api and
-  gp-auth check the membership on every request and fall back to the personal account; it is per device, which is the point -
-  the same user can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id`
-  claim stays the personal account.
+  `gp_active_account` cookie on `.globalping.io` (the account id, not the org id). The cookie is unsigned, so gp-api checks
+  the membership on every request and falls back to the personal account; it is per device, which is the point - the same user
+  can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id` claim stays
+  the personal account.
+- The cookie value is scoped to the user (`<userId>:<accountId>`) and ignored when the user does not match, so the choice left
+  on a shared machine never carries over to whoever logs in next.
+- OAuth is the exception: gp-auth ignores the cookie entirely and asks on the approval screen instead. Connecting an app is a
+  durable, hard-to-notice decision, so it is never made by ambient browser state. The cookie only preselects the entry there.
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
 - Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the admin before saving.
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.

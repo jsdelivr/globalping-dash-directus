@@ -90,6 +90,8 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
 
 - Drop the `*_fulfill_account` triggers FIRST, with `migrate:one`, and only then let `schema:apply` drop the columns. Dropping a column a trigger reads does not disable the trigger - every write to the table fails with `Unknown column ... in 'NEW'` until it is gone, and `schema:apply` runs before `migrate`.
 - Drop old columns: `gp_probes.userId`, `gp_credits.user_id`, `gp_credits_deductions.user_id`, `gp_apps_approvals.user`.
+- `gp_apps_approvals.user` is the one case where no order avoids a gap: dropping its trigger first leaves the NOT NULL column with nothing to fill it (`1364 Field 'user' doesn't have a default value`, gp-auth stopped writing it in phase 2), and dropping the column first breaks the trigger that reads `NEW.user`. Do both in the same deploy and accept the seconds in between - the table holds 85 rows in total, so at worst someone's consent screen has to be repeated. The strict trigger-first order still matters for the probe and credit tables, where the same gap would land on constant writes.
+- Make `account_id` NOT NULL in `gp_probes`, `gp_apps_approvals`, `gp_credits`, `gp_credits_deductions`. Every row has been filled since phase 1 by the backfill and the triggers, and once the legacy columns are gone an ownerless row should stop being representable at all. `gp_tokens.account_id` is the exception and stays nullable: client-credentials tokens are issued for `{ id: null }`, so they have neither a user nor an account by design.
 - Remove dual-write / dual-read support from extensions and gp-api.
 - Tags: phases 1-4 change nothing about them - the prefix select, the validation and both prefix fields work exactly as today, and
   the restrictions land only here. Nothing is renamed, ever. The prefix stored in `gp_probes.tags` stays the source of truth, so every existing tag keeps
@@ -111,8 +113,8 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
 
 Added while implementing phase 1 (remove or update in phase 5):
 
-- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260814GP`) - fulfill `account_id` for the rows gp-auth writes. Drop once it sets the account itself, in phase 2.
-- `gp_apps_approvals_fulfill_account` also copies `user` -> `user_created`; drop together with the `user` column.
+- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260814GP`) - fulfill `account_id` for the rows gp-auth writes. Dead once phase 2 ships: gp-auth sets the account itself.
+- `gp_apps_approvals_fulfill_account` also fills the NOT NULL `user` column that gp-auth stopped writing in phase 2, so it goes together with that column - see phase 5.
 - Credits triggers (`20260814GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
 - `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.
 - `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20260814GP` only to free the `user` foreign key from the unique key being replaced.

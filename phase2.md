@@ -51,9 +51,14 @@ Verify: unit + integration suites; on dev - adopt a probe into an org, see its t
 
 ## 2. gp-auth (`globalping-auth`)
 
-1. Consent flow takes the account from the session: `gp_active_account` when the user may act for it, the personal claim
-   otherwise (same `// PHASE5: remove` lookup fallback as gp-api), and the approval screen may override it with a request
-   parameter.
+1. The account is picked on the approval screen, never taken from the browser state: gp-auth does not read
+   `gp_active_account` at all. The screen sends the chosen account as a request parameter; with nothing sent the approval is
+   personal, taken from the session's `user_account_id` claim (same `// PHASE5: remove` lookup fallback as gp-api). That keeps
+   the old dashboard working against the new gp-auth, so it can be deployed first.
+1a. **The screen is skipped only when there is nothing to pick.** A remembered approval short-circuits it as before, but only
+   for a user with no org to act for - the orgs they picked in the dashboard (`directus_users.selected_orgs`) crossed with the
+   memberships where their role is admin or member. Everyone else confirms the account on every explicit login: the choice is
+   theirs, it can differ from the last one, and a stale cookie can never make it silently.
 2. Validate it before approving: the account must be the user's own or an org where they are admin or member - a viewer cannot
    approve for the org.
 3. `gp_apps_approvals`: write `account_id` + `user_created`; `user` may be left to the phase 1 trigger, but `user_created` is
