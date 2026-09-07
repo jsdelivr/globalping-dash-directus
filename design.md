@@ -43,7 +43,11 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
   can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id` claim stays
   the personal account.
 - The cookie value is scoped to the user (`<userId>:<accountId>`) and ignored when the user does not match, so the choice left
-  on a shared machine never carries over to whoever logs in next.
+  on a shared machine never carries over to whoever logs in next. Clearing it on logout would not be enough: sessions expire
+  without one, and globalping.io sends the cookie to the API without ever loading the dashboard, so nothing there could clear it.
+- What each user picked is remembered by the dashboard in `localStorage`, keyed by the user id, and the cookie carries only the
+  current choice. Coming back to a machine restores that user's last org without the cookie having to hold a map of everyone who
+  ever logged in there, and without the choice leaking across devices the way a column on `directus_users` would.
 - OAuth is the exception: gp-auth ignores the cookie entirely and asks on the approval screen instead. Connecting an app is a
   durable, hard-to-notice decision, so it is never made by ambient browser state. The cookie only preselects the entry there.
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
