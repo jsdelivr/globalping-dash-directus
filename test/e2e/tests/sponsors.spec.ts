@@ -162,8 +162,8 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await eventsTable.getByRole('columnheader', { name: 'Sponsorship amount' }).click();
 	await sortedEventsResponse;
 	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(5));
-	await expect(adminPage).toHaveURL(/sponsorEventsSort=sponsorshipValue/);
-	await expect(adminPage).toHaveURL(/sponsorEventsDirection=asc/);
+	await expect(adminPage).toHaveURL(/eventsSort=sponsorshipValue/);
+	await expect(adminPage).toHaveURL(/eventsOrder=asc/);
 	sortedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('sort=sponsorshipValue') && response.url().includes('direction=desc'));
 	await eventsTable.getByRole('columnheader', { name: 'Sponsorship amount' }).click();
 	await sortedEventsResponse;
@@ -186,7 +186,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(accountsTable.locator('tbody tr').first()).toContainText('One-time only');
 	await adminPage.getByRole('heading', { name: 'Sponsor accounts' }).evaluate(element => element.scrollIntoView({ block: 'center' }));
 	await accountsTable.getByRole('button', { name: 'Filters' }).click();
-	const accountFilters = adminPage.getByRole('dialog').filter({ has: adminPage.getByRole('heading', { name: 'Filter sponsor accounts' }) });
+	const accountFilters = adminPage.getByRole('dialog', { name: 'Filter sponsor accounts' });
 	await expect(accountFilters).toBeVisible();
 	await accountFilters.getByRole('combobox', { name: 'Sponsor statuses' }).click();
 	await expect(adminPage.getByRole('option', { name: 'One-time only' })).toBeVisible();
@@ -202,8 +202,8 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	const sortedAccountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('sort=periodValue') && response.url().includes('direction=asc'));
 	await accountsTable.getByRole('columnheader', { name: 'Period amount' }).click();
 	await sortedAccountsResponse;
-	await expect(adminPage).toHaveURL(/sponsorAccountsSort=periodValue/);
-	await expect(adminPage).toHaveURL(/sponsorAccountsDirection=asc/);
+	await expect(adminPage).toHaveURL(/accountsSort=periodValue/);
+	await expect(adminPage).toHaveURL(/accountsOrder=asc/);
 
 	await adminPage.getByLabel('Sponsorship period').click();
 	await adminPage.getByRole('option', { name: '2024' }).click();
@@ -222,7 +222,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await manualAdditionsDialog.getByRole('columnheader', { name: 'Credits' }).click();
 	await sortedManualAdditionsResponse;
 	await expect(adminPage).toHaveURL(/manualAdditionsSort=credits/);
-	await expect(adminPage).toHaveURL(/manualAdditionsDirection=asc/);
+	await expect(adminPage).toHaveURL(/manualAdditionsOrder=asc/);
 	await manualAdditionsDialog.getByRole('button', { name: 'Close' }).click();
 
 	await adminPage.getByRole('button', { name: 'Add credits' }).click();
