@@ -4,20 +4,36 @@ import sinon from 'sinon';
 import { applyManualSearch, applySearch, fillChartPoints, normalizeManualAddition, normalizeSponsorAccount, normalizeSponsorshipEvent, utcMonthSql } from '../src/queries.js';
 
 describe('sponsor query normalization', () => {
-	it('matches numeric GitHub IDs exactly', () => {
-		const where = sinon.spy();
+	it('matches numeric GitHub IDs exactly while searching event usernames', () => {
+		const builder = {
+			where: sinon.stub().returnsThis(),
+			orWhere: sinon.stub().returnsThis(),
+			orWhereRaw: sinon.stub().returnsThis(),
+		};
+		const where = sinon.spy((callback: (builder: Knex.QueryBuilder) => void) => callback(builder as unknown as Knex.QueryBuilder));
 
 		applySearch({ where } as unknown as Knex.QueryBuilder, '123');
 
-		expect(where.calledOnceWithExactly('additions.github_id', '123')).to.equal(true);
+		expect(builder.where.calledOnceWithExactly('additions.github_id', '123')).to.equal(true);
+		expect(builder.orWhere.calledWithExactly('current_sponsors.github_login', 'like', '%123%')).to.equal(true);
+		expect(builder.orWhere.calledWithExactly('directus_users.github_username', 'like', '%123%')).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%123%' ])).to.equal(true);
 	});
 
-	it('matches numeric GitHub IDs exactly in manual additions', () => {
-		const where = sinon.spy();
+	it('matches numeric GitHub IDs exactly while searching manual-addition usernames', () => {
+		const builder = {
+			where: sinon.stub().returnsThis(),
+			orWhere: sinon.stub().returnsThis(),
+			orWhereRaw: sinon.stub().returnsThis(),
+		};
+		const where = sinon.spy((callback: (builder: Knex.QueryBuilder) => void) => callback(builder as unknown as Knex.QueryBuilder));
 
 		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '123', 'added-by-expression');
 
-		expect(where.calledOnceWithExactly('additions.github_id', '123')).to.equal(true);
+		expect(builder.where.calledOnceWithExactly('additions.github_id', '123')).to.equal(true);
+		expect(builder.orWhere.calledWithExactly('current_sponsors.github_login', 'like', '%123%')).to.equal(true);
+		expect(builder.orWhere.calledWithExactly('dashboard_users.github_username', 'like', '%123%')).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%123%' ])).to.equal(true);
 	});
 
 	it('groups monthly chart timestamps in UTC', () => {

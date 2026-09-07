@@ -108,15 +108,15 @@ export const applySearch = (query: Knex.QueryBuilder, search: string | undefined
 		return;
 	}
 
-	if (/^\d+$/.test(search)) {
-		query.where('additions.github_id', search);
-		return;
-	}
-
 	const value = `%${search}%`;
 	query.where((builder) => {
-		builder.where('additions.github_id', 'like', value)
-			.orWhere('current_sponsors.github_login', 'like', value)
+		if (/^\d+$/.test(search)) {
+			builder.where('additions.github_id', search);
+		} else {
+			builder.where('additions.github_id', 'like', value);
+		}
+
+		builder.orWhere('current_sponsors.github_login', 'like', value)
 			.orWhere('directus_users.github_username', 'like', value)
 			.orWhereRaw(`${metadataGithubLoginSql} LIKE ?`, [ value ]);
 	});
@@ -127,15 +127,15 @@ export const applyManualSearch = (query: Knex.QueryBuilder, search: string | und
 		return;
 	}
 
-	if (/^\d+$/.test(search)) {
-		query.where('additions.github_id', search);
-		return;
-	}
-
 	const value = `%${search}%`;
 	query.where((builder) => {
-		builder.where('additions.github_id', 'like', value)
-			.orWhere('current_sponsors.github_login', 'like', value)
+		if (/^\d+$/.test(search)) {
+			builder.where('additions.github_id', search);
+		} else {
+			builder.where('additions.github_id', 'like', value);
+		}
+
+		builder.orWhere('current_sponsors.github_login', 'like', value)
 			.orWhere('dashboard_users.github_username', 'like', value)
 			.orWhereRaw(`${additionGithubLoginSql()} LIKE ?`, [ value ])
 			.orWhereRaw(`JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.comment')) LIKE ?`, [ value ])
