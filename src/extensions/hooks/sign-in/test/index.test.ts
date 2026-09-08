@@ -277,7 +277,7 @@ describe('Sign-in hook', () => {
 			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
 			expect(result).to.deep.equal(payload);
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'non-existent-user-id', { fields: [ 'user_type', 'github_username', 'account' ] }]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'non-existent-user-id' ]);
 		});
 
 		it('should not modify payload if user has no GitHub username', async () => {
@@ -295,7 +295,7 @@ describe('Sign-in hook', () => {
 			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
 			expect(result).to.deep.equal(payload); // Payload should remain unchanged
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-id-without-github-username', { fields: [ 'user_type', 'github_username', 'account' ] }]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-id-without-github-username' ]);
 		});
 
 		it('should add github_username to payload if user has a GitHub username', async () => {
@@ -317,7 +317,7 @@ describe('Sign-in hook', () => {
 			});
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-github-username', { fields: [ 'user_type', 'github_username', 'account' ] }]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-github-username' ]);
 		});
 
 		it('should add user_type to payload', async () => {
@@ -338,7 +338,7 @@ describe('Sign-in hook', () => {
 			});
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-user-type', { fields: [ 'user_type', 'github_username', 'account' ] }]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-user-type' ]);
 		});
 
 		it('should add user_account_id to payload', async () => {
