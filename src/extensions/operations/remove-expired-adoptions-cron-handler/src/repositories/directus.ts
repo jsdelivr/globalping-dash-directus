@@ -149,7 +149,7 @@ export const deleteProbes = async ({ services, getSchema }: OperationContext): P
 		filter: {
 			status: { _eq: 'offline' },
 			lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString() },
-			userId: { _null: true },
+			account_id: { _null: true },
 		},
 	}, { emitEvents: false }) as string[];
 	return deletedProbesIds;

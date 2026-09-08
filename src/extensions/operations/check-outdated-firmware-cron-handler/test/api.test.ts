@@ -61,7 +61,6 @@ describe('Adopted probes status cron handler', () => {
 		mockProbesResult([{
 			id: 'probe-id',
 			ip: '1.1.1.1',
-			userId: 'user-id',
 			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
 			isOutdated: true,
@@ -87,7 +86,6 @@ describe('Adopted probes status cron handler', () => {
 		mockProbesResult([{
 			id: 'probe-id',
 			ip: '1.1.1.1',
-			userId: 'user-id',
 			hardwareDevice: null,
 			hardwareDeviceFirmware: null,
 			isOutdated: true,
@@ -114,7 +112,6 @@ describe('Adopted probes status cron handler', () => {
 			id: 'probe-id',
 			ip: '1.1.1.1',
 			name: '][not the probe](https://another.link)[probe',
-			userId: 'user-id',
 			hardwareDevice: null,
 			hardwareDeviceFirmware: null,
 			isOutdated: true,
@@ -139,7 +136,6 @@ describe('Adopted probes status cron handler', () => {
 	it('should not send notification if versions are actual', async () => {
 		mockProbesResult([{
 			id: 'probe-id',
-			userId: 'user-id',
 			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v2.0',
 			nodeVersion: 'v20.13.0',
@@ -158,7 +154,6 @@ describe('Adopted probes status cron handler', () => {
 
 		mockProbesResult([{
 			id: 'probe-id',
-			userId: 'user-id',
 			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
 			nodeVersion: 'v20.13.0',
@@ -179,7 +174,6 @@ describe('Adopted probes status cron handler', () => {
 			{
 				id: 'probe-id-2',
 				ip: '1.1.1.2',
-				userId: 'user-id',
 				hardwareDevice: null,
 				hardwareDeviceFirmware: null,
 				isOutdated: true,
@@ -188,7 +182,6 @@ describe('Adopted probes status cron handler', () => {
 			{
 				id: 'probe-id-3',
 				ip: '1.1.1.3',
-				userId: 'user-id',
 				hardwareDevice: null,
 				hardwareDeviceFirmware: null,
 				isOutdated: true,
@@ -216,7 +209,6 @@ describe('Adopted probes status cron handler', () => {
 			{
 				id: 'probe-sw',
 				ip: '1.1.1.2',
-				userId: 'user-id',
 				hardwareDevice: null,
 				hardwareDeviceFirmware: null,
 				isOutdated: true,
@@ -225,7 +217,6 @@ describe('Adopted probes status cron handler', () => {
 			{
 				id: 'probe-hw-1',
 				ip: '1.1.1.3',
-				userId: 'user-id',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v1.9',
 				isOutdated: true,
@@ -234,7 +225,6 @@ describe('Adopted probes status cron handler', () => {
 			{
 				id: 'probe-hw-2',
 				ip: '1.1.1.4',
-				userId: 'user-id',
 				hardwareDevice: 'v1',
 				hardwareDeviceFirmware: 'v1.9',
 				isOutdated: true,
@@ -273,7 +263,6 @@ describe('Adopted probes status cron handler', () => {
 		mockProbesResult([{
 			id: 'probe-id-1',
 			ip: '1.1.1.1',
-			userId: 'user-id',
 			hardwareDevice: null,
 			hardwareDeviceFirmware: null,
 			isOutdated: true,

@@ -168,7 +168,7 @@ describe('local-adoption endpoint', () => {
 				},
 			]);
 
-			expect(knexQueryBuilder.whereNull.calledWith('userId')).to.equal(true);
+			expect(knexQueryBuilder.whereNull.calledWith('account_id')).to.equal(true);
 			expect(knexQueryBuilder.whereNotNull.calledWith('localAdoptionServer')).to.equal(true);
 			expect(knexQueryBuilder.where.calledWith('status', 'ready')).to.equal(true);
 		});

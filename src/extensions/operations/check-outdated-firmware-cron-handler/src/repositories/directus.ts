@@ -3,7 +3,6 @@ import type { OperationContext } from '@directus/extensions';
 export type AdoptedProbe = {
 	id: string;
 	ip: string;
-	userId: string | null;
 	name: string | null;
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;

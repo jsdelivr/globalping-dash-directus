@@ -42,7 +42,7 @@ export default defineEndpoint((router, context) => {
 
 		const unadoptedProbes = await database('gp_probes')
 			.select('country', 'city', 'network', 'ip as publicIp', 'localAdoptionServer')
-			.whereNull('userId')
+			.whereNull('account_id')
 			.whereNotNull('localAdoptionServer')
 			.where('status', 'ready')
 			.where((query) => {
@@ -64,7 +64,7 @@ export default defineEndpoint((router, context) => {
 		const clientIp = getClientIp(req);
 
 		const row = await database('gp_probes')
-			.whereNull('userId')
+			.whereNull('account_id')
 			.whereNotNull('localAdoptionServer')
 			.where('status', 'ready')
 			.where((query) => {
