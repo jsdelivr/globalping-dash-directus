@@ -36,7 +36,7 @@ describe('adopted-probe hook', () => {
 		env: {
 			GEONAMES_USERNAME: 'username',
 		},
-		database: {},
+		database: { raw: sinon.stub() },
 		getSchema: () => Promise.resolve({}),
 		services: {
 			ItemsService: sinon.stub().callsFake((collection) => {
@@ -62,6 +62,8 @@ describe('adopted-probe hook', () => {
 			github_username: 'jimaek',
 			github_organizations: [ 'jsdelivr' ],
 		});
+
+		context.database.raw.resolves([ [{ org_name: null, github_username: 'jimaek', github_organizations: JSON.stringify([ 'jsdelivr' ]) }] ]);
 	});
 
 	after(() => {
@@ -71,6 +73,7 @@ describe('adopted-probe hook', () => {
 	it('should update city, lat and long of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
+			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
@@ -167,6 +170,7 @@ describe('adopted-probe hook', () => {
 	it('should additionally update state for the US cities', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
+			account_id: 'account-1',
 			city: 'Detroit',
 			state: 'MI',
 			latitude: '42.33',
@@ -263,6 +267,7 @@ describe('adopted-probe hook', () => {
 	it('should reset city, lat and long of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
+			account_id: 'account-1',
 			city: 'Marseille',
 			country: 'FR',
 			countryName: 'France',
@@ -334,6 +339,7 @@ describe('adopted-probe hook', () => {
 		adoptedProbes.readMany.resolves([{
 			id: 'id-1',
 			userId: 'user-id-value',
+			account_id: 'account-1',
 			country: 'FR',
 			city: 'Paris',
 		}]);
@@ -353,6 +359,7 @@ describe('adopted-probe hook', () => {
 		adoptedProbes.readOne.resolves({
 			id: 'id-1',
 			userId: 'user-id-value',
+			account_id: 'account-1',
 			country: 'FR',
 			city: 'Paris',
 		});
@@ -372,6 +379,7 @@ describe('adopted-probe hook', () => {
 		adoptedProbes.readOne.resolves({
 			id: 'id-1',
 			userId: 'user-id-value',
+			account_id: 'account-1',
 			country: 'FR',
 			city: 'Paris',
 		});
@@ -390,6 +398,7 @@ describe('adopted-probe hook', () => {
 	it('should update non-city meta fields of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
+			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
@@ -446,6 +455,7 @@ describe('adopted-probe hook', () => {
 	it('should send valid error if country is not defined', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
+			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
@@ -466,6 +476,7 @@ describe('adopted-probe hook', () => {
 	it('should send valid error if provided city is not valid', async () => {
 		adoptedProbes.readMany.resolves([{
 			userId: '1',
+			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
 			latitude: '48.85',
@@ -495,6 +506,7 @@ describe('adopted-probe hook', () => {
 			adoptedProbes.readMany.resolves([{
 				id: 'probe-id',
 				userId: 'user-id',
+				account_id: 'account-1',
 				city: 'Paris',
 				state: null,
 				latitude: '48.85',
@@ -537,6 +549,7 @@ describe('adopted-probe hook', () => {
 			adoptedProbes.readMany.resolves([{
 				id: 'probe-id',
 				userId: 'user-id',
+				account_id: 'account-1',
 				city: 'Paris',
 				state: null,
 				latitude: '48.85',
@@ -602,6 +615,7 @@ describe('adopted-probe hook', () => {
 		before(() => {
 			adoptedProbes.readMany.resolves([{
 				userId: '1',
+				account_id: 'account-1',
 				city: 'Paris',
 				state: null,
 				latitude: '48.85',
@@ -610,6 +624,27 @@ describe('adopted-probe hook', () => {
 				allowedCountries: [ 'FR' ],
 				customLocation: null,
 			}]);
+		});
+
+		it('should accept the org name as a prefix for an org probe', async () => {
+			context.database.raw.resolves([ [{ org_name: 'jsdelivr', github_username: null, github_organizations: null }] ]);
+
+			hook(events, context);
+			const payload = { tags: [{ prefix: 'jsdelivr', value: 'berlin' }] };
+			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+
+			expect(payload).to.deep.equal({ tags: [{ prefix: 'jsdelivr', value: 'berlin' }] });
+			expect(users.readOne.callCount).to.equal(0);
+		});
+
+		it('should reject the editor own username as a prefix for an org probe', async () => {
+			context.database.raw.resolves([ [{ org_name: 'jsdelivr', github_username: null, github_organizations: null }] ]);
+
+			hook(events, context);
+			const payload = { tags: [{ prefix: 'jimaek', value: 'berlin' }] };
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+
+			expect(err.message).to.equal('"[0].prefix" must be [jsdelivr]');
 		});
 
 		it('should send valid error if prefix is wrong', async () => {
@@ -625,6 +660,7 @@ describe('adopted-probe hook', () => {
 
 			adoptedProbes.readMany.resolves([{
 				userId: '1',
+				account_id: 'account-1',
 				tags: [{ prefix: 'oldprefix', value: 'a' }],
 				city: 'Paris',
 				state: null,
@@ -648,6 +684,7 @@ describe('adopted-probe hook', () => {
 
 			adoptedProbes.readMany.resolves([{
 				userId: '1',
+				account_id: 'account-1',
 				tags: [{ prefix: 'oldprefix', value: 'a' }],
 				city: 'Paris',
 				state: null,

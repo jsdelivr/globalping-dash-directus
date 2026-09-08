@@ -4,7 +4,7 @@ import axios from 'axios';
 import Joi from 'joi';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { getDefaultProbeName } from '../../../lib/src/probe-name.js';
-import { getProbes, getUser } from './repositories/directus.js';
+import { getAccountTagPrefixes, getProbes } from './repositories/directus.js';
 import { type Fields, UserNotFoundError, payloadError } from './index.js';
 
 export type City = {
@@ -50,30 +50,26 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	}
 
 	const currentProbes = await getProbes(keys, context, accountability);
-	const userId = currentProbes[0]!.userId;
+	const accountId = currentProbes[0]!.account_id;
 
-	if (!userId) {
-		throw payloadError('User id not found.');
+	if (!accountId) {
+		throw payloadError('Probe owner not found.');
 	}
 
-	if (currentProbes.some(probe => probe.userId !== userId)) {
-		throw payloadError('User id is not the same for the requested probes.');
+	if (currentProbes.some(probe => probe.account_id !== accountId)) {
+		throw payloadError('Owner is not the same for the requested probes.');
 	}
 
 	const existingTagsArrays = currentProbes.map(probe => probe.tags || []);
 
-	const user = await getUser(userId, accountability, context);
-
-	if (!user || !user.github_username) {
-		throw payloadError('User does not have required github data.');
-	}
-
 	const newTags = fields.tags.filter(tag => existingTagsArrays
 		.some(existingTags => existingTags.findIndex(existingTag => tag.prefix === existingTag.prefix && tag.value === existingTag.value) === -1));
 
-	// PHASE5: the list narrows to the account owner's name (org name or github_username). The stored prefix keeps being read -
-	// existing tags are never renamed, only new and edited ones are restricted.
-	const validPrefixes = [ user.github_username, ...user.github_organizations ];
+	const validPrefixes = await getAccountTagPrefixes(accountId, context);
+
+	if (!validPrefixes.length) {
+		throw payloadError('Probe owner does not have required github data.');
+	}
 
 	const tagsSchema = Joi.array().items(Joi.object({
 		value: Joi.string().trim().pattern(/^[a-zA-Z0-9-]+$/).max(32).required(),

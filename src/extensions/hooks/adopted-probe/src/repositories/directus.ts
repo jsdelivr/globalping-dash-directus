@@ -36,6 +36,29 @@ export const getUser = async (userId: string, accountability: EventContext['acco
 	return user;
 };
 
+// PHASE5: drop `github_organizations` - a personal account narrows to its owner's `github_username`.
+export const getAccountTagPrefixes = async (accountId: string, { database }: HookExtensionContext): Promise<string[]> => {
+	const [ rows ] = await database.raw(`
+		SELECT o.name AS org_name, u.github_username, u.github_organizations
+		FROM gp_accounts a
+		LEFT JOIN gp_orgs o ON a.org = o.id
+		LEFT JOIN directus_users u ON a.user = u.id
+		WHERE a.id = :account
+	`, { account: accountId }) as [{ org_name: string | null; github_username: string | null; github_organizations: string | null }[]];
+
+	const owner = rows[0];
+
+	if (owner?.org_name) {
+		return [ owner.org_name ];
+	}
+
+	if (!owner?.github_username) {
+		return [];
+	}
+
+	return [ owner.github_username, ...JSON.parse(owner.github_organizations ?? '[]') as string[] ];
+};
+
 export const updateProbeWithUserPermissions = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], { services, getSchema }: HookExtensionContext) => {
 	if (_.isEmpty(fields)) { return; }
 

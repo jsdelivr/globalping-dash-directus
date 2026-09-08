@@ -98,6 +98,9 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
   working - including the 83 whose prefix is an org name or a username the owner no longer has. What goes away is the choice: the
   prefix select disappears, a new or edited tag always gets the owner's name (org name or `github_username`), and old tags can only
   be deleted. `validateTags` shrinks to a comparison against that one name, which is what lets `github_organizations` go.
+- Personal probes lose the org names as prefixes here, ending up under the rule org probes follow from phase 2 on: a new or edited
+  tag may only carry the owner's own name. Existing tags are untouched - `validateTags` only looks at tags that are not already on
+  the probe - so the 83 tags whose prefix is an org name or a former username keep resolving.
 - Editing an old tag renames its prefix, so the dialog has to say so before saving - the same trap `format: 'v1'` already has today.
 - `default_prefix` and `deprecated_prefix` stay as columns, but the user stops choosing them: the settings selector goes and
   `default_prefix` is dropped from the `directus_users.update` fields of the User policy. Without the permission change the freeze
