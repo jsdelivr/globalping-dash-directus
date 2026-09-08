@@ -107,7 +107,7 @@ const notifySingleProbe = async (probe: AdoptedProbe, userId: string, context: O
 		item: probe.id,
 		collection: 'gp_probes',
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
-		subject: 'Your probe went offline',
+		subject: probe.name ? `Your probe ${probe.name} went offline` : 'Your probe went offline',
 		message: `Your ${getProbeLink(probe)} has been offline for more than 24 hours. If it does not come back online before **${formatExpirationDate(probe.lastSyncDate)}** it will be removed from your account.`,
 	}, context);
 };
@@ -137,7 +137,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], context: Operation
 		await createNotification({
 			recipient: probe.userId,
 			type: 'probe_unassigned',
-			subject: 'Your probe has been deleted',
+			subject: probe.name ? `Your probe ${probe.name} has been deleted` : 'Your probe has been deleted',
 			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'}${getIPSuffix(probe.ip)} has been deleted from your account due to being offline for more than ${REMOVE_AFTER_DAYS} days. You can adopt it again when it is back online.`,
 			item: probe.id,
 			collection: 'gp_probes',
