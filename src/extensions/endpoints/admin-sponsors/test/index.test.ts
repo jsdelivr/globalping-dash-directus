@@ -25,7 +25,7 @@ describe('/admin-sponsors endpoint', () => {
 	const insert = sinon.stub().resolves();
 	const databaseStub = sinon.stub().returns({ insert });
 	const database = databaseStub as unknown as EndpointExtensionContext['database'];
-	const githubAccountResolver = sinon.stub().callsFake(async (githubId: string) => ({ id: Number(githubId), login: 'jsDelivr' }));
+	const githubLoginResolver = sinon.stub().resolves('jsDelivr');
 	const endpointContext = {
 		database,
 		logger: { error: console.error },
@@ -41,7 +41,7 @@ describe('/admin-sponsors endpoint', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	createAdminSponsorsEndpoint(queryService, githubAccountResolver)(router, endpointContext);
+	createAdminSponsorsEndpoint(queryService, githubLoginResolver)(router, endpointContext);
 	app.use(router);
 
 	beforeEach(() => {
@@ -189,7 +189,6 @@ describe('/admin-sponsors endpoint', () => {
 		const body = {
 			type: 'payment',
 			githubId: '6191378',
-			githubLogin: 'JSDELIVR',
 			credits: 10_000,
 			amountInDollars: 5,
 		};
@@ -197,7 +196,7 @@ describe('/admin-sponsors endpoint', () => {
 
 		expect(response.status).to.equal(201);
 		expect(databaseStub.calledOnceWithExactly('gp_credits_additions')).to.equal(true);
-		expect(githubAccountResolver.calledOnceWithExactly('6191378', endpointContext)).to.equal(true);
+		expect(githubLoginResolver.calledOnceWithExactly('6191378', endpointContext)).to.equal(true);
 
 		expect(insert.firstCall.args[0]).to.deep.include({
 			github_id: '6191378',
@@ -214,7 +213,6 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).post('/manual-additions').send({
 			type: 'other',
 			githubId: '6191378',
-			githubLogin: 'JSDELIVR',
 			credits: 10_000,
 			comment: 'Customer support adjustment.',
 		});
@@ -234,7 +232,6 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).post('/manual-additions').send({
 			type: 'other',
 			githubId: '6191378',
-			githubLogin: 'JSDELIVR',
 			credits: 10_000,
 			comment: 'customer support adjustment',
 		});
