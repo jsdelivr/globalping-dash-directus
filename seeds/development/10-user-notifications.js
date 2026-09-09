@@ -13,10 +13,6 @@ export const seed = async (knex) => {
 		knex('gp_probes').where({ userId: user.id, isOutdated: true }).select('id', 'name', 'ip', 'hardwareDevice'),
 	]);
 
-	// used in outdated probe messages
-	const targetFirmware = process.env.TARGET_HW_DEVICE_FIRMWARE ?? 'v20.13.0';
-	const targetNodeVersion = process.env.TARGET_NODE_VERSION ?? 'v2.0';
-
 	// used to set status to archive on the last 40% of outdated probes
 	const startArchiveIndex = Math.floor(outdatedProbes.length * 0.6);
 
@@ -55,7 +51,7 @@ export const seed = async (knex) => {
 				status: index % 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
 				subject: probe.name ? `Probe ${probe.name} unassigned` : 'Probe unassigned',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
+				message: `Your probe **${probe.name}** with IP address **${probe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
 			}
 		)),
 		// your probe has been deleted message
@@ -67,7 +63,7 @@ export const seed = async (knex) => {
 				type: 'probe_unassigned',
 				collection: 'gp_probes',
 				subject: probe.name ? `Your probe ${probe.name} has been deleted` : 'Your probe has been deleted',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+				message: `Your probe **${probe.name}** with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			}
 		)),
 		// new probe adopted message
@@ -128,7 +124,7 @@ export const seed = async (knex) => {
 					item: probe.id,
 					collection: 'gp_probes',
 					type: 'outdated_firmware',
-					secondary_type: `${targetNodeVersion}_${targetFirmware}`,
+					secondary_type: 'v2.0_v22.22.3',
 					subject: probe.name ? `Your hardware probe ${probe.name} is running outdated firmware` : 'Your hardware probe is running outdated firmware',
 					message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 				};
@@ -141,7 +137,7 @@ export const seed = async (knex) => {
 				item: probe.id,
 				collection: 'gp_probes',
 				type: 'outdated_software',
-				secondary_type: targetNodeVersion,
+				secondary_type: 'v22.22.3',
 				subject: probe.name ? `The container running your probe ${probe.name} has outdated software` : 'Your probe container is running an outdated software version',
 				message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 			};
