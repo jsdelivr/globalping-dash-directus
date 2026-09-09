@@ -1,6 +1,6 @@
 export type AdoptedProbe = {
 	id: string;
-	userId: string;
+	account_id: string;
 	name: string | null;
 	ip: string | null;
 	status: string;

@@ -22,8 +22,8 @@ export const validateQuery = (query: { filter?: object; search?: object } = {}) 
 		const filterKeys = getKeysDeep(query.filter);
 		const dataFields = _.uniq(filterKeys).filter(key => !key.startsWith('_'));
 
-		if (dataFields.every(field => [ 'id', 'user_created', 'app_id' ].includes(field))) {
-			return; // Filter by "id" is required to not break the Directus UI. And "user_created" and "app_id" for Dashboard.
+		if (dataFields.every(field => [ 'id', 'user_created', 'app_id', 'account_id' ].includes(field))) {
+			return; // Filter by "id" is required to not break the Directus UI. And "user_created", "app_id" and "account_id" for Dashboard.
 		}
 
 		throw new FilteringError();

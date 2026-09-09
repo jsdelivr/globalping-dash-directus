@@ -1,76 +1,58 @@
 import type { OperationContext } from '@directus/extensions';
-import { LOW_CREDITS_DEFAULT_THRESHOLD } from '../../../../lib/src/notification-types.js';
-
-type CreditsRow = {
-	id: number;
-	user_id: string;
-	amount: number;
-	low_credits_notified: boolean;
-};
+import { getCandidates, notifyRecipients, saveNotifiedList } from '../repositories/directus.js';
+import type { NotifiedListUpdate, CandidateRow } from '../types.js';
 
 export const checkLowCredits = async (ctx: OperationContext): Promise<{ notified: string[]; reset: string[] }> => {
-	const { toNotify, toReset } = await findCreditsToUpdate(ctx);
-	await notifyAndFlipFlags(ctx, toNotify);
-	await resetFlags(ctx, toReset);
+	const candidates = await getCandidates(ctx);
+	const { toNotify, updates } = getUpdates(candidates);
+
+	await saveNotifiedList(ctx, updates);
+	await notifyRecipients(ctx, toNotify);
 
 	return {
-		notified: toNotify.map(r => r.user_id),
-		reset: toReset.map(r => r.user_id),
+		notified: toNotify.map(row => row.recipient),
+		reset: updates.filter(update => update.recipients.length === 0).map(update => String(update.id)),
 	};
 };
 
-const findCreditsToUpdate = async (ctx: OperationContext): Promise<{ toNotify: CreditsRow[]; toReset: CreditsRow[] }> => {
-	const rows = (await ctx.database.raw(`
-		SELECT id, user_id, amount, low_credits_notified
-		FROM (
-			SELECT
-				c.id,
-				c.user_id,
-				c.amount,
-				c.low_credits_notified,
-				COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(u.notification_preferences, '$.low_credits.parameter')) AS UNSIGNED), ?) AS threshold,
-				COALESCE(JSON_UNQUOTE(JSON_EXTRACT(u.notification_preferences, '$.low_credits.enabled')), 'true') AS low_credits_enabled
-			FROM gp_credits c
-			JOIN directus_users u ON u.id = c.user_id
-		) candidates
-		WHERE (
-				(low_credits_enabled != 'false' AND low_credits_notified = false AND amount <= threshold)
-				OR (low_credits_notified = true AND amount > threshold)
-			)
-	`, [ LOW_CREDITS_DEFAULT_THRESHOLD ]))[0] as CreditsRow[];
+// A recipient is added to the low_credits_notified list on low balance, and removed as soon as the balance is above their own
+// threshold again, so a later drop notifies them again.
+const getUpdates = (candidates: CandidateRow[]): { toNotify: CandidateRow[]; updates: NotifiedListUpdate[] } => {
+	const toNotify: CandidateRow[] = [];
+	const recipientsByAccount = new Map<number, { row: CandidateRow; recipients: string[] }>();
 
-	return {
-		toNotify: rows.filter(r => !r.low_credits_notified),
-		toReset: rows.filter(r => r.low_credits_notified),
-	};
+	for (const candidate of candidates) {
+		const entry = recipientsByAccount.get(candidate.id) ?? { row: candidate, recipients: [] };
+		recipientsByAccount.set(candidate.id, entry);
+
+		const isNotified = candidate.allNotifiedUsers.includes(candidate.recipient);
+
+		// The balance is above their threshold: the episode is over for them, so they leave the list.
+		if (candidate.amount > candidate.threshold) {
+			continue;
+		}
+
+		// They are already on the list: they stay in the list.
+		if (isNotified) {
+			entry.recipients.push(candidate.recipient);
+			continue;
+		}
+
+		// They turned the notification off: nothing to send, and nothing to remember.
+		if (!candidate.enabled) {
+			continue;
+		}
+
+		// The balance is low and they haven't been notified in this episode yet.
+		toNotify.push(candidate);
+		entry.recipients.push(candidate.recipient);
+	}
+
+	const updates = [ ...recipientsByAccount.values() ]
+		.filter(({ row, recipients }) => !isSameList(row.allNotifiedUsers, recipients))
+		.map(({ row, recipients }) => ({ id: row.id, recipients }));
+
+	return { toNotify, updates };
 };
 
-const notifyAndFlipFlags = async (ctx: OperationContext, toNotify: CreditsRow[]): Promise<void> => {
-	if (toNotify.length === 0) { return; }
-
-	const { database, services, getSchema } = ctx;
-	const schema = await getSchema();
-
-	await database.transaction(async (trx) => {
-		const { NotificationsService, ItemsService } = services;
-		const creditsService = new ItemsService('gp_credits', { schema, knex: trx });
-		const notificationsService = new NotificationsService({ schema, knex: trx });
-
-		await notificationsService.createMany(toNotify.map(row => ({
-			recipient: row.user_id,
-			type: 'low_credits',
-			subject: 'Your Globalping credits are running low',
-			message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
-		})));
-
-		await creditsService.updateMany(toNotify.map(r => r.id), { low_credits_notified: true });
-	});
-};
-
-const resetFlags = async (ctx: OperationContext, toReset: CreditsRow[]): Promise<void> => {
-	if (toReset.length === 0) { return; }
-
-	const { ItemsService } = ctx.services;
-	const creditsService = new ItemsService('gp_credits', { schema: await ctx.getSchema() });
-	await creditsService.updateMany(toReset.map(r => r.id), { low_credits_notified: false });
-};
+const isSameList = (a: string[], b: string[]) => a.length === b.length && a.every(item => b.includes(item));

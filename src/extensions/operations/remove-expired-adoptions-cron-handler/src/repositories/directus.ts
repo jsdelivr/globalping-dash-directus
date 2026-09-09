@@ -2,24 +2,11 @@ import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
 import { escapeMdSymbols, getIPSuffix, getProbeLink } from '../../../../lib/src/probe-name.js';
+import { sendNotification } from '../../../../lib/src/send-notification.js';
 import { REMOVE_AFTER_DAYS } from '../actions/remove-expired-probes.js';
 import type { AdoptedProbe } from '../types.js';
 
 const OFFLINE_PROBE_NOTIFICATION_TYPE = 'offline_probe';
-
-// The notifications hook cancels a create by throwing; for the sender that is a success, not an error.
-const createNotification = async (notification: Record<string, unknown>, { services, getSchema }: OperationContext) => {
-	const { NotificationsService } = services;
-	const notificationsService = new NotificationsService({ schema: await getSchema() });
-
-	try {
-		await notificationsService.createOne(notification);
-	} catch (error) {
-		if ((error as { code?: string }).code !== 'CANCELLED') {
-			throw error;
-		}
-	}
-};
 
 type OfflineNotification = {
 	item: string | null;
@@ -38,7 +25,7 @@ export const getOfflineAdoptions = async ({ services, getSchema }: OperationCont
 	const rows = await probesService.readByQuery({
 		filter: {
 			status: { _eq: 'offline' },
-			userId: { _nnull: true },
+			account_id: { _nnull: true },
 		},
 	});
 
@@ -59,14 +46,11 @@ export const getExistingNotifications = async (probes: AdoptedProbe[], { service
 		schema: await getSchema(),
 	});
 
-	const userIds = [ ...new Set(probes.map(probe => probe.userId)) ];
-
 	const result = await notificationsService.readByQuery({
 		fields: [ 'item', 'metadata', 'timestamp', 'recipient' ],
 		filter: {
 			type: { _eq: OFFLINE_PROBE_NOTIFICATION_TYPE },
 			collection: { _eq: 'gp_probes' },
-			recipient: { _in: userIds },
 			timestamp: { _gte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString() },
 		},
 	});
@@ -79,17 +63,17 @@ export const notifyAdoptions = async (probes: AdoptedProbe[], context: Operation
 		return [];
 	}
 
-	const probesByUser = _.groupBy(probes, 'userId');
+	const probesByAccount = _.groupBy(probes, 'account_id');
 	const ids: string[] = [];
 
-	await Bluebird.map(Object.entries(probesByUser), async ([ userId, userProbes ]) => {
-		if (userProbes.length === 1) {
-			await notifySingleProbe(userProbes[0]!, userId, context);
+	await Bluebird.map(Object.entries(probesByAccount), async ([ accountId, accountProbes ]) => {
+		if (accountProbes.length === 1) {
+			await notifySingleProbe(accountProbes[0]!, accountId, context);
 		} else {
-			await notifyMultipleProbes(userProbes, userId, context);
+			await notifyMultipleProbes(accountProbes, accountId, context);
 		}
 
-		ids.push(...userProbes.map(p => p.id));
+		ids.push(...accountProbes.map(probe => probe.id));
 	}, { concurrency: 4 });
 
 	return ids;
@@ -101,9 +85,9 @@ const formatExpirationDate = (lastSyncDate: Date) => {
 	return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const notifySingleProbe = async (probe: AdoptedProbe, userId: string, context: OperationContext) => {
-	await createNotification({
-		recipient: userId,
+const notifySingleProbe = async (probe: AdoptedProbe, accountId: string, context: OperationContext) => {
+	await sendNotification({
+		account: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
@@ -112,11 +96,11 @@ const notifySingleProbe = async (probe: AdoptedProbe, userId: string, context: O
 	}, context);
 };
 
-const notifyMultipleProbes = async (probes: AdoptedProbe[], userId: string, context: OperationContext) => {
+const notifyMultipleProbes = async (probes: AdoptedProbe[], accountId: string, context: OperationContext) => {
 	const lines = probes.map(probe => `- ${probe.name ? `[${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`}${getIPSuffix(probe.ip)} - **${formatExpirationDate(probe.lastSyncDate)}**`);
 
-	await createNotification({
-		recipient: userId,
+	await sendNotification({
+		account: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(p => p.id),
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
@@ -134,8 +118,8 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], context: Operation
 	});
 
 	await Bluebird.map(probes, async (probe) => {
-		await createNotification({
-			recipient: probe.userId,
+		await sendNotification({
+			account: probe.account_id,
 			type: 'probe_unassigned',
 			subject: 'Your probe has been deleted',
 			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'}${getIPSuffix(probe.ip)} has been deleted from your account due to being offline for more than ${REMOVE_AFTER_DAYS} days. You can adopt it again when it is back online.`,
@@ -165,7 +149,7 @@ export const deleteProbes = async ({ services, getSchema }: OperationContext): P
 		filter: {
 			status: { _eq: 'offline' },
 			lastSyncDate: { _lte: new Date(Date.now() - REMOVE_AFTER_DAYS * 24 * 60 * 60 * 1000).toISOString() },
-			userId: { _null: true },
+			account_id: { _null: true },
 		},
 	}, { emitEvents: false }) as string[];
 	return deletedProbesIds;

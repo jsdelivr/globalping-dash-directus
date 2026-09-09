@@ -4,7 +4,11 @@ import _ from 'lodash';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { User } from '../types.ts';
-import { randomIP } from '../utils.ts';
+import { getAdoptionCode, prepareMockProbeByIp, randomIP } from '../utils.ts';
+
+test.beforeEach(async () => {
+	await prepareMockProbeByIp('2.2.2.2');
+});
 
 test.afterEach(async () => {
 	await sql('gp_probes').where({ ip: '2.2.2.2' }).delete();
@@ -36,6 +40,7 @@ const addUserProbes = async (user: User) => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',
@@ -65,6 +70,7 @@ const addUserProbes = async (user: User) => {
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',
@@ -113,12 +119,10 @@ const addProbeWithoutUser = async (probeFields: Partial<typeof defaultProbe> = {
 };
 
 const addProbeWithUser = async (user2: User) => {
-	await sql('gp_probes').insert({
-		...defaultProbe,
-		userId: user2.id,
-	});
+	const owner = { userId: user2.id, account_id: user2.account_id };
+	await sql('gp_probes').insert({ ...defaultProbe, ...owner });
 
-	return { ...defaultProbe, userId: user2.id };
+	return { ...defaultProbe, ...owner };
 };
 
 const addOfflineProbeWithSameAsn = async (user: User) => {
@@ -129,6 +133,7 @@ const addOfflineProbeWithSameAsn = async (user: User) => {
 		uuid: 'outdatedUuid',
 		status: 'offline',
 		userId: user.id,
+		account_id: user.account_id,
 	});
 };
 
@@ -148,7 +153,7 @@ test('Software probe adoption (token)', async ({ page, user }) => {
 
 	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
 		probe: _.omit(probe, 'id'),
-		user: { id: user.id },
+		account: { id: user.account_id },
 	}, {
 		headers: {
 			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,
@@ -189,7 +194,7 @@ test('Software probe adoption (code)', async ({ page }) => {
 	await page.getByLabel('Adopt the probe manually').click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
@@ -205,7 +210,7 @@ test('Hardware probe adoption', async ({ page }) => {
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
@@ -220,7 +225,7 @@ test('Probe adoption of non-synced probe', async ({ page }) => {
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
-	await page.getByTestId('adoption-code').locator('input').first().fill('111111');
+	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
@@ -319,4 +324,3 @@ test('Adoption of a probe with old node version', async ({ page, user }) => {
 	await expect(page.getByText('New probe adopted').first()).toBeVisible();
 	await expect(page.getByText('outdated software').first()).toBeVisible();
 });
-

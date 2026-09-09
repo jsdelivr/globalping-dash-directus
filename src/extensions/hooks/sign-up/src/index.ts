@@ -3,6 +3,7 @@ import { defineHook } from '@directus/extensions-sdk';
 import { generateBytes } from '../../../lib/src/bytes.js';
 import { releaseDeprecatedPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
+import { sendNotification } from '../../../lib/src/send-notification.js';
 
 export type User = {
 	provider: string;
@@ -78,8 +79,8 @@ const fulfillFirstNameAndLastName = (user: User) => {
 };
 
 const fulfillOrganizations = async (userId: string, user: User, context: HookExtensionContext) => {
-	const githubOrgs = await getGithubOrganizations(user, context);
-	await updateUser(userId, { github_organizations: githubOrgs }, context);
+	const organizations = await getGithubOrganizations(user, context);
+	await updateUser(userId, { github_organizations: organizations.map(org => org.login) }, context);
 };
 
 const updateUser = async (userId: string, updateObject: Partial<User>, context: HookExtensionContext) => {
@@ -148,17 +149,10 @@ const fulfillUserType = async (userId: string, user: User, context: HookExtensio
 };
 
 const sendWelcomeNotification = async (userId: string, _user: User, context: HookExtensionContext) => {
-	const { services, getSchema } = context;
-	const { NotificationsService } = services;
-
-	const notificationsService = new NotificationsService({
-		schema: await getSchema(),
-	});
-
-	await notificationsService.createOne({
+	await sendNotification({
 		recipient: userId,
 		type: 'welcome',
 		subject: 'Welcome to Globalping 🎉',
 		message: 'As a registered user, you get 500 free tests per hour. Get more by hosting probes or sponsoring us and supporting the development of the project!',
-	});
+	}, context);
 };

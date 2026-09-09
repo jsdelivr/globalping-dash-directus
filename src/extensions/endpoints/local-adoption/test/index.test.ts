@@ -9,6 +9,7 @@ describe('local-adoption endpoint', () => {
 	const sandbox = sinon.createSandbox();
 
 	let knexQueryBuilder: any;
+	let accountsQueryBuilder: any;
 	let databaseStub: any;
 	let updateOne: any;
 	let readOne: any;
@@ -76,7 +77,17 @@ describe('local-adoption endpoint', () => {
 		knexQueryBuilder.transacting.returns(knexQueryBuilder);
 		knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
 
-		databaseStub = sandbox.stub().returns(knexQueryBuilder);
+		accountsQueryBuilder = {
+			where: sandbox.stub(),
+			first: sandbox.stub().callsFake((field: string) => field === 'user'
+				? Promise.resolve({ user: 'user-id' })
+				: Promise.resolve({ id: 'account-id' })),
+		};
+
+		accountsQueryBuilder.where.returns(accountsQueryBuilder);
+
+		databaseStub = sandbox.stub().callsFake((table: string) => table === 'gp_accounts' ? accountsQueryBuilder : knexQueryBuilder);
+		databaseStub.raw = sandbox.stub().resolves([ [{ id: 'account-id' }] ]);
 		databaseStub.transaction = sandbox.stub().callsFake(async (callback: any) => callback(knexQueryBuilder));
 
 		updateOne = sandbox.stub();
@@ -157,7 +168,7 @@ describe('local-adoption endpoint', () => {
 				},
 			]);
 
-			expect(knexQueryBuilder.whereNull.calledWith('userId')).to.equal(true);
+			expect(knexQueryBuilder.whereNull.calledWith('account_id')).to.equal(true);
 			expect(knexQueryBuilder.whereNotNull.calledWith('localAdoptionServer')).to.equal(true);
 			expect(knexQueryBuilder.where.calledWith('status', 'ready')).to.equal(true);
 		});
@@ -201,13 +212,14 @@ describe('local-adoption endpoint', () => {
 			expect(updateOne.args[0]?.[1]).to.deep.include({
 				name: 'probe-us-new-york-01',
 				userId: 'user-id',
+				account_id: 'account-id',
 				ip: clientIp,
 			});
 
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				recipient: 'user-id',
+				account: 'account-id',
 				subject: 'New probe adopted',
 				message: 'A new probe [probe-us-new-york-01](/probes/probe-1) with IP address **192.168.1.10** has been assigned to your account.',
 			});
@@ -221,6 +233,7 @@ describe('local-adoption endpoint', () => {
 			knexQueryBuilder.first.onSecondCall().resolves({
 				...probeData,
 				userId: 'user-id',
+				account_id: 'account-id',
 			});
 
 			const res = await request(app)

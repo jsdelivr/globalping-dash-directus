@@ -12,8 +12,16 @@ describe('/sync-github-data endpoint', () => {
 	const updateByQuery = sinon.stub();
 	const createNotification = sinon.stub();
 	const readOne = sinon.stub();
+	const readByQuery = sinon.stub();
+	const itemsCreateOne = sinon.stub();
+	const itemsUpdateOne = sinon.stub();
+	const deleteMany = sinon.stub();
 	const itemsServiceStub = sinon.stub().returns({
 		readOne,
+		readByQuery,
+		createOne: itemsCreateOne,
+		updateOne: itemsUpdateOne,
+		deleteMany,
 	});
 	const usersServiceStub = sinon.stub().returns({
 		updateOne,
@@ -69,9 +77,14 @@ describe('/sync-github-data endpoint', () => {
 		]);
 
 		readOne.reset();
+		readByQuery.reset();
+		readByQuery.resolves([]);
+		itemsCreateOne.resolves('created-id');
+		deleteMany.resolves();
 
 		readOne.resolves({
-			external_identifier: 'github-id',
+			id: 'directus-id',
+			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
@@ -83,18 +96,17 @@ describe('/sync-github-data endpoint', () => {
 		};
 	});
 
-	after(() => {
+	afterEach(() => {
 		nock.cleanAll();
 	});
 
 	it('should sync GitHub data', async () => {
-		nock('https://api.github.com').get('/user/github-id').reply(200, {
+		nock('https://api.github.com').get('/user/123456').reply(200, {
 			login: 'new-username',
 		});
 
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{
-			login: 'new-org',
-		}]);
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({
 			userId: 'directus-id',
@@ -123,13 +135,12 @@ describe('/sync-github-data endpoint', () => {
 			admin: true,
 		};
 
-		nock('https://api.github.com').get('/user/github-id').reply(200, {
+		nock('https://api.github.com').get('/user/123456').reply(200, {
 			login: 'new-username',
 		});
 
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{
-			login: 'new-org',
-		}]);
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({
 			userId: 'directus-id',
@@ -153,18 +164,19 @@ describe('/sync-github-data endpoint', () => {
 	});
 
 	it('should work if current github data is null', async () => {
-		nock('https://api.github.com').get('/user/github-id').reply(200, {
+		nock('https://api.github.com').get('/user/123456').reply(200, {
 			login: 'new-username',
 		});
 
-		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, [{
-			login: 'new-org',
-		}]);
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		readOne.resolves({
-			external_identifier: 'github-id',
+			id: 'directus-id',
+			external_identifier: '123456',
 			github_username: null,
 			github_organizations: [],
+			github_oauth_token: 'user-github-token',
 		});
 
 		const res = await request(app).post('/').send({
@@ -188,77 +200,238 @@ describe('/sync-github-data endpoint', () => {
 		});
 	});
 
-	it('should retry with default github token if user token failed', async () => {
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get('/user/github-id')
-			.reply(401);
+	describe('org sync', () => {
+		// The lists the sync reads: the orgs it already knows by github id, and the memberships of the user.
+		const seedDirectus = ({ orgs = [], memberships = [] }: { orgs?: unknown[]; memberships?: unknown[] }) => {
+			readByQuery.reset();
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id')
-			.reply(200, {
-				login: 'new-username',
+			readByQuery.callsFake(async (query: { filter?: { github_id?: unknown; user?: unknown } }) => {
+				if (query?.filter?.github_id) { return orgs; }
+
+				if (query?.filter?.user) { return memberships; }
+
+				return [];
+			});
+		};
+
+		const seedGithub = (memberships: unknown[], publicOrgs: unknown[] = []) => {
+			nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
+			nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, memberships);
+			nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, publicOrgs);
+		};
+
+		const sync = () => request(app).post('/').send({ userId: 'directus-id' });
+
+		const createdMemberships = () => itemsCreateOne.args.map(args => args[0]).filter((payload: any) => payload.user);
+
+		const createdOrgs = () => itemsCreateOne.args.map(args => args[0]).filter((payload: any) => payload.github_id);
+
+		it('should create the org and the membership for a new org', async () => {
+			seedDirectus({});
+			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			expect(createdOrgs()[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
+			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'admin' });
+		});
+
+		it('should promote a member to admin', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
+				memberships: [{ id: 'membership-1', role: 'member', org: { id: 'org-1', github_id: '1' } }],
 			});
 
+			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(itemsUpdateOne.args[0]).to.deep.equal([ 'membership-1', { role: 'admin' }]);
+			expect(itemsCreateOne.callCount).to.equal(0);
+		});
+
+		it('should never demote an admin', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
+				memberships: [{ id: 'membership-1', role: 'admin', org: { id: 'org-1', github_id: '1' } }],
+			});
+
+			seedGithub([{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(itemsUpdateOne.callCount).to.equal(0);
+			expect(itemsCreateOne.callCount).to.equal(0);
+		});
+
+		it('should remove a membership that is gone from GitHub', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'jsdelivr', github_id: '1' }],
+				memberships: [
+					{ id: 'membership-1', role: 'member', org: { id: 'org-1', github_id: '1' } },
+					{ id: 'membership-2', role: 'admin', org: { id: 'org-2', github_id: '2' } },
+				],
+			});
+
+			seedGithub([{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-2' ] ]);
+		});
+
+		it('should drop an org the user left from their selected list', async () => {
+			readOne.resolves({
+				id: 'directus-id',
+				external_identifier: '123456',
+				github_username: 'new-username',
+				github_organizations: [ 'jsdelivr' ],
+				github_oauth_token: 'user-github-token',
+				selected_orgs: [ 'org-1', 'org-2' ],
+			});
+
+			seedDirectus({
+				orgs: [],
+				memberships: [{ id: 'membership-1', role: 'member', org: { id: 'org-1', github_id: '1' } }],
+			});
+
+			seedGithub([]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-1' ] ]);
+			expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { selected_orgs: [ 'org-2' ] }, { emitEvents: false }]);
+		});
+
+		it('should add an org that only the public list shows as a member', async () => {
+			// An org restricting our OAuth app is missing from the memberships list, so it comes without a role.
+			seedDirectus({});
+			seedGithub([], [{ id: 5, login: 'restricted-org' }]);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			expect(createdOrgs()[0]).to.deep.include({ name: 'restricted-org', github_id: '5' });
+			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'member' });
+			expect(res.body.github_organizations).to.deep.equal([ 'restricted-org' ]);
+		});
+
+		it('should prefer the membership role over the public list', async () => {
+			seedDirectus({});
+
+			seedGithub(
+				[{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }],
+				[{ id: 1, login: 'jsdelivr' }],
+			);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(createdMemberships()).to.deep.equal([{ org: 'created-id', user: 'directus-id', role: 'admin' }]);
+		});
+
+		it('should ignore a membership that is not active', async () => {
+			seedDirectus({});
+			seedGithub([{ state: 'pending', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			expect(itemsCreateOne.callCount).to.equal(0);
+			expect(res.body.github_organizations).to.deep.equal([]);
+		});
+
+		it('should treat a billing manager as a member', async () => {
+			seedDirectus({});
+			seedGithub([{ state: 'active', role: 'billing_manager', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'member' });
+		});
+
+		it('should update the org name when it changed on GitHub', async () => {
+			seedDirectus({
+				orgs: [{ id: 'org-1', name: 'old-name', github_id: '1' }],
+				memberships: [{ id: 'membership-1', role: 'admin', org: { id: 'org-1', github_id: '1' } }],
+			});
+
+			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(itemsUpdateOne.args[0]).to.deep.equal([ 'org-1', { name: 'jsdelivr' }]);
+		});
+	});
+
+	it('should fail without updating anything if the username request is rejected', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get('/user/orgs')
+			.get('/user/123456')
 			.reply(401);
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id/orgs')
-			.reply(200, [{
-				login: 'new-org',
-			}]);
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({
 			userId: 'directus-id',
 		});
 
-		expect(nock.isDone()).to.equal(true);
-		expect(res.status).to.equal(200);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
+		expect(updateOne.callCount).to.equal(0);
 	});
 
-	it('should use default github token if user token is null', async () => {
+	it('should fail without updating anything if the user token is rejected', async () => {
+		nock('https://api.github.com').get('/user/123456').reply(200, {
+			login: 'new-username',
+		});
+
+		nock('https://api.github.com')
+			.matchHeader('Authorization', 'Bearer user-github-token')
+			.get('/user/memberships/orgs?per_page=100&page=1')
+			.reply(401);
+
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
+
+		const res = await request(app).post('/').send({
+			userId: 'directus-id',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
+		expect(updateOne.callCount).to.equal(0);
+	});
+
+	it('should fail without updating anything if the user has no token', async () => {
 		readOne.resolves({
-			external_identifier: 'github-id',
+			id: 'directus-id',
+			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
 			github_oauth_token: null,
 		});
 
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id')
-			.reply(200, {
-				login: 'new-username',
-			});
-
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer default-github-token')
-			.get('/user/github-id/orgs')
-			.reply(200, [{
-				login: 'new-org',
-			}]);
+		nock('https://api.github.com').get('/user/123456').reply(401);
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(401);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(401);
 
 		const res = await request(app).post('/').send({
 			userId: 'directus-id',
 		});
 
-		expect(nock.isDone()).to.equal(true);
-		expect(res.status).to.equal(200);
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
+		expect(updateOne.callCount).to.equal(0);
 	});
 
 	it('should not call update if data is the same', async () => {
-		nock('https://api.github.com').get('/user/github-id').reply(200, {
+		nock('https://api.github.com').get('/user/123456').reply(200, {
 			login: 'old-username',
 		});
 
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{
-			login: 'old-org',
-		}]);
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'old-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({
 			userId: 'directus-id',
@@ -279,7 +452,7 @@ describe('/sync-github-data endpoint', () => {
 	it('should deprecate an invalid default_prefix and notify the user', async () => {
 		readOne.resolves({
 			id: 'directus-id',
-			external_identifier: 'github-id',
+			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
@@ -288,8 +461,9 @@ describe('/sync-github-data endpoint', () => {
 			public_probes: true,
 		});
 
-		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'new-username' });
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'new-org' }]);
+		nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({ userId: 'directus-id' });
 
@@ -326,7 +500,7 @@ describe('/sync-github-data endpoint', () => {
 	it('should update an invalid default_prefix without moving it to deprecated_prefix for `public_probes: false`', async () => {
 		readOne.resolves({
 			id: 'directus-id',
-			external_identifier: 'github-id',
+			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
@@ -335,8 +509,9 @@ describe('/sync-github-data endpoint', () => {
 			public_probes: false,
 		});
 
-		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'new-username' });
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'new-org' }]);
+		nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'new-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({ userId: 'directus-id' });
 
@@ -360,7 +535,7 @@ describe('/sync-github-data endpoint', () => {
 	it('should not deprecate when default_prefix is still valid', async () => {
 		readOne.resolves({
 			id: 'directus-id',
-			external_identifier: 'github-id',
+			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
@@ -368,8 +543,9 @@ describe('/sync-github-data endpoint', () => {
 			deprecated_prefix: null,
 		});
 
-		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'old-username' });
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'old-org' }]);
+		nock('https://api.github.com').get('/user/123456').reply(200, { login: 'old-username' });
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'old-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({ userId: 'directus-id' });
 
@@ -382,7 +558,7 @@ describe('/sync-github-data endpoint', () => {
 	it('should not deprecate when default_prefix is an unchanged org and only the username changed', async () => {
 		readOne.resolves({
 			id: 'directus-id',
-			external_identifier: 'github-id',
+			external_identifier: '123456',
 			github_username: 'old-username',
 			github_organizations: [ 'my-org' ],
 			github_oauth_token: 'user-github-token',
@@ -390,8 +566,9 @@ describe('/sync-github-data endpoint', () => {
 			deprecated_prefix: null,
 		});
 
-		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'new-username' });
-		nock('https://api.github.com').get('/user/orgs').reply(200, [{ login: 'my-org' }]);
+		nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'my-org' } }]);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
 
 		const res = await request(app).post('/').send({ userId: 'directus-id' });
 

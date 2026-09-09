@@ -21,6 +21,10 @@ describe('Sign-in hook', () => {
 	} as any;
 	const itemsService = {
 		readOne: sinon.stub(),
+		readByQuery: sinon.stub(),
+		createOne: sinon.stub(),
+		updateOne: sinon.stub(),
+		deleteMany: sinon.stub(),
 	};
 	const usersService = {
 		updateOne: sinon.stub(),
@@ -52,7 +56,7 @@ describe('Sign-in hook', () => {
 		},
 		getSchema: () => Promise.resolve({}),
 		logger: {
-			error: () => {},
+			error: sinon.stub(),
 		},
 	} as any;
 
@@ -62,7 +66,21 @@ describe('Sign-in hook', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		itemsService.readByQuery.resolves([]);
+		itemsService.createOne.resolves('created-id');
+		itemsService.deleteMany.resolves();
 	});
+
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
+	// The sync runs in the background, so tests wait for its observable side effects instead of awaiting it.
+	const waitFor = async (condition: () => boolean) => {
+		for (let i = 0; i < 100 && !condition(); i++) {
+			await new Promise(resolve => setTimeout(resolve, 5));
+		}
+	};
 
 	after(() => {
 		nock.cleanAll();
@@ -112,51 +130,60 @@ describe('Sign-in hook', () => {
 		});
 	});
 
-	describe('auth.login', () => {
-		it('should sync GitHub username and organizations if data is different', async () => {
-			const userId = '123';
-			const githubId = '456';
+	describe('auth.jwt background sync', () => {
+		const loginMeta = { user: '123', provider: 'github' };
 
-			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+		it('should sync orgs, memberships and the organizations list on login', async () => {
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
-			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => usersService.updateOne.callCount === 1);
 
-			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.calledWith('123', {}, { emitEvents: false })).to.equal(true);
 			expect(nock.isDone()).to.equal(true);
-			expect(usersService.updateOne.callCount).to.equal(1);
+
+			// The org and the membership are created.
+			expect(itemsService.createOne.args[0]?.[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
+			expect(itemsService.createOne.args[1]?.[0]).to.deep.include({ org: 'created-id', user: '123', role: 'admin' });
+
+			// The legacy organizations list is updated.
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
 		});
 
-		it('should not update organizations if it is the same', async () => {
-			const userId = '123';
-			const githubId = '456';
+		it('should not update the organizations list if it is the same', async () => {
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
 
-			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
+			itemsService.readByQuery.onFirstCall().resolves([{ id: 'org-id', name: 'jsdelivr', github_id: '1' }]);
+			itemsService.readByQuery.onSecondCall().resolves([{ id: 'membership-id', role: 'member', org: { github_id: '1' } }]);
+			itemsService.readByQuery.onThirdCall().resolves([{ id: 'membership-id', role: 'member', org: { github_id: '1' } }]);
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
-			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => nock.isDone());
 
-			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
 			expect(nock.isDone()).to.equal(true);
+			expect(itemsService.createOne.callCount).to.equal(0);
 			expect(usersService.updateOne.callCount).to.equal(0);
 		});
 
-		it('should deprecate an invalid default_prefix on login and notify the user', async () => {
+		it('should deprecate an invalid default_prefix and notify the user', async () => {
 			itemsService.readOne.resolves({
 				id: '123',
 				external_identifier: '456',
@@ -170,15 +197,17 @@ describe('Sign-in hook', () => {
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
 			hook(events, context);
 
-			await callbacks.action['auth.login']?.({ user: '123', provider: 'github' });
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => notificationsService.createOne.callCount === 1);
 
 			expect(nock.isDone()).to.equal(true);
-			expect(usersService.updateOne.callCount).to.equal(1);
 
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', {
 				default_prefix: 'newUsername',
@@ -191,67 +220,48 @@ describe('Sign-in hook', () => {
 			});
 		});
 
-		it('should not deprecate when default_prefix is a still-valid org on login', async () => {
-			itemsService.readOne.resolves({
-				id: '123',
-				external_identifier: '456',
-				github_username: 'newUsername',
-				github_organizations: [ 'jsdelivr' ],
-				github_oauth_token: 'user-github-token',
-				default_prefix: 'jsdelivr',
-				deprecated_prefix: null,
-			});
+		it('should log the error if the user token is invalid', async () => {
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
-
-			hook(events, context);
-
-			await callbacks.action['auth.login']?.({ user: '123', provider: 'github' });
-
-			expect(nock.isDone()).to.equal(true);
-			expect(usersService.updateOne.callCount).to.equal(0);
-			expect(usersService.updateByQuery.callCount).to.equal(0);
-			expect(notificationsService.createOne.callCount).to.equal(0);
-		});
-
-		it('should fallback to default github token if user token is invalid', async () => {
-			const userId = '123';
-			const githubId = '456';
-
-			itemsService.readOne.resolves({ id: userId, external_identifier: githubId, github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
-
-			nock('https://api.github.com')
-				.matchHeader('Authorization', 'Bearer user-github-token')
-				.get(`/user/orgs`)
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
 				.reply(401);
 
-			nock('https://api.github.com')
-				.matchHeader('Authorization', 'Bearer default-github-token')
-				.get(`/user/${githubId}/orgs`)
-				.reply(200, [{ login: 'jsdelivr' }]);
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, [{ id: 1, login: 'jsdelivr' }]);
 
 			hook(events, context);
 
-			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
+			const payload = await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => context.logger.error.callCount === 1);
 
-			expect(nock.isDone()).to.equal(true);
+			// The token is still issued, the failure is only logged.
+			expect(payload).to.deep.include({ id: '123' });
+			expect(context.logger.error.args[0]?.[0].message).to.equal('Failed to get the GitHub data (401). Please sign out and sign in again.');
+			expect(usersService.updateOne.callCount).to.equal(0);
 		});
 
-		it('should send error if there is no enough data to check username', async () => {
-			const userId = '123';
-
+		it('should log the error if there is not enough data to sync', async () => {
 			itemsService.readOne.resolves({ external_identifier: null });
 
 			hook(events, context);
 
-			const error = await callbacks.action['auth.login']?.({ user: userId, provider: 'github' }).catch(err => err);
-			expect(error.message).to.equal('Not enough data to sync with GitHub');
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => context.logger.error.callCount === 1);
 
-			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(context.logger.error.args[0]?.[0].message).to.equal('Not enough data to sync with GitHub');
+		});
+
+		it('should not sync for a non-github provider', async () => {
+			itemsService.readOne.resolves({ id: '123', user_type: 'member' });
+
+			hook(events, context);
+
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, { user: '123', provider: 'default' });
+			await new Promise(resolve => setTimeout(resolve, 50));
+
+			// Only the claims read happened, no sync read with emitEvents: false.
+			expect(itemsService.readOne.calledWith('123', {}, { emitEvents: false })).to.equal(false);
 		});
 	});
 
@@ -329,6 +339,24 @@ describe('Sign-in hook', () => {
 
 			expect(itemsService.readOne.callCount).to.equal(1);
 			expect(itemsService.readOne.args[0]).to.deep.equal([ 'user-with-user-type' ]);
+		});
+
+		it('should add user_account_id to payload', async () => {
+			const payload = { id: '123' };
+			const meta = { user: 'user-with-account' };
+
+			itemsService.readOne.resolves({
+				id: 'user-id',
+				account: [ 'account-id' ],
+			});
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
+			expect(result).to.deep.equal({
+				...payload,
+				user_account_id: 'account-id',
+			});
 		});
 	});
 });

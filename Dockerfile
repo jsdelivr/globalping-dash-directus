@@ -11,6 +11,7 @@ COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoint
 COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints/applications/
 COPY src/extensions/endpoints/city-autocomplete/package.json src/extensions/endpoints/city-autocomplete/
 COPY src/extensions/endpoints/credits-timeline/package.json src/extensions/endpoints/credits-timeline/
+COPY src/extensions/endpoints/e2e-mocks/package.json src/extensions/endpoints/e2e-mocks/
 COPY src/extensions/endpoints/email-unsubscribe/package.json src/extensions/endpoints/email-unsubscribe/
 COPY src/extensions/endpoints/local-adoption/package.json src/extensions/endpoints/local-adoption/
 COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/metadata/
@@ -22,6 +23,8 @@ COPY src/extensions/hooks/cors/package.json src/extensions/hooks/cors/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/
 COPY src/extensions/hooks/elastic-apm/package.json src/extensions/hooks/elastic-apm/
 COPY src/extensions/hooks/email-sender/package.json src/extensions/hooks/email-sender/
+COPY src/extensions/hooks/gp-org-members/package.json src/extensions/hooks/gp-org-members/
+COPY src/extensions/hooks/gp-orgs/package.json src/extensions/hooks/gp-orgs/
 COPY src/extensions/hooks/gp-tokens/package.json src/extensions/hooks/gp-tokens/
 COPY src/extensions/hooks/location-overrides/package.json src/extensions/hooks/location-overrides/
 COPY src/extensions/hooks/notifications/package.json src/extensions/hooks/notifications/
@@ -37,6 +40,7 @@ COPY src/extensions/interfaces/visible-token/package.json src/extensions/interfa
 COPY src/extensions/lib/package.json src/extensions/lib/
 COPY src/extensions/modules/probes-adapter/package.json src/extensions/modules/probes-adapter/
 COPY src/extensions/operations/adopted-probes-credits-cron-handler/package.json src/extensions/operations/adopted-probes-credits-cron-handler/
+COPY src/extensions/operations/check-members-cron-handler/package.json src/extensions/operations/check-members-cron-handler/
 COPY src/extensions/operations/check-outdated-firmware-cron-handler/package.json src/extensions/operations/check-outdated-firmware-cron-handler/
 COPY src/extensions/operations/gh-webhook-handler/package.json src/extensions/operations/gh-webhook-handler/
 COPY src/extensions/operations/low-credits-cron-handler/package.json src/extensions/operations/low-credits-cron-handler/

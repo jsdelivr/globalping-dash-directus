@@ -9,6 +9,8 @@ import endpoint from '../src/index.js';
 describe('/applications endpoint', () => {
 	const countStub = sinon.stub();
 	const offsetStub = sinon.stub();
+	const rawStub = sinon.stub();
+	const firstStub = sinon.stub();
 
 	const database = new Proxy(() => database, {
 		get: (_target, property) => {
@@ -16,6 +18,10 @@ describe('/applications endpoint', () => {
 				return countStub;
 			} else if (property === 'offset') {
 				return offsetStub;
+			} else if (property === 'raw') {
+				return rawStub;
+			} else if (property === 'first') {
+				return firstStub;
 			}
 
 			return database;
@@ -45,6 +51,8 @@ describe('/applications endpoint', () => {
 		sinon.resetHistory();
 		countStub.resolves([{ total: 0 }]);
 		offsetStub.resolves([]);
+		rawStub.resolves([ [{ id: 'account-id' }] ]);
+		firstStub.resolves({ id: 'account-id' });
 
 		accountability = {
 			user: 'user-id',
@@ -107,6 +115,48 @@ describe('/applications endpoint', () => {
 
 		expect(res.status).to.equal(200);
 		expect(res.body).to.deep.equal({ applications: [], total: 0 });
+	});
+
+	it('should accept a request with accountId', async () => {
+		const res = await request(app).get('/').query({
+			accountId: 'account-id',
+		});
+
+		expect(res.status).to.equal(200);
+	});
+
+	it('should reject a request for an account the user has no access to', async () => {
+		rawStub.resolves([ [] ]);
+
+		const res = await request(app).get('/').query({
+			accountId: 'foreign-account-id',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('You can not access this account.');
+	});
+
+	it('should reject a request with both userId and accountId', async () => {
+		const res = await request(app).get('/').query({
+			userId: 'user-id',
+			accountId: 'account-id',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.include('contains a conflict');
+	});
+
+	it('should accept admin request for all accounts', async () => {
+		accountability = {
+			user: 'admin-id',
+			admin: true,
+		};
+
+		const res = await request(app).get('/').query({
+			accountId: 'all',
+		});
+
+		expect(res.status).to.equal(200);
 	});
 
 	it('should accept admin request for all users', async () => {

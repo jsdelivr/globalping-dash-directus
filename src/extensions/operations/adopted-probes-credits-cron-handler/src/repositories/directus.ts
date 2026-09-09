@@ -5,29 +5,21 @@ type AdoptedProbe = {
 	name: string | null;
 	ip: string;
 	onlineTimesToday: number;
-	userId: string;
+	githubId: string | null;
 };
 
-type User = {
-	id: string;
-	external_identifier: string;
-};
+// The additions are stored per github id, so the owner's one comes with the probes: a user account resolves to the user, an org
+// account to the org.
+export const getAdoptedProbes = async ({ database }: OperationContext) => {
+	const [ rows ] = await database.raw(`
+		SELECT p.id, p.name, p.ip, p.onlineTimesToday, COALESCE(u.external_identifier, o.github_id) AS githubId
+		FROM gp_probes p
+		JOIN gp_accounts a ON a.id = p.account_id
+		LEFT JOIN directus_users u ON a.user = u.id
+		LEFT JOIN gp_orgs o ON a.org = o.id
+	`) as [AdoptedProbe[]];
 
-export const getAdoptedProbes = async ({ services, getSchema }: OperationContext) => {
-	const { ItemsService } = services;
-
-	const itemsService = new ItemsService('gp_probes', {
-		schema: await getSchema(),
-	});
-
-	const result = await itemsService.readByQuery({
-		filter: {
-			userId: {
-				_nnull: true,
-			},
-		},
-	}) as AdoptedProbe[];
-	return result;
+	return rows;
 };
 
 export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services, getSchema, env }: OperationContext) => {
@@ -45,15 +37,8 @@ export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services,
 		schema: await getSchema(),
 	});
 
-	const usersService = new ItemsService('directus_users', {
-		schema: await getSchema(),
-	});
-
-	const users = await usersService.readMany(adoptedProbes.map(({ userId }) => userId)) as User[];
-	const usersMap = new Map(users.map(user => [ user.id, user ]));
-
-	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ id, userId, ip, name }) => ({
-		github_id: usersMap.get(userId)?.external_identifier,
+	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ id, githubId, ip, name }) => ({
+		github_id: githubId,
 		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
 		reason: 'adopted_probe',
 		meta: {

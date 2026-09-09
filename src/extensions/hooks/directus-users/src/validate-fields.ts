@@ -2,56 +2,14 @@ import { createError } from '@directus/errors';
 import type { HookExtensionContext } from '@directus/extensions';
 import type { EventContext } from '@directus/types';
 import Joi from 'joi';
-import { getNotificationType, joiConfigurableNotificationTypeKey } from '../../../lib/src/notification-types.js';
-import { getDirectusUsers } from './repositories/directus.js';
+import { joiNotificationPreferences } from '../../../lib/src/notification-types.js';
+import { getDirectusUsers, getMembershipOrgIds } from './repositories/directus.js';
 
 export const payloadError = (message: string) => new (createError('INVALID_PAYLOAD_ERROR', message, 400))();
 
-const parameterSchema = Joi.number().strict().min(0).max(1_000_000_000);
-
-const validateNotificationParameter = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
-	const pathSegments = helpers.state.path ?? [];
-	const notificationType = pathSegments[pathSegments.length - 1] as string;
-	const notification = getNotificationType(notificationType);
-
-	if (!notification?.hasParameter) {
-		return value;
-	}
-
-	if (typeof value.parameter === 'number' && value.parameter < notification.min) {
-		return helpers.message({
-			custom: `"${notificationType}" parameter must be greater than or equal to ${notification.min}`,
-		});
-	}
-
-	if (value.enabled && typeof value.parameter !== 'number') {
-		return { ...value, parameter: notification.defaultParameter };
-	}
-
-	return value;
-};
-
-const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpers: Joi.CustomHelpers) => {
-	const pathSegments = helpers.state.path ?? [];
-	const notificationType = pathSegments[pathSegments.length - 1] as string;
-	const notification = getNotificationType(notificationType);
-
-	if (notification?.readOnly) {
-		return { ...value, enabled: true };
-	}
-
-	return value;
-};
-
 const userSchema = Joi.object({
-	notification_preferences: Joi.object().pattern(
-		joiConfigurableNotificationTypeKey.max(100),
-		Joi.object({
-			enabled: Joi.boolean().required(),
-			emailEnabled: Joi.boolean().optional(),
-			parameter: parameterSchema.optional(),
-		}).custom(validateNotificationParameter).custom(validateReadOnly),
-	).max(50).allow(null).optional(),
+	notification_preferences: joiNotificationPreferences.optional(),
+	selected_orgs: Joi.array().items(Joi.string().uuid()).optional(),
 }).unknown(true);
 
 export const joiValidateUser = (fields: Record<string, unknown>) => {
@@ -64,12 +22,30 @@ export const joiValidateUser = (fields: Record<string, unknown>) => {
 	Object.assign(fields, value);
 };
 
-export const validateDefaultPrefix = async (defaultPrefix: string, keys: string[], accountability: EventContext['accountability'] | null, context: HookExtensionContext) => {
+// The list is what the dashboard switcher shows, so it may only hold orgs the user is actually a member of.
+export const validateSelectedOrgs = async (selectedOrgs: string[], userIds: string[], context: HookExtensionContext) => {
+	if (selectedOrgs.length === 0) {
+		return;
+	}
+
+	if (userIds.length > 1) {
+		throw payloadError('Batch selected orgs update is not supported.');
+	}
+
+	const orgIds = await getMembershipOrgIds(userIds[0]!, context);
+	const foreign = selectedOrgs.filter(orgId => !orgIds.has(orgId));
+
+	if (foreign.length > 0) {
+		throw payloadError(`Not a member of the selected orgs: ${foreign.join(', ')}.`);
+	}
+};
+
+export const validateDefaultPrefix = async (defaultPrefix: string, userIds: string[], accountability: EventContext['accountability'] | null, context: HookExtensionContext) => {
 	if (!accountability || !accountability.user) {
 		return;
 	}
 
-	const user = (await getDirectusUsers(keys, accountability, context))[0];
+	const user = (await getDirectusUsers(userIds, accountability, context))[0];
 
 	if (!user || !user.github_username || !user.github_organizations) {
 		throw payloadError('User does not have required github data.');
