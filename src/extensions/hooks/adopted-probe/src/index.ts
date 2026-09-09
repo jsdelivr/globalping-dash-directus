@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { getResetLocationFields } from '../../../lib/src/reset-fields.js';
 import { updateProbeWithRootPermissions, updateProbeWithUserPermissions } from './repositories/directus.js';
 import { patchCustomLocationRootFields, resetUserDefinedData } from './update-with-root.js';
-import { patchCustomLocationAllowedFields, resetProbeName, resetCustomLocationAllowedFields, validateSettings, validateTags } from './update-with-user.js';
+import { patchCustomLocationAllowedFields, resetProbeName, resetCustomLocationAllowedFields, validateName, validateSettings, validateTags } from './update-with-user.js';
 
 export type Probe = {
 	id: string;
@@ -45,6 +45,7 @@ export default defineHook(({ filter, action }, context) => {
 		}
 
 		validateSettings(fields);
+		validateName(fields);
 
 		const isResettingLocation = Object.hasOwn(fields, 'city') && !fields.city;
 		const isUpdatingLocation = Boolean(fields.city || Object.hasOwn(fields, 'country') || Object.hasOwn(fields, 'state')) && !isResettingLocation;

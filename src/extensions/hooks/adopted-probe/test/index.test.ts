@@ -349,6 +349,16 @@ describe('adopted-probe hook', () => {
 		expect(payload.name).to.equal('probe-fr-paris-01');
 	});
 
+	it('should send valid error if the name is too long', async () => {
+		hook(events, context);
+		const payload = { name: 'a'.repeat(129) };
+
+		const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+
+		expect(err.message).to.equal('Probe name must be at most 128 characters long.');
+		expect(adoptedProbes.updateMany.callCount).to.equal(0);
+	});
+
 	it('should increment name index if there are other probes with the same values', async () => {
 		adoptedProbes.readOne.resolves({
 			id: 'id-1',
