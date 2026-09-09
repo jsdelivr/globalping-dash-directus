@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { setTimeout } from 'node:timers/promises';
 import { randomUUID } from 'crypto';
+import { type Browser, request } from '@playwright/test';
 import axios from 'axios';
 import { client } from './client.ts';
 import { Actors, Org, User } from './types.ts';
@@ -163,4 +164,18 @@ export const randomToken = () => {
 
 export const randomIP = () => {
 	return Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join('.');
+};
+
+// A browser page signed in as the given account. The `page` fixture is always the test user, so anything about another actor - the Directus admin, an org admin - needs its own session.
+export const pageAs = async (browser: Browser, email: string, password: string) => {
+	const apiContext = await request.newContext({ storageState: undefined });
+	const response = await apiContext.post(`${process.env.DIRECTUS_URL}/auth/login`, { data: { email, password, mode: 'session' } });
+
+	if (!response.ok()) {
+		throw new Error(`${response.status()} ${response.statusText()}`);
+	}
+
+	const context = await browser.newContext({ storageState: await apiContext.storageState() });
+
+	return context.newPage();
 };

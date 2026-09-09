@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from 'axios';
 import relativeDayUtc from 'relative-day-utc';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
-import { addProbe, getAdoptionCode, prepareMockProbeByIp, randomIP, randomToken } from '../utils.ts';
+import { addProbe, getAdoptionCode, pageAs, prepareMockProbeByIp, randomIP, randomToken } from '../utils.ts';
 
 const EXPIRED_PROBES_FLOW_ID = '176fb9aa-ba3c-44c9-97f8-78f1078eb554';
 
@@ -192,4 +192,15 @@ test('The expired probes cron removes an org probe that stayed offline', async (
 
 	expect(notifications.map(n => n.recipient)).toEqual([ org.admin.id, org.admin.id ]);
 	expect(notifications.map(n => n.type).sort()).toEqual([ 'offline_probe', 'probe_unassigned' ]);
+});
+
+test('An org probe is not listed in the admin`s personal probes list', async ({ browser, org }) => {
+	await addProbe({ account_id: org.account_id, name: 'e2e-probe-of-the-org' });
+	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-probe-of-the-admin' });
+
+	const page = await pageAs(browser, org.admin.email, 'user');
+	await page.goto('/probes');
+
+	await expect(page.getByText('e2e-probe-of-the-admin').first()).toBeVisible();
+	await expect(page.getByText('e2e-probe-of-the-org')).toHaveCount(0);
 });
