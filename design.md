@@ -77,6 +77,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - Admin or member can create an app approval + token to consume org credits; viewer can't.
 - An approval is bound to a specific account: consent, the "already approved" check, listing, and revoke are all per account (the same app is approved separately for the personal account and for each org).
 - If the user who created an app approval leaves the org - remove the approval and its tokens (same lifecycle as plain tokens).
+- Listing and revoke are scoped to the creator as well, except for a Directus admin: impersonation swaps the account but not the session, so the admin lists the whole account and names the creator (`userCreated`) to revoke exactly the row they see.
 
 **Credits**
 - Probe credits are assigned based on the probe's `account_id`.

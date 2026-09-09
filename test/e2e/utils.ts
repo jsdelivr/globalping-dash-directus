@@ -125,6 +125,43 @@ export const addProbe = async (fields: Record<string, unknown>) => {
 	return id;
 };
 
+export const addApplication = async ({ accountId, userId, appId, name = 'e2e-app' }: { accountId: string; userId: string; appId?: string; name?: string }) => {
+	const app = appId ?? randomUUID();
+
+	if (!appId) {
+		await client('gp_apps').insert({
+			id: app,
+			name,
+			user_created: userId,
+			date_created: new Date(),
+			redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
+			grants: JSON.stringify([ 'authorization_code' ]),
+			secrets: JSON.stringify([]),
+		});
+	}
+
+	await Promise.all([
+		client('gp_tokens').insert({
+			name: 'e2e-app-token',
+			value: randomToken(),
+			date_created: new Date(),
+			user_created: userId,
+			account_id: accountId,
+			app_id: app,
+		}),
+		client('gp_apps_approvals').insert({
+			id: randomUUID(),
+			user: userId,
+			user_created: userId,
+			account_id: accountId,
+			app,
+			scopes: JSON.stringify([ 'measurements' ]),
+		}),
+	]);
+
+	return app;
+};
+
 // A Directus client acting as the given account. Errors are returned, not thrown, so that tests can assert on the status.
 const login = async (email: string, password: string) => {
 	const { data } = await axios.post(`${process.env.DIRECTUS_URL}/auth/login`, { email, password });

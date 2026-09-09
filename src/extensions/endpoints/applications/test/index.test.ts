@@ -87,7 +87,7 @@ describe('/applications endpoint', () => {
 					date_last_used: '2025-04-10 02:00:00',
 					owner_name: 'Globalping',
 					owner_url: 'https://globalping.io/',
-					user_id: 'user-1',
+					user_created: 'user-1',
 				},
 			],
 			total: 1,
@@ -180,5 +180,31 @@ describe('/applications endpoint', () => {
 
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('Allowed only for admin.');
+	});
+
+	it('should reject a revoke for all accounts', async () => {
+		accountability = {
+			user: 'admin-id',
+			admin: true,
+		};
+
+		const res = await request(app).post('/revoke').send({
+			accountId: 'all',
+			id: 'app-1',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('An application can only be revoked for a single account.');
+	});
+
+	it('should reject a revoke of an application created by somebody else', async () => {
+		const res = await request(app).post('/revoke').send({
+			accountId: 'account-id',
+			userCreated: 'another-user-id',
+			id: 'app-1',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('You can only revoke your own applications.');
 	});
 });

@@ -1,8 +1,9 @@
-import { isDirectusError } from '@directus/errors';
+import { createError, isDirectusError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
+import type { Knex } from 'knex';
 import { ALL_ACCOUNTS, getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
@@ -47,9 +48,37 @@ const revokeApplicationSchema = Joi.object<Request>({
 		// PHASE5: remove `userId`, `accountId` is the only owner input.
 		userId: Joi.string(),
 		accountId: Joi.string(),
+		userCreated: Joi.string(),
 		id: Joi.string().required(),
 	}).xor('userId', 'accountId').required(),
 }).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+
+const AllAccountsError = createError('INVALID_PAYLOAD_ERROR', 'An application can only be revoked for a single account.', 400);
+const ForeignCreatorError = createError('INVALID_PAYLOAD_ERROR', 'You can only revoke your own applications.', 400);
+
+const scopeToOwner = (query: Knex.QueryBuilder, accountId: string, accountability: Request['accountability']) => {
+	if (accountId === ALL_ACCOUNTS) {
+		return;
+	}
+
+	query.where({ account_id: accountId });
+
+	if (!accountability.admin) {
+		query.where({ user_created: accountability.user });
+	}
+};
+
+const getCreatorId = (userCreated: string | undefined, accountability: Request['accountability']) => {
+	if (!userCreated || userCreated === accountability.user) {
+		return accountability.user;
+	}
+
+	if (!accountability.admin) {
+		throw new ForeignCreatorError();
+	}
+
+	return userCreated;
+};
 
 export default defineEndpoint((router, context) => {
 	const { database, logger } = context;
@@ -69,7 +98,7 @@ export default defineEndpoint((router, context) => {
 				database.raw('ROW_NUMBER() OVER (PARTITION BY app_id, account_id, user_created ORDER BY date_last_used DESC) AS row_num'),
 			)
 			.whereNotNull('app_id')
-			.modify(q => accountId === ALL_ACCOUNTS ? q : q.where({ account_id: accountId, user_created: req.accountability.user }))
+			.modify(q => scopeToOwner(q, accountId, req.accountability))
 			.as('rankedTokens');
 
 		const [ appTokens, [{ total }] ] = await Promise.all([
@@ -105,8 +134,7 @@ export default defineEndpoint((router, context) => {
 				date_last_used: token.date_last_used,
 				owner_name: token.owner_name || 'Globalping',
 				owner_url: validateUrl(token.owner_url),
-				// PHASE5: remove `user_id`, the account identifies the owner.
-				user_id: token.user_created,
+				user_created: token.user_created,
 				account_id: token.account_id,
 			};
 
@@ -124,10 +152,15 @@ export default defineEndpoint((router, context) => {
 		const req = _req as Request;
 
 		try {
-			const body = req.body as { userId?: string; accountId?: string; id: string };
+			const body = req.body as { userId?: string; accountId?: string; userCreated?: string; id: string };
 			const accountId = await getRequestAccountId(body, req.accountability, context, [ 'admin', 'member' ]);
-			// Each user manages only their own tokens and approvals, either in their own account or inside the org.
-			const owner = { account_id: accountId, user_created: req.accountability.user };
+
+			if (accountId === ALL_ACCOUNTS) {
+				throw new AllAccountsError();
+			}
+
+			// PHASE5: drop the `userId` fallback - in the legacy form it named the creator, not only the owner.
+			const owner = { account_id: accountId, user_created: getCreatorId(body.userCreated ?? body.userId, req.accountability) };
 
 			await Promise.all([
 				database('gp_tokens')
