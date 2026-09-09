@@ -185,6 +185,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
+			name: 'home-lab',
 			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString(),
@@ -207,8 +208,8 @@ describe('Remove expired adoptions CRON handler', () => {
 				item: 'probeId1',
 				collection: 'gp_probes',
 				type: 'offline_probe',
-				subject: 'Your probe went offline',
-				message: 'Your [probe with IP address **1.1.1.1**](/probes/probeId1) has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
+				subject: 'Your probe home-lab went offline',
+				message: 'Your probe [home-lab](/probes/probeId1) with IP address **1.1.1.1** has been offline for more than 24 hours. If it does not come back online before **May 23, 2023** it will be removed from your account.',
 			},
 		]);
 
@@ -219,6 +220,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
+			name: 'home-lab',
 			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-30).toISOString().split('T')[0],
@@ -236,8 +238,8 @@ describe('Remove expired adoptions CRON handler', () => {
 			{
 				recipient: 'userId1',
 				type: 'probe_unassigned',
-				subject: 'Your probe has been deleted',
-				message: 'Your probe with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
+				subject: 'Your probe home-lab has been deleted',
+				message: 'Your probe **home-lab** with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
 				item: 'probeId1',
 				collection: 'gp_probes',
 			},

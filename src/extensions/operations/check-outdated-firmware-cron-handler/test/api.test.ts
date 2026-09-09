@@ -59,6 +59,7 @@ describe('Adopted probes status cron handler', () => {
 		mockProbesResult([{
 			id: 'probe-id',
 			ip: '1.1.1.1',
+			name: 'home-lab',
 			userId: 'user-id',
 			hardwareDevice: 'v1',
 			hardwareDeviceFirmware: 'v1.9',
@@ -76,8 +77,8 @@ describe('Adopted probes status cron handler', () => {
 			collection: 'gp_probes',
 			type: 'outdated_firmware',
 			secondary_type: 'v2.0_v20.13.0',
-			subject: 'Your hardware probe is running an outdated firmware',
-			message: 'Your [probe with IP address **1.1.1.1**](/probes/probe-id) is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
+			subject: 'Your hardware probe home-lab is running outdated firmware',
+			message: 'Your probe [home-lab](/probes/probe-id) with IP address **1.1.1.1** is running an outdated firmware and we couldn\'t update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.',
 		});
 	});
 
@@ -85,6 +86,7 @@ describe('Adopted probes status cron handler', () => {
 		mockProbesResult([{
 			id: 'probe-id',
 			ip: '1.1.1.1',
+			name: 'edge-paris',
 			userId: 'user-id',
 			hardwareDevice: null,
 			hardwareDeviceFirmware: null,
@@ -102,8 +104,8 @@ describe('Adopted probes status cron handler', () => {
 			collection: 'gp_probes',
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
-			subject: 'Your probe container is running an outdated software version',
-			message: 'Your [probe with IP address **1.1.1.1**](/probes/probe-id) is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			subject: 'The container running your probe edge-paris has outdated software',
+			message: 'Your probe [edge-paris](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
 		});
 	});
 
@@ -129,7 +131,7 @@ describe('Adopted probes status cron handler', () => {
 			collection: 'gp_probes',
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
-			subject: 'Your probe container is running an outdated software version',
+			subject: 'The container running your probe ][not the probe](https://another.link)[probe has outdated software',
 			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
 		});
 	});
@@ -258,7 +260,7 @@ describe('Adopted probes status cron handler', () => {
 			metadata: [ 'probe-hw-1', 'probe-hw-2' ],
 			type: 'outdated_firmware',
 			secondary_type: 'v2.0_v20.13.0',
-			subject: 'Your hardware probes are running an outdated firmware',
+			subject: 'Your hardware probes are running outdated firmware',
 		});
 	});
 

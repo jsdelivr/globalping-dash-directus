@@ -44,6 +44,12 @@ export const validateSettings = (fields: Fields) => {
 	}
 };
 
+export const validateName = (fields: Fields) => {
+	if (fields.name && fields.name.length > 128) {
+		throw payloadError('Probe name must be at most 128 characters long.');
+	}
+};
+
 export const validateTags = async (fields: Fields, keys: string[], accountability: EventContext['accountability'], context: HookExtensionContext) => {
 	if (!fields.tags) {
 		return;
