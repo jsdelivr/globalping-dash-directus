@@ -6,13 +6,19 @@ type AccountInput = { accountId?: string; userId?: string };
 type Accountability = { user?: string | null; admin?: boolean };
 
 const ForbiddenAccountError = createError('INVALID_PAYLOAD_ERROR', 'You can not access this account.', 400);
+const AccountNotFoundError = createError('INVALID_PAYLOAD_ERROR', 'Account not found.', 400);
 
 // The admin-only "show everything" mode of the dashboard lists.
 export const ALL_ACCOUNTS = 'all';
 
 const getUserAccountId = async (userId: string, { database }: ApiExtensionContext) => {
-	const account = await database('gp_accounts').where({ user: userId }).first<{ id: string }>('id');
-	return account!.id;
+	const account = await database('gp_accounts').where({ user: userId }).first<{ id: string } | undefined>('id');
+
+	if (!account) {
+		throw new AccountNotFoundError();
+	}
+
+	return account.id;
 };
 
 // The account is available to its own user, and to the members of its org whose role is one of `roles`.

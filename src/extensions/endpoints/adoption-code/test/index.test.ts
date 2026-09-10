@@ -295,6 +295,36 @@ describe('adoption code endpoints', () => {
 	});
 
 	describe('/adoption-code/verify-code endpoint', () => {
+		it('keeps each pending adoption when two are started for the same account', async () => {
+			let firstCode = '';
+			let secondCode = '';
+
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				if (body.ip !== '1.1.1.1') { return false; }
+
+				firstCode = body.code;
+				return true;
+			}).reply(200, adoptionCodeGPApiResponse);
+
+			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
+				if (body.ip !== '2.2.2.2') { return false; }
+
+				secondCode = body.code;
+				return true;
+			}).reply(200, adoptionCodeGPApiResponse);
+
+			await request(app).post('/send-code').send({ userId: 'first-user-id', ip: '1.1.1.1' });
+			await request(app).post('/send-code').send({ userId: 'first-user-id', ip: '2.2.2.2' });
+
+			// The second send-code must not invalidate the first: both codes still verify.
+			const first = await request(app).post('/verify-code').send({ userId: 'first-user-id', code: firstCode });
+			const second = await request(app).post('/verify-code').send({ userId: 'first-user-id', code: secondCode });
+
+			expect(first.status).to.equal(200);
+			expect(second.status).to.equal(200);
+			expect(createOne.callCount).to.equal(2);
+		});
+
 		it('should adopt non-existing probe', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {

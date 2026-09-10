@@ -3,22 +3,20 @@ import { getUserPermissions, getUserPolicyId, createPermissions, editPermissions
 export async function up () {
 	const accounts = await getUserPermissions('gp_accounts');
 
-	if (accounts.readPermissions) {
-		throw new Error('gp_accounts permissions already exist.');
+	if (!accounts.readPermissions) {
+		await createPermissions([{
+			collection: 'gp_accounts',
+			action: 'read',
+			policy: await getUserPolicyId(),
+			permissions: {
+				_or: [
+					{ user: { _eq: '$CURRENT_USER' } },
+					{ org: { members: { user: { _eq: '$CURRENT_USER' } } } },
+				],
+			},
+			fields: [ 'id', 'user', 'org' ],
+		}]);
 	}
-
-	await createPermissions([{
-		collection: 'gp_accounts',
-		action: 'read',
-		policy: await getUserPolicyId(),
-		permissions: {
-			_or: [
-				{ user: { _eq: '$CURRENT_USER' } },
-				{ org: { members: { user: { _eq: '$CURRENT_USER' } } } },
-			],
-		},
-		fields: [ 'id', 'user', 'org' ],
-	}]);
 
 	console.log('gp_accounts read permissions created');
 

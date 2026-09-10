@@ -35,7 +35,7 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 30 * 60,
 });
 
-const probesToAdopt = new TTLCache<string, { code: string; probe: ProbeToAdopt }>({ ttl: 30 * 60 * 1000 });
+const probesToAdopt = new TTLCache<string, ProbeToAdopt>({ ttl: 30 * 60 * 1000 });
 
 const generateRandomCode = () => {
 	const randomNumber = Math.floor(Math.random() * 1000000);
@@ -89,10 +89,7 @@ export default defineEndpoint((router, context) => {
 				timeout: 5000,
 			});
 
-			probesToAdopt.set(accountId, {
-				code,
-				probe,
-			});
+			probesToAdopt.set(`${accountId}:${code}`, probe);
 
 			res.send('Code was sent to the probe.');
 		} catch (error: unknown) {
@@ -125,16 +122,15 @@ export default defineEndpoint((router, context) => {
 
 		await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
 
-		const value = probesToAdopt.get(accountId);
+		const probe = probesToAdopt.get(`${accountId}:${userCode}`);
 
-		if (!value || value.code !== userCode) {
+		if (!probe) {
 			throw new InvalidCodeError();
 		}
 
-		const probe = value.probe;
 		const adoptedProbe = await createAdoptedProbe(accountId, probe, context);
 
-		probesToAdopt.delete(accountId);
+		probesToAdopt.delete(`${accountId}:${userCode}`);
 		await rateLimiter.delete(req.accountability?.user ?? '');
 
 		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });

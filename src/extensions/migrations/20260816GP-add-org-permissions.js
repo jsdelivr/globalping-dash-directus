@@ -82,14 +82,20 @@ export async function up () {
 		},
 	];
 
-	const orgs = await getUserPermissions('gp_orgs');
-	const members = await getUserPermissions('gp_org_members');
+	const existing = {
+		gp_orgs: await getUserPermissions('gp_orgs'),
+		gp_org_members: await getUserPermissions('gp_org_members'),
+	};
 
-	if (orgs.readPermissions || orgs.updatePermissions || members.readPermissions || members.updatePermissions) {
-		throw new Error('gp_orgs/gp_org_members permissions already exist.');
+	const missing = orgPermissions.filter(({ collection, action }) => {
+		const current = existing[collection];
+		return action === 'read' ? !current.readPermissions : !current.updatePermissions;
+	});
+
+	if (missing.length) {
+		await createPermissions(missing);
 	}
 
-	await createPermissions(orgPermissions);
 	console.log('gp_orgs and gp_org_members permissions created');
 }
 
