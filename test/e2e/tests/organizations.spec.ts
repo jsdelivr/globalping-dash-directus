@@ -102,9 +102,8 @@ test('all memberships are visible to the org admin, and only their own membershi
 });
 
 test('an org is only visible to its own members, and its adoption token only to its admins', async ({ org, org2, actors }) => {
-	for (const api of [ actors.admin, actors.directusAdmin ]) {
-		expect((await api.get(`/items/gp_orgs/${org.id}`)).data.data.adoption_token).toBe(org.adoption_token);
-	}
+	expect((await actors.admin.get(`/items/gp_orgs/${org.id}`)).data.data.adoption_token).toBe(org.adoption_token);
+	expect((await actors.directusAdmin.get(`/items/gp_orgs/${org.id}`)).data.data.adoption_token).toBe(org.adoption_token);
 
 	for (const api of [ actors.member, actors.viewer ]) {
 		const response = await api.get(`/items/gp_orgs/${org.id}`);
@@ -117,18 +116,14 @@ test('an org is only visible to its own members, and its adoption token only to 
 		expect((await api.get(`/items/gp_orgs/${org.id}`)).status).toBe(403);
 	}
 
-	// The same holds for a list read, where the hook has to strip the token per row.
+	// The same holds for a list read, where the hook has to add the token per row.
 	const listedTokens = async (api: AxiosInstance, fields: string) => {
 		const response = await api.get(`/items/gp_orgs?fields=${fields}`);
 		return response.data.data.map((item: { adoption_token?: string }) => item.adoption_token);
 	};
 
-	expect(await listedTokens(actors.admin, 'id,adoption_token')).toEqual([ org.adoption_token ]);
-	expect(await listedTokens(actors.member, 'id,adoption_token')).toEqual([ undefined ]);
-
-	// Without the id the hook can not tell whose org the row is, so it strips the token from everybody but a Directus admin.
-	expect(await listedTokens(actors.admin, 'adoption_token')).toEqual([ undefined ]);
-	expect(await listedTokens(actors.directusAdmin, 'adoption_token')).toEqual(expect.arrayContaining([ org.adoption_token ]));
+	expect(await listedTokens(actors.admin, 'id,name')).toEqual([ org.adoption_token ]);
+	expect(await listedTokens(actors.member, 'id,name')).toEqual([ undefined ]);
 
 	expect(await listedIds(actors.admin, 'gp_orgs')).toEqual([ org.id ]);
 	expect(await listedIds(actors.member, 'gp_orgs')).toEqual([ org.id ]);
@@ -142,6 +137,33 @@ test('an org is only visible to its own members, and its adoption token only to 
 	expect(await listedIds(actors.viewer, 'gp_accounts')).toEqual(expect.arrayContaining([ org.viewer.account_id, org.account_id ]));
 	expect(await listedIds(actors.outsider, 'gp_accounts')).not.toContain(org.account_id);
 	expect(await listedIds(actors.otherOrgAdmin, 'gp_accounts')).not.toContain(org.account_id);
+});
+
+test('the org adoption token can not be read by naming the field anywhere in a query', async ({ org, actors }) => {
+	const prefix = org.adoption_token.slice(0, 4);
+
+	const denied = [
+		'/items/gp_orgs?fields=id,adoption_token',
+		'/items/gp_orgs?aggregate[max]=adoption_token',
+		'/items/gp_orgs?aggregate[count]=id&groupBy[]=adoption_token',
+		'/items/gp_orgs?fields=id&sort=adoption_token',
+		'/items/gp_orgs?alias[token]=adoption_token&fields=id,token',
+		`/items/gp_orgs?fields=id&filter[adoption_token][_starts_with]=${prefix}`,
+		'/items/gp_accounts?fields=id,org.adoption_token',
+		'/items/gp_org_members?fields=id,org.adoption_token',
+		`/items/gp_org_members?fields=id&filter[org][adoption_token][_starts_with]=${prefix}`,
+		`/items/gp_org_members?fields=id,org.id&deep[org][_filter][adoption_token][_starts_with]=${prefix}`,
+	];
+
+	for (const api of [ actors.admin, actors.member, actors.viewer ]) {
+		for (const url of denied) {
+			expect((await api.get(url)).status, url).toBe(403);
+		}
+	}
+
+	// `search` names no field, so an unreadable one is simply not searched.
+	expect((await actors.viewer.get(`/items/gp_orgs?fields=id&search=${org.adoption_token}`)).data.data).toEqual([]);
+	expect((await actors.viewer.get(`/items/gp_org_members?fields=id&search=${org.adoption_token}`)).data.data).toEqual([]);
 });
 
 test('the org adoption token and the public probes switch can only be changed by an admin, and nothing else about the org is editable', async ({ org, actors }) => {

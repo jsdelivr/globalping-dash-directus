@@ -144,4 +144,51 @@ describe('token hooks', () => {
 			expect(raw.callCount).to.equal(0);
 		});
 	});
+
+	describe('query validation', () => {
+		const query = (value: object) => {
+			try {
+				callbacks.filter['gp_tokens.items.query']?.(value);
+				return undefined;
+			} catch (error) {
+				return error as Error;
+			}
+		};
+
+		it('should allow the filters the dashboard needs', () => {
+			expect(query({ filter: { user_created: { _eq: 'user-id' }, app_id: { _null: true } } })).to.equal(undefined);
+		});
+
+		it('should reject a filter by another field', () => {
+			expect(query({ filter: { name: { _eq: 'token' } } })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should reject a search', () => {
+			expect(query({ search: 'token' })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should reject an aggregate over the value', () => {
+			expect(query({ aggregate: { max: [ 'value' ] } })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should reject a sort by the value', () => {
+			expect(query({ sort: [ '-value' ] })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should reject an alias of the value', () => {
+			expect(query({ alias: { v: 'value' } })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should reject naming the value through a relational path', () => {
+			expect(query({ sort: [ 'parent.value' ] })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should reject a group by the value', () => {
+			expect(query({ group: [ 'value' ], aggregate: { count: [ 'id' ] } })).to.have.property('message', 'Filtering is not available for "gp_tokens" collection');
+		});
+
+		it('should allow the aggregates the dashboard needs', () => {
+			expect(query({ aggregate: { count: [ 'id' ] }, sort: [ '-date_created' ] })).to.equal(undefined);
+		});
+	});
 });

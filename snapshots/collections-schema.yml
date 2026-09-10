@@ -3739,7 +3739,7 @@ fields:
       note: null
       options: null
       readonly: false
-      required: false
+      required: true
       searchable: true
       sort: 4
       special: null
@@ -3755,7 +3755,7 @@ fields:
       max_length: 255
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: true
       is_indexed: false
       is_primary_key: false

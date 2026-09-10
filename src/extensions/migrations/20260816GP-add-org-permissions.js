@@ -57,7 +57,7 @@ export async function up () {
 			action: 'read',
 			policy: policyId,
 			permissions: { members: { user: { _eq: '$CURRENT_USER' } } },
-			fields: [ 'id', 'name', 'github_id', 'adoption_token', 'account', 'members' ],
+			fields: [ 'id', 'name', 'github_id', 'account', 'members' ],
 		},
 		{
 			collection: 'gp_orgs',
