@@ -1,5 +1,4 @@
 import type { ApiExtensionContext } from '@directus/extensions';
-import { getAccountUserIds } from './accounts.js';
 import { getProbeLink } from './probe-name.js';
 import { sendNotification } from './send-notification.js';
 
@@ -21,13 +20,9 @@ type Notification = {
 export const OUTDATED_SOFTWARE_NOTIFICATION_TYPE = 'outdated_software';
 export const OUTDATED_FIRMWARE_NOTIFICATION_TYPE = 'outdated_firmware';
 
-export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], accountId: string, context: ApiExtensionContext): Promise<string[]> {
-	const outdatedProbes = probesToCheck.filter(probe => probe.isOutdated);
-
-	if (outdatedProbes.length === 0) { return []; }
-
-	const alreadyNotifiedProbes = await getAlreadyNotifiedProbes(context, accountId);
-	const probes = outdatedProbes.filter(probe => !alreadyNotifiedProbes.has(probe.id));
+export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], accountId: string, context: ApiExtensionContext, alreadyNotified?: Set<string>): Promise<string[]> {
+	const notified = alreadyNotified ?? await getAlreadyNotifiedProbes(context);
+	const probes = probesToCheck.filter(probe => probe.isOutdated && !notified.has(probe.id));
 
 	if (probes.length === 0) { return []; }
 
@@ -51,10 +46,8 @@ export async function checkFirmwareVersions (probesToCheck: ProbeInfo[], account
 	return ids;
 }
 
-export const getAlreadyNotifiedProbes = async (context: ApiExtensionContext, accountId?: string) => {
+export const getAlreadyNotifiedProbes = async (context: ApiExtensionContext): Promise<Set<string>> => {
 	const { env, services, getSchema } = context;
-	// Scoped by the account recipients, so a probe reassigned to a new owner is notified about again.
-	const recipients = accountId ? await getAccountUserIds(accountId, context) : null;
 	const { ItemsService } = services;
 
 	const notificationsService = new ItemsService<Notification>('directus_notifications', {
@@ -64,7 +57,6 @@ export const getAlreadyNotifiedProbes = async (context: ApiExtensionContext, acc
 	const existingNotifications = await notificationsService.readByQuery({
 		fields: [ 'item', 'metadata' ],
 		filter: {
-			...recipients ? { recipient: { _in: recipients } } : null,
 			_or: [
 				{
 					type: { _eq: OUTDATED_SOFTWARE_NOTIFICATION_TYPE },
@@ -78,7 +70,7 @@ export const getAlreadyNotifiedProbes = async (context: ApiExtensionContext, acc
 		},
 	});
 
-	const idsSet = new Set(existingNotifications.map(({ item }) => item).filter(id => id !== null));
+	const idsSet = new Set<string>(existingNotifications.map(({ item }) => item).filter((id): id is string => id !== null));
 	existingNotifications.filter(({ metadata }) => Array.isArray(metadata)).forEach(({ metadata }) => {
 		(metadata as string[]).forEach((id) => { idsSet.add(id); });
 	});

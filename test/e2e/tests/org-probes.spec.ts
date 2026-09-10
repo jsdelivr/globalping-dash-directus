@@ -5,6 +5,7 @@ import { client as sql } from '../client.ts';
 import { addProbe, getAdoptionCode, pageAs, prepareMockProbeByIp, randomIP, randomToken } from '../utils.ts';
 
 const EXPIRED_PROBES_FLOW_ID = '176fb9aa-ba3c-44c9-97f8-78f1078eb554';
+const OUTDATED_FIRMWARE_FLOW_ID = 'c76af4f0-229f-4ec3-a576-32958db2ed44';
 
 const listedProbeIds = async (api: AxiosInstance) => {
 	const response = await api.get('/items/gp_probes');
@@ -211,6 +212,24 @@ test('The offline warning for an org probe is sent once and not repeated on the 
 
 	// One warning for the admin across both runs; the second run dedups on the item the notification carries.
 	expect(warnings).toEqual([{ collection: 'gp_probes', item: probeId }]);
+});
+
+test('The outdated software warning for an org probe is sent once and not repeated on the next cron run', async ({ org }) => {
+	const outdatedProbeId = await addProbe({
+		account_id: org.account_id,
+		name: 'e2e-org-probe-outdated',
+		nodeVersion: 'v1.0.0',
+	});
+
+	await axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${OUTDATED_FIRMWARE_FLOW_ID}`);
+	await axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${OUTDATED_FIRMWARE_FLOW_ID}`);
+
+	const warnings = await sql('directus_notifications')
+		.where({ type: 'outdated_software', recipient: org.admin.id })
+		.select('collection', 'item');
+
+	// One warning for the admin across both runs; the second run dedups on the item the notification carries.
+	expect(warnings).toEqual([{ collection: 'gp_probes', item: outdatedProbeId }]);
 });
 
 test('An org probe is not listed in the admin`s personal probes list', async ({ browser, org }) => {

@@ -73,17 +73,6 @@ export const getRequestAccountId = async (
 	return accountId;
 };
 
-export const getAccountUserIds = async (accountId: string, { database }: ApiExtensionContext, roles: string[] = [ 'admin' ]): Promise<string[]> => {
-	const [ rows ] = await database.raw(`
-		SELECT COALESCE(a.user, m.user) AS user
-		FROM gp_accounts a
-		LEFT JOIN gp_org_members m ON m.org = a.org AND m.role IN (:roles)
-		WHERE a.id = :account
-	`, { account: accountId, roles }) as [{ user: string | null }[]];
-
-	return rows.map(row => row.user).filter((user): user is string => Boolean(user));
-};
-
 export const getAccountGithubId = async (accountId: string, { database }: ApiExtensionContext): Promise<string | null> => {
 	const [ rows ] = await database.raw(`
 		SELECT COALESCE(u.external_identifier, o.github_id) AS github_id

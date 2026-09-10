@@ -5,12 +5,11 @@ import { getAllAccountIdsToCheck, getOutdatedProbesForAccount } from '../reposit
 
 export const checkOutdatedFirmware = async (context: OperationContext): Promise<string[]> => {
 	const accountIds = await getAllAccountIdsToCheck(context);
-	const alreadyNotifiedIds = await getAlreadyNotifiedProbes(context);
+	const alreadyNotified = await getAlreadyNotifiedProbes(context);
 
 	const ids = await Bluebird.map(accountIds, async (accountId) => {
 		const probes = await getOutdatedProbesForAccount(accountId, context);
-		const notNotified = probes.filter(p => !alreadyNotifiedIds.has(p.id));
-		return notNotified.length === 0 ? [] : checkFirmwareVersions(notNotified, accountId, context);
+		return checkFirmwareVersions(probes, accountId, context, alreadyNotified);
 	}, { concurrency: 4 });
 
 	return ids.flat();

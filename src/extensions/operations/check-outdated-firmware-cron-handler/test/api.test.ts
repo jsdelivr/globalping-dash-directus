@@ -23,7 +23,6 @@ describe('Adopted probes status cron handler', () => {
 	sqlProbes.where.returns(sqlProbes);
 
 	const database = sinon.stub() as any;
-	database.raw = sinon.stub().resolves([ [{ user: 'user-id' }] ]);
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -48,7 +47,6 @@ describe('Adopted probes status cron handler', () => {
 	beforeEach(() => {
 		readByQuery.resolves([]);
 		database.reset();
-		database.raw = sinon.stub().resolves([ [{ user: 'user-id' }] ]);
 		sqlIds.orderBy.resetBehavior();
 		sqlIds.orderBy.resolves([{ account_id: 'account-id' }]);
 		mockProbesResult([]);
