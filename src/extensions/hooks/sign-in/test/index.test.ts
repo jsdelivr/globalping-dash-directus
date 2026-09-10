@@ -72,7 +72,9 @@ describe('Sign-in hook', () => {
 	});
 
 	afterEach(() => {
+		const pendingMocks = nock.pendingMocks();
 		nock.cleanAll();
+		expect(pendingMocks, `unused nock mocks: ${pendingMocks.join(', ')}`).to.have.lengthOf(0);
 	});
 
 	// The sync runs in the background, so tests wait for its observable side effects instead of awaiting it.

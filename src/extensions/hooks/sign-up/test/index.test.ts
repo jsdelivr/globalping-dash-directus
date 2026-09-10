@@ -81,14 +81,17 @@ describe('Sign-up hook', () => {
 		sinon.resetHistory();
 	});
 
+	afterEach(() => {
+		const pendingMocks = nock.pendingMocks();
+		nock.cleanAll();
+		expect(pendingMocks, `unused nock mocks: ${pendingMocks.join(', ')}`).to.have.lengthOf(0);
+	});
+
 	after(() => {
 		nock.cleanAll();
 	});
 
 	it('filter should fulfill first_name, last_name, github_username, adoption_token', async () => {
-		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
 		hook(events, context);
 
 		const payload: Partial<User> = {
@@ -114,9 +117,6 @@ describe('Sign-up hook', () => {
 	});
 
 	it('filter should use gh login as first_name if name is not provided', async () => {
-		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
 		hook(events, context);
 
 		const payload = {

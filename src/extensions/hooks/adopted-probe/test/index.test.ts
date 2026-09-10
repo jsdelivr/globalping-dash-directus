@@ -66,6 +66,12 @@ describe('adopted-probe hook', () => {
 		context.database.raw.resolves([ [{ org_name: null, github_username: 'jimaek', github_organizations: JSON.stringify([ 'jsdelivr' ]) }] ]);
 	});
 
+	afterEach(() => {
+		const pendingMocks = nock.pendingMocks();
+		nock.cleanAll();
+		expect(pendingMocks, `unused nock mocks: ${pendingMocks.join(', ')}`).to.have.lengthOf(0);
+	});
+
 	after(() => {
 		nock.cleanAll();
 	});

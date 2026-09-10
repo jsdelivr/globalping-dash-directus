@@ -24,6 +24,12 @@ describe('gp_location_overrides hook', () => {
 		nock.disableNetConnect();
 	});
 
+	afterEach(() => {
+		const pendingMocks = nock.pendingMocks();
+		nock.cleanAll();
+		expect(pendingMocks, `unused nock mocks: ${pendingMocks.join(', ')}`).to.have.lengthOf(0);
+	});
+
 	after(() => {
 		nock.cleanAll();
 	});
@@ -111,9 +117,6 @@ describe('gp_location_overrides hook', () => {
 	});
 
 	it('should throw if invalid CIDR was provided', async () => {
-		nock('http://api.geonames.org').get('/searchJSON?featureClass=P&style=medium&isNameRequired=true&maxRows=1&username=username&name=marsel')
-			.reply(200, geonamesResponse);
-
 		hook(events, context);
 		const payload = { ip_range: '1.1.1.300/32', city: 'marsel' };
 		const err = await callbacks.filter['gp_location_overrides.items.create']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
