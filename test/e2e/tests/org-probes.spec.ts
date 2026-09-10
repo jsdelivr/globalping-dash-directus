@@ -194,6 +194,25 @@ test('The expired probes cron removes an org probe that stayed offline', async (
 	expect(notifications.map(n => n.type).sort()).toEqual([ 'offline_probe', 'probe_unassigned' ]);
 });
 
+test('The offline warning for an org probe is sent once and not repeated on the next cron run', async ({ org }) => {
+	const probeId = await addProbe({
+		account_id: org.account_id,
+		name: 'e2e-org-probe-offline',
+		status: 'offline',
+		lastSyncDate: relativeDayUtc(-3),
+	});
+
+	await axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${EXPIRED_PROBES_FLOW_ID}`);
+	await axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${EXPIRED_PROBES_FLOW_ID}`);
+
+	const warnings = await sql('directus_notifications')
+		.where({ type: 'offline_probe', recipient: org.admin.id })
+		.select('collection', 'item');
+
+	// One warning for the admin across both runs; the second run dedups on the item the notification carries.
+	expect(warnings).toEqual([{ collection: 'gp_probes', item: probeId }]);
+});
+
 test('An org probe is not listed in the admin`s personal probes list', async ({ browser, org }) => {
 	await addProbe({ account_id: org.account_id, name: 'e2e-probe-of-the-org' });
 	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-probe-of-the-admin' });

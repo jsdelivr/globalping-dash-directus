@@ -399,7 +399,7 @@ describe('notifications hooks', () => {
 			]);
 
 			try {
-				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1', collection: 'gp_probes', item: 'probe-1', secondary_type: 'v20.13.0' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
@@ -413,6 +413,9 @@ describe('notifications hooks', () => {
 				type: 'probe_adopted',
 				subject: 'test',
 				message: 'test',
+				collection: 'gp_probes',
+				item: 'probe-1',
+				secondary_type: 'v20.13.0',
 				email_status: 'not-required',
 			});
 

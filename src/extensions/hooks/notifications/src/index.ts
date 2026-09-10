@@ -58,7 +58,7 @@ export default defineHook(({ filter }, hookContext) => {
 
 			// The notification goes to every admin of the org.
 			if (account.org) {
-				await notifyOrgAdmins(account.org, value, type);
+				await notifyOrgAdmins(account.org, payload, type);
 				throw new CancelNotificationError();
 			}
 
@@ -104,7 +104,7 @@ export default defineHook(({ filter }, hookContext) => {
 	};
 
 	// Org notifications go to the org admins only, each per their own org notification preferences.
-	const notifyOrgAdmins = async (orgId: string, value: NotificationPayload, type: NotificationTypeKey) => {
+	const notifyOrgAdmins = async (orgId: string, payload: NotificationPayload, type: NotificationTypeKey) => {
 		const notificationsService = new NotificationsService({ schema: await getSchema() });
 		const admins = await getOrgAdmins(orgId, hookContext);
 
@@ -116,10 +116,8 @@ export default defineHook(({ filter }, hookContext) => {
 			}
 
 			await notificationsService.createOne({
+				...payload,
 				recipient: admin.user.id,
-				type: value.type,
-				subject: value.subject,
-				message: value.message,
 				email_status: getEmailStatus(type, user),
 			}, { emitEvents: false });
 		}
