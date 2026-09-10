@@ -45,7 +45,7 @@
 		"@directus/errors": "^2.3.1",
 		"@isaacs/ttlcache": "^1.4.1",
 		"axios": "^1.12.2",
-		"countries-list": "^3.1.1",
+		"countries-list": "^3.4.1",
 		"ipaddr.js": "^2.2.0",
 		"joi": "^18.0.1",
 		"lodash": "^4.17.21",
