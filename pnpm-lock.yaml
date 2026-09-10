@@ -27,8 +27,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
       countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.4.1
+        version: 3.4.1
       knex:
         specifier: ^3.1.0
         version: 3.1.0(mysql@2.18.1)
@@ -197,8 +197,8 @@ importers:
         specifier: ^1.12.2
         version: 1.12.2
       countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.4.1
+        version: 3.4.1
       ipaddr.js:
         specifier: ^2.2.0
         version: 2.2.0
@@ -343,8 +343,8 @@ importers:
         specifier: ^1.12.2
         version: 1.12.2
       countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.4.1
+        version: 3.4.1
       csv-parser:
         specifier: ^3.2.0
         version: 3.2.0
@@ -792,8 +792,8 @@ importers:
         specifier: ^1.12.2
         version: 1.12.2
       countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.4.1
+        version: 3.4.1
       joi:
         specifier: ^18.0.1
         version: 18.0.1
@@ -1529,8 +1529,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0(axios@1.12.2)
       countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.4.1
+        version: 3.4.1
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
@@ -1895,8 +1895,8 @@ importers:
         specifier: ^3.7.2
         version: 3.7.2
       countries-list:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.4.1
+        version: 3.4.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -4335,8 +4335,8 @@ packages:
       typescript:
         optional: true
 
-  countries-list@3.1.1:
-    resolution: {integrity: sha512-nPklKJ5qtmY5MdBKw1NiBAoyx5Sa7p2yPpljZyQ7gyCN1m+eMFs9I6CT37Mxt8zvR5L3VzD3DJBE4WQzX3WF4A==}
+  countries-list@3.4.1:
+    resolution: {integrity: sha512-sKLGAZD5EAdzQwQ19vOp/9u33MTjmZ0CkdXPYtp/An6cyIlJ/E8TwGf2FcPe1AnzHO+h7nbTfoHyXIi58Hpa+Q==}
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
@@ -11777,7 +11777,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  countries-list@3.1.1: {}
+  countries-list@3.4.1: {}
 
   create-require@1.1.1: {}
 
