@@ -22,8 +22,9 @@ export const joiValidateUser = (fields: Record<string, unknown>) => {
 	Object.assign(fields, value);
 };
 
-// The list is what the dashboard switcher shows, so it may only hold orgs the user is actually a member of.
-export const validateSelectedOrgs = async (selectedOrgs: string[], userIds: string[], context: HookExtensionContext) => {
+export const filterSelectedOrgs = async (fields: { selected_orgs?: string[] }, userIds: string[], context: HookExtensionContext) => {
+	const selectedOrgs = fields.selected_orgs ?? [];
+
 	if (selectedOrgs.length === 0) {
 		return;
 	}
@@ -33,11 +34,7 @@ export const validateSelectedOrgs = async (selectedOrgs: string[], userIds: stri
 	}
 
 	const orgIds = await getMembershipOrgIds(userIds[0]!, context);
-	const foreign = selectedOrgs.filter(orgId => !orgIds.has(orgId));
-
-	if (foreign.length > 0) {
-		throw payloadError(`Not a member of the selected orgs: ${foreign.join(', ')}.`);
-	}
+	fields.selected_orgs = selectedOrgs.filter(orgId => orgIds.has(orgId));
 };
 
 export const validateDefaultPrefix = async (defaultPrefix: string, userIds: string[], accountability: EventContext['accountability'] | null, context: HookExtensionContext) => {

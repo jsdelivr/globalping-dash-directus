@@ -192,14 +192,15 @@ test('the org adoption token and the public probes switch can only be changed by
 	expect(renamed.name).toBe('e2e-renamed-org');
 });
 
-test('the selected orgs can only be set on your own row, and only to your orgs', async ({ org, org2, actors }) => {
+test('the selected orgs can only be set on your own row, and non-member orgs are dropped', async ({ org, org2, actors }) => {
 	const selected = { selected_orgs: [ org.id ] };
+	const readSelected = async () => JSON.parse((await sql('directus_users').where({ id: org.member.id }).first('selected_orgs')).selected_orgs);
 
 	expect((await actors.member.patch(`/users/${org.member.id}`, selected)).status).toBe(200);
+	expect(await readSelected()).toEqual([ org.id ]);
 
-	const foreign = await actors.member.patch(`/users/${org.member.id}`, { selected_orgs: [ org2.id ] });
-	expect(foreign.status).toBe(400);
-	expect(foreign.data.errors[0].message).toBe(`Not a member of the selected orgs: ${org2.id}.`);
+	expect((await actors.member.patch(`/users/${org.member.id}`, { selected_orgs: [ org.id, org2.id ] })).status).toBe(200);
+	expect(await readSelected()).toEqual([ org.id ]);
 
 	expect((await actors.admin.patch(`/users/${org.member.id}`, selected)).status).toBe(403);
 	expect((await actors.outsider.patch(`/users/${org.member.id}`, selected)).status).toBe(403);

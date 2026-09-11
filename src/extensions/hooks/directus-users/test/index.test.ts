@@ -131,29 +131,29 @@ describe('users hooks', () => {
 		it('should allow selecting an org the user is a member of', async () => {
 			membersService.readByQuery.resolves([{ org: '3e2b6b3a-0000-4000-8000-000000000001' }]);
 
+			const payload = { selected_orgs: [ '3e2b6b3a-0000-4000-8000-000000000001' ] };
+
 			await callbacks.filter['users.update']?.(
-				{ selected_orgs: [ '3e2b6b3a-0000-4000-8000-000000000001' ] },
+				payload,
 				{ keys: [ '1-1-1-1-1' ] },
 				{ accountability: { user: '1-1-1-1-1' } },
 			);
+
+			expect(payload.selected_orgs).to.deep.equal([ '3e2b6b3a-0000-4000-8000-000000000001' ]);
 		});
 
-		it('should reject an org the user is not a member of', async () => {
+		it('should drop an org the user is not a member of, keeping the rest', async () => {
 			membersService.readByQuery.resolves([{ org: '3e2b6b3a-0000-4000-8000-000000000001' }]);
 
-			let error: any = null;
+			const payload = { selected_orgs: [ '3e2b6b3a-0000-4000-8000-000000000001', '3e2b6b3a-0000-4000-8000-000000000002' ] };
 
-			try {
-				await callbacks.filter['users.update']?.(
-					{ selected_orgs: [ '3e2b6b3a-0000-4000-8000-000000000002' ] },
-					{ keys: [ '1-1-1-1-1' ] },
-					{ accountability: { user: '1-1-1-1-1' } },
-				);
-			} catch (err) {
-				error = err;
-			}
+			await callbacks.filter['users.update']?.(
+				payload,
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: '1-1-1-1-1' } },
+			);
 
-			expect(error?.message).to.equal('Not a member of the selected orgs: 3e2b6b3a-0000-4000-8000-000000000002.');
+			expect(payload.selected_orgs).to.deep.equal([ '3e2b6b3a-0000-4000-8000-000000000001' ]);
 		});
 
 		it('should reject a selected orgs value that is not a list of ids', async () => {
