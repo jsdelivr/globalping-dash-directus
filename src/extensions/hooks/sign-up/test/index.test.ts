@@ -64,7 +64,9 @@ describe('Sign-up hook', () => {
 		},
 		database: {
 			transaction: async (f: any) => {
-				return f({});
+				const accountsQuery = { where: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'account-1' }) };
+				const trx = sinon.stub().returns(accountsQuery);
+				return f(trx);
 			},
 		},
 		getSchema: () => Promise.resolve({}),
@@ -183,7 +185,7 @@ describe('Sign-up hook', () => {
 			{ consumed: true },
 		]);
 
-		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1' }]);
+		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1', account_id: 'account-1' }]);
 	});
 
 	it('action should fulfill user type', async () => {

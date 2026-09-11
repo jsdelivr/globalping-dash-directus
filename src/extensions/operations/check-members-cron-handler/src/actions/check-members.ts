@@ -14,8 +14,9 @@ export const checkMembers = async (context: OperationContext) => {
 			await removeMemberships(left, context);
 			removed.push(...left);
 		} catch (error) {
-			context.logger.error(error);
-			errors.push(error instanceof Error ? error.message : String(error));
+			const message = error instanceof Error ? error.message : String(error);
+			context.logger.error(`Failed to check members of org ${org.name}: ${message}`);
+			errors.push(message);
 		}
 	}, { concurrency: 2 });
 

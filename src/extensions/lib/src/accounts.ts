@@ -11,7 +11,7 @@ const AccountNotFoundError = createError('INVALID_PAYLOAD_ERROR', 'Account not f
 // The admin-only "show everything" mode of the dashboard lists.
 export const ALL_ACCOUNTS = 'all';
 
-const getUserAccountId = async (userId: string, { database }: ApiExtensionContext) => {
+export const getUserAccountId = async (userId: string, database: ApiExtensionContext['database']): Promise<string> => {
 	const account = await database('gp_accounts').where({ user: userId }).first<{ id: string } | undefined>('id');
 
 	if (!account) {
@@ -56,7 +56,7 @@ export const getRequestAccountId = async (
 	roles: string[] = [ 'admin' ],
 ): Promise<string> => {
 	// PHASE5: remove the `userId` branch, `accountId` is the only input.
-	const accountId = input.accountId ?? await getUserAccountId(input.userId ?? accountability.user!, context);
+	const accountId = input.accountId ?? await getUserAccountId(input.userId ?? accountability.user!, context.database);
 
 	if (accountability.admin) {
 		return accountId;

@@ -1,5 +1,6 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
+import { getUserAccountId } from '../../../lib/src/accounts.js';
 import { generateBytes } from '../../../lib/src/bytes.js';
 import { releaseDeprecatedPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
@@ -120,6 +121,7 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 		}
 
 		const sum = creditsAdditions.reduce((sum, { amount }) => sum + amount, 0);
+		const accountId = await getUserAccountId(userId, trx);
 
 		await Promise.all([
 			creditsAdditionsService.updateByQuery({
@@ -128,7 +130,7 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 					consumed: { _eq: false },
 				},
 			}, { consumed: true }),
-			creditsService.createOne({ amount: sum, user_id: userId }),
+			creditsService.createOne({ amount: sum, user_id: userId, account_id: accountId }),
 		]);
 	});
 };
