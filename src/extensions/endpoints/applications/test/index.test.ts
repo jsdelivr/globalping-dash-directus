@@ -11,6 +11,7 @@ describe('/applications endpoint', () => {
 	const offsetStub = sinon.stub();
 	const rawStub = sinon.stub();
 	const firstStub = sinon.stub();
+	const delStub = sinon.stub();
 
 	const database = new Proxy(() => database, {
 		get: (_target, property) => {
@@ -22,6 +23,8 @@ describe('/applications endpoint', () => {
 				return rawStub;
 			} else if (property === 'first') {
 				return firstStub;
+			} else if (property === 'del') {
+				return delStub;
 			}
 
 			return database;
@@ -52,6 +55,7 @@ describe('/applications endpoint', () => {
 		countStub.resolves([{ total: 0 }]);
 		offsetStub.resolves([]);
 		rawStub.resolves([ [{ id: 'account-id' }] ]);
+		delStub.resolves(1);
 		firstStub.resolves({ id: 'account-id' });
 
 		accountability = {
@@ -87,6 +91,7 @@ describe('/applications endpoint', () => {
 					date_last_used: '2025-04-10 02:00:00',
 					owner_name: 'Globalping',
 					owner_url: 'https://globalping.io/',
+					user_id: 'user-1',
 					user_created: 'user-1',
 				},
 			],
@@ -195,6 +200,31 @@ describe('/applications endpoint', () => {
 
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('An application can only be revoked for a single account.');
+	});
+
+	it('should accept a revoke in the legacy form, with the user_id from the list', async () => {
+		offsetStub.resolves([{
+			id: '1',
+			app_id: 'app-1',
+			date_last_used: '2025-04-10 02:00:00',
+			user_created: 'user-id',
+			app_name: 'Client Credentials App',
+			owner_name: null,
+			owner_url: null,
+		}]);
+
+		countStub.resolves([{ total: 1 }]);
+
+		const list = await request(app).get('/').query({ userId: 'user-id' });
+		const [ application ] = list.body.applications;
+
+		const res = await request(app).post('/revoke').send({
+			userId: application.user_id,
+			id: application.id,
+		});
+
+		expect(res.status).to.equal(200);
+		expect(res.text).to.equal('Application access revoked.');
 	});
 
 	it('should reject a revoke of an application created by somebody else', async () => {

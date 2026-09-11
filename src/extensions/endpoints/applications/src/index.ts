@@ -134,6 +134,8 @@ export default defineEndpoint((router, context) => {
 				date_last_used: token.date_last_used,
 				owner_name: token.owner_name || 'Globalping',
 				owner_url: validateUrl(token.owner_url),
+				// PHASE5: remove `user_id`, `user_created` is the only creator output.
+				user_id: token.user_created,
 				user_created: token.user_created,
 				account_id: token.account_id,
 			};
