@@ -39,7 +39,7 @@ test('Admin mode shows the applications of every user, impersonation narrows the
 	await page.getByRole('switch').click();
 	await expect(page.getByText('Admin Mode')).toBeVisible();
 
-	// Impersonation sends the account of the user while the session stays the admin's, which used to return an empty list.
+	// Impersonation sends the account of the user while the session stays the admin's.
 	await page.getByLabel('Admin Panel').click();
 	await page.getByPlaceholder('Enter username').fill(user.github_username);
 	await page.getByRole('button', { name: 'Apply' }).click();

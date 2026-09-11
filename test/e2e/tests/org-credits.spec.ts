@@ -7,6 +7,27 @@ const countAccountItems = async (api: AxiosInstance, collection: string, account
 	return response.data.data.length as number;
 };
 
+const countAdditions = async (api: AxiosInstance, githubId: string) => {
+	const response = await api.get(`/items/gp_credits_additions?filter[github_id][_eq]=${githubId}`);
+	return response.data.data.length as number;
+};
+
+test('org credit additions are readable through Directus by every member of that org and by nobody else', async ({ org, actors }) => {
+	await sql('gp_credits_additions').insert({ github_id: org.github_id, amount: 2500, reason: 'one_time_sponsorship', meta: JSON.stringify({ amountInDollars: 10 }), consumed: 0 });
+
+	try {
+		for (const api of [ actors.admin, actors.member, actors.viewer, actors.directusAdmin ]) {
+			expect(await countAdditions(api, org.github_id)).toBe(1);
+		}
+
+		for (const api of [ actors.outsider, actors.otherOrgAdmin ]) {
+			expect(await countAdditions(api, org.github_id)).toBe(0);
+		}
+	} finally {
+		await sql('gp_credits_additions').where({ github_id: org.github_id }).delete();
+	}
+});
+
 test('org credits are readable by every member of that org and by nobody else', async ({ org, actors }) => {
 	await sql('gp_credits').insert({ account_id: org.account_id, amount: 1234 });
 

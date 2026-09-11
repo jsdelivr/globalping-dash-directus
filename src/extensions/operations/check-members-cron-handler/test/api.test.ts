@@ -239,6 +239,22 @@ describe('Check org members CRON handler', () => {
 		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
 	});
 
+	it('should treat a capped 100-org bulk answer as inconclusive, not as a leaver', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 200);
+		// Exactly ORGS_LIMIT orgs, none of them this org: the list is truncated, so its absence proves nothing.
+		const cappedList = Array.from({ length: 100 }, (_, index) => String(1000 + index));
+		nockGraphql({ 1: [ org.orgGithubId ], 2: cappedList });
+		// The one-by-one fallback then asks member 2's own token, which confirms they are still in.
+		nockSelfCheck('token-2', 200);
+
+		const result = await operationApi.handler({}, context as any);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(deleteMany.callCount).to.equal(0);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
+	});
+
 	it('should verify a restricting org through the public org lists', async () => {
 		rows = [ member(1), member(2) ];
 		nockSelfCheck('token-1', 403);

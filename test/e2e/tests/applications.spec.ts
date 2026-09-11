@@ -46,6 +46,13 @@ test('applications are listed per creator, and a Directus admin sees the whole a
 	expect(new Set(allAccounts.map(application => application.account_id)).size).toBeGreaterThan(1);
 });
 
+test('the applications list is allowed to a member but refused to a viewer of the same org', async ({ org, actors }) => {
+	await addApplication({ accountId: org.account_id, userId: org.admin.id });
+
+	expect((await actors.member.get(`/applications?accountId=${org.account_id}&limit=100`)).status).toBe(200);
+	expect((await actors.viewer.get(`/applications?accountId=${org.account_id}&limit=100`)).status).toBe(400);
+});
+
 test('a Directus admin revokes the applications of the impersonated user', async ({ user, user2, actors }) => {
 	const app = await addApplication({ accountId: user.account_id, userId: user.id });
 	// The same app approved by somebody else has to survive the revoke.

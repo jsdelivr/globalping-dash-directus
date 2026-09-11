@@ -65,6 +65,10 @@ test('Org probe adoption is available to admins only', async ({ org, actors }) =
 		expect((await api.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(400);
 	}
 
+	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.post('/adoption-code/verify-code', { accountId: org.account_id, code: '000000' })).status).toBe(400);
+	}
+
 	expect((await actors.admin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 	expect((await actors.directusAdmin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 

@@ -66,7 +66,6 @@ test('a new GitHub user gets their pending credits on the account', async () => 
 	const account = await sql('gp_accounts').where({ user: userId }).first('id') as { id: string };
 	const credits = await waitForCredits(userId);
 
-	// The bug: assignCredits wrote only user_id, leaving account_id NULL forever (invisible to every account-scoped reader).
 	expect(credits.account_id).toBe(account.id);
 	expect(credits.amount).toBe(12345);
 

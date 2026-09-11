@@ -364,6 +364,32 @@ describe('/sync-github-data endpoint', () => {
 
 			expect(itemsUpdateOne.args[0]).to.deep.equal([ 'org-1', { name: 'jsdelivr' }]);
 		});
+
+		it('should follow the Link pagination to read every membership page', async () => {
+			seedDirectus({});
+
+			nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
+
+			nock('https://api.github.com')
+				.get('/user/memberships/orgs?per_page=100&page=1')
+				.reply(200, [{ state: 'active', role: 'admin', organization: { id: 1, login: 'org-page-1' } }], {
+					Link: '<https://api.github.com/user/memberships/orgs?per_page=100&page=2>; rel="next"',
+				});
+
+			nock('https://api.github.com')
+				.get('/user/memberships/orgs?per_page=100&page=2')
+				.reply(200, [{ state: 'active', role: 'admin', organization: { id: 2, login: 'org-page-2' } }]);
+
+			nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
+
+			const res = await sync();
+			expect(res.status).to.equal(200);
+
+			// Every page's mock is consumed (afterEach): the loop followed rel="next" to page 2 and stopped when it was gone.
+			expect(nock.isDone()).to.equal(true);
+			expect(createdOrgs().map((org: any) => org.github_id)).to.deep.equal([ '1', '2' ]);
+			expect(res.body.github_organizations).to.deep.equal([ 'org-page-1', 'org-page-2' ]);
+		});
 	});
 
 	it('should fail without updating anything if the username request is rejected', async () => {

@@ -161,6 +161,27 @@ describe('Sign-in hook', () => {
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
 		});
 
+		it('should run the same sync on a token refresh, not only on login', async () => {
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+
+			nock('https://api.github.com')
+				.matchHeader('Authorization', 'Bearer user-github-token')
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
+
+			hook(events, context);
+
+			// auth.jwt fires on refresh too; the hook does not gate on meta.type, so the full sync runs all the same.
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, { ...loginMeta, type: 'refresh' });
+			await waitFor(() => usersService.updateOne.callCount === 1);
+
+			expect(nock.isDone()).to.equal(true);
+			expect(itemsService.createOne.args[0]?.[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
+			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
+		});
+
 		it('should not update the organizations list if it is the same', async () => {
 			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
 

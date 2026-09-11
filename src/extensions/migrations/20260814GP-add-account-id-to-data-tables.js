@@ -43,7 +43,7 @@ export async function up (knex) {
 		END;
 	`);
 
-	// The credits triggers now resolve an account instead of a user, so an org can hold a balance too.
+	// The credits triggers resolve an account, so an org can hold a balance too.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER after_gp_credits_additions_insert
 		BEFORE INSERT ON gp_credits_additions
