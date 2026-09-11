@@ -239,14 +239,29 @@ describe('Check org members CRON handler', () => {
 		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
 	});
 
-	it('should report an error when the org restricts the OAuth app', async () => {
+	it('should verify a restricting org through the public org lists', async () => {
 		rows = [ member(1), member(2) ];
 		nockSelfCheck('token-1', 403);
+		nockGraphql({ 1: [ org.orgGithubId ], 2: [ '555' ] });
 
 		const result = await operationApi.handler({}, context as any);
 
+		expect(nock.isDone()).to.equal(true);
+		expect(deleteMany.callCount).to.equal(1);
+		expect(deleteMany.args[0]![0]).to.deep.equal([ 'membership-2' ]);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: [membership-2]. Errors: [].');
+	});
+
+	it('should not run the one-by-one fallback for a restricting org', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 403);
+		nockGraphql({ 1: [ org.orgGithubId ], 2: null });
+
+		const result = await operationApi.handler({}, context as any);
+
+		expect(nock.isDone()).to.equal(true);
 		expect(deleteMany.callCount).to.equal(0);
-		expect(result).to.equal(`Checked 1 orgs. Removed memberships: []. Errors: [Org jsdelivr restricts the OAuth app, memberships can't be verified.].`);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
 	});
 
 	it('should report an error when no member has a working token', async () => {

@@ -9,13 +9,14 @@ type GithubOrg = { id: number; login: string };
 // Webhook-trigger flow seeded in seeds/development/08-flow-triggers.js; lets us run the members cron on demand.
 const MANUAL_FLOW_ID = 'ccdde62b-6f94-456e-8f24-73bb22d38547';
 
-const prepareMockGithub = async (user: User, memberships: { role: string; state: string; organization: GithubOrg }[], orgs: GithubOrg[] = [], login = 'e2e-github-user') => {
+const prepareMockGithub = async (user: User, memberships: { role: string; state: string; organization: GithubOrg }[], orgs: GithubOrg[] = [], login = 'e2e-github-user', restrictedOrgs: string[] = []) => {
 	await axios.post(`${process.env.DIRECTUS_URL}/e2e-mocks/github/state`, {
 		token: user.github_oauth_token,
 		username: login,
 		githubId: Number(user.external_identifier),
 		memberships,
 		orgs,
+		restrictedOrgs,
 	});
 };
 
@@ -237,12 +238,12 @@ const renameOrg = (org: Org) => {
 };
 
 // `login` is what GitHub answers with: passing an older one makes the stored login stale, as it is after a rename.
-const prepareMockMember = async (user: User, orgs: GithubOrg[], login?: string) => {
+const prepareMockMember = async (user: User, orgs: GithubOrg[], login?: string, restrictedOrgs: string[] = []) => {
 	// The bulk check resolves a member by their stored login, and the generated logins repeat between tests while the states live on.
 	user.github_username = `${user.github_username}-${user.external_identifier}`;
 	await sql('directus_users').where({ id: user.id }).update({ github_username: user.github_username });
 
-	await prepareMockGithub(user, orgs.map(org => membership(org.id, org.login)), [], login ?? user.github_username);
+	await prepareMockGithub(user, orgs.map(org => membership(org.id, org.login)), [], login ?? user.github_username, restrictedOrgs);
 };
 
 test('the members cron removes the memberships of everyone who left, with their org tokens and selection', async ({ org }) => {
@@ -309,5 +310,37 @@ test('the members cron does not take a member who renamed themselves on GitHub f
 	expect(await getSelectedOrgs(org.member)).toEqual([ org.id ]);
 	expect(await getSelectedOrgs(org.viewer)).toEqual([]);
 	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeTruthy();
+	expect(await sql('gp_tokens').where({ id: adminToken }).first('id')).toBeTruthy();
+});
+
+/*
+ * An org that restricts our OAuth app answers 403 to every member's own membership check, so no member can be the
+ * in-org checker. The cron must not give up on it - it falls back to the public org lists and still removes leavers.
+ * Every member is publicly in the org (that is the only way our sync learns of a restricted org), so a leaver is one
+ * whose public org list no longer has it.
+ */
+test('the members cron cleans up a leaver of an org that restricts the OAuth app', async ({ org }) => {
+	await renameOrg(org);
+	const githubOrg = { id: Number(org.github_id), login: org.name };
+	const [ adminApi, memberApi ] = await Promise.all([ loginUser(org.admin), loginUser(org.member) ]);
+	const [ adminToken, memberToken ] = await Promise.all([ createOrgToken(adminApi, org.account_id), createOrgToken(memberApi, org.account_id) ]);
+
+	await Promise.all([
+		prepareMockMember(org.admin, [ githubOrg ], undefined, [ org.name ]),
+		prepareMockMember(org.viewer, [ githubOrg ], undefined, [ org.name ]),
+		// Publicly in another org now, but no longer in this one.
+		prepareMockMember(org.member, [{ id: 1, login: 'e2e-some-other-org' }], undefined, [ org.name ]),
+		selectOrgs(org.member, [ org.id ]),
+		selectOrgs(org.viewer, [ org.id ]),
+	]);
+
+	await triggerMembersCron();
+
+	const memberships = await sql('gp_org_members').where({ org: org.id }).select('user');
+	expect(memberships.map(item => item.user).sort()).toEqual([ org.admin.id, org.viewer.id ].sort());
+
+	expect(await getSelectedOrgs(org.member)).toEqual([]);
+	expect(await getSelectedOrgs(org.viewer)).toEqual([ org.id ]);
+	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeUndefined();
 	expect(await sql('gp_tokens').where({ id: adminToken }).first('id')).toBeTruthy();
 });

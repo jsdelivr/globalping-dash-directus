@@ -14,6 +14,8 @@ type GithubState = {
 	githubId: number;
 	memberships: Membership[];
 	orgs: { id: number; login: string }[];
+	// Org logins whose OAuth App access restriction hides the org from the token owner's own membership endpoint.
+	restrictedOrgs: string[];
 };
 
 const states = new TTLCache<string, GithubState>({ ttl: 30 * 60 * 1000 });
@@ -44,7 +46,7 @@ const answer = (req: Request, res: Response, value: (state: GithubState) => unkn
 export const githubRoutes = (router: Router) => {
 	router.post('/github/state', (req, res) => {
 		const { token, ...state } = req.body as GithubState & { token: string };
-		states.set(token, { username: state.username ?? 'e2e-github-user', githubId: state.githubId ?? 0, memberships: state.memberships ?? [], orgs: state.orgs ?? [] });
+		states.set(token, { username: state.username ?? 'e2e-github-user', githubId: state.githubId ?? 0, memberships: state.memberships ?? [], orgs: state.orgs ?? [], restrictedOrgs: state.restrictedOrgs ?? [] });
 		res.sendStatus(200);
 	});
 
@@ -57,6 +59,10 @@ export const githubRoutes = (router: Router) => {
 
 		if (!state) {
 			return proxy(req, res);
+		}
+
+		if (state.restrictedOrgs.includes(req.params.org)) {
+			return res.status(403).send({ message: 'Forbidden' });
 		}
 
 		const membership = state.memberships.find(item => item.organization.login === req.params.org);

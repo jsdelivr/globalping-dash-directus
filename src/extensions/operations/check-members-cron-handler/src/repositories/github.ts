@@ -27,32 +27,41 @@ const githubGet = <T = unknown>(path: string, token: string, context: ApiExtensi
 };
 
 /**
- * Returns membership ids of the members who are no longer in the org on GitHub, verified with the members' OAuth
- * tokens (either own or a fellow member's) - there is no other way to see private memberships.
+ * Returns the membership ids of members who have left the org on GitHub.
  *
- * 1. Find a checker: a member whose token works and who is still in the org himself (the self check is authoritative).
- * 2. With the checker's token read every member's org list in bulk - a fellow member sees private memberships too.
- * 3. Anyone the bulk check can't answer for (stale login, 100+ orgs) answers for himself with his own token,
- *    and if that token is dead - through the checker via the REST API.
+ * GitHub reveals a private membership only to the member himself or a fellow member, so we verify through a member's token:
+ *
+ * 1. Pick a checker: a member still in the org. His token can then see every member's membership, private ones too.
+ * 2. With that token, fetch every member's org list in one bulk call - org still listed = stays, missing = left.
+ * 3. For members the bulk call can't resolve (renamed login, 100+ orgs), ask the checker one by one over REST.
+ *
+ * An org that restricts our OAuth app is invisible to every member's token, so there is no in-org checker. We then
+ * fall back to any member's token and the public org lists: only public memberships show, and steps 1 and 3 (which
+ * need in-org access) are skipped.
  */
 export const findLeftMemberships = async (org: Org, context: ApiExtensionContext): Promise<string[]> => {
 	const membersWithToken = org.members.filter(member => member.githubOauthToken);
 	const left: OrgMember[] = [];
-	let checker: OrgMember | null = null;
+	let orgChecker: OrgMember | null = null;
+	let publicChecker: OrgMember | null = null;
 
-	// 1. Find the checker user whose token will be used for the bulk check.
+	// 1. Find the checker whose token will read everyone's membership.
 	for (const member of membersWithToken) {
 		const ownMembership = await getOwnMembership(org, member, context);
 
-		if (ownMembership === 'org-inaccessible') {
-			throw new Error(`Org ${org.name} restricts the OAuth app, memberships can't be verified.`);
+		if (ownMembership === 'active') {
+			orgChecker = member;
+			break;
 		}
 
-		if (ownMembership === 'active') {
-			checker = member;
+		// The restriction is org-wide, so no member's token can be active here, but any of them still reads public lists.
+		if (ownMembership === 'org-inaccessible') {
+			publicChecker = member;
 			break;
 		}
 	}
+
+	const checker = orgChecker ?? publicChecker;
 
 	if (!checker) {
 		throw new Error(`Org ${org.name} has no member with a working token, memberships can't be verified.`);
@@ -66,8 +75,9 @@ export const findLeftMemberships = async (org: Org, context: ApiExtensionContext
 			left.push(member);
 		}
 
-		// 3. One-by-one check of the inconclusive ones.
-		if (verdict === 'unknown' && await hasLeftOrg(org, member, checker, context)) {
+		// 3. One-by-one check of the inconclusive ones - only with an in-org checker, as the REST fallback reads
+		//    /orgs/{org}/members, which a restricting org denies. Without one, an inconclusive verdict stays untouched.
+		if (verdict === 'unknown' && orgChecker && await hasLeftOrg(org, member, orgChecker, context)) {
 			left.push(member);
 		}
 	}

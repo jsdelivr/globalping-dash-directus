@@ -57,6 +57,14 @@ describe('/e2e-mocks endpoint', () => {
 			expect(userRes.body).to.deep.equal({ login: 'new-username' });
 		});
 
+		it('should answer 403 for the self-check of a restricted org', async () => {
+			await request(app).post('/github/state').send({ token: 'restricted-token', username: 'u', memberships, restrictedOrgs: [ 'jsdelivr' ] });
+
+			const res = await request(app).get('/github/user/memberships/orgs/jsdelivr').set('Authorization', 'Bearer restricted-token');
+
+			expect(res.status).to.equal(403);
+		});
+
 		it('should proxy a token nothing was prepared for to GitHub itself', async () => {
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer real-token')
