@@ -3,11 +3,6 @@ import type { EventContext } from '@directus/types';
 import _ from 'lodash';
 import { payloadError, type Probe, type Fields } from '../index.js';
 
-type User = {
-	github_username: string | null;
-	github_organizations: string[];
-};
-
 export const getProbes = async (keys: string[], { services, getSchema }: HookExtensionContext, accountability: EventContext['accountability']) => {
 	const { ItemsService } = services;
 
@@ -23,17 +18,6 @@ export const getProbes = async (keys: string[], { services, getSchema }: HookExt
 	}
 
 	return probes;
-};
-
-export const getUser = async (userId: string, accountability: EventContext['accountability'], { services, getSchema }: HookExtensionContext) => {
-	const { ItemsService } = services;
-	const itemsService = new ItemsService('directus_users', {
-		schema: await getSchema(),
-		accountability,
-	});
-
-	const user = await itemsService.readOne(userId) as User | null;
-	return user;
 };
 
 // PHASE5: drop `github_organizations` - a personal account narrows to its owner's `github_username`.

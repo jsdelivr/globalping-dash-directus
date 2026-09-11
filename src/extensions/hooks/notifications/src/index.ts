@@ -74,7 +74,7 @@ export default defineHook(({ filter }, hookContext) => {
 			schema: await getSchema(),
 		});
 
-		const user = await usersService.readOne(recipient) as User | null;
+		const user = await usersService.readOne(recipient, { fields: [ 'email', 'notification_preferences' ] }) as User | null;
 
 		if (!user) {
 			throw new UserNotFoundError();

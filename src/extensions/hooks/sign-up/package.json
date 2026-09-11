@@ -41,7 +41,6 @@
 		"@isaacs/ttlcache": "^1.4.1",
 		"@scure/base": "^2.0.0",
 		"axios": "^1.12.2",
-		"axios-retry": "^4.5.0",
 		"nock": "^14.0.10"
 	}
 }
