@@ -18,7 +18,7 @@ export const getOrgMember = async (orgId: string, userId: string, { services, ge
 	const membersService = new ItemsService('gp_org_members', { schema: await getSchema() });
 
 	const [ member ] = await membersService.readByQuery({
-		filter: { org: { _eq: orgId }, user: { _eq: userId } },
+		filter: { org: { _eq: orgId }, user: { _eq: userId }, role: { _in: [ 'admin', 'member' ] } },
 		fields: MEMBER_FIELDS,
 	}) as OrgMember[];
 

@@ -53,6 +53,7 @@ describe('org members hooks', () => {
 		const error = await Promise.resolve(update({ role: 'admin' }, [ 'm-1' ])).catch(err => err);
 
 		expect((error as Error).message).to.equal('Only an admin of the org can change roles.');
+		expect((error as { status: number }).status).to.equal(403);
 	});
 
 	it('should reject a role change when the user is an admin of only some of the target orgs', async () => {
@@ -82,6 +83,7 @@ describe('org members hooks', () => {
 		const error = await Promise.resolve(update({ notification_preferences: {} }, [ 'm-1' ])).catch(err => err);
 
 		expect((error as Error).message).to.equal('Notification preferences can only be changed on your own membership.');
+		expect((error as { status: number }).status).to.equal(403);
 	});
 
 	it('should apply both rules when both fields are in the payload', async () => {

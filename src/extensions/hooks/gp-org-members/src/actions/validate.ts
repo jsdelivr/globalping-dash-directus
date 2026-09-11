@@ -4,8 +4,8 @@ import { filterOrgIdsByBeingAdmin } from '../../../../lib/src/accounts.js';
 import { joiNotificationPreferences } from '../../../../lib/src/notification-types.js';
 import type { Fields, Membership } from '../types.js';
 
-const ForbiddenPreferencesError = createError('INVALID_PAYLOAD_ERROR', 'Notification preferences can only be changed on your own membership.', 400);
-const ForbiddenRoleError = createError('INVALID_PAYLOAD_ERROR', 'Only an admin of the org can change roles.', 400);
+const ForbiddenPreferencesError = createError('FORBIDDEN', 'Notification preferences can only be changed on your own membership.', 403);
+const ForbiddenRoleError = createError('FORBIDDEN', 'Only an admin of the org can change roles.', 403);
 
 export const validatePreferences = (fields: Fields, memberships: Membership[], userId: string) => {
 	if (memberships.some(membership => membership.user !== userId)) {
