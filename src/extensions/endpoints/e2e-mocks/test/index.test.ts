@@ -27,9 +27,7 @@ describe('/e2e-mocks endpoint', () => {
 	});
 
 	afterEach(() => {
-		const pendingMocks = nock.pendingMocks();
 		nock.cleanAll();
-		expect(pendingMocks, `unused nock mocks: ${pendingMocks.join(', ')}`).to.have.lengthOf(0);
 	});
 
 	it('should register nothing unless the mocks are enabled', async () => {

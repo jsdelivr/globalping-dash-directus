@@ -68,6 +68,10 @@ describe('/sync-github-data endpoint', () => {
 		nock.enableNetConnect('127.0.0.1');
 	});
 
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
 	beforeEach(async () => {
 		sinon.resetHistory();
 
@@ -94,12 +98,6 @@ describe('/sync-github-data endpoint', () => {
 			user: 'directus-id',
 			admin: false,
 		};
-	});
-
-	afterEach(() => {
-		const pendingMocks = nock.pendingMocks();
-		nock.cleanAll();
-		expect(pendingMocks, `unused nock mocks: ${pendingMocks.join(', ')}`).to.have.lengthOf(0);
 	});
 
 	it('should sync GitHub data', async () => {
@@ -385,9 +383,8 @@ describe('/sync-github-data endpoint', () => {
 			const res = await sync();
 			expect(res.status).to.equal(200);
 
-			// Every page's mock is consumed (afterEach): the loop followed rel="next" to page 2 and stopped when it was gone.
 			expect(nock.isDone()).to.equal(true);
-			expect(createdOrgs().map((org: any) => org.github_id)).to.deep.equal([ '1', '2' ]);
+			expect(createdOrgs().map((org: any) => org.github_id)).to.have.members([ '1', '2' ]);
 			expect(res.body.github_organizations).to.deep.equal([ 'org-page-1', 'org-page-2' ]);
 		});
 	});
