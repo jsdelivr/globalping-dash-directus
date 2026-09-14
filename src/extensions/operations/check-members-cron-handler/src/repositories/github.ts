@@ -11,7 +11,8 @@ const REQUEST_TIMEOUT = 5000;
 type OwnMembership = 'active' | 'left' | 'org-inaccessible' | 'bad-token';
 type Verdict = 'member' | 'left' | 'unknown';
 
-type GraphqlNode = { databaseId: number; organizations: { nodes: ({ databaseId: number } | null)[] } } | null;
+type OrgNode = { databaseId: number; login: string };
+type GraphqlNode = { databaseId: number; organizations: { nodes: (OrgNode | null)[] } } | null;
 type GraphqlData = Record<string, GraphqlNode>;
 type GraphqlError = { type?: string; message: string };
 
@@ -39,7 +40,7 @@ const githubGet = <T = unknown>(path: string, token: string, context: ApiExtensi
  * fall back to any member's token and the public org lists: only public memberships show, and steps 1 and 3 (which
  * need in-org access) are skipped.
  */
-export const findLeftMemberships = async (org: Org, context: ApiExtensionContext): Promise<string[]> => {
+export const findLeftMemberships = async (org: Org, context: ApiExtensionContext): Promise<{ left: string[]; orgName: string | null }> => {
 	const membersWithToken = org.members.filter(member => member.githubOauthToken);
 	const left: OrgMember[] = [];
 	let orgChecker: OrgMember | null = null;
@@ -68,7 +69,13 @@ export const findLeftMemberships = async (org: Org, context: ApiExtensionContext
 	}
 
 	// 2. Bulk check of all members.
-	const verdicts = await getVerdicts(org, org.members, checker.githubOauthToken!, context);
+	const { verdicts, orgName } = await getVerdicts(org, org.members, checker.githubOauthToken!, context);
+
+	// The org name only reaches us through a member's login, so a rename can be days old. Everything below reads
+	// the org by name, which after a rename may point at a different org, so the run stops and the name is refreshed.
+	if (orgName && orgName !== org.name) {
+		return { left: [], orgName };
+	}
 
 	for (const [ member, verdict ] of verdicts) {
 		if (verdict === 'left') {
@@ -82,7 +89,7 @@ export const findLeftMemberships = async (org: Org, context: ApiExtensionContext
 		}
 	}
 
-	return left.map(member => member.membershipId);
+	return { left: left.map(member => member.membershipId), orgName };
 };
 
 // GET /user/memberships/orgs/{org} answers for the token's owner, so it sees even a private membership.
@@ -106,8 +113,9 @@ const getOwnMembership = async (org: Org, member: OrgMember, context: ApiExtensi
 	return 'bad-token';
 };
 
-const getVerdicts = async (org: Org, members: OrgMember[], token: string, context: ApiExtensionContext): Promise<Map<OrgMember, Verdict>> => {
+const getVerdicts = async (org: Org, members: OrgMember[], token: string, context: ApiExtensionContext): Promise<{ verdicts: Map<OrgMember, Verdict>; orgName: string | null }> => {
 	const verdicts = new Map<OrgMember, Verdict>();
+	let orgName: string | null = null;
 	const membersWithLogin = members.filter(member => member.githubUsername);
 	const membersWithoutLogin = members.filter(member => !member.githubUsername);
 
@@ -121,11 +129,13 @@ const getVerdicts = async (org: Org, members: OrgMember[], token: string, contex
 		const nodes = await fetchMembersByLogin(batch.map(member => member.githubUsername!), token, context);
 
 		batch.forEach((member, index) => {
-			verdicts.set(member, getVerdict(org, member, nodes[index] ?? null));
+			const node = nodes[index] ?? null;
+			orgName ??= node?.organizations.nodes.find(orgNode => orgNode?.databaseId.toString() === org.githubId)?.login ?? null;
+			verdicts.set(member, getVerdict(org, member, node));
 		});
 	}
 
-	return verdicts;
+	return { verdicts, orgName };
 };
 
 const getVerdict = (org: Org, member: OrgMember, node: GraphqlNode): Verdict => {
@@ -150,7 +160,7 @@ const getVerdict = (org: Org, member: OrgMember, node: GraphqlNode): Verdict => 
 
 const fetchMembersByLogin = async (logins: string[], token: string, context: ApiExtensionContext): Promise<GraphqlNode[]> => {
 	const variableDefinitions = logins.map((_login, index) => `$l${index}: String!`).join(', ');
-	const fields = logins.map((_login, index) => `u${index}: user(login: $l${index}) { databaseId organizations(first: ${ORGS_LIMIT}) { nodes { databaseId } } }`).join(' ');
+	const fields = logins.map((_login, index) => `u${index}: user(login: $l${index}) { databaseId organizations(first: ${ORGS_LIMIT}) { nodes { databaseId login } } }`).join(' ');
 	const query = `query (${variableDefinitions}) { ${fields} }`;
 	const variables = Object.fromEntries(logins.map((login, index) => [ `l${index}`, login ]));
 

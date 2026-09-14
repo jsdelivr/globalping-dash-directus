@@ -231,12 +231,6 @@ test('removes only the org the user left, keeping the rest with their tokens and
 // The members cron re-checks the orgs of users who never sign in, so it goes through GitHub with the members' own tokens.
 const triggerMembersCron = () => axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${MANUAL_FLOW_ID}`);
 
-// The org name goes into the GitHub url, and the generated one has spaces in it.
-const renameOrg = (org: Org) => {
-	org.name = `e2e-check-members-${org.github_id}`;
-	return sql('gp_orgs').where({ id: org.id }).update({ name: org.name });
-};
-
 // `login` is what GitHub answers with: passing an older one makes the stored login stale, as it is after a rename.
 const prepareMockMember = async (user: User, orgs: GithubOrg[], login?: string, restrictedOrgs: string[] = []) => {
 	// The bulk check resolves a member by their stored login, and the generated logins repeat between tests while the states live on.
@@ -247,7 +241,6 @@ const prepareMockMember = async (user: User, orgs: GithubOrg[], login?: string, 
 };
 
 test('the members cron removes the memberships of everyone who left, with their org tokens and selection', async ({ org }) => {
-	await renameOrg(org);
 	const githubOrg = { id: Number(org.github_id), login: org.name };
 	const [ adminApi, memberApi ] = await Promise.all([ loginUser(org.admin), loginUser(org.member) ]);
 	const [ adminToken, memberToken ] = await Promise.all([ createOrgToken(adminApi, org.account_id), createOrgToken(memberApi, org.account_id) ]);
@@ -286,7 +279,6 @@ test('the members cron removes the memberships of everyone who left, with their 
  * 3. everyone left unknown is asked about with their own token, which answers without a login at all.
  */
 test('the members cron does not take a member who renamed themselves on GitHub for a leaver', async ({ org }) => {
-	await renameOrg(org);
 	const githubOrg = { id: Number(org.github_id), login: org.name };
 	const [ adminApi, memberApi ] = await Promise.all([ loginUser(org.admin), loginUser(org.member) ]);
 	const [ adminToken, memberToken ] = await Promise.all([ createOrgToken(adminApi, org.account_id), createOrgToken(memberApi, org.account_id) ]);
@@ -313,6 +305,33 @@ test('the members cron does not take a member who renamed themselves on GitHub f
 	expect(await sql('gp_tokens').where({ id: adminToken }).first('id')).toBeTruthy();
 });
 
+test('the members cron refreshes the stored org name instead of checking the org by it', async ({ org }) => {
+	const newLogin = `${org.name}-renamed`;
+	// Someone else holds the name we still have stored.
+	const squatter = { id: 1, login: org.name };
+	const renamed = { id: Number(org.github_id), login: newLogin };
+	const memberApi = await loginUser(org.member);
+	const memberToken = await createOrgToken(memberApi, org.account_id);
+
+	await Promise.all([
+		// The admin is in both, so the stale name still finds a checker and the run gets as far as the bulk check.
+		prepareMockMember(org.admin, [ squatter, renamed ]),
+		prepareMockMember(org.viewer, [ renamed ]),
+		// Really out of the org, but nothing may be removed until the name is verified.
+		prepareMockMember(org.member, [{ id: 2, login: 'e2e-some-other-org' }]),
+		selectOrgs(org.member, [ org.id ]),
+	]);
+
+	await triggerMembersCron();
+
+	expect(await sql('gp_orgs').where({ id: org.id }).first('name')).toMatchObject({ name: newLogin });
+
+	const memberships = await sql('gp_org_members').where({ org: org.id }).select('user');
+	expect(memberships.map(item => item.user).sort()).toEqual([ org.admin.id, org.member.id, org.viewer.id ].sort());
+	expect(await getSelectedOrgs(org.member)).toEqual([ org.id ]);
+	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeTruthy();
+});
+
 /*
  * An org that restricts our OAuth app answers 403 to every member's own membership check, so no member can be the
  * in-org checker. The cron must not give up on it - it falls back to the public org lists and still removes leavers.
@@ -320,7 +339,6 @@ test('the members cron does not take a member who renamed themselves on GitHub f
  * whose public org list no longer has it.
  */
 test('the members cron cleans up a leaver of an org that restricts the OAuth app', async ({ org }) => {
-	await renameOrg(org);
 	const githubOrg = { id: Number(org.github_id), login: org.name };
 	const [ adminApi, memberApi ] = await Promise.all([ loginUser(org.admin), loginUser(org.member) ]);
 	const [ adminToken, memberToken ] = await Promise.all([ createOrgToken(adminApi, org.account_id), createOrgToken(memberApi, org.account_id) ]);

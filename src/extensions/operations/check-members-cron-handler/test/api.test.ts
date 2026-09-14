@@ -23,21 +23,11 @@ describe('Check org members CRON handler', () => {
 
 	let rows: Row[] = [];
 
-	// The org query is a knex chain ending with select(columns object); subqueries end with whereNotNull, so only the final
-	// object-form select resolves with the rows.
 	const query: any = {};
 
-	for (const method of [ 'join', 'whereIn', 'orWhereIn', 'whereNotNull' ]) {
+	for (const method of [ 'join', 'whereNotNull' ]) {
 		query[method] = sinon.stub().returns(query);
 	}
-
-	query.where = sinon.stub().callsFake((callback: unknown) => {
-		if (typeof callback === 'function') {
-			callback(query);
-		}
-
-		return query;
-	});
 
 	query.select = sinon.stub().callsFake((arg: unknown) => typeof arg === 'string' ? query : Promise.resolve(rows));
 
@@ -46,8 +36,9 @@ describe('Check org members CRON handler', () => {
 	const deleteMany = sinon.stub().resolves([]);
 	const readMany = sinon.stub().resolves([]);
 	const updateOne = sinon.stub().resolves();
+	const orgUpdateOne = sinon.stub().resolves();
 	const services = {
-		ItemsService: sinon.stub().returns({ deleteMany, readMany }),
+		ItemsService: sinon.stub().returns({ deleteMany, readMany, updateOne: orgUpdateOne }),
 		UsersService: sinon.stub().returns({ updateOne }),
 	} as any;
 
@@ -71,7 +62,7 @@ describe('Check org members CRON handler', () => {
 	};
 
 	// Bulk check: nodes keyed by member github id -> list of org github ids, null = NOT_FOUND.
-	const nockGraphql = (nodesById: Record<string, string[] | null>) => {
+	const nockGraphql = (nodesById: Record<string, string[] | null>, orgLogins: Record<string, string> = {}) => {
 		nock('https://api.github.com').post('/graphql').reply(200, (_uri, body: any) => {
 			const responseData: Record<string, unknown> = {};
 			const errors: unknown[] = [];
@@ -85,7 +76,7 @@ describe('Check org members CRON handler', () => {
 					responseData[alias] = null;
 					errors.push({ type: 'NOT_FOUND', message: `Could not resolve to a User with the login of '${login}'.`, path: [ alias ] });
 				} else {
-					responseData[alias] = { databaseId: Number(githubId), organizations: { nodes: orgIds.map(id => ({ databaseId: Number(id) })) } };
+					responseData[alias] = { databaseId: Number(githubId), organizations: { nodes: orgIds.map(id => ({ databaseId: Number(id), login: orgLogins[id] ?? (id === org.orgGithubId ? org.orgName : `org-${id}`) })) } };
 				}
 			});
 
@@ -285,6 +276,29 @@ describe('Check org members CRON handler', () => {
 
 		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal(`Checked 1 orgs. Removed memberships: []. Errors: [Org jsdelivr has no member with a working token, memberships can't be verified.].`);
+	});
+
+	it('should refresh the stored org name when GitHub answers with a new one', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 200);
+		nockGraphql({ 1: [ org.orgGithubId ], 2: null }, { [org.orgGithubId]: 'jsdelivr-renamed' });
+
+		const result = await operationApi.handler({}, context as any);
+
+		expect(orgUpdateOne.args[0]).to.deep.equal([ org.orgId, { name: 'jsdelivr-renamed' }]);
+		expect(deleteMany.callCount).to.equal(0);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
+	});
+
+	it('should keep removing leavers while the stored org name still matches', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 200);
+		nockGraphql({ 1: [ org.orgGithubId ], 2: [] });
+
+		await operationApi.handler({}, context as any);
+
+		expect(orgUpdateOne.callCount).to.equal(0);
+		expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-2' ] ]);
 	});
 
 	it('should check multiple orgs independently', async () => {

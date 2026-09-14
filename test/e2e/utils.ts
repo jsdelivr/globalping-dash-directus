@@ -46,7 +46,7 @@ export const generateOrg = async (suffix = ''): Promise<Org> => {
 
 	const org = {
 		id: randomUUID(),
-		name: `Sacred Heart ${randomExternalId()}`,
+		name: `e2e-org-${randomExternalId()}`,
 		github_id: randomExternalId(),
 		adoption_token: randomBytes(16).toString('hex'),
 	};

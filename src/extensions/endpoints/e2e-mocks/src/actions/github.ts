@@ -90,7 +90,7 @@ export const githubRoutes = (router: Router) => {
 
 			data[alias] = {
 				databaseId: member.githubId,
-				organizations: { nodes: member.memberships.map(item => ({ databaseId: item.organization.id })) },
+				organizations: { nodes: member.memberships.map(item => ({ databaseId: item.organization.id, login: item.organization.login })) },
 			};
 		});
 

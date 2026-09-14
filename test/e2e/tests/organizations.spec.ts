@@ -31,7 +31,7 @@ test('only an org admin can change roles', async ({ org, org2, actors }) => {
 	// The self-promotion of a member is the reason the hook exists: the permission alone lets them update their own row.
 	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
 		const response = await api.patch(`/items/gp_org_members/${membershipId}`, { role: 'admin' });
-		expect(response.status).toBe(400);
+		expect(response.status).toBe(403);
 		expect(response.data.errors[0].message).toBe('Only an admin of the org can change roles.');
 	}
 
@@ -46,7 +46,7 @@ test('only an org admin can change roles', async ({ org, org2, actors }) => {
 	// But only inside their own org.
 	const otherMembershipId = await getMembershipId(org2, org2.member);
 	const inOtherOrg = await actors.admin.patch(`/items/gp_org_members/${otherMembershipId}`, { role: 'admin' });
-	expect(inOtherOrg.status).toBe(400);
+	expect(inOtherOrg.status).toBe(403);
 	expect(inOtherOrg.data.errors[0].message).toBe('Only an admin of the org can change roles.');
 
 	// A Directus admin manages the roles of an org they are not a member of.
@@ -81,7 +81,7 @@ test('notification preferences can only be changed on your own membership', asyn
 
 	for (const api of [ actors.admin, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
 		const response = await api.patch(`/items/gp_org_members/${membershipId}`, { notification_preferences: preferences });
-		expect(response.status).toBe(400);
+		expect(response.status).toBe(403);
 		expect(response.data.errors[0].message).toBe('Notification preferences can only be changed on your own membership.');
 	}
 

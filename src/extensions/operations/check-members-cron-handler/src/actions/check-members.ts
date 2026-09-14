@@ -1,6 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
-import { getOrgsToCheck, removeMemberships } from '../repositories/directus.js';
+import { getOrgsToCheck, removeMemberships, renameOrg } from '../repositories/directus.js';
 import { findLeftMemberships } from '../repositories/github.js';
 
 export const checkMembers = async (context: OperationContext) => {
@@ -10,7 +10,14 @@ export const checkMembers = async (context: OperationContext) => {
 
 	await Bluebird.map(orgs, async (org) => {
 		try {
-			const left = await findLeftMemberships(org, context);
+			const { left, orgName } = await findLeftMemberships(org, context);
+
+			if (orgName && orgName !== org.name) {
+				// Org name has changed, so membership check is not valid on this run.
+				await renameOrg(org.id, orgName, context);
+				return;
+			}
+
 			await removeMemberships(left, context);
 			removed.push(...left);
 		} catch (error) {
