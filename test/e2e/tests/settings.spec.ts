@@ -1,6 +1,6 @@
 import { test, expect } from '../fixtures.ts';
 
-test('Settings page', async ({ page }) => {
+test('Settings page', async ({ page, user }) => {
 	await page.goto('/settings');
 	await expect(page.locator('h1')).toHaveText('Settings');
 
@@ -9,7 +9,7 @@ test('Settings page', async ({ page }) => {
 	await page.getByLabel('Apply settings').click();
 
 	await page.getByLabel('Last Name').fill('Reid-Dorian');
-	await page.getByLabel('elliot').click();
+	await page.getByLabel(user.default_prefix).click();
 	await page.locator('#defaultPrefix_1').getByText('Scrubs').click();
 	await page.getByLabel('Regenerate').click();
 	await page.getByLabel('Apply settings').click();

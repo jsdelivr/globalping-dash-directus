@@ -9,6 +9,7 @@ import { Actors, Org, User } from './types.ts';
 export const generateUser = async (suffix = ''): Promise<User> => {
 	const userId = randomUUID();
 	const userRole = await client('directus_roles').where({ name: 'User' }).select('id').first();
+	const login = `elliot${suffix}-${userId.split('-')[0]}`;
 
 	const user = {
 		id: userId,
@@ -21,10 +22,10 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 		provider: 'default',
 		email_notifications: 0,
 		github_organizations: JSON.stringify([ `Scrubs${suffix}` ]),
-		github_username: `elliot${suffix}`,
+		github_username: login,
 		user_type: 'sponsor',
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
-		default_prefix: `elliot${suffix}`,
+		default_prefix: login,
 		// Code sends sync request to GH with github_oauth_token as header, and e2e GH mock reads it to auth as user, so we need github_oauth_token === token.
 		github_oauth_token: `e2e-github-${userId}`,
 		token: `e2e-github-${userId}`,
