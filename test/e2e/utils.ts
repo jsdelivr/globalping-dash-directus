@@ -213,6 +213,7 @@ export const pageAs = async (browser: Browser, email: string, password: string) 
 	}
 
 	const context = await browser.newContext({ storageState: await apiContext.storageState() });
+	await apiContext.dispose();
 
 	return context.newPage();
 };

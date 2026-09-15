@@ -9,11 +9,13 @@ test('Admin mode shows the probes of every user, impersonation narrows them to o
 	await expect(page.locator('h1')).toHaveText('Probes');
 
 	// The admin owns nothing, so their own list is empty until admin mode is on.
-	await expect(page.getByText('e2e-probe-of-the-user')).toHaveCount(0);
+	await expect(page.locator('tbody tr')).toHaveCount(0);
 
 	await page.getByLabel('Admin Panel').click();
 	await page.getByRole('switch').click();
 	await expect(page.getByText('Admin Mode')).toBeVisible();
+
+	// Probes of other users, which the admin has no other way to see.
 	await expect(page.locator('tbody tr').first()).toBeVisible();
 
 	// Impersonation replaces the account every list is filtered by, so the probe of that user shows up as their own.
@@ -33,11 +35,14 @@ test('Admin mode shows the applications of every user, impersonation narrows the
 	await expect(page.locator('h1')).toHaveText('Tokens');
 
 	// The admin approved nothing, so their own list is empty until admin mode is on.
-	await expect(page.getByText('e2e-app-of-the-user')).toHaveCount(0);
+	await expect(page.locator('tbody tr')).toHaveCount(0);
 
 	await page.getByLabel('Admin Panel').click();
 	await page.getByRole('switch').click();
 	await expect(page.getByText('Admin Mode')).toBeVisible();
+
+	// Applications of other users, which the admin has no other way to see.
+	await expect(page.locator('tbody tr').first()).toBeVisible();
 
 	// Impersonation sends the account of the user while the session stays the admin's.
 	await page.getByLabel('Admin Panel').click();
