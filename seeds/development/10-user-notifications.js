@@ -13,10 +13,6 @@ export const seed = async (knex) => {
 		knex('gp_probes').where({ userId: user.id, isOutdated: true }).select('id', 'name', 'ip', 'hardwareDevice'),
 	]);
 
-	// used in outdated probe messages
-	const targetFirmware = process.env.TARGET_HW_DEVICE_FIRMWARE ?? 'v20.13.0';
-	const targetNodeVersion = process.env.TARGET_NODE_VERSION ?? 'v2.0';
-
 	// used to set status to archive on the last 40% of outdated probes
 	const startArchiveIndex = Math.floor(outdatedProbes.length * 0.6);
 
@@ -54,8 +50,8 @@ export const seed = async (knex) => {
 				timestamp: relativeDayUtc(-index),
 				status: index % 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
-				subject: 'Probe unassigned',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
+				subject: probe.name ? `Probe ${probe.name} unassigned` : 'Probe unassigned',
+				message: `Your probe **${probe.name}** with IP address **${probe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
 			}
 		)),
 		// your probe has been deleted message
@@ -66,8 +62,8 @@ export const seed = async (knex) => {
 				status: index === 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
 				collection: 'gp_probes',
-				subject: 'Your probe has been deleted',
-				message: `Your probe ${probe.name} with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
+				subject: probe.name ? `Your probe ${probe.name} has been deleted` : 'Your probe has been deleted',
+				message: `Your probe **${probe.name}** with IP address **${probe.ip}** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.`,
 			}
 		)),
 		// new probe adopted message
@@ -77,23 +73,45 @@ export const seed = async (knex) => {
 				timestamp: relativeDayUtc(0),
 				status: index === 3 ? 'archived' : 'inbox',
 				type: 'probe_adopted',
-				subject: 'New probe adopted',
+				subject: probe.name ? `New probe ${probe.name} adopted` : 'New probe adopted',
 				message: `A new probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** has been assigned to your account.`,
 			}
 		)),
+		// probe location changed messages
+		...readyProbes.slice(0, 1).map(probe => ({
+			recipient: user.id,
+			timestamp: relativeDayUtc(0),
+			status: 'inbox',
+			type: 'probe_location_changed',
+			item: probe.id,
+			collection: 'gp_probes',
+			subject: probe.name ? `Your probe ${probe.name} changed location` : `Your probe's location has changed`,
+			message: `Globalping detected that your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** has changed its location from Slovakia to Austria.\n\nIf this change is not right, please follow the steps in [this issue](https://github.com/jsdelivr/globalping/issues/660).`,
+		})),
+		...readyProbes.slice(1, 2).map(probe => ({
+			recipient: user.id,
+			timestamp: relativeDayUtc(0),
+			status: 'inbox',
+			type: 'probe_location_changed_back',
+			item: probe.id,
+			collection: 'gp_probes',
+			subject: probe.name ? `Your probe ${probe.name} returned to its previous location` : `Your probe's location has changed back`,
+			message: `Globalping detected that your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** has changed its location back from Austria to Slovakia.`,
+		})),
 		// your probe went offline message
 		...offlineProbes.map((probe) => {
 			const dateOfExpiration = new Date(probe.lastSyncDate);
 			dateOfExpiration.setDate(dateOfExpiration.getDate() + 30);
+			const probeLink = probe.name ? `probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}**` : `[probe with IP address **${probe.ip}**](/probes/${probe.id})`;
 
 			return {
 				recipient: user.id,
-				subject: 'Your probe went offline',
+				subject: probe.name ? `Your probe ${probe.name} went offline` : 'Your probe went offline',
 				timestamp: new Date(probe.lastSyncDate),
 				type: 'offline_probe',
 				item: probe.id,
 				collection: 'gp_probes',
-				message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** has been offline for more than 24 hours. If it does not come back online before **${dateOfExpiration.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}** it will be removed from your account.`,
+				message: `Your ${probeLink} has been offline for more than 24 hours. If it does not come back online before **${dateOfExpiration.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}** it will be removed from your account.`,
 			};
 		}),
 		// outdated software & firmware notifications
@@ -106,8 +124,8 @@ export const seed = async (knex) => {
 					item: probe.id,
 					collection: 'gp_probes',
 					type: 'outdated_firmware',
-					secondary_type: `${targetNodeVersion}_${targetFirmware}`,
-					subject: 'Your hardware probe is running an outdated firmware',
+					secondary_type: 'v2.0_v22.22.3',
+					subject: probe.name ? `Your hardware probe ${probe.name} is running outdated firmware` : 'Your hardware probe is running outdated firmware',
 					message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 				};
 			}
@@ -119,8 +137,8 @@ export const seed = async (knex) => {
 				item: probe.id,
 				collection: 'gp_probes',
 				type: 'outdated_software',
-				secondary_type: targetNodeVersion,
-				subject: 'Your probe container is running an outdated software version',
+				secondary_type: 'v22.22.3',
+				subject: probe.name ? `The container running your probe ${probe.name} has outdated software` : 'Your probe container is running an outdated software version',
 				message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 			};
 		}),

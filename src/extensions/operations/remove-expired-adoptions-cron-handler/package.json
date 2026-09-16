@@ -49,7 +49,7 @@
 	},
 	"dependencies": {
 		"bluebird": "^3.7.2",
-		"countries-list": "^3.1.1",
+		"countries-list": "^3.4.1",
 		"lodash": "^4.17.21"
 	}
 }

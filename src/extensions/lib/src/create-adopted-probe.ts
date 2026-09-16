@@ -198,7 +198,7 @@ const sendNotificationProbeAdopted = async (adoption: NotificationInfo, context:
 	await sendNotification({
 		account: adoption.account_id,
 		type: 'probe_adopted',
-		subject: 'New probe adopted',
+		subject: adoption.name ? `New probe ${adoption.name} adopted` : 'New probe adopted',
 		message: `A new ${adoption.name ? `probe [${escapeMdSymbols(adoption.name)}](/probes/${adoption.id})` : `[probe](/probes/${adoption.id})`} with IP address **${adoption.ip}** has been assigned to your account.`,
 	}, context);
 };
@@ -207,7 +207,7 @@ const sendNotificationProbeUnassigned = async (existingProbe: NotificationInfo, 
 	await sendNotification({
 		account: existingProbe.account_id,
 		type: 'probe_unassigned',
-		subject: 'Probe unassigned',
+		subject: existingProbe.name ? `Probe ${existingProbe.name} unassigned` : 'Probe unassigned',
 		message: `Your probe ${existingProbe.name ? `**${escapeMdSymbols(existingProbe.name)}** ` : ''}with IP address **${existingProbe.ip}** has been reassigned to another user because it reported an adoption token that belongs to another user.`,
 	}, context);
 };

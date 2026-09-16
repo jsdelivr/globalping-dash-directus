@@ -41,7 +41,7 @@
 		"@directus/errors": "^2.3.1",
 		"any-ascii": "^0.3.3",
 		"axios": "^1.12.2",
-		"countries-list": "^3.1.1",
+		"countries-list": "^3.4.1",
 		"joi": "^18.0.1",
 		"lodash": "^4.17.21"
 	}

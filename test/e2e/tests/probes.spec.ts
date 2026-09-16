@@ -291,7 +291,7 @@ test('Adoption of a probe with different data in SQL and API', async ({ page, us
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
 	await expect(page.getByText('Ouagadougou').first()).toBeVisible();
 	await page.getByRole('button', { name: 'Notifications' }).click();
-	await expect(page.getByText('New probe adopted').first()).toBeVisible();
+	await expect(page.getByText('New probe probe-bf-ouagadougou-01 adopted').first()).toBeVisible();
 	await expect(page.getByText('outdated software').first()).not.toBeVisible();
 });
 
@@ -321,6 +321,6 @@ test('Adoption of a probe with old node version', async ({ page, user }) => {
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
 	await expect(page.getByText('Ouagadougou').first()).toBeVisible();
 	await page.getByRole('button', { name: 'Notifications' }).click();
-	await expect(page.getByText('New probe adopted').first()).toBeVisible();
+	await expect(page.getByText('New probe probe-bf-ouagadougou-01 adopted').first()).toBeVisible();
 	await expect(page.getByText('outdated software').first()).toBeVisible();
 });

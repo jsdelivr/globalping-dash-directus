@@ -87,7 +87,7 @@ const notifySingleSoftwareProbe = async (probe: ProbeInfo, accountId: string, co
 		collection: 'gp_probes',
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
-		subject: 'Your probe container is running an outdated software version',
+		subject: probe.name ? `The container running your probe ${probe.name} has outdated software` : 'Your probe container is running an outdated software version',
 		message: `Your ${getProbeLink(probe)} is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 	}, context);
 
@@ -103,7 +103,7 @@ const notifySingleHardwareProbe = async (probe: ProbeInfo, accountId: string, co
 		collection: 'gp_probes',
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
-		subject: 'Your hardware probe is running an outdated firmware',
+		subject: probe.name ? `Your hardware probe ${probe.name} is running outdated firmware` : 'Your hardware probe is running outdated firmware',
 		message: `Your ${getProbeLink(probe)} is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 	}, context);
 
@@ -137,7 +137,7 @@ const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], accountId: stri
 		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
 		secondary_type: `${env.TARGET_HW_DEVICE_FIRMWARE}_${env.TARGET_NODE_VERSION}`,
-		subject: 'Your hardware probes are running an outdated firmware',
+		subject: 'Your hardware probes are running outdated firmware',
 		message: `Some of your hardware probes are running an outdated firmware and we couldn't update them automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update them manually:\n${lines.join('\n')}`,
 	}, context);
 
