@@ -63,14 +63,16 @@ test('a new GitHub user gets their pending credits on the account', async () => 
 
 	const userId = await createGithubUser(githubId, token, login);
 
-	const account = await sql('gp_accounts').where({ user: userId }).first('id') as { id: string };
-	const credits = await waitForCredits(userId);
+	try {
+		const account = await sql('gp_accounts').where({ user: userId }).first('id') as { id: string };
+		const credits = await waitForCredits(userId);
 
-	expect(credits.account_id).toBe(account.id);
-	expect(credits.amount).toBe(12345);
-
-	await sql('gp_credits').where({ account_id: account.id }).delete();
-	await sql('gp_accounts').where({ user: userId }).delete();
-	await sql('gp_credits_additions').where({ github_id: githubId }).delete();
-	await sql('directus_users').where({ id: userId }).delete();
+		expect(credits.account_id).toBe(account.id);
+		expect(credits.amount).toBe(12345);
+	} finally {
+		await sql('gp_credits').where({ user_id: userId }).delete();
+		await sql('gp_accounts').where({ user: userId }).delete();
+		await sql('gp_credits_additions').where({ github_id: githubId }).delete();
+		await sql('directus_users').where({ id: userId }).delete();
+	}
 });
