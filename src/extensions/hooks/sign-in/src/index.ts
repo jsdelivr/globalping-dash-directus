@@ -74,7 +74,7 @@ export default defineHook(({ filter }, context) => {
 			schema: await getSchema(),
 		});
 
-		const user = await itemsService.readOne(userId, { fields: [ 'user_type', 'github_username', 'account' ] }) as User | undefined;
+		const user = await itemsService.readOne(userId) as User | undefined;
 
 		if (user?.user_type) {
 			payload.user_type = user.user_type;
