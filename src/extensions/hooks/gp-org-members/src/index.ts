@@ -6,8 +6,8 @@ import type { Fields } from './types.js';
 
 const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 
-// The update permission covers both fields at once, and permissions can't split the fields of one action into separate rules -
-// so the per-field rules live here.
+// `role` and `notification_preferences` need different update rules, but a Directus permission applies a single rule to the
+// whole update - so they are authorized here instead.
 export default defineHook(({ filter }) => {
 	filter('gp_org_members.items.update', async (payload, meta, context) => {
 		const fields = payload as Fields;

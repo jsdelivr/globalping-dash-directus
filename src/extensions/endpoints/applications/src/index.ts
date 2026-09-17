@@ -37,7 +37,7 @@ const getApplicationsSchema = Joi.object<Request>({
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 const revokeApplicationSchema = Joi.object<Request>({
 	accountability: Joi.object({
@@ -51,12 +51,12 @@ const revokeApplicationSchema = Joi.object<Request>({
 		userCreated: Joi.string(),
 		id: Joi.string().required(),
 	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 const AllAccountsError = createError('INVALID_PAYLOAD_ERROR', 'An application can only be revoked for a single account.', 400);
 const ForeignCreatorError = createError('INVALID_PAYLOAD_ERROR', 'You can only revoke your own applications.', 400);
 
-const scopeToOwner = (query: Knex.QueryBuilder, accountId: string, accountability: Request['accountability']) => {
+const filterByOwner = (query: Knex.QueryBuilder, accountId: string, accountability: Request['accountability']) => {
 	if (accountId === ALL_ACCOUNTS) {
 		return;
 	}
@@ -98,7 +98,7 @@ export default defineEndpoint((router, context) => {
 				database.raw('ROW_NUMBER() OVER (PARTITION BY app_id, account_id, user_created ORDER BY date_last_used DESC) AS row_num'),
 			)
 			.whereNotNull('app_id')
-			.modify(q => scopeToOwner(q, accountId, req.accountability))
+			.modify(q => filterByOwner(q, accountId, req.accountability))
 			.as('rankedTokens');
 
 		const [ appTokens, [{ total }] ] = await Promise.all([

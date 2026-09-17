@@ -54,7 +54,7 @@ const sendCodeSchema = Joi.object<Request>({
 		accountId: Joi.string(),
 		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
 	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 export default defineEndpoint((router, context) => {
 	const { env } = context;
@@ -112,7 +112,7 @@ export default defineEndpoint((router, context) => {
 			accountId: Joi.string(),
 			code: Joi.string().required(),
 		}).xor('userId', 'accountId').required(),
-	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 	router.post('/verify-code', validate(verifyCodeSchema), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;

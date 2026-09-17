@@ -7,8 +7,6 @@ type Request = ExpressRequest & {
 };
 
 export const allowOnlyForCurrentUserAndAdmin = (mode: 'body' | 'query') => (value: Request, helpers: CustomHelpers): Request | ErrorReport => {
-	// The account form carries its own ownership check, done where the account is validated.
-	// PHASE5: remove the whole validator - `userId` is gone from every endpoint by then.
 	if (value[mode].userId === undefined) {
 		return value;
 	}

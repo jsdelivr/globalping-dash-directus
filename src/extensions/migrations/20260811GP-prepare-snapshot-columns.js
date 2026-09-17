@@ -1,6 +1,5 @@
 // Prepares the columns the snapshot can't change itself: Directus rewrites a char column as varchar whenever it alters one, which
-// turns any change into a type change, and that is rejected on a foreign key column. Runs on its own, before the snapshot is
-// applied - see the deploy note in phase1.md.
+// turns any change into a type change, and that is rejected on a foreign key column. Runs on its own, before the snapshot is applied.
 export async function up (knex) {
 	// The `user` foreign key is served by the UNIQUE(user, app) index that 20260814GP replaces, so the column needs an index of its
 	// own. Also created here because the snapshot marks the column as indexed, which it otherwise can't apply on a char column.

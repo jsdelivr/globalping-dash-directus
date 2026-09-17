@@ -107,11 +107,12 @@ How the code is written for it:
 
 1. `pnpm migrate:one:production` - applies `20260811GP` alone: it converts `gp_credits_deductions.user_id` to varchar and adds the
    `gp_apps_approvals.user` index. Both are column changes the snapshot declares but Directus can't apply itself: it rewrites a
-   char column as varchar whenever it alters one, and a type change is rejected on a foreign key column. Runs Directus's
-   `migrate:up`, which applies the first migration above the last applied one.
+   char column as varchar whenever it alters one, and a type change is rejected on a foreign key column.
 2. `pnpm schema:apply:production` - adds the org collections and the `account_id` columns, and makes `user_id` nullable, which it
    can now do because the column is varchar.
-3. `pnpm migrate:production` - the remaining migrations, then restart Directus.
+3. `pnpm migrate:production` - the remaining migrations
+4. restart Directus.
+5. deploy gp-api, gp-auth, gp-dash.
 
 After the deploy, `SELECT COUNT(*) FROM gp_probes WHERE userId IS NOT NULL AND account_id IS NULL` must be 0, and stay 0 - phase 2
 resolves a probe's owner through the account alone, so a probe with an owner but no account is invisible to it. Nothing writes such a

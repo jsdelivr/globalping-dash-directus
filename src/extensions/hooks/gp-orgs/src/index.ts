@@ -1,10 +1,6 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { getAdoptionTokens } from './repositories/directus.js';
-
-type Org = {
-	id?: string;
-	adoption_token?: string;
-};
+import { addAdoptionToken } from './actions/add-adoption-token.js';
+import type { Org } from './types.js';
 
 export default defineHook(({ filter }) => {
 	filter('gp_orgs.items.read', async (payload, _meta, context) => {
@@ -15,21 +11,7 @@ export default defineHook(({ filter }) => {
 			return payload;
 		}
 
-		const orgIds = orgs.map(org => org.id).filter(Boolean) as string[];
-
-		if (orgIds.length === 0) {
-			return payload;
-		}
-
-		const tokens = await getAdoptionTokens(orgIds, accountability.user, database);
-
-		for (const org of orgs) {
-			const token = org.id && tokens.get(org.id);
-
-			if (token) {
-				org.adoption_token = token;
-			}
-		}
+		await addAdoptionToken(orgs, accountability.user, database);
 
 		return payload;
 	});

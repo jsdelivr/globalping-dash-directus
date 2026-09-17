@@ -45,7 +45,7 @@ const creditsTimelineSchema = Joi.object<Request>({
 			Joi.string().valid(...ALLOWED_REASONS),
 		).optional().default(ALLOWED_REASONS),
 	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
 	const fullReasons: Record<string, string[]> = {
