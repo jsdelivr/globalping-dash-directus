@@ -60,6 +60,7 @@ export default defineHook(({ filter, action }, context) => {
 		// Calling updateProbeWithUserPermissions instead of native Directus update to check user permissions before updateProbeWithRootPermissions.
 		await updateProbeWithUserPermissions(
 			// `userId`/`account_id` can't be set to null here, as this will break the further native Directus update with no permissions.
+			// PHASE5: drop `userId` from the list.
 			_.omit(fields, [ 'userId', 'account_id' ]),
 			keys,
 			accountability,
@@ -77,6 +78,7 @@ export default defineHook(({ filter, action }, context) => {
 		const fields = payload as Fields;
 
 		// In case of removing adoption, reset all user affected fields.
+		// PHASE5: drop the `userId` check - the account alone defines the owner.
 		if (fields.userId === null || fields.account_id === null) {
 			await resetUserDefinedData(fields, keys, context);
 		}

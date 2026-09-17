@@ -130,6 +130,7 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 					consumed: { _eq: false },
 				},
 			}, { consumed: true }),
+			// PHASE5: remove `user_id`, the account alone owns the credits.
 			creditsService.createOne({ amount: sum, user_id: userId, account_id: accountId }),
 		]);
 	});
