@@ -21,10 +21,8 @@ const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data
 
 export const syncGithubData = async (userId: string, context: EndpointExtensionContext) => {
 	const user = await getDirectusUser(userId, context);
-	const githubId = user?.external_identifier;
-	const username = user?.github_username;
 
-	if (!user || !githubId) {
+	if (!user || !user.external_identifier) {
 		throw new NotEnoughDataError();
 	}
 
@@ -38,7 +36,7 @@ export const syncGithubData = async (userId: string, context: EndpointExtensionC
 	// PHASE5: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
 	const githubOrgs = organizations.map(org => org.login);
 
-	if (username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
+	if (user.github_username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
 		await updateDirectusUser(user, {
 			github_username: githubUsername,
 			github_organizations: githubOrgs,

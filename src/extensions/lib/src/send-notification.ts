@@ -12,9 +12,9 @@ type NotificationContent = {
 };
 
 // A notification can be sent to:
-// - a specific user (recipient)
-// - the owner of an account (account)
-// - a member of an org (account + recipient)
+// - the user (recipient)
+// - the owner of personal account or admins of org account (account)
+// - the specific member of an org (account + recipient)
 type Notification =
 	| NotificationContent & { recipient: string }
 	| NotificationContent & { account: string }

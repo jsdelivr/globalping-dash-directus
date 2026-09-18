@@ -179,7 +179,6 @@ const validateReadOnly = (value: { enabled: boolean; parameter?: number }, helpe
 	return value;
 };
 
-// The same shape for the personal preferences (directus_users) and the per-org admin preferences (gp_org_members).
 export const joiNotificationPreferences = Joi.object().pattern(
 	joiConfigurableNotificationTypeKey.max(100),
 	Joi.object({
