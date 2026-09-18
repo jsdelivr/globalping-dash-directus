@@ -1,5 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import { graphql } from '@octokit/graphql';
+import { getGithubUrl } from '../../../../lib/src/service-urls.js';
 import type { GithubActivity } from '../types.js';
 
 type GithubResponse = {
@@ -51,13 +52,15 @@ const query = `
 	}
 `;
 
-export const getGithubSponsorActivities = async (since: number, until: number, { env }: OperationContext): Promise<GithubActivity[]> => {
+export const getGithubSponsorActivities = async (since: number, until: number, context: OperationContext): Promise<GithubActivity[]> => {
+	const { env } = context;
 	const nodes: GithubActivity[] = [];
 	let hasNextPage = true;
 	let cursor: string | null = null;
 
 	while (hasNextPage) {
 		const response: GithubResponse = await graphql(query, {
+			baseUrl: getGithubUrl(context),
 			headers: {
 				Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
 			},

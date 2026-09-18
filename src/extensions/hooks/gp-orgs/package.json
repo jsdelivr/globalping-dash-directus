@@ -1,0 +1,48 @@
+{
+	"name": "gp-orgs",
+	"description": "Strips the org adoption token from reads for everyone but the admins of that org.",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-hook"
+	],
+	"type": "module",
+	"files": [
+		"dist"
+	],
+	"directus:extension": {
+		"type": "hook",
+		"path": "dist/index.js",
+		"source": "src/index.ts",
+		"host": "^10.10.0"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"validate": "directus-extension validate",
+		"test": "tsc --noEmit && NODE_ENV=test mocha",
+		"test:dev": "NODE_ENV=test TS_NODE_TRANSPILE_ONLY=true mocha"
+	},
+	"devDependencies": {
+		"@directus/extensions": "^3.0.25",
+		"@directus/extensions-sdk": "18.0.2",
+		"@directus/types": "^15.0.3",
+		"@types/chai": "^5.2.3",
+		"@types/knex": "^0.16.1",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^26.2.0",
+		"@types/sinon": "^17.0.4",
+		"chai": "^6.2.0",
+		"knex": "^3.1.0",
+		"mocha": "^11.7.4",
+		"sinon": "^21.0.0",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.8.3"
+	},
+	"dependencies": {
+		"@directus/errors": "^2.3.1"
+	}
+}

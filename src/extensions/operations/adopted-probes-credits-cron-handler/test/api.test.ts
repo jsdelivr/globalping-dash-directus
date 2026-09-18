@@ -4,7 +4,6 @@ import * as sinon from 'sinon';
 import operationApi from '../src/api.js';
 
 describe('Adopted probes status cron handler', () => {
-	const database = {} as OperationContext['database'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -14,12 +13,12 @@ describe('Adopted probes status cron handler', () => {
 	};
 
 	const data = {};
-	const readByQuery = sinon.stub();
-	const readMany = sinon.stub();
+	const rawStub = sinon.stub();
+	const database = { raw: rawStub } as unknown as OperationContext['database'];
 	const createMany = sinon.stub();
 	const updateByQuery = sinon.stub();
 	const services = {
-		ItemsService: sinon.stub().returns({ readByQuery, readMany, createMany, updateByQuery }),
+		ItemsService: sinon.stub().returns({ createMany, updateByQuery }),
 	} as unknown as OperationContext['services'];
 	let sandbox: sinon.SinonSandbox;
 
@@ -37,23 +36,16 @@ describe('Adopted probes status cron handler', () => {
 	});
 
 	it('should assign credits for >20 hours online and reset online hours', async () => {
-		readByQuery.resolves([{
+		rawStub.resolves([ [{
 			id: '1',
 			ip: '1.2.3.4',
-			userId: '1-1-1-1-1-1',
+			githubId: '123456',
 			onlineTimesToday: 120,
-		}]);
-
-		readMany.resolves([{
-			id: '1-1-1-1-1-1',
-			external_identifier: '123456',
-		}]);
+		}] ]);
 
 		createMany.resolves([ 1 ]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(readMany.args[0]).to.deep.equal([ [ '1-1-1-1-1-1' ] ]);
 
 		expect(createMany.args[0]).to.deep.equal([
 			[
@@ -76,21 +68,16 @@ describe('Adopted probes status cron handler', () => {
 	});
 
 	it('should not assign credits for <20 hours online and still reset online hours', async () => {
-		readByQuery.resolves([{
+		rawStub.resolves([ [{
 			id: '1',
 			ip: '1.2.3.4',
-			userId: '1-1-1-1-1-1',
+			githubId: '123456',
 			onlineTimesToday: 119,
-		}]);
-
-		readMany.resolves([{
-			id: '1-1-1-1-1-1',
-			external_identifier: '123456',
-		}]);
+		}] ]);
 
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
-		expect(readMany.callCount).to.equal(0);
+		expect(createMany.callCount).to.equal(0);
 		expect(createMany.callCount).to.equal(0);
 		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
 

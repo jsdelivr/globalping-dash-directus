@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { User } from '../types.ts';
-import { randomToken } from '../utils.ts';
+import { loginUser, randomToken } from '../utils.ts';
 import { randomUUID } from 'node:crypto';
 
 const addToken = async (user: User) => {
@@ -149,4 +149,45 @@ test('Revoke application', async ({ page, user }) => {
 	await page.getByRole('button', { name: 'Revoke access' }).click();
 
 	await expect(page.getByTestId('applications-table').getByText('No data to show')).toBeVisible();
+});
+
+
+test('gp_tokens queries: the dashboard reads pass, anything that could reveal the value is rejected', async ({ user }) => {
+	const api = await loginUser(user);
+
+	const created = await api.post('/items/gp_tokens', {
+		name: 'e2e-query-token',
+		value: (await api.post('/bytes')).data.data,
+		account_id: user.account_id,
+	});
+	expect(created.status).toBe(200);
+
+	// The two reads the dashboard makes: the token list and its count.
+	const list = await api.get(`/items/gp_tokens?filter[account_id][_eq]=${user.account_id}&filter[app_id][_null]=true&sort=-date_created&limit=10&offset=0`);
+	expect(list.status).toBe(200);
+	expect(list.data.data.map((token: { id: number }) => token.id)).toContain(created.data.data.id);
+	expect(list.data.data[0].value).toBe('********');
+
+	const count = await api.get(`/items/gp_tokens?aggregate[count]=*&filter[account_id][_eq]=${user.account_id}&filter[app_id][_null]=true`);
+	expect(count.status).toBe(200);
+	expect(Number(count.data.data[0].count)).toBe(1);
+
+	// Filtering by id is what the Directus UI needs.
+	expect((await api.get(`/items/gp_tokens?filter[id][_eq]=${created.data.data.id}`)).status).toBe(200);
+
+	const rejected = [
+		'aggregate[max]=value',
+		'sort=value',
+		'sort=-value',
+		'sort=parent.value',
+		'alias[v]=value',
+		'groupBy[]=value',
+		'filter[value][_eq]=anything',
+		'filter[name][_eq]=e2e-query-token',
+		'search=anything',
+	];
+
+	for (const query of rejected) {
+		expect((await api.get(`/items/gp_tokens?${query}`)).status, query).toBe(400);
+	}
 });
