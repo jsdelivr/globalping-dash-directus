@@ -246,3 +246,31 @@ test('An org probe is not listed in the admin`s personal probes list', async ({ 
 	await expect(page.getByText('e2e-probe-of-the-admin').first()).toBeVisible();
 	await expect(page.getByText('e2e-probe-of-the-org')).toHaveCount(0);
 });
+
+test('a local probe is adopted into the account it was asked for, leaving the personal one untouched', async ({ org, actors }) => {
+	const orgIp = randomIP();
+	const orgToken = randomToken();
+	const personalIp = randomIP();
+	const personalToken = randomToken();
+
+	const orgProbeId = await addProbe({ ip: orgIp, localAdoptionServer: JSON.stringify({ token: orgToken, ips: [ orgIp ] }) });
+	const personalProbeId = await addProbe({ ip: personalIp, localAdoptionServer: JSON.stringify({ token: personalToken, ips: [ personalIp ] }) });
+
+	const intoOrg = await actors.admin.post('/local-adoption/adopt', { token: orgToken, accountId: org.account_id }, { headers: { 'true-client-ip': orgIp } });
+	expect(intoOrg.status).toBe(200);
+
+	const intoPersonal = await actors.admin.post('/local-adoption/adopt', { token: personalToken }, { headers: { 'true-client-ip': personalIp } });
+	expect(intoPersonal.status).toBe(200);
+
+	const [ orgProbe, personalProbe ] = await Promise.all([
+		sql('gp_probes').where({ id: orgProbeId }).first('account_id', 'userId'),
+		sql('gp_probes').where({ id: personalProbeId }).first('account_id', 'userId'),
+	]);
+
+	expect(orgProbe.account_id).toBe(org.account_id);
+	expect(orgProbe.userId).toBe(null);
+
+	expect(personalProbe.account_id).toBe(org.admin.account_id);
+	expect(personalProbe.userId).toBe(org.admin.id);
+});
+
