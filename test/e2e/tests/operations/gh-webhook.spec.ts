@@ -95,3 +95,31 @@ test('a request that is not signed with the shared secret is refused', async ({ 
 	expect(await additionsFor(org.github_id)).toHaveLength(0);
 	expect(await sql('gp_credits').where({ account_id: org.account_id }).select('id')).toHaveLength(0);
 });
+
+test('a sponsorship of a redirected github id credits the target user', async ({ org, user }) => {
+	// A pair out of SOURCE_ID_TO_TARGET_ID in add-credits.ts: an org that sponsors, and the user its credits belong to.
+	org.github_id = '66716858';
+	user.external_identifier = '6209808';
+	await sql('sponsors').where({ github_id: org.github_id }).delete();
+	await sql('gp_credits_additions').where({ github_id: user.external_identifier }).delete();
+	await sql('gp_orgs').where({ id: org.id }).update({ github_id: org.github_id });
+	await sql('directus_users').where({ id: user.id }).update({ external_identifier: user.external_identifier });
+
+	const response = await postWebhook(sponsorshipEvent({ login: org.name, githubId: org.github_id, dollars: 5, oneTime: false }));
+	expect(response.status).toBe(200);
+
+	// The addition is written under the target id, so the org owning the sponsoring id is never resolved.
+	expect(await additionsFor(org.github_id)).toHaveLength(0);
+
+	const additions = await additionsFor(user.external_identifier);
+	expect(additions).toHaveLength(1);
+	expect(additions[0]).toMatchObject({ amount: 5 * CREDITS_PER_DOLLAR, reason: 'recurring_sponsorship' });
+
+	const userCredits = await sql('gp_credits').where({ account_id: user.account_id }).first('amount');
+	expect(userCredits.amount).toBe(5 * CREDITS_PER_DOLLAR);
+	expect(await sql('gp_credits').where({ account_id: org.account_id }).select('id')).toHaveLength(0);
+
+	// Only the credits move: the sponsor on record is still the github account that pays.
+	const sponsor = await sql('sponsors').where({ github_id: org.github_id }).first('github_login', 'monthly_amount');
+	expect(sponsor).toMatchObject({ github_login: org.name, monthly_amount: 5 });
+});
