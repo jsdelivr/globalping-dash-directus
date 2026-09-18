@@ -1,15 +1,7 @@
-import axios from 'axios';
-import { test, expect } from '../fixtures.ts';
-import { client as sql } from '../client.ts';
-import { User } from '../types.ts';
-
-// Webhook-trigger flow seeded in seeds/development/08-flow-triggers.js; lets us
-// run the low-credits cron on demand instead of waiting 5 minutes.
-const MANUAL_FLOW_ID = '9fce4936-773d-4942-bfb1-fc608dfda174';
-
-const triggerLowCreditsCron = async () => {
-	await axios.get(`${process.env.DIRECTUS_URL}/flows/trigger/${MANUAL_FLOW_ID}`);
-};
+import { test, expect } from '../../fixtures.ts';
+import { client as sql } from '../../client.ts';
+import { FLOW, trigger } from './shared.ts';
+import { User } from '../../types.ts';
 
 const addCredits = async (user: User, amount: number, notifiedUsers: string[] = []) => {
 	await sql('gp_credits').insert({
@@ -28,8 +20,8 @@ const getNotifiedUsers = async (user: User) => {
 test('notifies the user and flips the flag when amount is at or below the default threshold', async ({ user }) => {
 	await addCredits(user, 100);
 
-	await triggerLowCreditsCron();
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
+	await trigger(FLOW.lowCredits);
 
 	const notification = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -46,7 +38,7 @@ test('notifies the user and flips the flag when amount is at or below the defaul
 test('resets the flag and does not notify when amount has recovered above the threshold', async ({ user }) => {
 	await addCredits(user, 10000, [ user.id ]);
 
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
 
 	const notification = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -65,8 +57,8 @@ test('respects a custom per-user threshold: notifies at amount equal to the cust
 
 	await addCredits(user, 8000);
 
-	await triggerLowCreditsCron();
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
+	await trigger(FLOW.lowCredits);
 
 	const notification = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -88,7 +80,7 @@ test('does not notify a user who disabled low_credits notifications', async ({ u
 
 	await addCredits(user, 100);
 
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
 
 	const notification = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -101,7 +93,7 @@ test('does not notify a user who disabled low_credits notifications', async ({ u
 test('resets the flag while disabled, then notifies again after re-enabling', async ({ user }) => {
 	await addCredits(user, 100);
 
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
 
 	let notifications = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -117,7 +109,7 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 	});
 
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 10000 });
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
 
 	notifications = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -135,7 +127,7 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 
 	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 100 });
 
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
 
 	notifications = await sql('directus_notifications')
 		.where({ recipient: user.id, type: 'low_credits' })
@@ -169,7 +161,7 @@ test('notifies an org admin by their org preferences, whatever their personal on
 		low_credits_notified: JSON.stringify([]),
 	});
 
-	await triggerLowCreditsCron();
+	await trigger(FLOW.lowCredits);
 
 	const notifications = await sql('directus_notifications')
 		.whereIn('recipient', [ org.admin.id, org.member.id, org.viewer.id ])
@@ -181,3 +173,100 @@ test('notifies an org admin by their org preferences, whatever their personal on
 	const credits = await sql('gp_credits').where({ account_id: org.account_id }).select('low_credits_notified').first();
 	expect(JSON.parse(credits.low_credits_notified)).toEqual([ org.admin.id ]);
 });
+
+const addOrgCredits = async (accountId: string, amount: number, notifiedUsers: string[] = []) => {
+	await sql('gp_credits').insert({ account_id: accountId, amount, low_credits_notified: JSON.stringify(notifiedUsers) });
+};
+
+const getOrgNotifiedUsers = async (accountId: string) => {
+	const credits = await sql('gp_credits').where({ account_id: accountId }).select('low_credits_notified').first();
+	return JSON.parse(credits.low_credits_notified) as string[];
+};
+
+const promoteToAdmin = async (org: { id: string; member: User }) => {
+	await sql('gp_org_members').where({ org: org.id, user: org.member.id }).update({ role: 'admin' });
+	return org.member;
+};
+
+const notifiedRecipients = async (org: { admin: User; member: User; viewer: User }) => {
+	const rows = await sql('directus_notifications')
+		.whereIn('recipient', [ org.admin.id, org.member.id, org.viewer.id ])
+		.where({ type: 'low_credits' })
+		.select('recipient');
+
+	return rows.map(row => row.recipient as string).sort();
+};
+
+test('notifies every admin of the org, and nobody below that role', async ({ org }) => {
+	// The fixture builds an org with a single admin, so the member is promoted to give it a second one.
+	const secondAdmin = await promoteToAdmin(org);
+	await addOrgCredits(org.account_id, 100);
+
+	await trigger(FLOW.lowCredits);
+
+	// One balance, one notification per admin; the viewer stays out of it.
+	expect(await notifiedRecipients(org)).toEqual([ org.admin.id, secondAdmin.id ].sort());
+	expect((await getOrgNotifiedUsers(org.account_id)).sort()).toEqual([ org.admin.id, secondAdmin.id ].sort());
+});
+
+test('leaves out the admin who turned the notification off in the org, and keeps the other', async ({ org }) => {
+	const secondAdmin = await promoteToAdmin(org);
+
+	await sql('gp_org_members').where({ org: org.id, user: org.admin.id }).update({
+		notification_preferences: JSON.stringify({ low_credits: { enabled: false } }),
+	});
+
+	await addOrgCredits(org.account_id, 100);
+
+	await trigger(FLOW.lowCredits);
+
+	expect(await notifiedRecipients(org)).toEqual([ secondAdmin.id ]);
+
+	// The one who is not being told is not remembered either, so turning it back on notifies them.
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([ secondAdmin.id ]);
+});
+
+test('clears every admin from the list once the org balance recovers', async ({ org }) => {
+	const secondAdmin = await promoteToAdmin(org);
+	await addOrgCredits(org.account_id, 100, [ org.admin.id, secondAdmin.id ]);
+
+	await sql('gp_credits').where({ account_id: org.account_id }).update({ amount: 100000 });
+	await trigger(FLOW.lowCredits);
+
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([]);
+	expect(await notifiedRecipients(org)).toEqual([]);
+});
+
+test('notifies the admin who turns the notification back on, and does not repeat it for the other', async ({ org }) => {
+	const secondAdmin = await promoteToAdmin(org);
+
+	await sql('gp_org_members').where({ org: org.id, user: org.admin.id }).update({
+		notification_preferences: JSON.stringify({ low_credits: { enabled: false } }),
+	});
+
+	await addOrgCredits(org.account_id, 100);
+	await trigger(FLOW.lowCredits);
+
+	expect(await notifiedRecipients(org)).toEqual([ secondAdmin.id ]);
+
+	await sql('gp_org_members').where({ org: org.id, user: org.admin.id }).update({
+		notification_preferences: JSON.stringify({ low_credits: { enabled: true } }),
+	});
+
+	await trigger(FLOW.lowCredits);
+
+	// The list holds the admins already told, not the balance itself, so the same low balance still reaches a new one.
+	expect(await notifiedRecipients(org)).toEqual([ org.admin.id, secondAdmin.id ].sort());
+	expect((await getOrgNotifiedUsers(org.account_id)).sort()).toEqual([ org.admin.id, secondAdmin.id ].sort());
+
+	const perAdmin = await sql('directus_notifications')
+		.whereIn('recipient', [ org.admin.id, secondAdmin.id ])
+		.where({ type: 'low_credits' })
+		.count({ count: '*' })
+		.groupBy('recipient')
+		.select('recipient');
+
+	// One each: the second run must not tell the first admin a second time.
+	expect(perAdmin.map(row => row.count)).toEqual([ 1, 1 ]);
+});
+

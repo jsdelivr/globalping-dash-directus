@@ -40,7 +40,7 @@ describe('/e2e-mocks endpoint', () => {
 		const orgs = [{ id: 2, login: 'restricted-org' }];
 
 		before(async () => {
-			await request(app).post('/github/state').send({ token: 'user-token', username: 'new-username', memberships, orgs });
+			await request(app).post('/github/state').send({ token: 'user-token', username: 'new-username', githubId: 123, memberships, orgs });
 		});
 
 		it('should answer with the state of the token', async () => {
@@ -53,6 +53,12 @@ describe('/e2e-mocks endpoint', () => {
 			expect(membershipsRes.body).to.deep.equal(memberships);
 			expect(orgsRes.body).to.deep.equal(orgs);
 			expect(userRes.body).to.deep.equal({ login: 'new-username' });
+		});
+
+		it('should report a user nobody registered as gone', async () => {
+			const res = await request(app).get('/github/user/999').set('Authorization', 'Bearer user-token');
+
+			expect(res.status).to.equal(404);
 		});
 
 		it('should answer 403 for the self-check of a restricted org', async () => {

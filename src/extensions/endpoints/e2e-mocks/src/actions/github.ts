@@ -20,7 +20,13 @@ type GithubState = {
 
 const states = new TTLCache<string, GithubState>({ ttl: 30 * 60 * 1000 });
 
-const getToken = (req: Request) => req.headers.authorization?.replace('Bearer ', '') ?? '';
+// The sponsorship queries are about the jsDelivr org rather than about the caller, so they read one shared list.
+type SponsorEdge = { login: string; githubId: number; monthlyAmount: number; isActive?: boolean; isOneTimePayment?: boolean; tierId?: string };
+let sponsors: SponsorEdge[] = [];
+let sponsorsActivities: unknown[] = [];
+
+// Clients spell the scheme differently - octokit sends `token`, axios `Bearer` - and the token itself is what identifies the state.
+const getToken = (req: Request) => (req.headers.authorization ?? '').replace(/^(bearer|token)\s+/i, '');
 
 const proxy = async (req: Request, res: Response) => {
 	try {
@@ -40,7 +46,13 @@ const proxy = async (req: Request, res: Response) => {
 
 const answer = (req: Request, res: Response, value: (state: GithubState) => unknown) => {
 	const state = states.get(getToken(req));
-	return state ? res.send(value(state)) : proxy(req, res);
+
+	if (!state) {
+		return proxy(req, res);
+	}
+
+	const body = value(state);
+	return body === undefined ? res.status(404).send({ message: 'Not Found' }) : res.send(body);
 };
 
 export const githubRoutes = (router: Router) => {
@@ -69,12 +81,47 @@ export const githubRoutes = (router: Router) => {
 		return membership ? res.send(membership) : res.status(404).send({ message: 'Not Found' });
 	});
 
+	router.post('/github/sponsors/state', (req, res) => {
+		const state = req.body as { sponsors?: SponsorEdge[]; activities?: unknown[] };
+		sponsors = state.sponsors ?? [];
+		sponsorsActivities = state.activities ?? [];
+		res.send({ ok: true });
+	});
+
 	router.post('/github/graphql', (req, res) => {
+		const { query, variables } = req.body as { query: string; variables: Record<string, string> };
+
+		if (query.includes('sponsorshipsAsMaintainer')) {
+			return res.send({
+				data: {
+					organization: {
+						sponsorshipsAsMaintainer: {
+							pageInfo: { hasNextPage: false, endCursor: null },
+							edges: sponsors.map(sponsor => ({
+								node: {
+									sponsorEntity: { login: sponsor.login, databaseId: sponsor.githubId },
+									isActive: sponsor.isActive ?? true,
+									isOneTimePayment: sponsor.isOneTimePayment ?? false,
+									tierSelectedAt: new Date().toISOString(),
+									tier: { id: sponsor.tierId ?? `tier-${sponsor.githubId}`, monthlyPriceInDollars: sponsor.monthlyAmount },
+								},
+							})),
+						},
+					},
+				},
+			});
+		}
+
+		if (query.includes('sponsorsActivities')) {
+			return res.send({
+				data: { organization: { sponsorsActivities: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: sponsorsActivities } } },
+			});
+		}
+
 		if (!states.get(getToken(req))) {
 			return proxy(req, res);
 		}
 
-		const { variables } = req.body as { variables: Record<string, string> };
 		const data: Record<string, unknown> = {};
 		const errors: unknown[] = [];
 
@@ -97,5 +144,8 @@ export const githubRoutes = (router: Router) => {
 		return res.send({ data, ...errors.length ? { errors } : {} });
 	});
 
-	router.get('/github/user/:githubId', (req, res) => answer(req, res, state => ({ login: state.username })));
+	router.get('/github/user/:githubId', (req, res) => answer(req, res, () => {
+		const known = [ ...states.values() ].find(item => item.githubId.toString() === req.params.githubId);
+		return known ? { login: known.username } : undefined;
+	}));
 };
