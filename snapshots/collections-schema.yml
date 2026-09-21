@@ -2060,7 +2060,7 @@ fields:
       foreign_key_column: null
   - collection: gp_apps_approvals
     field: account_id
-    type: string
+    type: uuid
     meta:
       collection: gp_apps_approvals
       conditions: null
@@ -2086,7 +2086,7 @@ fields:
     schema:
       name: account_id
       table: gp_apps_approvals
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null
@@ -2102,7 +2102,7 @@ fields:
       foreign_key_column: id
   - collection: gp_apps_approvals
     field: user_created
-    type: string
+    type: uuid
     meta:
       collection: gp_apps_approvals
       conditions: null
@@ -2128,7 +2128,7 @@ fields:
     schema:
       name: user_created
       table: gp_apps_approvals
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null
@@ -2307,7 +2307,7 @@ fields:
       foreign_key_column: null
   - collection: gp_credits
     field: account_id
-    type: string
+    type: uuid
     meta:
       collection: gp_credits
       conditions: null
@@ -2333,7 +2333,7 @@ fields:
     schema:
       name: account_id
       table: gp_credits
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null
@@ -2880,7 +2880,7 @@ fields:
     schema:
       name: user_id
       table: gp_credits_deductions
-      data_type: char
+      data_type: varchar
       default_value: null
       max_length: 36
       numeric_precision: null
@@ -2896,7 +2896,7 @@ fields:
       foreign_key_column: id
   - collection: gp_credits_deductions
     field: account_id
-    type: string
+    type: uuid
     meta:
       collection: gp_credits_deductions
       conditions: null
@@ -2922,7 +2922,7 @@ fields:
     schema:
       name: account_id
       table: gp_credits_deductions
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null
@@ -5460,7 +5460,7 @@ fields:
       foreign_key_column: null
   - collection: gp_probes
     field: account_id
-    type: string
+    type: uuid
     meta:
       collection: gp_probes
       conditions: null
@@ -5486,7 +5486,7 @@ fields:
     schema:
       name: account_id
       table: gp_probes
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null
@@ -7125,7 +7125,7 @@ fields:
       foreign_key_column: id
   - collection: gp_tokens
     field: account_id
-    type: string
+    type: uuid
     meta:
       collection: gp_tokens
       conditions: null
@@ -7151,7 +7151,7 @@ fields:
     schema:
       name: account_id
       table: gp_tokens
-      data_type: varchar
+      data_type: char
       default_value: null
       max_length: 36
       numeric_precision: null
