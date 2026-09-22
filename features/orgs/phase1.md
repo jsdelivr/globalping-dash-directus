@@ -36,7 +36,7 @@ How the code is written for it:
    - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side
      equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api
      reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it
-     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 for the 49
+     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 for the
      users whose `default_prefix` is an org name today
    - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
      GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
