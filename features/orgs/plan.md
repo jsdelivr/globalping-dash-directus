@@ -39,7 +39,7 @@ use `account_id`, moving credits takes the balance out of where `credits-master`
 nothing at all. Full design in `account-migration.md`.
 
 - Migration endpoint - who may migrate, probes, adoption token, tokens with approvals, credits, in one transaction.
-- `gp_credits_redirects` table + read permission, `redirectGithubId` reads it instead of `SOURCE_ID_TO_TARGET_ID`. Seeded with the
+- `gp_credits_redirects` table, `redirectGithubId` reads it instead of `SOURCE_ID_TO_TARGET_ID`. Seeded with the
   current ones, so nothing changes for prod on deploy.
 - `gp_orgs` update hook validating `extra_adoption_tokens`: entry shape, and the new array being a subset of the old one.
 - No one-off conversion. The redirects we have are seeded into the table and keep working exactly as they do now; unwinding one is
@@ -53,34 +53,40 @@ nothing at all. Full design in `account-migration.md`.
   the account owner - `COALESCE(org.user_type, user.user_type)`, the same shape already used for `default_prefix` and
   `adoption_token` - and teach the sponsors cron to set it on the org: it matches sponsors by `external_identifier` today, and
   an org has `github_id`.
+- Permissions migration - `directus_users` read for org admins. Today the only read rule is `id _eq $CURRENT_USER`
+  (`20230425GP-create-user-role.js`), so the members list of phase 4 would render bare uuids. Add a second read rule,
+  `{ "memberships": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } }`, exposing
+  `id` and `github_username` only - the `memberships` alias already exists on `directus_users` (`one_field` of the
+  `gp_org_members.user` relation). Shipped here so that phase 4 is a dash deploy only.
 - Unit tests + e2e over REST.
 
 ## Phase 4: gp-dash org UI
 
-User-visible org support, including the UI for the migration back end from phase 3. Directus is deployed here too, for the
-permissions migration below.
+User-visible org support, including the UI for the migration back end from phase 3. A dash deploy only: everything it relies on
+in Directus shipped in phase 3.
 
-- "Migrate to organization" UI over the phase 3 endpoint: pick the org, tick what moves (probes, tokens, credits), confirm - the
-  operation is irreversible, so the screen has to list exactly what will happen. Shown only to users the endpoint would accept
-  (`account-migration.md`), and the credits section names the redirect it is about to disable.
-- Redirects page: the redirects where the user is the source, or where an org they administer is the target.
-- Org settings list the org's extra adoption tokens with the username each came from, and let any admin remove one (`account-migration.md`).
+- "Migrate to organization", a section of the user settings: four rows - transfer probes, transfer tokens, transfer credits,
+  redirect sponsorship credits - each a button opening its own modal that does only that one thing: pick an org, read what will
+  happen, confirm, with an irreversibility warning on the three transfers. Offers the `selected_orgs` where the user is an admin
+  or a member, and is hidden when there is none. The redirect row shows the current state, `john => acme-org`, with a cross to
+  clear it; the credits modal names the redirect the transfer is about to delete.
 - Org store: memberships + roles loaded on login, own account id resolved via `readMe` expansion, `activeOrg` in store + cookie.
-- Header: "Act as organization" button + select modal, active org shown instead of the username.
+- "Act as organization" in the user menu, between Settings and Sign out: a submenu with the personal account and the
+  `selected_orgs` where the user is an admin or a member, plus "+ Add organization" - a modal with a table of the orgs that could
+  be added, each with an "Add" button writing `selected_orgs`. Picking an org sets `activeOrg` and the cookie, and the header shows
+  the org's name instead of the GitHub username.
 - The CLI, the chat bots and the MCP server read `organization` from `/oauth/token/introspect` (it ships in phase 2) and say which account a token acts for, so "Logged in as john" stops hiding that the credits come from an org.
 - Probes list + detail: org view, edit controls and adopt only for admin (role-gated). In org mode a non-admin is not offered adoption at all - neither the adoption code flow nor the local network adoption (the endpoints reject it, the UI must not show it).
 - Every adoption call passes `accountId` explicitly (the active account, personal or org): adoption-code `send-code`/`verify-code` and local-adoption `/adopt`. The legacy `userId` form and the implicit personal-account default stay only for the old dashboard and are dropped in phase 5.
 - The OAuth approval screen gains the account picker and posts `accountId` on every approval, the personal account included. Until then the field stays optional in gp-auth: the deployed screen posts only `approved`, and a missing `accountId` has to keep meaning the personal account.
 - Credits page: org stats and history in org view.
 - Tokens page: own tokens and approvals inside the org, generate token creates an org item, disabled for viewers.
-- Members screen: demoting someone to viewer deletes their org tokens and app approvals (the database trigger does it), so the
-  role selector has to warn the admin before saving - it is irreversible and breaks whatever runs on those tokens.
-- Settings: "Organization" section (only admin sees, copies, and regenerates the org adoption token) plus the org's public-probes switch (`gp_orgs.public_probes`), which makes its probes globally targetable as `u-<org name>`. This is what replaces "point my personal `default_prefix` at an org name" for anyone who wants org-named probes from phase 5 on: move the probes into the org.
-- Admin-only "Organization" page: org info, members list, role management.
-- Permissions migration - `directus_users` read for co-members. Today the only read rule is `id _eq $CURRENT_USER`
-  (`20230425GP-create-user-role.js`), so the members list and the extra adoption tokens would render bare uuids. Add a second read
-  rule, `{ "memberships": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" } } } } }`, exposing `id` and `github_username`
-  only - the `memberships` alias already exists on `directus_users` (`one_field` of the `gp_org_members.user` relation).
+- "Organization" screen, admins only, a navigation entry under Tokens. Settings first: the org adoption token (copy, regenerate),
+  the public-probes switch (`gp_orgs.public_probes`, which makes the org's probes globally targetable as `u-<org name>` - what
+  replaces "point my personal `default_prefix` at an org name" from phase 5 on), the extra adoption tokens with the username each
+  came from and a way to remove one, and the org's own inherited credits redirect with a cross to clear it. Members second: the
+  list and role management, where demoting someone to viewer warns before saving - the database trigger deletes their org tokens
+  and app approvals, irreversibly.
 - e2e.
 
 ## Phase 5: cleanup

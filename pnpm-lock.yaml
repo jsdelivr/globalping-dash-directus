@@ -138,13 +138,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.25
-        version: 3.0.25(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
+        version: 3.0.25(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.41(typescript@5.8.3))
       '@directus/extensions-sdk':
         specifier: ^17.1.4
-        version: 17.1.4(@types/node@22.13.14)(@unhead/vue@1.11.20(vue@3.5.24(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 17.1.4(@types/node@22.13.14)(@unhead/vue@1.11.20(vue@3.5.41(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.41(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       '@directus/types':
         specifier: ^15.0.3
-        version: 15.0.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
+        version: 15.0.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.41(typescript@5.8.3))
       '@types/chai':
         specifier: ^5.2.2
         version: 5.2.2
@@ -360,13 +360,13 @@ importers:
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.25
-        version: 3.0.25(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.41(typescript@5.8.3))
+        version: 3.0.25(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
       '@directus/extensions-sdk':
         specifier: ^17.1.4
-        version: 17.1.4(@types/node@22.13.14)(@unhead/vue@1.11.20(vue@3.5.41(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.41(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
+        version: 17.1.4(@types/node@22.13.14)(@unhead/vue@1.11.20(vue@3.5.24(typescript@5.8.3)))(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(pinia@2.3.1(typescript@5.8.3)(vue@3.5.24(typescript@5.8.3)))(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6)(typescript@5.8.3)
       '@directus/types':
         specifier: ^15.0.3
-        version: 15.0.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.41(typescript@5.8.3))
+        version: 15.0.3(express@4.21.2)(knex@3.1.0(mysql@2.18.1))(mysql@2.18.1)(vue@3.5.24(typescript@5.8.3))
       '@types/adm-zip':
         specifier: ^0.5.7
         version: 0.5.7
@@ -1169,6 +1169,9 @@ importers:
       '@directus/errors':
         specifier: ^2.3.1
         version: 2.3.1
+      joi:
+        specifier: ^18.0.1
+        version: 18.0.1
     devDependencies:
       '@directus/extensions':
         specifier: ^3.0.25

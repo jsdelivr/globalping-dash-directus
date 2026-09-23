@@ -101,13 +101,20 @@ matters if it falls inside the cron's 24-hour window at deploy time, and nothing
 
 Before anything writes the column, the rule that guards it has to exist - step 3 is the first writer.
 
-2.1 **Update hook on `gp_orgs`.** The value is validated on every write: the shape of every entry, and the new array being a
-**subset** of the old one. An admin may therefore remove entries and never append or rewrite a token. It is a read-modify-write,
-and the losing side of two simultaneous edits simply repeats it.
+2.1 **Update hook on `gp_orgs`.** The value is validated on every update: the shape of every entry, and the new array being a
+**subset** of the old one - entries distinct, each one already stored. An admin may therefore remove entries and never append,
+rewrite or repeat a token. One org per update: a single payload applied to several orgs at once has no meaning here, since the
+array it has to be a subset of is a different one for each. Only update: `create` is left alone because the user policy does not
+grant it and the only programmatic creator (`sync-orgs.ts`) never names the field.
 
-2.2 **Reading it is admin-only**, like `adoption_token`. That takes both halves: the field is added to the `gp_orgs` read
-permission *and* the `gp-orgs` read hook strips it for everyone else. Adding it to the permission alone would hand every member
-the tokens of every other member.
+It is a read-modify-write against the stored value, so two simultaneous removals both answer 200 and the later one wins, undoing
+the other. The update response carries the stored array back through the read hook, which is what lets the caller notice.
+
+2.2 **Reading it is admin-only**, exactly the way `adoption_token` already is: the field stays out of the `gp_orgs` read
+permission, and the `gp-orgs` read hook puts it back on the rows of the orgs the caller administers. Default-deny, so a bug in the
+hook hides the tokens instead of leaking them, and naming the field in a query is refused for everybody. Writing it is the other
+half: `extra_adoption_tokens` joins `adoption_token` and `public_probes` in the `gp_orgs` update permission, which is what makes
+the removal UI of phase 4 reachable, and 2.1 is what makes it safe.
 
 ## 3. The `transfer-data` extension
 
@@ -116,7 +123,9 @@ the tokens of every other member.
 - `transfer probes`, `transfer tokens`, `transfer credits` - one per entity kind, each its own transaction. A user may hand over
   their probes and keep their credits; nothing forces the three to happen together or in any order.
 - `credits-redirect` GET - the redirects where the active account's github id is the source or the target. It is the only
-  reader of the table (1.4), so it is also what keeps a viewer from seeing them.
+  reader of the table (1.4), so it is also what keeps a viewer from seeing them. Each side comes back with its name - the user's
+  `github_username` or the org's `name`, the bare id when neither table knows it - because the dash shows `john => acme-org` and
+  can read no other user's row.
 - `credits-redirect` POST - manages the redirect whose **source is the active account's github id**, which is the one that gives
   its money away. Acting personally, a user points their sponsorship at an org they belong to, replaces that choice, or clears it
   with `orgId: null`. Acting as an org, an admin can only clear: the `org -> user` rows we inherited are removable by the org that
@@ -228,18 +237,33 @@ who is not a sponsor writes org measurements into `measurement_member`, and a sp
 4.3 **Who sets it.** The sponsors cron, which matches sponsors by `external_identifier` today and can match an org by
 `github_id`.
 
-## 5. Tests
+## 5. `directus_users` read for the admins of an org
 
-5.1 **Unit**, per extension: the authorization matrix (3.2) with every cell and the redirect branch, the promotion window (3.3),
+The members list of phase 4 shows each member's name, and a user can read no `directus_users` row but their own - the only read
+rule is `id _eq $CURRENT_USER` (`20230425GP-create-user-role.js`) - so it would render bare uuids. It ships here so that phase 4
+is a dash deploy only. The extra adoption tokens do not need it: each entry carries its own `github_username`.
+
+5.1 **A second read rule**, `{ "memberships": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } }`,
+exposing `id` and `github_username` only. The `memberships` alias already exists on `directus_users` as the `one_field` of the
+`gp_org_members.user` relation.
+
+5.2 **Scoped to admins** rather than to every co-member, because the only screen that needs the names is admin-only. A plain member
+can not read the membership rows at all, so granting them the names would expose who is in an org to someone with no way to ask -
+and no screen to show it on.
+
+## 6. Tests
+
+6.1 **Unit**, per extension: the authorization matrix (3.2) with every cell and the redirect branch, the promotion window (3.3),
 the approval merge (3.6), the credits traps (3.7), the subset validation (2.1).
 
-5.2 **e2e over REST**: each transfer alone and all three in sequence; a member refused the probes transfer in an org that has an
+6.2 **e2e over REST**: each transfer alone and all three in sequence; a member refused the probes transfer in an org that has an
 admin; the first member of an admin-less org becoming its admin; a second member transferring into the same org (the token array
 grows, the first entry survives); a transfer into an org that already holds an approval of the same app (scopes union); a redirect
-created, overwritten and deleted; a rollback on a forced failure leaving nothing moved.
+created, overwritten and deleted; a rollback on a forced failure leaving nothing moved; an org admin reading `id` and
+`github_username` of the org's members and nothing else of them, while a member and a viewer read no co-member at all.
 
 ## Deploy
 
 One Directus deploy: `schema:apply` for `gp_credits_redirects` and `gp_orgs.user_type`, then the migrations (redirect seed,
-permissions), then restart. No other service is redeployed, so the endpoints have to be correct against the phase 2 readers as
+sponsor id backfill, the `gp_orgs` and `directus_users` permissions), then restart. No other service is redeployed, so the endpoints have to be correct against the phase 2 readers as
 they already run in prod.
