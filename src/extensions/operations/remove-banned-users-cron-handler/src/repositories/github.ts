@@ -63,7 +63,7 @@ const fetchUsersByLogin = async (logins: string[], { env }: OperationContext): P
 		data = await graphql<GraphqlData>(query, {
 			...variables,
 			headers: { Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}` },
-			request: { signal: AbortSignal.timeout(5000) },
+			request: { signal: AbortSignal.timeout(30000) },
 		});
 	} catch (error) {
 		if (!(error instanceof GraphqlResponseError)) {

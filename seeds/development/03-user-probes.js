@@ -1714,7 +1714,7 @@ export const seed = async (knex) => {
 		asn: 13335,
 		city: 'Istanbul',
 		country: 'TR',
-		countryName: 'Turkey',
+		countryName: 'Türkiye',
 		date_created: '2024-04-21 00:05:50',
 		date_updated: '2024-04-21 00:07:05',
 		ip: '2a03:b0c0:3:d0::1a2b:3016',
