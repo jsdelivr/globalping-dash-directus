@@ -155,7 +155,7 @@ export default defineEndpoint((router, context) => {
 		const accountability = (req as Request & { accountability: EventContext['accountability'] }).accountability;
 		const input = req.body as ManualAdditionInput;
 		const isPayment = input.type === 'payment';
-		const githubId = redirectGithubId(input.githubId);
+		const githubId = await redirectGithubId(input.githubId, context);
 		let githubLogin: string;
 
 		try {

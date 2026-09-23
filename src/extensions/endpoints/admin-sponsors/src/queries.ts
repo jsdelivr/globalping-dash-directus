@@ -1,5 +1,4 @@
 import type { Knex } from 'knex';
-import { redirectGithubId, SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import type {
 	AccountsQuery,
 	EventsQuery,
@@ -80,9 +79,6 @@ const additionGithubLoginSql = (alias = 'additions') => `NULLIF(JSON_UNQUOTE(JSO
 
 export const utcMonthSql = (column: string) => `DATE_FORMAT(CONVERT_TZ(${column}, @@session.time_zone, '+00:00'), '%Y-%m')`;
 
-const redirectEntries = Object.entries(SOURCE_ID_TO_TARGET_ID);
-const redirectCases = redirectEntries.map(() => 'WHEN ? THEN ?').join(' ');
-
 const activeSponsorSql = '(current_sponsors.github_id IS NOT NULL OR legacy_sponsors.github_id IS NOT NULL)';
 const sponsorLoginSql = 'COALESCE(current_sponsors.github_login, legacy_sponsors.github_login)';
 const sponsorMonthlyAmountSql = 'COALESCE(current_sponsors.monthly_amount, legacy_sponsors.monthly_amount)';
@@ -92,7 +88,7 @@ const dashboardAccountNameSql = 'COALESCE(directus_users.github_username, gp_org
 
 const joinSponsors = (database: Knex, query: Knex.QueryBuilder) => query
 	.leftJoin('sponsors as current_sponsors', 'current_sponsors.github_id', 'additions.github_id')
-	.leftJoin('sponsors as legacy_sponsors', database.raw(`legacy_sponsors.github_id = CASE additions.github_id ${redirectCases} END`, redirectEntries.flatMap(([ source, target ]) => [ target, source ])));
+	.leftJoin('sponsors as legacy_sponsors', database.raw('legacy_sponsors.github_id = (SELECT source_github_id FROM gp_credits_redirects WHERE target_github_id = additions.github_id LIMIT 1)'));
 
 const periodEventsQuery = (database: Knex, range: SponsorsPeriodRange) => database('gp_credits_additions as additions')
 	.whereIn('additions.reason', SPONSORSHIP_REASONS)
@@ -107,7 +103,7 @@ export const applySearch = (query: Knex.QueryBuilder, search: string | undefined
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.where('additions.github_id', redirectGithubId(search));
+			builder.whereRaw('additions.github_id = COALESCE((SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?), ?)', [ search, search ]);
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
@@ -126,7 +122,7 @@ export const applyManualSearch = (query: Knex.QueryBuilder, search: string | und
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.where('additions.github_id', redirectGithubId(search));
+			builder.whereRaw('additions.github_id = COALESCE((SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?), ?)', [ search, search ]);
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}

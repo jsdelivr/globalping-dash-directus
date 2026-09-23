@@ -42,10 +42,8 @@ nothing at all. Full design in `account-migration.md`.
 - `gp_credits_redirects` table + read permission, `redirectGithubId` reads it instead of `SOURCE_ID_TO_TARGET_ID`. Seeded with the
   current ones, so nothing changes for prod on deploy.
 - `gp_orgs` update hook validating `extra_adoption_tokens`: entry shape, and the new array being a subset of the old one.
-- One-off conversion of the sponsor accounts we redirect today, reusing the endpoint's code rather than repeating it: create the org if the
-  sync has not, re-point the additions of the one redirect whose target no longer exists back onto its source first, then run the transfer
-  and disable the old redirect. Whatever the owners do themselves through the UI later needs no conversion at all - decide how
-  much of this to automate once the button exists.
+- No one-off conversion. The redirects we have are seeded into the table and keep working exactly as they do now; unwinding one is
+  the owner's choice through the phase 4 buttons, or the org's by clearing its own redirect.
 - `gp_orgs.user_type` (member | sponsor | special) and the tier moving to the account. Today the tier comes from the requesting
   person: `auth.ts` joins it off `directus_users`, gp-api encodes it into the measurement id (`USER_TIER`) and the offloader
   stores the result in `measurement_<tier>`. It grants nothing - no limits, no credits - it only picks the table. That is

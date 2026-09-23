@@ -82,7 +82,7 @@ test('drops a sponsor whose sponsorship turned one-time, without crediting them 
 });
 
 test('credits a redirected sponsor', async ({ org, user }) => {
-	// A pair out of SOURCE_ID_TO_TARGET_ID in add-credits.ts: an org that sponsors, and the user its credits belong to.
+	// A pair seeded into gp_credits_redirects: an org that sponsors, and the user its credits belong to.
 	org.github_id = '203478287';
 	user.external_identifier = '163146';
 	await sql('sponsors').where({ github_id: org.github_id }).delete();

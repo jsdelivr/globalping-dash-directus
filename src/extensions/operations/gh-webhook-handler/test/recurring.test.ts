@@ -7,11 +7,10 @@ import recurringSponsorshipCreated from './recurring-sponsorship-created.json' w
 import recurringSponsorshipTierChanged from './recurring-sponsorship-tier-changed.json' with { type: 'json' };
 
 describe('GitHub webhook recurring handler', () => {
-	const database = {
-		transaction: async (f: any) => {
-			return f({});
-		},
-	} as unknown as OperationContext['database'];
+	const redirect = sinon.stub().resolves(undefined);
+	const database = Object.assign(() => ({ where: () => ({ first: redirect }) }), {
+		transaction: (f: (trx: object) => unknown) => Promise.resolve(f({})),
+	}) as unknown as OperationContext['database'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -82,6 +81,7 @@ describe('GitHub webhook recurring handler', () => {
 				amountInDollars: 15,
 				bonus: 5,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -140,6 +140,7 @@ describe('GitHub webhook recurring handler', () => {
 				amountInDollars: 5,
 				bonus: 0,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
