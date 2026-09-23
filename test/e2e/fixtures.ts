@@ -21,6 +21,7 @@ export const test = baseTest.extend<{ user: User; user2: User; admin: User; admi
 	},
 	adminPage: async ({ browser, admin, baseURL }, use) => {
 		await sql('directus_users').insert(admin);
+
 		const context = await browser.newContext({ baseURL });
 		const loginResponse = await context.request.post(`${process.env.DIRECTUS_URL}/auth/login`, {
 			data: {

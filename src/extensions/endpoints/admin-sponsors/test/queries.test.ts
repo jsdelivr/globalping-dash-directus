@@ -10,6 +10,7 @@ describe('sponsor query normalization', () => {
 			orWhere: sinon.stub().returnsThis(),
 			orWhereRaw: sinon.stub().returnsThis(),
 		};
+
 		const where = sinon.spy((callback: (builder: Knex.QueryBuilder) => void) => callback(builder as unknown as Knex.QueryBuilder));
 
 		applySearch({ where } as unknown as Knex.QueryBuilder, '123');
@@ -26,6 +27,7 @@ describe('sponsor query normalization', () => {
 			orWhere: sinon.stub().returnsThis(),
 			orWhereRaw: sinon.stub().returnsThis(),
 		};
+
 		const where = sinon.spy((callback: (builder: Knex.QueryBuilder) => void) => callback(builder as unknown as Knex.QueryBuilder));
 
 		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '123', 'added-by-expression');

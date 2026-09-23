@@ -16,12 +16,14 @@ describe('/admin-sponsors endpoint', () => {
 		allTime: { sponsors: 3 },
 		chart: [],
 	};
+
 	const queryService = {
 		getSummary: sinon.stub().resolves(summary),
 		getEvents: sinon.stub().resolves({ items: [], total: 0 }),
 		getAccounts: sinon.stub().resolves({ items: [], total: 0 }),
 		getManualAdditions: sinon.stub().resolves({ items: [], total: 0 }),
 	};
+
 	const insert = sinon.stub().resolves();
 	const databaseStub = sinon.stub().returns({ insert });
 	const database = databaseStub as unknown as EndpointExtensionContext['database'];
@@ -30,6 +32,7 @@ describe('/admin-sponsors endpoint', () => {
 		database,
 		logger: { error: console.error },
 	} as unknown as EndpointExtensionContext;
+
 	const app = express();
 	let accountability: { user: string; admin: boolean } | undefined;
 
@@ -192,6 +195,7 @@ describe('/admin-sponsors endpoint', () => {
 			credits: 10_000,
 			amountInDollars: 5,
 		};
+
 		const response = await request(app).post('/manual-additions').send(body);
 
 		expect(response.status).to.equal(201);

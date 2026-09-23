@@ -34,6 +34,7 @@ type GithubLoginResolver = (githubId: string, context: EndpointExtensionContext)
 const periodSchema = Joi.string().default('past-year').custom((value, helpers) => {
 	try {
 		resolveSponsorsPeriod(value);
+
 		return value;
 	} catch {
 		return helpers.error('any.invalid');
@@ -127,6 +128,7 @@ const resolveGithubLogin: GithubLoginResolver = async (githubId, context) => {
 	}
 
 	const response = await client.get<{ login: string }>(`https://api.github.com/user/${encodeURIComponent(githubId)}`);
+
 	return response.data.login;
 };
 
@@ -147,23 +149,27 @@ export const createAdminSponsorsEndpoint = (queryService: QueryService, githubLo
 	router.get('/summary', validate(summarySchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as { period: SponsorsPeriod };
 		const range = resolveSponsorsPeriod(query.period);
+
 		res.send(await queryService.getSummary(context.database, range));
 	}, context));
 
 	router.get('/events', validate(eventsSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as EventsQuery;
 		const range = resolveSponsorsPeriod(query.period);
+
 		res.send(await queryService.getEvents(context.database, range, query));
 	}, context));
 
 	router.get('/accounts', validate(accountsSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as AccountsQuery;
 		const range = resolveSponsorsPeriod(query.period);
+
 		res.send(await queryService.getAccounts(context.database, range, query));
 	}, context));
 
 	router.get('/manual-additions', validate(manualAdditionsSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as ManualAdditionsQuery;
+
 		res.send(await queryService.getManualAdditions(context.database, query));
 	}, context));
 

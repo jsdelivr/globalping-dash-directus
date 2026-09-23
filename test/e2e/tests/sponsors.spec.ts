@@ -7,6 +7,7 @@ const sponsorshipValueSql = `COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.am
 	* CASE WHEN reason = 'recurring_sponsorship'
 		THEN COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.monthsCovered')) AS UNSIGNED), 1)
 		ELSE 1 END`;
+
 let baseline: {
 	active: number;
 	monthly: number;
@@ -18,8 +19,10 @@ let baseline: {
 	year2024Sponsors: number;
 	year2024Value: number;
 };
+
 const previousMonthDate = (day: number) => {
 	const now = new Date();
+
 	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, day, 12));
 };
 
@@ -27,6 +30,7 @@ test.beforeEach(async ({ user, user2 }) => {
 	const now = new Date();
 	const pastYear = new Date(now);
 	pastYear.setUTCFullYear(pastYear.getUTCFullYear() - 1);
+
 	const previousFrom = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
 	const previousTo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 	const [ overview, previous, period, year2024 ] = await Promise.all([
@@ -42,6 +46,7 @@ test.beforeEach(async ({ user, user2 }) => {
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', new Date('2024-01-01T00:00:00.000Z')).where('date_created', '<', new Date('2025-01-01T00:00:00.000Z'))
 			.countDistinct({ sponsors: 'github_id' }).sum({ value: sql.raw(sponsorshipValueSql) }).first(),
 	]);
+
 	baseline = {
 		active: Number(overview?.active || 0),
 		monthly: Number(overview?.monthly || 0),
@@ -119,6 +124,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await adminPage.goto('/sponsors');
 	await expect(adminPage.getByRole('heading', { name: 'Sponsors', exact: true })).toBeVisible();
 	await expect(adminPage.getByRole('link', { name: 'Sponsors' })).toBeVisible();
+
 	const formatMoney = (value: number) => `$${new Intl.NumberFormat('en-US').format(value)}`;
 	await expect(adminPage.getByTestId('active-sponsors')).toHaveText(String(baseline.active + 1));
 	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(baseline.previousValue + 235));
@@ -130,6 +136,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(adminPage.getByText('Bonus', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByText('Sponsors credited', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByLabel('Monthly recurring and one-time sponsorship amounts')).toBeVisible();
+
 	const eventsTable = adminPage.getByRole('heading', { name: 'Sponsorship events' }).locator('xpath=ancestor::section[1]');
 	const eventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('search='));
 	await adminPage.getByLabel('Search sponsorship events').fill(user.external_identifier);
@@ -151,6 +158,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
 	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(50));
 	await adminPage.getByRole('combobox', { name: 'Event types' }).click();
+
 	const resetEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && !response.url().includes('types='));
 	await adminPage.getByRole('option', { name: 'All', exact: true }).click();
 	await resetEventsResponse;
@@ -158,12 +166,14 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	const searchedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${user.external_identifier}`));
 	await adminPage.getByLabel('Search sponsorship events').fill(user.external_identifier);
 	await searchedEventsResponse;
+
 	let sortedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('sort=sponsorshipValue') && response.url().includes('direction=asc'));
 	await eventsTable.getByRole('columnheader', { name: 'Sponsorship amount' }).click();
 	await sortedEventsResponse;
 	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(5));
 	await expect(adminPage).toHaveURL(/eventsSort=sponsorshipValue/);
 	await expect(adminPage).toHaveURL(/eventsOrder=asc/);
+
 	sortedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('sort=sponsorshipValue') && response.url().includes('direction=desc'));
 	await eventsTable.getByRole('columnheader', { name: 'Sponsorship amount' }).click();
 	await sortedEventsResponse;
@@ -175,30 +185,36 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await accountsResponse;
 	await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
 	await expect(accountsTable.locator('tbody tr').first()).toContainText('Active recurring');
+
 	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${user2.external_identifier}`));
 	await adminPage.getByLabel('Search sponsor accounts').fill(user2.external_identifier);
 	await accountsResponse;
 	await expect(accountsTable.locator('tbody tr').first()).toContainText('Former recurring');
 	await expect(accountsTable.locator('tbody tr').first().getByRole('link', { name: user2.github_username })).toBeVisible();
+
 	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${unlinkedGithubId}`));
 	await adminPage.getByLabel('Search sponsor accounts').fill(unlinkedGithubId);
 	await accountsResponse;
 	await expect(accountsTable.locator('tbody tr').first()).toContainText('One-time only');
 	await adminPage.getByRole('heading', { name: 'Sponsor accounts' }).evaluate(element => element.scrollIntoView({ block: 'center' }));
 	await accountsTable.getByRole('button', { name: 'Filters' }).click();
+
 	const accountFilters = adminPage.getByRole('dialog', { name: 'Filter sponsor accounts' });
 	await expect(accountFilters).toBeVisible();
 	await accountFilters.getByRole('combobox', { name: 'Sponsor statuses' }).click();
 	await expect(adminPage.getByRole('option', { name: 'One-time only' })).toBeVisible();
+
 	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('statuses=one-time'));
 	await adminPage.getByRole('option', { name: 'One-time only' }).click();
 	await accountsResponse;
 	await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
 	await adminPage.getByRole('combobox', { name: 'Dashboard account linkage' }).click();
+
 	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('linked=false'));
 	await adminPage.getByRole('option', { name: 'Not linked' }).click();
 	await accountsResponse;
 	await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
+
 	const sortedAccountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('sort=periodValue') && response.url().includes('direction=asc'));
 	await accountsTable.getByRole('columnheader', { name: 'Period amount' }).click();
 	await sortedAccountsResponse;
@@ -218,6 +234,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(manualAdditionsRows.nth(1)).toContainText('Other credits');
 	await expect(manualAdditionsDialog.locator('tbody').getByText('Admin User', { exact: true })).toHaveCount(10);
 	await expect(manualAdditionsDialog.getByRole('button', { name: 'Page 2' })).toBeVisible();
+
 	const sortedManualAdditionsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.url().includes('sort=credits') && response.url().includes('direction=asc'));
 	await manualAdditionsDialog.getByRole('columnheader', { name: 'Credits' }).click();
 	await sortedManualAdditionsResponse;

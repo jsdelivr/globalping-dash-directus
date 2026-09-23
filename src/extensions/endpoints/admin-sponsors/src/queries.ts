@@ -84,6 +84,7 @@ const canonicalGithubId = (database: Knex) => {
 	const entries = Object.entries(SOURCE_ID_TO_TARGET_ID);
 	const cases = entries.map(() => 'WHEN ? THEN ?').join(' ');
 	const bindings = entries.flatMap(([ source, target ]) => [ source, target ]);
+
 	return database.raw(`CASE sponsors.github_id ${cases} ELSE sponsors.github_id END AS github_id`, bindings);
 };
 
@@ -145,6 +146,7 @@ export const applyManualSearch = (query: Knex.QueryBuilder, search: string | und
 
 const toNumber = (value: string | number | null | undefined): number => {
 	const number = Number(value ?? 0);
+
 	return Number.isFinite(number) ? number : 0;
 };
 
@@ -230,6 +232,7 @@ export const getSponsorsSummary = async (database: Knex, range: SponsorsPeriodRa
 		database.raw('COUNT(*) AS active_sponsors'),
 		database.raw('COALESCE(SUM(monthly_amount), 0) AS estimated_next_month_value'),
 	).first();
+
 	const previousMonthQuery = database('gp_credits_additions as additions')
 		.whereIn('additions.reason', SPONSORSHIP_REASONS)
 		.where('additions.date_created', '>=', previousMonthFrom)
@@ -239,6 +242,7 @@ export const getSponsorsSummary = async (database: Knex, range: SponsorsPeriodRa
 			database.raw(`COALESCE(SUM(CASE WHEN additions.reason IN ('recurring_sponsorship', 'tier_changed') THEN ${valueSql} ELSE 0 END), 0) AS recurring_value`),
 			database.raw(`COALESCE(SUM(CASE WHEN additions.reason = 'one_time_sponsorship' THEN ${valueSql} ELSE 0 END), 0) AS one_time_value`),
 		).first();
+
 	const aggregateQuery = (selectedRange?: SponsorsPeriodRange) => {
 		const query = database('gp_credits_additions as additions').whereIn('additions.reason', SPONSORSHIP_REASONS);
 
@@ -253,10 +257,12 @@ export const getSponsorsSummary = async (database: Knex, range: SponsorsPeriodRa
 			database.raw(`COALESCE(SUM(CASE WHEN additions.reason = 'one_time_sponsorship' THEN ${valueSql} ELSE 0 END), 0) AS one_time_value`),
 		).first();
 	};
+
 	const allTimeQuery = database('gp_credits_additions as additions')
 		.whereIn('additions.reason', SPONSORSHIP_REASONS)
 		.countDistinct({ sponsors: 'additions.github_id' })
 		.first();
+
 	const chartMonthSql = utcMonthSql('additions.date_created');
 	const chartQuery = periodEventsQuery(database, range).select(
 		database.raw(`${chartMonthSql} AS month`),
@@ -303,6 +309,7 @@ export const getManualAdditions = async (database: Knex, query: ManualAdditionsQ
 		added_by_users.github_username,
 		added_by_users.email
 	)`;
+
 	const base = database('gp_credits_additions as additions')
 		.whereIn('additions.reason', [ 'one_time_sponsorship', 'other' ])
 		.whereRaw(`JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.manual')) = 'true'`)
@@ -323,6 +330,7 @@ export const getManualAdditions = async (database: Knex, query: ManualAdditionsQ
 		credits: 'additions.amount',
 		addedBy: addedBySql,
 	};
+
 	const [ countRow, rows ] = await Promise.all([
 		base.clone().clearSelect().clearOrder().count({ total: 'additions.id' }).first(),
 		base.clone().select(
@@ -357,6 +365,7 @@ export const getSponsorshipEvents = async (database: Knex, range: SponsorsPeriod
 	}
 
 	applySearch(base, query.search);
+
 	const sortExpressions: Record<EventsQuery['sort'], string> = {
 		date: 'additions.date_created',
 		sponsor: `COALESCE(current_sponsors.github_login, directus_users.github_username, ${additionGithubLoginSql()}, additions.github_id)`,
@@ -394,11 +403,13 @@ export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRa
 		database.raw('COUNT(*) AS period_events'),
 		database.raw('MAX(additions.date_created) AS latest_event'),
 	).groupBy('additions.github_id');
+
 	const recurringHistory = database('gp_credits_additions as history')
 		.whereIn('history.reason', SPONSORSHIP_REASONS)
 		.select('history.github_id')
 		.max({ has_recurring: database.raw(`CASE WHEN history.reason IN ('recurring_sponsorship', 'tier_changed') THEN 1 ELSE 0 END`) })
 		.groupBy('history.github_id');
+
 	const base = database.from(periodAccounts.as('additions'))
 		.leftJoin(currentSponsorsQuery(database).as('current_sponsors'), 'current_sponsors.github_id', 'additions.github_id')
 		.leftJoin(recurringHistory.as('history'), 'history.github_id', 'additions.github_id')
