@@ -14,6 +14,7 @@ export const seed = async (knex) => {
 	};
 
 	let user = await getUser();
+	const admin = await knex('directus_users').where({ email: 'admin@example.com' }).select('id').first();
 
 	// One time sponsorship credits
 	await knex('gp_credits_additions').insert([{
@@ -67,6 +68,42 @@ export const seed = async (knex) => {
 		user_updated: null,
 	}]);
 
+	// Manual additions created through the Sponsors administration page.
+	await knex('gp_credits_additions').insert([{
+		amount: 75_000,
+		reason: 'one_time_sponsorship',
+		meta: JSON.stringify({
+			amountInDollars: 35,
+			manual: true,
+		}),
+		consumed: 1,
+		date_created: relativeDayUtc(-5),
+		github_id: user.external_identifier,
+		user_updated: admin.id,
+	}, {
+		amount: 15_000,
+		reason: 'other',
+		meta: JSON.stringify({
+			comment: 'Customer support adjustment.',
+			manual: true,
+		}),
+		consumed: 1,
+		date_created: relativeDayUtc(-10),
+		github_id: user.external_identifier,
+		user_updated: admin.id,
+	}, ...Array.from({ length: 9 }, (_, index) => ({
+		amount: 20_000 + index * 1_000,
+		reason: 'one_time_sponsorship',
+		meta: JSON.stringify({
+			amountInDollars: 10 + index,
+			manual: true,
+		}),
+		consumed: 1,
+		date_created: relativeDayUtc(-20 - index),
+		github_id: `900000000${index + 1}`,
+		user_updated: admin.id,
+	})) ]);
+
 	// Recurring sponsorship credits
 	await knex('gp_credits_additions').insert([
 		...Array.from(Array(24).keys()).map(i => ({
@@ -81,6 +118,39 @@ export const seed = async (knex) => {
 			user_updated: null,
 		})),
 	]);
+
+	// Sponsor admin examples: tier change, former recurring, and one-time only.
+	await knex('gp_credits_additions').insert([{
+		amount: 20000,
+		reason: 'tier_changed',
+		meta: JSON.stringify({
+			amountInDollars: 10,
+		}),
+		consumed: 1,
+		date_created: relativeDayUtc(-15),
+		github_id: user.external_identifier,
+		user_updated: null,
+	}, {
+		amount: 40000,
+		reason: 'recurring_sponsorship',
+		meta: JSON.stringify({
+			amountInDollars: 20,
+		}),
+		consumed: 1,
+		date_created: relativeDayUtc(-30),
+		github_id: '1234567892',
+		user_updated: null,
+	}, {
+		amount: 50000,
+		reason: 'one_time_sponsorship',
+		meta: JSON.stringify({
+			amountInDollars: 25,
+		}),
+		consumed: 1,
+		date_created: relativeDayUtc(-45),
+		github_id: '9876543210',
+		user_updated: null,
+	}]);
 
 	const getProbe1 = async () => {
 		return knex('gp_probes')
