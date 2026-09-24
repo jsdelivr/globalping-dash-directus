@@ -4,6 +4,7 @@ import type { EventContext } from '@directus/types';
 import { isAxiosError } from 'axios';
 import type { Request, RequestHandler, Router } from 'express';
 import Joi from 'joi';
+import { redirectGithubId } from '../../../lib/src/add-credits.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
@@ -177,10 +178,11 @@ export const createAdminSponsorsEndpoint = (queryService: QueryService, githubLo
 		const accountability = (req as Request & { accountability: EventContext['accountability'] }).accountability;
 		const input = req.body as ManualAdditionInput;
 		const isPayment = input.type === 'payment';
+		const githubId = redirectGithubId(input.githubId);
 		let githubLogin: string;
 
 		try {
-			githubLogin = await githubLoginResolver(input.githubId, context);
+			githubLogin = await githubLoginResolver(githubId, context);
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 
@@ -189,13 +191,13 @@ export const createAdminSponsorsEndpoint = (queryService: QueryService, githubLo
 				return;
 			}
 
-			context.logger.error({ githubId: input.githubId, status }, 'GitHub account lookup failed.');
+			context.logger.error({ githubId, status }, 'GitHub account lookup failed.');
 			res.status(503).send('GitHub account lookup is temporarily unavailable.');
 			return;
 		}
 
 		await context.database('gp_credits_additions').insert({
-			github_id: input.githubId,
+			github_id: githubId,
 			amount: input.credits,
 			reason: isPayment ? 'one_time_sponsorship' : 'other',
 			meta: JSON.stringify(isPayment

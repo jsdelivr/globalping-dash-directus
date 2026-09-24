@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
+import { redirectGithubId, SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import type {
 	AccountsQuery,
 	EventsQuery,
@@ -112,7 +112,7 @@ export const applySearch = (query: Knex.QueryBuilder, search: string | undefined
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.where('additions.github_id', search);
+			builder.where('additions.github_id', redirectGithubId(search));
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
@@ -131,7 +131,7 @@ export const applyManualSearch = (query: Knex.QueryBuilder, search: string | und
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.where('additions.github_id', search);
+			builder.where('additions.github_id', redirectGithubId(search));
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
