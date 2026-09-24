@@ -1,8 +1,7 @@
 # Account migration
 
-Moving a user's own account into an org - the "migrate to organization" button. The back end is one endpoint and one
-transaction; the caller says which entities to move (probes, tokens, credits), so a user can take one part over without the
-rest. The UI is phase 4.
+Moving a user's own account into an org - the "migrate to organization" button. The back end is one endpoint per entity kind
+(probes, tokens, credits), each its own transaction, so a user can take one part over without the rest. The UI is phase 4.
 
 **Ships after phase 2, not with phase 1.** Before the readers move to `account_id` the transfer is either a no-op or harmful:
 the balance leaves `gp_credits.user_id`, where `credits-master` still looks for it (`credits-master.ts:65,98,117`), so the
@@ -29,7 +28,7 @@ and whoever claims an org can demote the admins who arrive later, until the sync
 
 ## 2. Membership
 
-The migrating user becomes an admin of the org regardless of their GitHub role, creating the membership if it is missing. Safe
+The migrating user becomes an admin of the org regardless of their GitHub role. Safe
 against the sync, which only ever promotes: a manually assigned admin is never demoted.
 
 ## 3. Probes
@@ -95,8 +94,8 @@ one direction would show them to nobody. The only direction that can be created 
 sponsorship at an org they belong to; the org -> user rows stay as they are and are expected to disappear as their owners transfer.
 Then:
 
-- if a redirect org -> user exists and the user migrates their credits anywhere, that redirect row is deleted;
-- a user -> org redirect is created. That is the only kind of redirect that can be created from now on;
+- no redirect is created: the credits move once, while a redirect routes what arrives later, so pointing a sponsorship at an org
+  is its own endpoint (`phase3.md` 3.1) and its own decision;
 - the history moves: `gp_credits_additions.github_id` becomes the org's, which carries the sponsor bonus with it - `getUserBonus`
   sums the last 12 months by `github_id`, so nothing has to know about redirects;
 - the balance and the deductions move to the org account. Two traps: `gp_credits` is `UNIQUE(account_id)` and

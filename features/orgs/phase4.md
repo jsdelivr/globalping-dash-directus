@@ -122,13 +122,17 @@ are independent and may be used at different times.
 7.3 **What each modal says.**
 
 - **Probes**: the probes' global tag changes to the org's name (the old one is replaced outright, no grace period), and the user's
-  adoption token is handed to the org and replaced with a fresh one. It is the one transfer that can be refused for a reason the
-  screen could not have known - the org already has an admin, so only an admin may hand probes over - so the error says exactly
-  that and names the way out: ask an admin of the org to do it.
+  adoption token is handed to the org and replaced with a fresh one. The modal names both tags, and it says so when the org's
+  public probes switch is off while the user's is on: the tag does not change then, it disappears, and the probes stop being
+  globally targetable under any name until an admin turns the switch on (6.2).
+
+  It is also the one transfer that can be refused for a reason the screen could not have known - the org already has an admin, so
+  only an admin may hand probes over - so the error says exactly that. Nobody can do it on their behalf, since a transfer only
+  ever moves the caller's own probes, so the way out is being made an admin of the org.
 - **Tokens**: the tokens and their app approvals move, and what they spend from then on is the org's credits.
 - **Credits**: the balance, the deductions and the sponsorship history move, and the sponsor bonus with them. If an
-  `org -> user` redirect points at the user, the modal names it, because the transfer deletes it - nobody should discover
-  afterwards that their sponsorship stopped arriving where it used to.
+  `org -> user` redirect points at the user, the modal names it and says it stays: the org keeps sending its sponsorship to them
+  until an admin of that org clears it on the Organization screen (6.2).
 - **Redirect**: routing future sponsorship, not handing over anything that exists, so it is reversible and carries no warning.
   The row shows the current state next to the button, `john => acme-org`, with a cross that clears it after a confirmation modal.
   Picking an org replaces whatever the user had before.

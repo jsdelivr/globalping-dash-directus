@@ -123,15 +123,18 @@ the removal UI of phase 4 reachable, and 2.1 is what makes it safe.
 - `transfer probes`, `transfer tokens`, `transfer credits` - one per entity kind, each its own transaction. A user may hand over
   their probes and keep their credits; nothing forces the three to happen together or in any order.
 - `credits-redirect` GET - the redirects where the active account's github id is the source or the target. It is the only
-  reader of the table (1.4), so it is also what keeps a viewer from seeing them. Each side comes back with its name - the user's
+  reader of the table (1.4), and the org half of it is admin-only for the reason 1.4 gives: the counterparty of an org's redirect
+  is a person no other row a member can read names. Each side comes back with its name - the user's
   `github_username` or the org's `name`, the bare id when neither table knows it - because the dash shows `john => acme-org` and
   can read no other user's row.
-- `credits-redirect` POST - manages the redirect whose **source is the active account's github id**, which is the one that gives
-  its money away. Acting personally, a user points their sponsorship at an org they belong to, replaces that choice, or clears it
-  with `orgId: null`. Acting as an org, an admin can only clear: the `org -> user` rows we inherited are removable by the org that
-  funds them, which is the one thing that lets a redirect be undone when its target is gone. Creation stays one-directional -
-  user -> org, towards an org the caller belongs to. Pointing at an org that is itself redirected is allowed and needs no thought:
-  the lookup is one hop (1.3).
+- `credits-redirect` POST - a person points their sponsorship at an org they belong to. Only that direction exists: an org
+  receives a sponsorship, it never passes one on. It also ends every row that touches the caller, in either direction - sending
+  their own money somewhere says they are nobody's stand-in any more. Pointing at an org that is itself redirected is allowed and
+  needs no thought: the lookup is one hop (1.3).
+- `credits-redirect` DELETE - removes one named row, `{ source, target }`, and either of the two sides may do it: the one giving
+  its sponsorship away, and the one that has been receiving it. Naming the row is what lets an org end a single member's donation
+  rather than all of them, and it is what makes the inherited `org -> user` rows removable - by the org that funds them, and by
+  the person they route through.
 
 The org is named by id; the caller is the session user, acting as the active account.
 
@@ -143,11 +146,11 @@ The org is named by id; the caller is the session user, acting as the active acc
 | transfer tokens | always | always | never |
 | transfer credits | always | always | never |
 | `credits-redirect` POST, own sponsorship | always | always | never |
-| `credits-redirect` POST, clearing the org's own redirect | always | never | never |
+| `credits-redirect` DELETE, a row this account is a side of | always | always for their own account, never for the org's | never |
 
-Plus one branch outside the matrix: the target of an `org -> user` redirect from that org may transfer even once the org has an
-admin - that redirect is our evidence that this particular person is the org. The branch has to check that the redirect points at
-the caller; "a redirect exists for the org" would let every member of such an org walk in.
+The matrix is the whole rule; probes have no exception. A redirect is about where money goes, not about who may act for an org,
+and reading one as permission would tie a probe capability to a row either side can delete. Somebody who has to hand probes over
+to an org that already has an admin asks that admin instead.
 
 The dash cannot pre-compute the probes row - a member may not read the org's memberships, so it cannot tell whether the org has an
 admin - so that rejection has to come back as its own error, distinguishable from "you are a viewer" and from "no such org", and
@@ -168,8 +171,8 @@ yields admin or member - so it is an explicit decision and it wins.
 DB**. Once it has one the operations stop granting anything, which is what closes the door behind the first claimant. Safe against
 the members cron, which only ever promotes - a manually assigned admin is never demoted.
 
-The check and the promotion belong in the same transaction, with the org row locked: two members reading "no admin" at once would
-otherwise both become one, and the door would not close behind either.
+Two members transferring at the same moment both read "no admin" and both end up admins. Accepted: each of them was entitled to
+claim the org at the moment they asked, so the outcome is one the rules already allow, just reached twice.
 
 Known and accepted: an org that has not approved the `globalping` OAuth app is invisible to the memberships endpoint, so everybody
 including its owners arrives through the public list with no role and is stored as a member (`github-api-client.ts:66`). Such an
@@ -198,8 +201,11 @@ migration never overwrites the first.
 with it. The approval is not access - the token is - but it has to move for two reasons: `/applications/revoke` deletes from both
 tables by the same `{ account_id, user_created }`, and an approval whose tokens left is invisible in the applications list while
 its consent silently keeps skipping the consent screen. The collision is the thing to get right: the personal row becomes
-`(user, app, org account)`, which the org may already have. Merge them, taking the union of the scopes, the way gp-auth itself
-unions them (`model.ts:198`). `user_created` never changes - moving the row changes which account is billed, not who consented.
+`(user, app, org account)`, which the org may already have. Then the org's row wins and the personal one is dropped - an approval
+only decides whether the consent screen is shown the next time the app asks, and a transfer is nobody answering that screen, so
+the scopes the org consented to are not for it to widen. Nothing breaks either way: gp-auth reads an approval only in
+`saveAuthorizationCode`, never when a token is used. `user_created` never changes - moving the row changes which account is
+billed, not who consented.
 
 3.7 **Credits.** The balance and the deductions move to the org account, and the additions history moves with them
 (`gp_credits_additions.github_id` becomes the org's), which carries the sponsor bonus along - `getUserBonus` sums the last twelve
@@ -213,8 +219,10 @@ inherits the percentage the donations earned, and the giver's timeline loses the
 (`credits-timeline/src/index.ts:96`). It is safe to rewrite only because of 1.5 - the cron no longer recognises an addition by the
 id it was filed under.
 
-If an `org -> user` redirect pointed at the caller, transferring their credits deletes that row: the org now holds both the
-history and the future sponsorship, and the redirect has nothing left to do.
+Redirects are left alone. Handing over the credits that have arrived and routing the ones that will are two decisions, and the
+`org -> user` row is the org's, not the caller's: clearing it reroutes the org's money, which is why it has its own endpoint and
+its own confirmation (3.1). An org that still redirects to someone who just gave it their credits is a state the org ends, not a
+side effect of their button.
 
 3.8 **Failure.** Each endpoint is one transaction, so a failed transfer leaves its own entity kind untouched and says nothing
 about the other two. The adoption token is the only part with an effect outside the database - the API's token map refreshes
@@ -253,13 +261,15 @@ and no screen to show it on.
 
 ## 6. Tests
 
-6.1 **Unit**, per extension: the authorization matrix (3.2) with every cell and the redirect branch, the promotion window (3.3),
-the approval merge (3.6), the credits traps (3.7), the subset validation (2.1).
+6.1 **Unit**, per extension: the authorization matrix (3.2) with every cell, the promotion window (3.3), the subset validation
+(2.1), the names the redirect list falls back to (3.1), and the two conditions around the adoption token (3.5) - a probe has to
+have moved, and the entry has to carry a username. Not the credits and approval moves: those are unique keys, a trigger and what
+MariaDB allows in a subquery, so a unit test there asserts the implementation's own statements back at it.
 
 6.2 **e2e over REST**: each transfer alone and all three in sequence; a member refused the probes transfer in an org that has an
 admin; the first member of an admin-less org becoming its admin; a second member transferring into the same org (the token array
-grows, the first entry survives); a transfer into an org that already holds an approval of the same app (scopes union); a redirect
-created, overwritten and deleted; a rollback on a forced failure leaving nothing moved; an org admin reading `id` and
+grows, the first entry survives); a transfer into an org that already holds an approval of the same app (the org's row stands); a redirect
+created, overwritten, refused by the side receiving it and deleted; a rollback on a forced failure leaving nothing moved; an org admin reading `id` and
 `github_username` of the org's members and nothing else of them, while a member and a viewer read no co-member at all.
 
 ## Deploy
