@@ -215,6 +215,36 @@ test('the org adoption token and the public probes switch can only be changed by
 	expect(renamed.name).toBe('e2e-renamed-org');
 });
 
+test('an org admin reads the names of the members', async ({ org, actors }) => {
+	// Like the org adoption token, the name is added by a hook, so it comes back without being asked for and cannot be named in `fields`.
+	const members = async (api: AxiosInstance) => (await api.get('/items/gp_org_members?fields=user,role&limit=50')).data.data;
+	const names = (rows: { user: string; github_username: string }[]) => Object.fromEntries(rows.map(row => [ row.user, row.github_username ]));
+
+	expect(names(await members(actors.admin))).toEqual({
+		[org.admin.id]: org.admin.github_username,
+		[org.member.id]: org.member.github_username,
+		[org.viewer.id]: org.viewer.github_username,
+	});
+
+	expect(names(await members(actors.member))).toEqual({ [org.member.id]: org.member.github_username });
+	expect(names(await members(actors.viewer))).toEqual({ [org.viewer.id]: org.viewer.github_username });
+
+	const byName = await actors.admin.get('/items/gp_org_members?filter[github_username][_eq]=e2e-nobody');
+	expect(byName.status).toBe(403);
+});
+
+test('the users of an org stay unreadable to each other', async ({ org, actors }) => {
+	// Nothing of a co-member comes back from /users: not as a field, not through a filter, not through an aggregate.
+	expect((await actors.admin.get('/users?fields=id&limit=50')).data.data).toEqual([{ id: org.admin.id }]);
+
+	const byToken = await actors.admin.get(`/users?filter[adoption_token][_starts_with]=${org.member.adoption_token}&fields=id`);
+	expect(byToken.data.data).toHaveLength(0);
+
+	const aggregated = await actors.admin.get('/users?groupBy=github_username&aggregate[max]=email,adoption_token');
+	expect(aggregated.data.data).toHaveLength(1);
+	expect(aggregated.data.data[0].github_username).toBe(org.admin.github_username);
+});
+
 test('the extra adoption tokens are visible to admins only and can only be removed', async ({ org, actors }) => {
 	const alice = { github_username: 'e2e-alice', token: 'e2e-alice-token' };
 	const bob = { github_username: 'e2e-bob', token: 'e2e-bob-token' };

@@ -53,11 +53,11 @@ nothing at all. Full design in `account-migration.md`.
   the account owner - `COALESCE(org.user_type, user.user_type)`, the same shape already used for `default_prefix` and
   `adoption_token` - and teach the sponsors cron to set it on the org: it matches sponsors by `external_identifier` today, and
   an org has `github_id`.
-- Permissions migration - `directus_users` read for org admins. Today the only read rule is `id _eq $CURRENT_USER`
-  (`20230425GP-create-user-role.js`), so the members list of phase 4 would render bare uuids. Add a second read rule,
-  `{ "memberships": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } }`, exposing
-  `id` and `github_username` only - the `memberships` alias already exists on `directus_users` (`one_field` of the
-  `gp_org_members.user` relation). Shipped here so that phase 4 is a dash deploy only.
+- Member names for org admins. Today the only `directus_users` read rule is `id _eq $CURRENT_USER`
+  (`20230425GP-create-user-role.js`), so the members list of phase 4 would render bare uuids. A `gp_org_members` read hook
+  attaches `github_username` to the rows the caller may already read, the way `gp-orgs` attaches `adoption_token`; the
+  permission stays as it is, because a second read rule leaks the whole first one through filters and aggregates
+  (phase3.md 5.2). Shipped here so that phase 4 is a dash deploy only.
 - Unit tests + e2e over REST.
 
 ## Phase 4: gp-dash org UI
