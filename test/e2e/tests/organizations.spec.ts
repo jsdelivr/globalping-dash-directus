@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
@@ -139,11 +140,12 @@ test('an org is only visible to its own members, and its adoption token only to 
 	expect(await listedIds(actors.otherOrgAdmin, 'gp_accounts')).not.toContain(org.account_id);
 });
 
-test('the org adoption token can not be read by naming the field anywhere in a query', async ({ org, actors }) => {
+test('the org adoption tokens can not be read by naming the field anywhere in a query', async ({ org, actors }) => {
 	const prefix = org.adoption_token.slice(0, 4);
 
 	const denied = [
 		'/items/gp_orgs?fields=id,adoption_token',
+		'/items/gp_orgs?fields=id,extra_adoption_tokens',
 		'/items/gp_orgs?aggregate[max]=adoption_token',
 		'/items/gp_orgs?aggregate[count]=id&groupBy[]=adoption_token',
 		'/items/gp_orgs?fields=id&sort=adoption_token',
@@ -212,6 +214,82 @@ test('the org adoption token and the public probes switch can only be changed by
 	expect((await actors.directusAdmin.patch(`/items/gp_orgs/${org.id}`, { name: 'e2e-renamed-org' })).status).toBe(200);
 	const renamed = await sql('gp_orgs').where({ id: org.id }).first('name');
 	expect(renamed.name).toBe('e2e-renamed-org');
+});
+
+test('an org admin reads the names of the members', async ({ org, actors }) => {
+	// Like the org adoption token, the name is added by a hook, so it comes back without being asked for and cannot be named in `fields`.
+	const members = async (api: AxiosInstance) => (await api.get('/items/gp_org_members?fields=id,role&limit=50')).data.data;
+	const names = (rows: { role: string; github_username: string }[]) => Object.fromEntries(rows.map(row => [ row.github_username, row.role ]));
+
+	expect(names(await members(actors.admin))).toEqual({
+		[org.admin.github_username]: 'admin',
+		[org.member.github_username]: 'member',
+		[org.viewer.github_username]: 'viewer',
+	});
+
+	expect(names(await members(actors.member))).toEqual({ [org.member.github_username]: 'member' });
+	expect(names(await members(actors.viewer))).toEqual({ [org.viewer.github_username]: 'viewer' });
+
+	const byName = await actors.admin.get('/items/gp_org_members?filter[github_username][_eq]=e2e-nobody');
+	expect(byName.status).toBe(403);
+});
+
+test('the users of an org stay unreadable to each other', async ({ org, actors }) => {
+	// Nothing of a co-member comes back from /users: not as a field, not through a filter, not through an aggregate.
+	expect((await actors.admin.get('/users?fields=id&limit=50')).data.data).toEqual([{ id: org.admin.id }]);
+
+	const byToken = await actors.admin.get(`/users?filter[adoption_token][_starts_with]=${org.member.adoption_token}&fields=id`);
+	expect(byToken.data.data).toHaveLength(0);
+
+	const aggregated = await actors.admin.get('/users?groupBy=github_username&aggregate[max]=email,adoption_token');
+	expect(aggregated.data.data).toHaveLength(1);
+	expect(aggregated.data.data[0].github_username).toBe(org.admin.github_username);
+});
+
+test('the extra adoption tokens are visible to admins only and can only be removed', async ({ org, actors }) => {
+	const alice = { github_username: 'e2e-alice', token: 'e2e-alice-token' };
+	const bob = { github_username: 'e2e-bob', token: 'e2e-bob-token' };
+	const mallory = { github_username: 'e2e-mallory', token: 'e2e-mallory-token' };
+
+	await sql('gp_orgs').where({ id: org.id }).update({ extra_adoption_tokens: JSON.stringify([ alice, bob ]) });
+
+	const stored = async () => {
+		const row = await sql('gp_orgs').where({ id: org.id }).first('extra_adoption_tokens');
+		return JSON.parse(row.extra_adoption_tokens);
+	};
+
+	expect((await actors.admin.get(`/items/gp_orgs/${org.id}`)).data.data.extra_adoption_tokens).toEqual([ alice, bob ]);
+
+	for (const api of [ actors.member, actors.viewer ]) {
+		expect((await api.get(`/items/gp_orgs/${org.id}`)).data.data.extra_adoption_tokens).toBeUndefined();
+	}
+
+	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
+		expect((await api.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [] })).status).toBe(403);
+	}
+
+	const rejected = async (api: AxiosInstance, value: unknown) => {
+		const response = await api.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: value });
+		expect(response.status).toBe(400);
+		return response.data.errors[0].message;
+	};
+
+	expect(await rejected(actors.admin, [ alice, bob, mallory ])).toBe('"extra_adoption_tokens" accepts removals only.');
+	expect(await rejected(actors.admin, [ alice, alice ])).toBe('"extra_adoption_tokens" accepts removals only.');
+	expect(await rejected(actors.admin, [ alice.token ])).toBe('"extra_adoption_tokens" must be a list of { github_username, token }.');
+
+	// A Directus admin is bound by the same rule.
+	expect(await rejected(actors.directusAdmin, [ alice, bob, mallory ])).toBe('"extra_adoption_tokens" accepts removals only.');
+	expect(await stored()).toEqual([ alice, bob ]);
+
+	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [ bob ] })).status).toBe(200);
+	expect(await stored()).toEqual([ bob ]);
+
+	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [] })).status).toBe(200);
+	expect(await stored()).toEqual([]);
+
+	expect((await actors.admin.patch(`/items/gp_orgs/${randomUUID()}`, { extra_adoption_tokens: [ alice ] })).status).toBe(400);
+	expect((await actors.admin.patch(`/items/gp_orgs/${randomUUID()}`, { extra_adoption_tokens: [] })).status).toBe(403);
 });
 
 test('the selected orgs can only be set on your own row, and non-member orgs are dropped', async ({ org, org2, actors }) => {

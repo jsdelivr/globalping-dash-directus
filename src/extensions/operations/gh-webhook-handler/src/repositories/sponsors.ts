@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import type { OperationContext } from '@directus/extensions';
+import { setSponsorshipTier } from '../../../../lib/src/sponsorship-tier.js';
 
 type AddItemData = {
 	github_login: string;
@@ -14,8 +15,9 @@ type Context = {
 	getSchema: OperationContext['getSchema'];
 };
 
-export const addSponsor = async ({ github_login, github_id, monthly_amount, last_earning_date }: AddItemData, { services, database, getSchema }: Context) => {
-	const { ItemsService, UsersService } = services;
+export const addSponsor = async ({ github_login, github_id, monthly_amount, last_earning_date }: AddItemData, context: Context) => {
+	const { services, database, getSchema } = context;
+	const { ItemsService } = services;
 
 	const result = await database.transaction(async (trx) => {
 		const sponsorsService = new ItemsService('sponsors', {
@@ -23,19 +25,7 @@ export const addSponsor = async ({ github_login, github_id, monthly_amount, last
 			knex: trx,
 		});
 
-		const usersService = new UsersService({
-			schema: await getSchema(),
-			knex: trx,
-		});
-
-		await usersService.updateByQuery({
-			filter: {
-				external_identifier: { _eq: github_id },
-				user_type: { _neq: 'special' },
-			},
-		}, {
-			user_type: 'sponsor',
-		});
+		await setSponsorshipTier(github_id, 'sponsor', context, trx);
 
 		const result = await sponsorsService.createOne({
 			github_login,

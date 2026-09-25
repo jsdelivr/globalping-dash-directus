@@ -56,6 +56,22 @@ test('records a new personal sponsor and credits their own account', async ({ us
 	expect(credits.amount).toBe(2 * CREDITS_PER_DOLLAR);
 });
 
+test('marks a sponsoring org as a sponsor, and back to a member when it stops', async ({ org }) => {
+	const tierOf = async () => (await sql('gp_orgs').where({ id: org.id }).first('user_type')).user_type as string;
+
+	expect(await tierOf()).toBe('member');
+
+	await mockGithubSponsors([{ login: org.name, githubId: Number(org.github_id), monthlyAmount: 5 }]);
+	await trigger(FLOW.sponsors);
+
+	expect(await tierOf()).toBe('sponsor');
+
+	await mockGithubSponsors([], [ org.github_id ]);
+	await trigger(FLOW.sponsors);
+
+	expect(await tierOf()).toBe('member');
+});
+
 test('drops a sponsor that is gone from GitHub and keeps the rest', async ({ org, user }) => {
 	await sql('sponsors').insert([
 		{ github_id: org.github_id, github_login: org.name, monthly_amount: 5, last_earning_date: new Date() },
@@ -82,7 +98,7 @@ test('drops a sponsor whose sponsorship turned one-time, without crediting them 
 });
 
 test('credits a redirected sponsor', async ({ org, user }) => {
-	// A pair out of SOURCE_ID_TO_TARGET_ID in add-credits.ts: an org that sponsors, and the user its credits belong to.
+	// A pair seeded into gp_credits_redirects: an org that sponsors, and the user its credits belong to.
 	org.github_id = '203478287';
 	user.external_identifier = '163146';
 	await sql('sponsors').where({ github_id: org.github_id }).delete();

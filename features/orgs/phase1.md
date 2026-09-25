@@ -36,8 +36,8 @@ How the code is written for it:
    - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side
      equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api
      reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it
-     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 for the 49
-     users whose `default_prefix` is an org name today
+     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 to a
+     new tag under an org name - existing tags and the current `default_prefix` stay as they are
    - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
      GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
      the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the
@@ -77,7 +77,7 @@ How the code is written for it:
 
 10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
 
-10a. **gp-orgs read hook**: strip `adoption_token` unless the requester is an admin of that org. Until it lands every member reads the org's adoption token (confirmed on the dev instance) - permission fields can't differ per role, so the hook is the only place for it; pattern = `github_oauth_token` masking in directus-users hook
+10a. **gp-orgs read hook**: `adoption_token` stays out of the `gp_orgs` read permission and the hook adds it for the admins of that org. Permission fields can't differ per role, and stripping the field from the output is not enough - a field in the permission can be named in `filter`/`sort` by every member who reads the row
 
 11. **Notifications**: senders address the owner, the hook resolves who actually gets notified.
 
