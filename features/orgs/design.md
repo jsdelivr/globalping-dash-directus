@@ -4,8 +4,7 @@ Default Directus multi-tenancy approach with a new orgs table and an account ent
 
   1. New `gp_orgs` table. Columns: `id, github_id, name, adoption_token, extra_adoption_tokens, public_probes, user_type`.
   2. New `gp_org_members` junction table. Columns: `id, org, user, role: viewer | member | admin, notification_preferences`.
-  3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB
-trigger on insert) and removed via FK cascade, so an account always exists.
+  3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB trigger on insert) and removed via FK cascade, so an account always exists.
   4. New column `account_id` in data tables:
   - gp_probes (`userId` => `account_id`)
   - gp_tokens (+`account_id`, `user_created` stays to track creator)
@@ -37,19 +36,10 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
-- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and in the
-  `gp_active_account` cookie on `.globalping.io` (the account id, not the org id). The cookie is unsigned, so gp-api checks
-  the membership on every request and falls back to the personal account; it is per device, which is the point - the same user
-  can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id` claim stays
-  the personal account.
-- The cookie value is scoped to the user (`<userId>:<accountId>`) and ignored when the user does not match, so the choice left
-  on a shared machine never carries over to whoever logs in next. Clearing it on logout would not be enough: sessions expire
-  without one, and globalping.io sends the cookie to the API without ever loading the dashboard, so nothing there could clear it.
-- What each user picked is remembered by the dashboard in `localStorage`, keyed by the user id, and the cookie carries only the
-  current choice. Coming back to a machine restores that user's last org without the cookie having to hold a map of everyone who
-  ever logged in there, and without the choice leaking across devices the way a column on `directus_users` would.
-- OAuth is the exception: gp-auth ignores the cookie entirely and asks on the approval screen instead. Connecting an app is a
-  durable, hard-to-notice decision, so it is never made by ambient browser state. The cookie only preselects the entry there.
+- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and in the `gp_active_account` cookie on `.globalping.io` (the account id, not the org id). The cookie is unsigned, so gp-api checks the membership on every request and refuses an account the user is not a member of; it is per device, which is the point - the same user can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id` claim stays the personal account.
+- The cookie value is scoped to the user (`<userId>:<accountId>`) and ignored when the user does not match, so the choice left on a shared machine never carries over to whoever logs in next. Clearing it on logout would not be enough: sessions expire without one, and globalping.io sends the cookie to the API without ever loading the dashboard, so nothing there could clear it.
+- What each user picked is remembered by the dashboard in `localStorage`, keyed by the user id, and the cookie carries only the current choice. Coming back to a machine restores that user's last org without the cookie having to hold a map of everyone who ever logged in there, and without the choice leaking across devices the way a column on `directus_users` would.
+- OAuth is the exception: gp-auth ignores the cookie entirely and asks on the approval screen instead. Connecting an app is a durable, hard-to-notice decision, so it is never made by ambient browser state. The cookie only preselects the entry there.
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
 - Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the admin before saving.
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.
@@ -81,8 +71,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Credits**
 - Probe credits are assigned based on the probe's `account_id`.
-- The `org -> user` credits redirect is no longer created; credits are assigned directly to the org. The existing ones keep
-  working until either side clears them.
+- The `org -> user` credits redirect is no longer created; credits are assigned directly to the org. The existing ones keep working until either side clears them.
 - A user can point their own sponsorship at an org they belong to (`user -> org` redirect), from the migrate section of the settings.
 
 **Notifications**
@@ -101,5 +90,4 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
     - "Tokens page" shows the user's own tokens and approvals inside the org; nobody sees other members' tokens or approvals.
     - "Generate new token" creates a token inside the org (disabled for viewers).
     - "Adopt a probe" into the org is admin-only.
-    - If the user is admin - a new "Organization" menu entry and page: the org settings first (see, copy and regenerate the org
-      adoption token), then all members, where the admin can set member roles.
+    - If the user is admin - a new "Organization" menu entry and page: the org settings first (see, copy and regenerate the org adoption token), then all members, where the admin can set member roles.

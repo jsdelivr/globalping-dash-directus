@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import express from 'express';
 import nock from 'nock';
 import request from 'supertest';
-import endpoint from '../src/index.js';
+import endpoint from '../src/endpoint/index.js';
 
 const GLOBALPING_URL = 'https://api.globalping.test/v1';
 
@@ -45,9 +45,9 @@ describe('/e2e-mocks endpoint', () => {
 
 		it('should answer with the state of the token', async () => {
 			const [ membershipsRes, orgsRes, userRes ] = await Promise.all([
-				request(app).get('/github/user/memberships/orgs').set('Authorization', 'Bearer user-token'),
-				request(app).get('/github/user/123/orgs').set('Authorization', 'Bearer user-token'),
-				request(app).get('/github/user/123').set('Authorization', 'Bearer user-token'),
+				request(app).get('/github/user/memberships/orgs').set('X-Github-Authorization', 'Bearer user-token'),
+				request(app).get('/github/user/123/orgs').set('X-Github-Authorization', 'Bearer user-token'),
+				request(app).get('/github/user/123').set('X-Github-Authorization', 'Bearer user-token'),
 			]);
 
 			expect(membershipsRes.body).to.deep.equal(memberships);
@@ -56,7 +56,7 @@ describe('/e2e-mocks endpoint', () => {
 		});
 
 		it('should report a user nobody registered as gone', async () => {
-			const res = await request(app).get('/github/user/999').set('Authorization', 'Bearer user-token');
+			const res = await request(app).get('/github/user/999').set('X-Github-Authorization', 'Bearer user-token');
 
 			expect(res.status).to.equal(404);
 		});
@@ -64,7 +64,7 @@ describe('/e2e-mocks endpoint', () => {
 		it('should answer 403 for the self-check of a restricted org', async () => {
 			await request(app).post('/github/state').send({ token: 'restricted-token', username: 'u', memberships, restrictedOrgs: [ 'jsdelivr' ] });
 
-			const res = await request(app).get('/github/user/memberships/orgs/jsdelivr').set('Authorization', 'Bearer restricted-token');
+			const res = await request(app).get('/github/user/memberships/orgs/jsdelivr').set('X-Github-Authorization', 'Bearer restricted-token');
 
 			expect(res.status).to.equal(403);
 		});
@@ -75,7 +75,7 @@ describe('/e2e-mocks endpoint', () => {
 				.get('/user/memberships/orgs?per_page=100&page=1')
 				.reply(200, [{ state: 'active', role: 'member', organization: { id: 9, login: 'real-org' } }]);
 
-			const res = await request(app).get('/github/user/memberships/orgs?per_page=100&page=1').set('Authorization', 'Bearer real-token');
+			const res = await request(app).get('/github/user/memberships/orgs?per_page=100&page=1').set('X-Github-Authorization', 'Bearer real-token');
 
 			expect(nock.isDone()).to.equal(true);
 			expect(res.body).to.deep.equal([{ state: 'active', role: 'member', organization: { id: 9, login: 'real-org' } }]);
