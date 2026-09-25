@@ -31,6 +31,9 @@ describe('GitHub webhook recurring handler', () => {
 		createOne: sinon.stub().resolves(2),
 		updateByQuery: sinon.stub().resolves(2),
 	};
+	const orgsService = {
+		updateByQuery: sinon.stub().resolves([]),
+	};
 	const services = {
 		UsersService: sinon.stub().returns(usersService),
 		ItemsService: sinon.stub().callsFake((collection) => {
@@ -39,6 +42,8 @@ describe('GitHub webhook recurring handler', () => {
 					return creditsAdditionsService;
 				case 'sponsors':
 					return sponsorsService;
+				case 'gp_orgs':
+					return orgsService;
 				default:
 					throw new Error('Collection name wasn\'t provided');
 			}
@@ -100,6 +105,11 @@ describe('GitHub webhook recurring handler', () => {
 			{
 				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
+			{ user_type: 'sponsor' },
+		]);
+
+		expect(orgsService.updateByQuery.args[0]).to.deep.equal([
+			{ filter: { github_id: { _eq: '2' }, user_type: { _neq: 'special' } } },
 			{ user_type: 'sponsor' },
 		]);
 

@@ -56,6 +56,22 @@ test('records a new personal sponsor and credits their own account', async ({ us
 	expect(credits.amount).toBe(2 * CREDITS_PER_DOLLAR);
 });
 
+test('marks a sponsoring org as a sponsor, and back to a member when it stops', async ({ org }) => {
+	const tierOf = async () => (await sql('gp_orgs').where({ id: org.id }).first('user_type')).user_type as string;
+
+	expect(await tierOf()).toBe('member');
+
+	await mockGithubSponsors([{ login: org.name, githubId: Number(org.github_id), monthlyAmount: 5 }]);
+	await trigger(FLOW.sponsors);
+
+	expect(await tierOf()).toBe('sponsor');
+
+	await mockGithubSponsors([], [ org.github_id ]);
+	await trigger(FLOW.sponsors);
+
+	expect(await tierOf()).toBe('member');
+});
+
 test('drops a sponsor that is gone from GitHub and keeps the rest', async ({ org, user }) => {
 	await sql('sponsors').insert([
 		{ github_id: org.github_id, github_login: org.name, monthly_amount: 5, last_earning_date: new Date() },
