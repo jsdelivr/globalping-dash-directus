@@ -260,35 +260,49 @@ org that sponsors today would stay a `member` forever: nothing has ever written 
 GitHub sync whenever its first member signs in, which can be long after the sponsorship started. Reconciling also means no
 backfill migration is needed - the next hourly run fixes everything.
 
-## 5. `directus_users` read for the admins of an org
+## 5. The member names for the admins of an org
 
 The members list of phase 4 shows each member's name, and a user can read no `directus_users` row but their own - the only read
 rule is `id _eq $CURRENT_USER` (`20230425GP-create-user-role.js`) - so it would render bare uuids. It ships here so that phase 4
 is a dash deploy only. The extra adoption tokens do not need it: each entry carries its own `github_username`.
 
-5.1 **A second read rule**, `{ "memberships": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } }`,
-exposing `id` and `github_username` only. The `memberships` alias already exists on `directus_users` as the `one_field` of the
-`gp_org_members.user` relation.
+5.1 **A read hook on `gp_org_members`**, not a permission: `gp_org_members.items.read` attaches `github_username` to every row of
+the payload, read from `directus_users` by the ids those rows carry. It is the shape `gp-orgs` already uses for `adoption_token`,
+and the scoping comes with it - the read permission has already chosen the rows, your own plus every row of an org you administer,
+so a name only ever rides along with a membership the caller may read anyway and the hook repeats no role check.
 
-5.2 **Scoped to admins** rather than to every co-member, because the only screen that needs the names is admin-only. A plain member
-can not read the membership rows at all, so granting them the names would expose who is in an org to someone with no way to ask -
-and no screen to show it on.
+5.2 **Not a second read rule on `directus_users`**, which was the first plan and leaks. Directus validates `filter`, `sort`,
+`groupBy`, `aggregate` and `alias` against the union of the field lists of every rule matching the collection, not against the
+fields of the rule that let a given row through. A second rule exposing `github_username` therefore makes every field of the first
+rule nameable against the rows of the second: `filter[adoption_token][_starts_with]` walks a co-member's adoption token character
+by character, and `groupBy=github_username&aggregate[max]=email` hands out their address in one request. A permission rule that
+widens the rows has to be assumed to widen the fields as well.
+
+5.3 **The field can not be named in a query**, since it is no column of `gp_org_members`: `fields`, `sort`, `filter`, `groupBy`,
+`aggregate` and `alias` all answer 403 for it, exactly as for the org's `adoption_token`, and it arrives unasked with every other
+selection. Directus also resolves relational data without emitting the read filter, so `members` under `gp_orgs` and `memberships`
+under `readMe` come back without it: the members list is its own `/items/gp_org_members` request, and the name is taken off the
+rows rather than asked for.
 
 ## 6. Tests
 
 6.1 **Unit**, per extension: the authorization matrix (3.2) with every cell, the promotion window (3.3), the subset validation
-(2.1), the names the redirect list falls back to (3.1), and the two conditions around the adoption token (3.5) - a probe has to
-have moved, and the entry has to carry a username. Not the credits and approval moves: those are unique keys, a trigger and what
+(2.1), the names the redirect list falls back to (3.1), the two conditions around the adoption token (3.5) - a probe has to
+have moved, and the entry has to carry a username - and the name attached to a membership read (5.1), which the rows of a payload
+get while an internal read and a payload without ids are left alone. Not the credits and approval moves: those are unique keys, a trigger and what
 MariaDB allows in a subquery, so a unit test there asserts the implementation's own statements back at it.
 
 6.2 **e2e over REST**: each transfer alone and all three in sequence; a member refused the probes transfer in an org that has an
 admin; the first member of an admin-less org becoming its admin; a second member transferring into the same org (the token array
 grows, the first entry survives); a transfer into an org that already holds an approval of the same app (the org's row stands); a redirect
-created, overwritten, refused by the side receiving it and deleted; a rollback on a forced failure leaving nothing moved; an org admin reading `id` and
-`github_username` of the org's members and nothing else of them, while a member and a viewer read no co-member at all.
+created, overwritten, refused by the side receiving it and deleted; a rollback on a forced failure leaving nothing moved; an org admin reading the name of every
+member of the org while a member and a viewer read only their own, the name refused in every part of a query that names a field,
+and nothing of a co-member reachable through `/users` - not by a filter on the adoption token and not by an aggregate over the
+emails.
 
 ## Deploy
 
-One Directus deploy: `schema:apply` for `gp_credits_redirects` and `gp_orgs.user_type`, then the migrations (redirect seed,
-sponsor id backfill, the `gp_orgs` and `directus_users` permissions), then restart. No other service is redeployed, so the endpoints have to be correct against the phase 2 readers as
-they already run in prod.
+Directus: `schema:apply` for `gp_credits_redirects` and `gp_orgs.user_type`, then the migrations (redirect seed, sponsor id
+backfill, the `gp_orgs` permission), then restart. The member names (5) are extension code only, so they ship with that restart.
+gp-api is redeployed too, for the account tier of 4.2. The dash is not, so the endpoints have to be correct against the phase 2
+readers as they already run in prod.
