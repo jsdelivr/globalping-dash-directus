@@ -19,10 +19,12 @@ describe('org members hooks', () => {
 
 	const select = sinon.stub();
 	const queryBuilder = {
+		join: sinon.stub(),
 		whereIn: sinon.stub(),
 		where: sinon.stub(),
 		select,
 	};
+	queryBuilder.join.returns(queryBuilder);
 	queryBuilder.whereIn.returns(queryBuilder);
 	queryBuilder.where.returns(queryBuilder);
 	const database = sinon.stub().returns(queryBuilder);
@@ -41,41 +43,34 @@ describe('org members hooks', () => {
 		select.reset();
 	});
 
-	it('should add the name to every membership of the payload', async () => {
-		select.resolves([{ id: 'user-id', github_username: 'alice' }, { id: 'other-user-id', github_username: 'bob' }]);
+	it('should add the name of the member to every membership of the payload', async () => {
+		select.resolves([{ id: 'm-1', github_username: 'alice' }, { id: 'm-2', github_username: 'bob' }]);
 
-		const payload = [{ id: 'm-1', user: 'user-id' }, { id: 'm-2', user: 'other-user-id' }];
+		const payload = [{ id: 'm-1', role: 'admin' }, { id: 'm-2', role: 'member' }];
 
 		await read(payload);
 
-		expect(payload[0]).to.deep.equal({ id: 'm-1', user: 'user-id', github_username: 'alice' });
-		expect(payload[1]).to.deep.equal({ id: 'm-2', user: 'other-user-id', github_username: 'bob' });
+		expect(queryBuilder.whereIn.firstCall.args).to.deep.equal([ 'gp_org_members.id', [ 'm-1', 'm-2' ] ]);
+		expect(payload[0]).to.deep.equal({ id: 'm-1', role: 'admin', github_username: 'alice' });
+		expect(payload[1]).to.deep.equal({ id: 'm-2', role: 'member', github_username: 'bob' });
 	});
 
-	it('should not read the database when the payload carries no user id', async () => {
-		const payload = [{ id: 'm-1', role: 'member' }];
+	it('should not read the database when the payload carries no membership id', async () => {
+		const payload = [{ role: 'member' }];
 
 		await read(payload);
 
 		expect(select.callCount).to.equal(0);
-		expect(payload[0]).to.deep.equal({ id: 'm-1', role: 'member' });
-	});
-
-	it('should not read the database when the user comes back as a related row', async () => {
-		const payload = [{ id: 'm-1', user: { id: 'user-id' } }];
-
-		await read(payload);
-
-		expect(select.callCount).to.equal(0);
+		expect(payload[0]).to.deep.equal({ role: 'member' });
 	});
 
 	it('should not touch the payload for internal reads', async () => {
-		const payload = [{ id: 'm-1', user: 'user-id' }];
+		const payload = [{ id: 'm-1' }];
 
 		await read(payload, { accountability: null, database });
 
 		expect(select.callCount).to.equal(0);
-		expect(payload[0]).to.deep.equal({ id: 'm-1', user: 'user-id' });
+		expect(payload[0]).to.deep.equal({ id: 'm-1' });
 	});
 
 	it('should allow an org admin to change a role', async () => {

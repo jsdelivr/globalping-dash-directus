@@ -12,9 +12,9 @@ confirms next start of work with next step.
 - Every Directus endpoint takes `accountId`; `userId` survives only as a `// PHASE5: remove` shim for the old dashboard.
 - `/oauth/token/introspect` returns the account a token acts for (phase 2).
 - The `transfer-data` extension, `gp_credits_redirects` and the validated `gp_orgs.extra_adoption_tokens` (phase 3).
-- The `github_username` of each member, attached by a Directus hook to the rows of a top level `gp_org_members` read (phase 3),
-  which is what the members list renders. It can not be named in `fields` and it does not survive a nested read, so the list is
-  its own request and the name is taken off the rows.
+- The `github_username` of each member, attached by a Directus hook to the rows of a top level `gp_org_members` read that
+  includes `id` (phase 3), which is what the members list renders; a role is changed by the membership `id`. It can not be named
+  in `fields` and it does not survive a nested read, so the list is its own request and the name is taken off the rows.
 
 ## Contract for this phase
 

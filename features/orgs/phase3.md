@@ -267,9 +267,11 @@ rule is `id _eq $CURRENT_USER` (`20230425GP-create-user-role.js`) - so it would 
 is a dash deploy only. The extra adoption tokens do not need it: each entry carries its own `github_username`.
 
 5.1 **A read hook on `gp_org_members`**, not a permission: `gp_org_members.items.read` attaches `github_username` to every row of
-the payload, read from `directus_users` by the ids those rows carry. It is the shape `gp-orgs` already uses for `adoption_token`,
-and the scoping comes with it - the read permission has already chosen the rows, your own plus every row of an org you administer,
-so a name only ever rides along with a membership the caller may read anyway and the hook repeats no role check.
+the payload, read by the membership `id`. Not even `user` is readable by permissions - it left the read fields in phase 2, because
+a relation named in `filter` or `sort` is checked against the field list only, never against the row rule of `directus_users` -
+and the list does not need it: a role is changed by the membership `id`. It is the shape `gp-orgs` already uses for `adoption_token`, and the scoping comes with it - the read permission
+has already chosen the rows, your own plus every row of an org you administer, so a name only ever rides along with a membership
+the caller may read anyway and the hook repeats no role check.
 
 5.2 **Not a second read rule on `directus_users`**, which was the first plan and leaks. Directus validates `filter`, `sort`,
 `groupBy`, `aggregate` and `alias` against the union of the field lists of every rule matching the collection, not against the
@@ -278,11 +280,11 @@ rule nameable against the rows of the second: `filter[adoption_token][_starts_wi
 by character, and `groupBy=github_username&aggregate[max]=email` hands out their address in one request. A permission rule that
 widens the rows has to be assumed to widen the fields as well.
 
-5.3 **The field can not be named in a query**, since it is no column of `gp_org_members`: `fields`, `sort`, `filter`, `groupBy`,
-`aggregate` and `alias` all answer 403 for it, exactly as for the org's `adoption_token`, and it arrives unasked with every other
-selection. Directus also resolves relational data without emitting the read filter, so `members` under `gp_orgs` and `memberships`
-under `readMe` come back without it: the members list is its own `/items/gp_org_members` request, and the name is taken off the
-rows rather than asked for.
+5.3 **The field can not be named in a query**: `fields`, `sort`, `filter`, `groupBy`, `aggregate` and `alias` all answer 403
+for it, exactly as for the org's `adoption_token`, and it arrives unasked with any selection that includes `id`. Directus also
+resolves relational data without emitting the read filter, so `members` under `gp_orgs` and `memberships` under `readMe` come
+back without it: the members list is its own `/items/gp_org_members?fields=id,...` request, and the name is taken off the rows
+rather than asked for.
 
 ## 6. Tests
 
