@@ -10,6 +10,5 @@ export type Membership = {
 };
 
 export type MemberRow = {
-	user?: unknown;
-	github_username?: string;
+	id?: string;
 };

@@ -217,17 +217,17 @@ test('the org adoption token and the public probes switch can only be changed by
 
 test('an org admin reads the names of the members', async ({ org, actors }) => {
 	// Like the org adoption token, the name is added by a hook, so it comes back without being asked for and cannot be named in `fields`.
-	const members = async (api: AxiosInstance) => (await api.get('/items/gp_org_members?fields=user,role&limit=50')).data.data;
-	const names = (rows: { user: string; github_username: string }[]) => Object.fromEntries(rows.map(row => [ row.user, row.github_username ]));
+	const members = async (api: AxiosInstance) => (await api.get('/items/gp_org_members?fields=id,role&limit=50')).data.data;
+	const names = (rows: { role: string; github_username: string }[]) => Object.fromEntries(rows.map(row => [ row.github_username, row.role ]));
 
 	expect(names(await members(actors.admin))).toEqual({
-		[org.admin.id]: org.admin.github_username,
-		[org.member.id]: org.member.github_username,
-		[org.viewer.id]: org.viewer.github_username,
+		[org.admin.github_username]: 'admin',
+		[org.member.github_username]: 'member',
+		[org.viewer.github_username]: 'viewer',
 	});
 
-	expect(names(await members(actors.member))).toEqual({ [org.member.id]: org.member.github_username });
-	expect(names(await members(actors.viewer))).toEqual({ [org.viewer.id]: org.viewer.github_username });
+	expect(names(await members(actors.member))).toEqual({ [org.member.github_username]: 'member' });
+	expect(names(await members(actors.viewer))).toEqual({ [org.viewer.github_username]: 'viewer' });
 
 	const byName = await actors.admin.get('/items/gp_org_members?filter[github_username][_eq]=e2e-nobody');
 	expect(byName.status).toBe(403);

@@ -3,11 +3,10 @@ import { getUsernames } from '../repositories/directus.js';
 import type { MemberRow } from '../types.js';
 
 export const addUsernames = async (members: MemberRow[], context: EventContext) => {
-	// `user` is the user id of the member, unless the read asked for it as a relation - then it is the related row.
-	const userIds = members.map(member => member.user).filter(user => typeof user === 'string');
+	const ids = members.map(member => member.id).filter(Boolean) as string[];
 
-	if (userIds.length === 0) { return; }
+	if (ids.length === 0) { return; }
 
-	const usernames = await getUsernames(userIds, context);
-	members.forEach(member => Object.assign(member, typeof member.user === 'string' && { github_username: usernames.get(member.user) }));
+	const usernames = await getUsernames(ids, context);
+	members.forEach(member => Object.assign(member, member.id && { github_username: usernames.get(member.id) }));
 };
