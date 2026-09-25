@@ -273,14 +273,29 @@ test('two members can move probes to the same org, and both adoption tokens stay
 	expect(kept.status).toBe(200);
 });
 
+test('two admins moving probes at the same time never overwrite each other\'s adoption token', async ({ org, actors }) => {
+	await sql('gp_org_members').where({ org: org.id, user: org.member.id }).update({ role: 'admin' });
+	await addProbe({ userId: org.member.id, account_id: org.member.account_id });
+	await addProbe({ userId: org.admin.id, account_id: org.admin.account_id });
+
+	const responses = await Promise.all([ transfer(actors.member, 'probes', org.id), transfer(actors.admin, 'probes', org.id) ]);
+
+	// MariaDB may refuse the later of the two transfers outright, but it never lets it overwrite the earlier one's entry.
+	const moved = [ org.member, org.admin ].filter((_, index) => responses[index]!.status === 200).map(user => user.github_username);
+	const orgRow = await sql('gp_orgs').where({ id: org.id }).first('extra_adoption_tokens');
+
+	expect(moved).not.toHaveLength(0);
+	expect(JSON.parse(orgRow.extra_adoption_tokens).map((entry: { github_username: string }) => entry.github_username).sort()).toEqual(moved.sort());
+});
+
 test('when a transfer fails, nothing is moved and the user does not become an admin', async ({ org, actors }) => {
 	await emptyTheOrg(org);
 
 	const probeId = await addProbe({ userId: org.member.id, account_id: org.member.account_id });
-	// Valid JSON that is not a list, so the transfer throws after the probes have already moved inside the transaction.
-	await sql('gp_orgs').where({ id: org.id }).update({ extra_adoption_tokens: '{}' });
+	// This fails the transaction after the probes have already moved.
+	await sql('directus_users').where({ id: org.member.id }).update({ github_username: null });
 
-	expect((await transfer(actors.member, 'probes', org.id)).status).toBe(500);
+	expect((await transfer(actors.member, 'probes', org.id)).status).toBe(400);
 
 	const probe = await sql('gp_probes').where({ id: probeId }).first('account_id');
 	expect(probe.account_id).toBe(org.member.account_id);

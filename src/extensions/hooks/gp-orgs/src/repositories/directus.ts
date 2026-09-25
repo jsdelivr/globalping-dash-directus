@@ -16,7 +16,9 @@ export const getAdoptionTokens = async (orgIds: string[], { accountability, data
 };
 
 export const getExtraAdoptionTokens = async (orgId: string, { database }: EventContext): Promise<ExtraAdoptionToken[]> => {
-	const row = await database('gp_orgs').where({ id: orgId }).first<{ extra_adoption_tokens: string }>('extra_adoption_tokens');
+	const row = await database('gp_orgs').where({ id: orgId }).first<{ extra_adoption_tokens: string } | undefined>('extra_adoption_tokens');
+
+	if (!row) { return []; }
 
 	return JSON.parse(row.extra_adoption_tokens) as ExtraAdoptionToken[];
 };

@@ -132,6 +132,13 @@ describe('org hooks', () => {
 		expect(database.callCount).to.equal(0);
 	});
 
+	it('should treat an org that does not exist as having no entries', async () => {
+		first.resolves(undefined);
+
+		await update({ extra_adoption_tokens: [] }, [ 'unknown-org' ]);
+		expect(await rejection({ extra_adoption_tokens: [ ALICE ] }, [ 'unknown-org' ])).to.equal('"extra_adoption_tokens" accepts removals only.');
+	});
+
 	it('should reject adding an entry that is not stored', async () => {
 		stored(ALICE);
 
