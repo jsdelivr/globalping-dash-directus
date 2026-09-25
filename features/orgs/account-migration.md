@@ -12,8 +12,8 @@ the phase 1 snapshot, unused until then.
 
 ## 1. Who may migrate
 
-A transfer of any kind is a privilege escalation risk: whoever migrates ends up an admin of the target org (2), so an ordinary
-GitHub member of a big org must not be able to walk in through it. The rule:
+A transfer of any kind is a privilege escalation risk: whoever migrates into an org with no admin ends up its admin (2), so an
+ordinary GitHub member of a big org must not be able to walk in through it. The rule:
 
 Admins may do everything, always. Viewers may do nothing, ever - that role exists only because an admin set it by hand, since
 GitHub yields admin or member. Members may transfer tokens and credits and point a credits redirect at the org at any time; they
@@ -28,8 +28,9 @@ and whoever claims an org can demote the admins who arrive later, until the sync
 
 ## 2. Membership
 
-The migrating user becomes an admin of the org regardless of their GitHub role. Safe
-against the sync, which only ever promotes: a manually assigned admin is never demoted.
+The first member to move anything into an org that has no admin becomes its admin, regardless of their GitHub role; in an org
+that already has one, the membership stays as it is. Safe against the sync, which only ever promotes: a manually assigned admin is
+never demoted.
 
 ## 3. Probes
 
@@ -53,9 +54,9 @@ token moves too - the user's current adoption token is appended to the `extra_ad
 - any admin can edit the array - in practice, remove entries. The update hook validates the value: the shape of every entry, and
   that the new array is a subset of the old one, so an admin can never append or rewrite a token. It is a read-modify-write, and
   the losing side of two simultaneous edits simply repeats it;
-- reading it is admin-only, like `adoption_token`: the `gp_orgs` read permission has to gain the field *and* the `gp-orgs` read
-  hook has to strip it for everyone else. Adding it to the permission alone would hand every member the tokens of every other
-  member;
+- reading it is admin-only, like `adoption_token`: the field stays out of the `gp_orgs` read permission, and the `gp-orgs` read
+  hook adds it for the admins. A field in the permission can be named in a filter by every member who reads the row, so even with
+  the output stripped it would hand every member the tokens of every other member, one character at a time;
 - the array is listed in the org settings with the username each token came from (phase 4). Without that list the tokens would be
   permanent and invisible: a member who migrated and then left could keep adopting probes into the org forever.
 
@@ -78,20 +79,21 @@ tokens for two reasons:
 
 Moving it changes the account a consent is billed to, never who consented - `user_created` stays the same person.
 `gp_apps_approvals` is `UNIQUE(user_created, app, account_id)`, so the two rows coexist happily *before* the transfer and collide
-during it: the personal row becomes `(user, app, org account)`, which the org may already have. Merge them, taking the union of
-the scopes - the personal row may hold the wider set - the way gp-auth itself unions them (`model.ts:198`). `gp_tokens` needs no
-such care, its only unique key is `value`.
+during it: the personal row becomes `(user, app, org account)`, which the org may already have. The org's row wins and the
+personal one is dropped: a transfer is nobody answering the consent screen, so the scopes the org consented to are not for it to
+widen (`phase3.md` 3.6). `gp_tokens` needs no such care, its only unique key is `value`.
 
 ## 6. Credits
 
 The redirects move out of the code into a `gp_credits_redirects` table (`source_github_id`, `target_github_id`), and
 `redirectGithubId` reads it instead of `SOURCE_ID_TO_TARGET_ID`. Github ids, not entity references: a redirect may point at
 someone who does not exist in our DB at all - one of the current targets is in no `directus_users` row - `addCredits` and
-the additions trigger already work in github ids, and the read rules can be written with `$CURRENT_USER.external_identifier` and
-`$CURRENT_USER.memberships.org.github_id`, as `20260816GP` already does. A user sees the redirects where the active account's
-github id is the source **or** the target - both, because every redirect that exists today runs org -> user, and a rule keyed on
-one direction would show them to nobody. The only direction that can be created from now on is user -> org, pointing a person's own
-sponsorship at an org they belong to; the org -> user rows stay as they are and are expected to disappear as their owners transfer.
+the additions trigger already work in github ids. Nothing reads the table through a permission: the `credits-redirect` endpoint
+is its only reader (`phase3.md` 3.1). A user sees the redirects where the active account's github id is the source **or** the
+target - both, because every redirect that exists today runs org -> user, and a lookup keyed on one direction would show them to
+nobody. The only direction that can be created from now on is user -> org, pointing a person's own sponsorship at an org they
+belong to; the org -> user rows stay as they are until either side removes one, or their user points their own sponsorship
+somewhere (`phase3.md` 3.1).
 Then:
 
 - no redirect is created: the credits move once, while a redirect routes what arrives later, so pointing a sponsorship at an org

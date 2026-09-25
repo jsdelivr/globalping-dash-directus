@@ -146,8 +146,8 @@ rather than what the API returns.
 8.2 **e2e**: adding an org through "+ Add organization" and seeing it appear in the submenu, not yet active; switching the active
 account and seeing every list follow it, and the header show the org's name; a viewer offered neither adoption nor token creation;
 a member getting no Organization screen (6.1); the demotion warning; the migrate section hidden without a selected org where the
-user is an admin or a member; each migration through its own modal, including the redirect being disabled by the credits transfer
-and the new personal adoption token appearing in settings; a redirect set, shown and cleared.
+user is an admin or a member; each migration through its own modal, including an `org -> user` redirect staying in place after
+the credits transfer and the new personal adoption token appearing in settings; a redirect set, shown and cleared.
 
 ## Deploy order
 

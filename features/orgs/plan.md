@@ -34,11 +34,11 @@ keys, permissions, endpoint parameters - has to be in phase 1. Accepted: until t
 
 ## Phase 3: account migration
 
-The back end of the "migrate to organization" button, in its own Directus deploy. It has to come after phase 2: until the readers
+The back end of the "migrate to organization" button, in its own Directus deploy, with gp-api for the account tier. It has to come after phase 2: until the readers
 use `account_id`, moving credits takes the balance out of where `credits-master` looks for it, and moving probes or tokens does
 nothing at all. Full design in `account-migration.md`.
 
-- Migration endpoint - who may migrate, probes, adoption token, tokens with approvals, credits, in one transaction.
+- Migration endpoint per entity kind - who may migrate, then probes with the adoption token, tokens with approvals, credits, each in its own transaction.
 - `gp_credits_redirects` table, `redirectGithubId` reads it instead of `SOURCE_ID_TO_TARGET_ID`. Seeded with the
   current ones, so nothing changes for prod on deploy.
 - `gp_orgs` update hook validating `extra_adoption_tokens`: entry shape, and the new array being a subset of the old one.
@@ -69,7 +69,7 @@ in Directus shipped in phase 3.
   redirect sponsorship credits - each a button opening its own modal that does only that one thing: pick an org, read what will
   happen, confirm, with an irreversibility warning on the three transfers. Offers the `selected_orgs` where the user is an admin
   or a member, and is hidden when there is none. The redirect row shows the current state, `john => acme-org`, with a cross to
-  clear it; the credits modal names the redirect the transfer is about to delete.
+  clear it; the credits modal names an `org -> user` redirect pointing at the user, which the transfer leaves in place.
 - Org store: memberships + roles loaded on login, own account id resolved via `readMe` expansion, `activeOrg` in store + cookie.
 - "Act as organization" in the user menu, between Settings and Sign out: a submenu with the personal account and the
   `selected_orgs` where the user is an admin or a member, plus "+ Add organization" - a modal with a table of the orgs that could
