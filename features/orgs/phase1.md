@@ -6,19 +6,16 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 
 ## Compatibility contract
 
-Phase 1 is deployed while every other service still runs its old version, and each of them switches to accounts on its own
-schedule. So both shapes have to work at the same time, in both directions:
+Phase 1 is deployed while every other service still runs its old version, and each of them switches to accounts on its own schedule. So both shapes have to work at the same time, in both directions:
 
 - a writer that still sends only `userId` / `user_id` / `user` must end up with `account_id` filled;
-- a writer that already sends only `account_id` must end up with the legacy column filled too, so the old readers keep seeing
-  the row - and must not be rejected by a NOT NULL column or an input schema that only knows the old parameter;
+- a writer that already sends only `account_id` must end up with the legacy column filled too, so the old readers keep seeing the row - and must not be rejected by a NOT NULL column or an input schema that only knows the old parameter;
 - a reader of either shape sees the same data.
 
 How the code is written for it:
 
 - account-first: the real logic resolves and stores `account_id`, and reads it back;
-- everything that exists only to keep the old shape alive - dual-writes, legacy input parameters, fulfillment triggers - is a
-  separate block marked `// PHASE5: remove`, never woven into the main path;
+- everything that exists only to keep the old shape alive - dual-writes, legacy input parameters, fulfillment triggers - is a separate block marked `// PHASE5: remove`, never woven into the main path;
 - phase 5 is then a grep for the marker and a delete, not a rewrite.
 
 ## Steps
@@ -29,19 +26,9 @@ How the code is written for it:
    - `account_id` (m2o gp_accounts, indexed) in gp_probes, gp_tokens, gp_apps_approvals, gp_credits, gp_credits_deductions
    - `gp_apps_approvals.user_created` added alongside `user`
    - reverse o2m aliases: `directus_users.account`, `directus_users.memberships`, `gp_orgs.account`, `gp_orgs.members`
-   - `gp_orgs.extra_adoption_tokens` (json, default `[]`): the personal adoption tokens members hand over with their probes,
-     `{ github_username, token }` each. Nothing in this phase writes it - the account migration does, one phase later
-     (`account-migration.md`) - but the column ships here because gp-api reads it in phase 2 and Directus is not deployed in
-     between
-   - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side
-     equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api
-     reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it
-     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 to a
-     new tag under an org name - existing tags and the current `default_prefix` stay as they are
-   - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
-     GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
-     the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the
-     UI can write them, and nothing else in the product touches the field.
+   - `gp_orgs.extra_adoption_tokens` (json, default `[]`): the personal adoption tokens members hand over with their probes, `{ github_username, token }` each. Nothing in this phase writes it - the account migration does, one phase later (`account-migration.md`) - but the column ships here because gp-api reads it in phase 2 and Directus is not deployed in between
+   - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 to a new tag under an org name - existing tags and the current `default_prefix` stay as they are
+   - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the UI can write them, and nothing else in the product touches the field.
    - apply + snapshot round-trip on dev
 
 2. **Knex migration: data + constraints**
@@ -89,34 +76,24 @@ How the code is written for it:
 
 12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
 
-    Org adoption ships here but stays dormant: only the phase 4 dashboard sends `activeOrg`, and Directus is not deployed again in
-    between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in
-    phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before
-    phase 2, same class as an org token created via raw API.
+    Org adoption ships here but stays dormant: only the phase 4 dashboard sends `activeOrg`, and Directus is not deployed again in between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before phase 2, same class as an org token created via raw API.
 
 13. **Applications endpoint**: list and revoke scope by `account_id`. Also fixes a phase-2 hazard: today revoke deletes by `user` + `app`, which would take an org approval down together with the personal one once gp-auth starts creating them.
 
 13a. **Legacy `userId` shim in endpoints**: adoption-code (`send-code`, `verify-code`, `adopt-by-token`), applications and credits-timeline accept `accountId` as the primary parameter; `userId` stays as a `// PHASE5: remove` shim resolved into the personal account via `getUserAccountId`, exactly one of the two is required. Ships in phase 1 because Directus is not deployed again before the callers switch.
 
-14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits is addressed to the account,
-    so for an org it reaches its admins (11a)
+14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits is addressed to the account, so for an org it reaches its admins (11a)
 
 15. **e2e** for permissions and sync
 
 **Deploy**: three steps, in this order.
 
-1. `pnpm migrate:one:production` - applies `20260811GP` alone: it converts `gp_credits_deductions.user_id` to varchar and adds the
-   `gp_apps_approvals.user` index. Both are column changes the snapshot declares but Directus can't apply itself: it rewrites a
-   char column as varchar whenever it alters one, and a type change is rejected on a foreign key column.
-2. `pnpm schema:apply:production` - adds the org collections and the `account_id` columns, and makes `user_id` nullable, which it
-   can now do because the column is varchar.
+1. `pnpm migrate:one:production` - applies `20260811GP` alone: it converts `gp_credits_deductions.user_id` to varchar and adds the `gp_apps_approvals.user` index. Both are column changes the snapshot declares but Directus can't apply itself: it rewrites a char column as varchar whenever it alters one, and a type change is rejected on a foreign key column.
+2. `pnpm schema:apply:production` - adds the org collections and the `account_id` columns, and makes `user_id` nullable, which it can now do because the column is varchar.
 3. `pnpm migrate:production` - the remaining migrations
 4. restart Directus.
 5. deploy gp-api, gp-auth, gp-dash.
 
-After the deploy, `SELECT COUNT(*) FROM gp_probes WHERE userId IS NOT NULL AND account_id IS NULL` must be 0, and stay 0 - phase 2
-resolves a probe's owner through the account alone, so a probe with an owner but no account is invisible to it. Nothing writes such a
-row: the backfill fixed the old ones and `createAdoptedProbe` sets both. Editing `userId` by hand in the admin app would.
+After the deploy, `SELECT COUNT(*) FROM gp_probes WHERE userId IS NOT NULL AND account_id IS NULL` must be 0, and stay 0 - phase 2 resolves a probe's owner through the account alone, so a probe with an owner but no account is invisible to it. Nothing writes such a row: the backfill fixed the old ones and `createAdoptedProbe` sets both. Editing `userId` by hand in the admin app would.
 
-A fresh database needs no special steps - `init.sh` order works as is. The snapshot creates the column nullable right away, so
-nothing has to alter it, and `20260811GP` only converts the type, which keeps every environment on the same column.
+A fresh database needs no special steps - `init.sh` order works as is. The snapshot creates the column nullable right away, so nothing has to alter it, and `20260811GP` only converts the type, which keeps every environment on the same column.
