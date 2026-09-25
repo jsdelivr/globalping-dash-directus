@@ -16,11 +16,12 @@ describe('transfer probes', () => {
 	let movedProbes = 1;
 	let user: object = { adoption_token: 'old-token', github_username: 'alice' };
 	const updates: Record<string, object[]> = {};
+	const raw = sinon.stub().resolves();
 
-	const trx = ((table: string) => {
+	const trx = Object.assign((table: string) => {
 		const builder: Record<string, unknown> = {
 			where: () => builder,
-			first: () => Promise.resolve(table === 'directus_users' ? user : { extra_adoption_tokens: '[]' }),
+			first: () => Promise.resolve(user),
 			update: (fields: object) => {
 				(updates[table] ??= []).push(fields);
 				return Promise.resolve(table === 'gp_probes' ? movedProbes : 1);
@@ -28,7 +29,7 @@ describe('transfer probes', () => {
 		};
 
 		return builder;
-	}) as unknown as Knex.Transaction;
+	}, { raw }) as unknown as Knex.Transaction;
 
 	beforeEach(() => {
 		sinon.resetHistory();
@@ -41,7 +42,7 @@ describe('transfer probes', () => {
 		await transferProbes(TRANSFER, trx);
 
 		expect(updates.gp_probes).to.deep.equal([{ account_id: 'org-account' }]);
-		expect(updates.gp_orgs).to.deep.equal([{ extra_adoption_tokens: '[{"github_username":"alice","token":"old-token"}]' }]);
+		expect(raw.firstCall.args[1]).to.deep.equal({ username: 'alice', token: 'old-token', org: 'org-1' });
 		expect((updates.directus_users?.[0] as { adoption_token: string }).adoption_token).to.have.length(32);
 		expect((updates.directus_users?.[0] as { adoption_token: string }).adoption_token).to.not.equal('old-token');
 	});
@@ -52,7 +53,7 @@ describe('transfer probes', () => {
 		await transferProbes(TRANSFER, trx);
 
 		expect(updates.gp_probes).to.have.length(1);
-		expect(updates.gp_orgs).to.equal(undefined);
+		expect(raw.callCount).to.equal(0);
 		expect(updates.directus_users).to.equal(undefined);
 	});
 });

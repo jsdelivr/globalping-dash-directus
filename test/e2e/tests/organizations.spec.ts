@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
@@ -286,6 +287,9 @@ test('the extra adoption tokens are visible to admins only and can only be remov
 
 	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [] })).status).toBe(200);
 	expect(await stored()).toEqual([]);
+
+	expect((await actors.admin.patch(`/items/gp_orgs/${randomUUID()}`, { extra_adoption_tokens: [ alice ] })).status).toBe(400);
+	expect((await actors.admin.patch(`/items/gp_orgs/${randomUUID()}`, { extra_adoption_tokens: [] })).status).toBe(403);
 });
 
 test('the selected orgs can only be set on your own row, and non-member orgs are dropped', async ({ org, org2, actors }) => {

@@ -19,12 +19,12 @@ const handOverAdoptionToken = async ({ userId, orgId }: Transfer, trx: Knex.Tran
 		throw new NoGithubUsernameError();
 	}
 
-	const org = await trx('gp_orgs').where({ id: orgId }).first<{ extra_adoption_tokens: string }>('extra_adoption_tokens');
-	const tokens = JSON.parse(org.extra_adoption_tokens) as { github_username: string; token: string }[];
+	await trx.raw(`
+		UPDATE gp_orgs
+		SET extra_adoption_tokens = JSON_ARRAY_APPEND(extra_adoption_tokens, '$', JSON_OBJECT('github_username', :username, 'token', :token))
+		WHERE id = :org
+	`, { username: user.github_username, token: user.adoption_token, org: orgId });
 
-	tokens.push({ github_username: user.github_username, token: user.adoption_token });
-
-	await trx('gp_orgs').where({ id: orgId }).update({ extra_adoption_tokens: JSON.stringify(tokens) });
 	await trx('directus_users').where({ id: userId }).update({ adoption_token: await generateBytes() });
 };
 
