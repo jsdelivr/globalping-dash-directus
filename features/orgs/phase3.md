@@ -240,10 +240,25 @@ who is not a sponsor writes org measurements into `measurement_member`, and a sp
 `measurement_sponsor`.
 
 4.2 **Fix.** Take the tier from the account owner: `COALESCE(org.user_type, user.user_type)` - the same shape already used for
-`default_prefix` and `adoption_token`, over the column added in 1.5.
+`default_prefix` and `adoption_token`, over the column added in 1.6. Both ways in read it: the token path in `auth.ts`, and the
+dashboard's session path through `getAccountRole`, which resolves the active account and now carries its tier with it. Leaving the
+second one out would have fixed exactly the case 4.1 describes for API tokens and left the dashboard doing the old thing.
 
-4.3 **Who sets it.** The sponsors cron, which matches sponsors by `external_identifier` today and can match an org by
-`github_id`.
+This half is gp-api, so it belongs to phase 2 and deploys with it, before phase 3. The contract above is unchanged: phase 3 still
+deploys Directus alone. The API keeps its own copy of the dashboard schema for tests
+(`migrations/dashboard/create-tables.js.sql`), so the column is added there too.
+
+A `special` account that acts for an org gets the org's tier, because the tier of a measurement is the tier of whoever pays for
+it. `special` still outranks everything on the account that holds it.
+
+4.3 **Who sets it.** The sponsors cron and the GitHub sponsorship webhook, which match sponsors by `external_identifier` today
+and now match an org by `github_id` as well, through one helper. The one-time and tier-changed paths keep setting no tier, as
+before - a one-time payment is undone by the same cron dropping the sponsor.
+
+The cron reconciles the tier of every sponsor it already knows, not only of the ones appearing for the first time. Otherwise an
+org that sponsors today would stay a `member` forever: nothing has ever written the column, and an org row is created by the
+GitHub sync whenever its first member signs in, which can be long after the sponsorship started. Reconciling also means no
+backfill migration is needed - the next hourly run fixes everything.
 
 ## 5. `directus_users` read for the admins of an org
 

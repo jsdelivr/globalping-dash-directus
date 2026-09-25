@@ -32,6 +32,9 @@ describe('SponsorActivitiesHandler', () => {
 		createOne: sinon.stub().resolves(7),
 		readByQuery: sinon.stub().resolves([]),
 	};
+	const orgsService = {
+		updateByQuery: sinon.stub().resolves([]),
+	};
 	const usersService = {
 		updateByQuery: sinon.stub(),
 	};
@@ -40,6 +43,8 @@ describe('SponsorActivitiesHandler', () => {
 			if (collection === 'gp_credits_additions') { return creditsAdditionsService; }
 
 			if (collection === 'sponsors') { return sponsorsService; }
+
+			if (collection === 'gp_orgs') { return orgsService; }
 
 			throw new Error(`Unexpected collection: ${collection}`);
 		}),

@@ -169,7 +169,7 @@ test('a user can create a redirect to an org, and both the user and the org can 
 	// An org receives a sponsorship, it does not pass one on.
 	const pointed = await actors.admin.post('/transfer-data/credits-redirect', { accountId: org.account_id, orgId: org.id });
 	expect(pointed.status).toBe(400);
-	expect(pointed.data).toBe('An organization can only remove a redirect, not create one.');
+	expect(pointed.data).toBe('An organization can not redirect credits, only user can.');
 
 	// The org the sponsorship arrives at may refuse it.
 	expect((await remove(actors.admin, org.account_id, org.member.external_identifier, org.github_id)).status).toBe(200);
