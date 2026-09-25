@@ -1,24 +1,39 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import express, { type NextFunction } from 'express';
+import type { Knex } from 'knex';
 import _ from 'lodash';
 import * as sinon from 'sinon';
 import request from 'supertest';
 import endpoint from '../src/index.js';
 
 describe('/sponsorship-details', () => {
-	const readOne = sinon.stub();
 	const readByQuery = sinon.stub();
+	const whereStub = sinon.stub();
+	const firstStub = sinon.stub();
+	const rawStub = sinon.stub();
+
+	const database = new Proxy(() => database, {
+		get: (_target, property) => {
+			if (property === 'where') {
+				return whereStub;
+			} else if (property === 'first') {
+				return firstStub;
+			} else if (property === 'raw') {
+				return rawStub;
+			}
+
+			return database;
+		},
+	}) as unknown as Knex;
+
 	const endpointContext = {
 		logger: {
 			error: console.error,
 		},
 		getSchema: () => ({}),
-		database: () => ({}),
+		database,
 		services: {
-			UsersService: sinon.stub().callsFake(() => {
-				return { readOne };
-			}),
 			ItemsService: sinon.stub().callsFake(() => {
 				return { readByQuery };
 			}),
@@ -54,9 +69,19 @@ describe('/sponsorship-details', () => {
 		});
 
 		readByQuery.resolves([]);
+		whereStub.returns(database);
+		firstStub.resolves({ id: 'account-id' });
 
-		readOne.resolves({
-			external_identifier: 'test-github-id',
+		rawStub.callsFake((sql: string) => {
+			if (sql.includes('gp_org_members')) {
+				return Promise.resolve([ [{ id: 'account-id' }] ]);
+			}
+
+			if (sql.includes('github_id')) {
+				return Promise.resolve([ [{ github_id: 'test-github-id' }] ]);
+			}
+
+			return Promise.resolve([ [] ]);
 		});
 
 		accountability = {
@@ -103,8 +128,7 @@ describe('/sponsorship-details', () => {
 		});
 
 		expect(_.sum(res.body.donatedByMonth)).to.equal(180);
-		expect(readOne.callCount).to.equal(1);
-		expect(readOne.args[0]?.[0]).to.equal('user-id');
+		expect(whereStub.args[0]?.[0]).to.deep.equal({ user: 'user-id' });
 	});
 
 	it('should distribute multi-month recurring credits across covered months and cap at the 12-month edge', async () => {
@@ -143,8 +167,7 @@ describe('/sponsorship-details', () => {
 			donatedByMonth: [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
 		});
 
-		expect(readOne.callCount).to.equal(1);
-		expect(readOne.args[0]?.[0]).to.equal('user-id');
+		expect(whereStub.args[0]?.[0]).to.deep.equal({ user: 'user-id' });
 	});
 
 	it('should reject user request for another user', async () => {
@@ -174,8 +197,7 @@ describe('/sponsorship-details', () => {
 			donatedByMonth: [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
 		});
 
-		expect(readOne.callCount).to.equal(1);
-		expect(readOne.args[0]?.[0]).to.equal('another-user-id');
+		expect(whereStub.args[0]?.[0]).to.deep.equal({ user: 'another-user-id' });
 	});
 
 	it('should reject request without accountability', async () => {
@@ -189,10 +211,34 @@ describe('/sponsorship-details', () => {
 		expect(res.text).to.equal('"accountability" is required');
 	});
 
-	it('should reject request without userId', async () => {
+	it('should reject request without an owner', async () => {
 		const res = await request(app).get('/').query({});
 
 		expect(res.status).to.equal(400);
-		expect(res.text).to.equal('"query.userId" is required');
+		expect(res.text).to.equal('"query" must contain at least one of [userId, accountId]');
+	});
+
+	it('should reject request with both userId and accountId', async () => {
+		const res = await request(app).get('/').query({ userId: 'user-id', accountId: 'account-id' });
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('"query" contains a conflict between exclusive peers [userId, accountId]');
+	});
+
+	it('should accept accountId of an org the user is a member of', async () => {
+		const res = await request(app).get('/').query({ accountId: 'org-account-id' });
+
+		expect(res.status).to.equal(200);
+		expect(firstStub.callCount).to.equal(0);
+		expect(rawStub.args[0]?.[1]).to.deep.include({ account: 'org-account-id', user: 'user-id' });
+	});
+
+	it('should reject accountId the user has no access to', async () => {
+		rawStub.callsFake((sql: string) => Promise.resolve(sql.includes('gp_org_members') ? [ [] ] : [ [{ github_id: null }] ]));
+
+		const res = await request(app).get('/').query({ accountId: 'org-account-id' });
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('You can not access this account.');
 	});
 });

@@ -50,6 +50,10 @@ describe('city-autocomplete endpoint', () => {
 		};
 	});
 
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
 	after(() => {
 		nock.cleanAll();
 	});

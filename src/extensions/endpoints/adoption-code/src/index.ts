@@ -8,12 +8,14 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { createAdoptedProbe, type ProbeToAdopt } from '../../../lib/src/create-adopted-probe.js';
 import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
+import { getGlobalpingApiUrl } from '../../../lib/src/service-urls.js';
 import { findAdoptedProbeByIp } from './repositories/directus.js';
 
 export type Request = ExpressRequest & {
@@ -33,7 +35,7 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 30 * 60,
 });
 
-const probesToAdopt = new TTLCache<string, { code: string; probe: ProbeToAdopt }>({ ttl: 30 * 60 * 1000 });
+const probesToAdopt = new TTLCache<string, ProbeToAdopt>({ ttl: 30 * 60 * 1000 });
 
 const generateRandomCode = () => {
 	const randomNumber = Math.floor(Math.random() * 1000000);
@@ -47,17 +49,19 @@ const sendCodeSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
-		userId: Joi.string().required(),
+		// PHASE5: remove `userId`, `accountId` is the only owner input.
+		userId: Joi.string(),
+		accountId: Joi.string(),
 		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
-	}).required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+	}).xor('userId', 'accountId').required(),
+}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 export default defineEndpoint((router, context) => {
 	const { env } = context;
 	router.post('/send-code', validate(sendCodeSchema), asyncWrapper(async (_req, res) => {
 		try {
 			const req = _req as Request;
-			const userId = req.body.userId;
+			const accountId = await getRequestAccountId(req.body, req.accountability!, context);
 			let ip: string;
 
 			try {
@@ -74,49 +78,8 @@ export default defineEndpoint((router, context) => {
 				throw new (createError('INVALID_PAYLOAD_ERROR', 'The probe with this IP address is already adopted', 400))();
 			}
 
-			if (env.ENABLE_E2E_MOCKS === true) {
-				probesToAdopt.set(userId, {
-					code: '111111',
-					probe: {
-						ip,
-						altIps: [],
-						uuid: '7bac0b3a-f808-48e1-8892-062bab3280f8',
-						name: null,
-						userId: null,
-						version: '0.28.0',
-						nodeVersion: 'v22.22.3',
-						hardwareDevice: null,
-						hardwareDeviceFirmware: null,
-						tags: [],
-						systemTags: [],
-						status: 'offline',
-						allowedCountries: [ 'BF' ],
-						city: 'Ouagadougou',
-						state: null,
-						stateName: null,
-						country: 'BF',
-						countryName: 'Burkina Faso',
-						continent: 'AF',
-						continentName: 'Africa',
-						region: 'Western Africa',
-						latitude: 12.37,
-						longitude: -1.53,
-						asn: 3302,
-						network: 'e2e network provider',
-						isIPv4Supported: true,
-						isIPv6Supported: false,
-						customLocation: null,
-						originalLocation: null,
-						localAdoptionServer: null,
-					},
-				});
-
-				res.send('Code was sent to the probe.');
-				return;
-			}
-
 			const code = generateRandomCode();
-			const { data: probe } = await axios.post<ProbeToAdopt>(`${env.GLOBALPING_URL}/adoption-code`, {
+			const { data: probe } = await axios.post<ProbeToAdopt>(`${getGlobalpingApiUrl(context)}/adoption-code`, {
 				ip,
 				code,
 			}, {
@@ -126,10 +89,7 @@ export default defineEndpoint((router, context) => {
 				timeout: 5000,
 			});
 
-			probesToAdopt.set(userId, {
-				code,
-				probe,
-			});
+			probesToAdopt.set(`${accountId}:${code}`, probe);
 
 			res.send('Code was sent to the probe.');
 		} catch (error: unknown) {
@@ -147,32 +107,33 @@ export default defineEndpoint((router, context) => {
 			admin: Joi.boolean().required(),
 		}).required().unknown(true),
 		body: Joi.object({
-			userId: Joi.string().required(),
+			// PHASE5: remove `userId`, `accountId` is the only owner input (required).
+			userId: Joi.string(),
+			accountId: Joi.string(),
 			code: Joi.string().required(),
-		}).required(),
-	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+		}).xor('userId', 'accountId').required(),
+	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
 
 	router.post('/verify-code', validate(verifyCodeSchema), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 
-		const userId = req.body.userId;
+		const accountId = await getRequestAccountId(req.body, req.accountability!, context);
 		const userCode = req.body.code.replaceAll(' ', '');
 
 		await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
 
-		const value = probesToAdopt.get(userId);
+		const probe = probesToAdopt.get(`${accountId}:${userCode}`);
 
-		if (!value || value.code !== userCode) {
+		if (!probe) {
 			throw new InvalidCodeError();
 		}
 
-		const probe = value.probe;
-		const adoptedProbe = await createAdoptedProbe(userId, probe, context);
+		const adoptedProbe = await createAdoptedProbe(accountId, probe, context);
 
-		probesToAdopt.delete(userId);
+		probesToAdopt.delete(`${accountId}:${userCode}`);
 		await rateLimiter.delete(req.accountability?.user ?? '');
 
-		await checkFirmwareVersions([ adoptedProbe ], userId, context).catch((error) => { context.logger.error(error); });
+		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });
 
 		res.send({
 			id: adoptedProbe.id,
@@ -217,9 +178,12 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const probe = req.body.probe as ProbeToAdopt;
-		const user = req.body.user as { id: string };
-		const adoptedProbe = await createAdoptedProbe(user.id, probe, context);
-		await checkFirmwareVersions([ adoptedProbe ], user.id, context).catch((error) => { context.logger.error(error); });
+		// PHASE5: remove the legacy `user` input, gp-api passes the account.
+		const account = req.body.account as { id: string } | undefined;
+		const user = req.body.user as { id: string } | undefined;
+		const accountId = await getRequestAccountId({ accountId: account?.id, userId: user?.id }, { admin: true }, context);
+		const adoptedProbe = await createAdoptedProbe(accountId, probe, context);
+		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });
 
 		res.sendStatus(200);
 	}, context));

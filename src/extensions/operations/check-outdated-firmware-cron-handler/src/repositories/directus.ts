@@ -3,7 +3,6 @@ import type { OperationContext } from '@directus/extensions';
 export type AdoptedProbe = {
 	id: string;
 	ip: string;
-	userId: string | null;
 	name: string | null;
 	hardwareDevice: string | null;
 	hardwareDeviceFirmware: string | null;
@@ -13,25 +12,24 @@ export type AdoptedProbe = {
 
 const OUTDATED_PROBE_FILTER = `
 	isOutdated = TRUE
-	AND userId IS NOT NULL
+	AND account_id IS NOT NULL
 	AND status != 'offline'
 `;
 
-export const getAllUserIdsToCheck = async ({ database }: OperationContext): Promise<string[]> => {
-	const rows: { userId: string }[] = await database('gp_probes')
-		.distinct('userId')
+export const getAllAccountIdsToCheck = async ({ database }: OperationContext): Promise<string[]> => {
+	const rows: { account_id: string }[] = await database('gp_probes')
+		.distinct('account_id')
 		.whereRaw(OUTDATED_PROBE_FILTER)
-		.orderBy('userId');
+		.orderBy('account_id');
 
-	return rows.map(r => r.userId);
+	return rows.map(r => r.account_id);
 };
 
-export const getOutdatedProbesForUsers = async (userId: string, { database }: OperationContext): Promise<AdoptedProbe[]> => {
+export const getOutdatedProbesForAccount = async (accountId: string, { database }: OperationContext): Promise<AdoptedProbe[]> => {
 	return database('gp_probes')
 		.select([
 			'id',
 			'ip',
-			'userId',
 			'name',
 			'hardwareDevice',
 			'hardwareDeviceFirmware',
@@ -39,6 +37,6 @@ export const getOutdatedProbesForUsers = async (userId: string, { database }: Op
 			'isOutdated',
 		])
 		.whereRaw(OUTDATED_PROBE_FILTER)
-		.where('userId', userId)
+		.where('account_id', accountId)
 		.orderBy('id');
 };

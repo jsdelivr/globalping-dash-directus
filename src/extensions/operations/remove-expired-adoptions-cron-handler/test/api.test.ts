@@ -32,14 +32,14 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
 		}, {
 			id: 'probeId2',
 			ip: '1.1.1.1',
 			name: 'probe-gb-london-01',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
 		}]);
@@ -52,7 +52,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				recipient: 'userId1',
+				account: 'accountId1',
 				collection: 'gp_probes',
 				metadata: [ 'probeId1', 'probeId2' ],
 				type: 'offline_probe',
@@ -68,13 +68,13 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
 		}, {
 			id: 'probeId2',
 			ip: '2.2.2.2',
-			userId: 'userId2',
+			account_id: 'accountId2',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString().split('T')[0],
 		}]);
@@ -87,7 +87,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				recipient: 'userId1',
+				account: 'accountId1',
 				item: 'probeId1',
 				collection: 'gp_probes',
 				type: 'offline_probe',
@@ -98,7 +98,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[1]).to.deep.equal([
 			{
-				recipient: 'userId2',
+				account: 'accountId2',
 				item: 'probeId2',
 				collection: 'gp_probes',
 				type: 'offline_probe',
@@ -114,7 +114,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-1).toISOString().split('T')[0],
 		}]);
@@ -132,7 +132,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-3).toISOString(),
 		}]);
@@ -155,13 +155,13 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-3).toISOString(),
 		}, {
 			id: 'probeId2',
 			ip: '2.2.2.2',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-3).toISOString(),
 		}]);
@@ -185,8 +185,8 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
+			account_id: 'accountId1',
 			name: 'home-lab',
-			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString(),
 		}]);
@@ -204,7 +204,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				recipient: 'userId1',
+				account: 'accountId1',
 				item: 'probeId1',
 				collection: 'gp_probes',
 				type: 'offline_probe',
@@ -220,8 +220,8 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
+			account_id: 'accountId1',
 			name: 'home-lab',
-			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-30).toISOString().split('T')[0],
 		}]);
@@ -236,7 +236,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				recipient: 'userId1',
+				account: 'accountId1',
 				type: 'probe_unassigned',
 				subject: 'Your probe home-lab has been deleted',
 				message: 'Your probe **home-lab** with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
@@ -256,7 +256,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(deleteByQuery.args[1]).to.deep.equal([
 			{
-				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }, userId: { _null: true } },
+				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }, account_id: { _null: true } },
 			},
 			{ emitEvents: false },
 		]);
@@ -268,7 +268,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-30).toISOString().split('T')[0],
 		}]);
@@ -284,7 +284,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				recipient: 'userId1',
+				account: 'accountId1',
 				type: 'probe_unassigned',
 				subject: 'Your probe has been deleted',
 				message: 'Your probe with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
@@ -304,7 +304,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(deleteByQuery.args[1]).to.deep.equal([
 			{
-				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }, userId: { _null: true } },
+				filter: { status: { _eq: 'offline' }, lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() }, account_id: { _null: true } },
 			},
 			{ emitEvents: false },
 		]);
@@ -316,7 +316,7 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
+			account_id: 'accountId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-29).toISOString().split('T')[0],
 		}]);
@@ -334,7 +334,7 @@ describe('Remove expired adoptions CRON handler', () => {
 				filter: {
 					status: { _eq: 'offline' },
 					lastSyncDate: { _lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() },
-					userId: { _null: true },
+					account_id: { _null: true },
 				},
 			},
 			{ emitEvents: false },
@@ -345,7 +345,6 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-8).toISOString(),
 		}]);
@@ -365,13 +364,11 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString(),
 		}, {
 			id: 'probeId2',
 			ip: '2.2.2.2',
-			userId: 'userId2',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-30).toISOString(),
 		}]);
@@ -393,7 +390,6 @@ describe('Remove expired adoptions CRON handler', () => {
 		itemsReadByQuery.onFirstCall().resolves([{
 			id: 'probeId1',
 			ip: '1.1.1.1',
-			userId: 'userId1',
 			status: 'offline',
 			lastSyncDate: relativeDayUtc(-2).toISOString(),
 		}]);

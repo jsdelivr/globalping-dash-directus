@@ -33,9 +33,13 @@ export const seed = async (knex) => {
 		getDiscordApp(),
 	]);
 
+	const account = await knex('gp_accounts').where({ user: user.id }).first('id');
+
 	await knex('gp_apps_approvals').insert([{
 		id: randomUUID(),
 		user: user.id,
+		user_created: user.id,
+		account_id: account.id,
 		app: authCodeApp.id,
 		scopes: JSON.stringify([ 'measurements' ]),
 	}]);
@@ -50,6 +54,7 @@ export const seed = async (knex) => {
 		expire: null,
 		origins: '[]',
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: null,
 	},
 	{
@@ -62,6 +67,7 @@ export const seed = async (knex) => {
 		expire: '2037-02-01',
 		origins: JSON.stringify([ 'https://www.jsdelivr.com', 'https://www.jsdelivr.com:10000' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -73,6 +79,7 @@ export const seed = async (knex) => {
 		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: null,
 		value: 'mDyYJ7cYn0/txr8fQtqaCxW1MN3bbjBc8y+bz5M4+Cg=', // token: w7nkybaxtfnajebtagdcrxsbqr42kjre
 		app_id: authCodeApp.id,
@@ -89,6 +96,7 @@ export const seed = async (knex) => {
 		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: null,
 		value: 't3lHNCiCf17iGssMzftULAGHr8jmttRORB7EeUonYn8=', // token: irhkax22pl5qd6qm6iiegikyndel4hh6
 		app_id: authCodeApp.id,
@@ -105,6 +113,7 @@ export const seed = async (knex) => {
 		name: 'For Client Credentials App',
 		origins: '[]',
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: null,
 		value: 'XfP0hC+L1TNOOTIP0U6LX7GWSUDuL/oEqTr+Dm+Z7gg=', // token: cd4j7g2m37e74wxivpuuj2xdt2acl6j6
 		app_id: clientCredentialsApp.id,
@@ -121,6 +130,7 @@ export const seed = async (knex) => {
 		name: 'For Client Credentials App',
 		origins: '[]',
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: null,
 		value: 'jR3Jx0KCKRc6IhuavjG7MqzslEFBDvTEb76hOMvVEx8=', // token: 3f2qkqbct7skzarkpihsrnak2brdasxk
 		app_id: clientCredentialsApp.id,
@@ -170,6 +180,7 @@ export const seed = async (knex) => {
 		expire: '2035-02-01',
 		origins: JSON.stringify([ 'https://www.globalping.io' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -182,6 +193,7 @@ export const seed = async (knex) => {
 		expire: null,
 		origins: JSON.stringify([ 'https://api.globalping.io' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -194,6 +206,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-21',
 		origins: JSON.stringify([ 'https://api.github.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -206,6 +219,7 @@ export const seed = async (knex) => {
 		expire: null,
 		origins: JSON.stringify([ 'https://api.stripe.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -218,6 +232,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-23',
 		origins: JSON.stringify([]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -230,6 +245,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-24',
 		origins: JSON.stringify([ 'https://api.slack.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -242,6 +258,7 @@ export const seed = async (knex) => {
 		expire: null,
 		origins: JSON.stringify([ 'https://api.digitalocean.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -254,6 +271,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-26',
 		origins: JSON.stringify([]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -266,6 +284,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-27',
 		origins: JSON.stringify([ 'https://api.datadoghq.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -278,6 +297,7 @@ export const seed = async (knex) => {
 		expire: null,
 		origins: JSON.stringify([ 'https://api.heroku.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -290,6 +310,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-29',
 		origins: JSON.stringify([]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -302,6 +323,7 @@ export const seed = async (knex) => {
 		expire: '2025-03-30',
 		origins: JSON.stringify([ 'https://api.aws.amazon.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	},
 	{
@@ -314,6 +336,7 @@ export const seed = async (knex) => {
 		expire: null,
 		origins: JSON.stringify([ 'https://api.cloudflare.com' ]),
 		user_created: user.id,
+		account_id: account.id,
 		user_updated: user.id,
 	}]);
 };

@@ -36,7 +36,9 @@ export const getResetLocationFields = (probe: Probe) => {
 export const getResetUserFields = (probe: Probe) => ({
 	...getResetLocationFields(probe),
 	name: null,
+	// PHASE5: drop `userId` - the account alone defines the owner.
 	userId: null,
+	account_id: null,
 	tags: [] as [],
 	systemTags: probe.systemTags.filter(tag => !tag.startsWith('u-')),
 	settings: { meteredConnection: false },
