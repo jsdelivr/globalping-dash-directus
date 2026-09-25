@@ -166,6 +166,28 @@ test('the org adoption token can not be read by naming the field anywhere in a q
 	expect((await actors.viewer.get(`/items/gp_org_members?fields=id&search=${org.adoption_token}`)).data.data).toEqual([]);
 });
 
+test('nothing about a co-member can be read through their membership', async ({ org, actors }) => {
+	const { email } = org.member;
+
+	const denied = [
+		'/items/gp_org_members?fields=id,user',
+		'/items/gp_org_members?fields=id,user.email',
+		`/items/gp_org_members?fields=id&filter[user][adoption_token][_starts_with]=${org.member.adoption_token.slice(0, 4)}`,
+		`/items/gp_org_members?fields=id&filter[user][email][_eq]=${email}`,
+		'/items/gp_org_members?fields=id&sort=user.email',
+		'/items/gp_org_members?aggregate[count]=id&groupBy[]=user',
+		`/items/gp_org_members?fields=id,user.id&deep[user][_filter][email][_eq]=${email}`,
+		`/items/gp_orgs?fields=id&filter[members][user][email][_eq]=${email}`,
+		'/items/gp_orgs?fields=id,members.user.email',
+	];
+
+	for (const api of [ actors.admin, actors.member, actors.viewer ]) {
+		for (const url of denied) {
+			expect((await api.get(url)).status, url).toBe(403);
+		}
+	}
+});
+
 test('the org adoption token and the public probes switch can only be changed by an admin, and nothing else about the org is editable', async ({ org, actors }) => {
 	const newAdoptionToken = (await actors.admin.post('/bytes')).data.data;
 	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { adoption_token: newAdoptionToken })).status).toBe(200);

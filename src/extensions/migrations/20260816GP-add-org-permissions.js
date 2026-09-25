@@ -71,7 +71,7 @@ export async function up () {
 			action: 'read',
 			policy: policyId,
 			permissions: { _or: [{ user: { _eq: '$CURRENT_USER' } }, ORG_ADMIN ] },
-			fields: [ 'id', 'org', 'user', 'role', 'notification_preferences' ],
+			fields: [ 'id', 'org', 'role', 'notification_preferences' ],
 		},
 		{
 			collection: 'gp_org_members',
