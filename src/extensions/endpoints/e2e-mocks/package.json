@@ -6,16 +6,30 @@
 	"keywords": [
 		"directus",
 		"directus-extension",
-		"directus-extension-endpoint"
+		"directus-extension-bundle"
 	],
 	"type": "module",
 	"files": [
 		"dist"
 	],
 	"directus:extension": {
-		"type": "endpoint",
-		"path": "dist/index.js",
-		"source": "src/index.ts",
+		"type": "bundle",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"entries": [
+			{
+				"type": "endpoint",
+				"name": "e2e-mocks",
+				"source": "src/endpoint/index.ts"
+			},
+			{
+				"type": "hook",
+				"name": "e2e-mocks-github-authorization",
+				"source": "src/hook/index.ts"
+			}
+		],
 		"host": "^10.10.0"
 	},
 	"scripts": {

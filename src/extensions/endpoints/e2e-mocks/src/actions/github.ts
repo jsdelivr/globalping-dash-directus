@@ -25,15 +25,19 @@ type SponsorEdge = { login: string; githubId: number; monthlyAmount: number; isA
 let sponsors: SponsorEdge[] = [];
 let sponsorsActivities: unknown[] = [];
 
+export const GITHUB_AUTHORIZATION_HEADER = 'x-github-authorization';
+
+const getAuthorization = (req: Request) => req.headers[GITHUB_AUTHORIZATION_HEADER] as string | undefined;
+
 // Clients spell the scheme differently - octokit sends `token`, axios `Bearer` - and the token itself is what identifies the state.
-const getToken = (req: Request) => (req.headers.authorization ?? '').replace(/^(bearer|token)\s+/i, '');
+const getToken = (req: Request) => (getAuthorization(req) ?? '').replace(/^(bearer|token)\s+/i, '');
 
 const proxy = async (req: Request, res: Response) => {
 	try {
 		const response = await axios({
 			method: req.method,
 			url: `${GITHUB_API_URL}${req.url.replace('/github', '')}`,
-			headers: { Authorization: req.headers.authorization },
+			headers: { Authorization: getAuthorization(req) },
 			data: req.method === 'GET' ? undefined : req.body,
 			validateStatus: () => true,
 		});
