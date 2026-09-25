@@ -1,7 +1,6 @@
 # Phase 2: gp-api, gp-auth, gp-dash switch to account_id
 
-Process: one repo at a time, in the order below, each in its own `orgs` branch/worktree. Per step: change, unit + integration
-tests, verify on the dev instance (Directus 18055 with phase 1 applied, gp-api 3000, dash 13010). Nothing is pushed.
+Process: one repo at a time, in the order below, each in its own `orgs` branch/worktree. Per step: change, unit + integration tests, verify on the dev instance (Directus 18055 with phase 1 applied, gp-api 3000, dash 13010). Nothing is pushed.
 
 ## What phase 1 already gives us
 
@@ -13,10 +12,8 @@ tests, verify on the dev instance (Directus 18055 with phase 1 applied, gp-api 3
 
 ## Contract for this phase
 
-- **An org-owned row has `userId` / `user_id` / `user` NULL.** Only `account_id` identifies its owner. Any reader still joining
-  by the legacy column silently treats such a row as ownerless - that is the bug this phase removes.
-- **A personal row keeps both columns** filled, so a reader that has not switched yet keeps working. Nothing here is a breaking
-  deploy for the other services.
+- **An org-owned row has `userId` / `user_id` / `user` NULL.** Only `account_id` identifies its owner. Any reader still joining by the legacy column silently treats such a row as ownerless - that is the bug this phase removes.
+- **A personal row keeps both columns** filled, so a reader that has not switched yet keeps working. Nothing here is a breaking deploy for the other services.
 - **Directus is not deployed in this phase.** Anything it would have to provide had to ship in phase 1.
 - No new UI. The dash still shows only the personal account; the org switcher is phase 4.
 
@@ -36,17 +33,13 @@ tests, verify on the dev instance (Directus 18055 with phase 1 applied, gp-api 3
 3. **`adopted-probes.ts` `fetchDProbes`**: join `gp_accounts` on `gp_probes.account_id`, then `directus_users` / `gp_orgs`:
    - owner name for the global tag: `COALESCE(org.name, user.default_prefix)`, gated by `COALESCE(org.public_probes, user.public_probes)`;
    - `deprecated_prefix` only for personal accounts (dropping it would silently take the old `u-<name>` from everyone in a grace period);
-   - the current `status = 'active'` condition moves onto the account's user, so probes of banned users still lose their overrides,
-     and an org account is never filtered out by it;
+   - the current `status = 'active'` condition moves onto the account's user, so probes of banned users still lose their overrides, and an org account is never filtered out by it;
    - `adoptionToken`: `COALESCE(org.adoption_token, user.adoption_token)`.
    - `getUpdatedProbes` sets `owner: { id: <account_id> }` (only `metrics.ts` reads it).
-4. **`adoption-token.ts`**: the token map covers org adoption tokens too - users' `adoption_token`, orgs' `adoption_token` and
-   the entries of `gp_orgs.extra_adoption_tokens`. The map value becomes the account id, and `adopt-by-token` is called with it.
-5. **Notifications**: post `account` instead of `recipient`, and the dedup check (today `recipient` + `message` + today's date)
-   becomes account-aware - for an org probe the stored recipients are its admins, so dedup by the account's notifications.
+4. **`adoption-token.ts`**: the token map covers org adoption tokens too - users' `adoption_token`, orgs' `adoption_token` and the entries of `gp_orgs.extra_adoption_tokens`. The map value becomes the account id, and `adopt-by-token` is called with it.
+5. **Notifications**: post `account` instead of `recipient`, and the dedup check (today `recipient` + `message` + today's date) becomes account-aware - for an org probe the stored recipients are its admins, so dedup by the account's notifications.
 
-Verify: unit + integration suites; on dev - adopt a probe into an org, see its tags/location overrides applied, its global tag
-`u-<org name>` follow the org's `public_probes`, a measurement with an org token bill the org's credits.
+Verify: unit + integration suites; on dev - adopt a probe into an org, see its tags/location overrides applied, its global tag `u-<org name>` follow the org's `public_probes`, a measurement with an org token bill the org's credits.
 
 ## 2. gp-auth (`globalping-auth`)
 
@@ -65,20 +58,16 @@ Verify: unit + integration suites; on dev - adopt a probe into an org, see its t
    required - an approval with no user is rejected. The "already approved" lookup keys on `(user_created, app, account_id)`.
 4. Tokens issued for the approval carry the same `account_id`, so gp-api bills the right account.
 
-Verify: unit + integration suites; on dev - run the real consent flow against the local dash and Directus, approve for the
-personal account and for an org, check both rows and both tokens.
+Verify: unit + integration suites; on dev - run the real consent flow against the local dash and Directus, approve for the personal account and for an org, check both rows and both tokens.
 
 ## 3. gp-dash (`globalping-dash`)
 
-1. `useUserFilter` learns the account: `account_id` for probes / credits / tokens / deductions / approvals, `recipient` stays a
-   user id, `github_id` stays as is. The account comes from the user object Directus already returns.
+1. `useUserFilter` learns the account: `account_id` for probes / credits / tokens / deductions / approvals, `recipient` stays a user id, `github_id` stays as is. The account comes from the user object Directus already returns.
 2. Every call site follows the field it filters on - 8 `userId`, 8 `user_id`, 2 `user_created` today.
 3. Requests that pass `userId` to the Directus endpoints (adoption, applications, credits timeline) pass `accountId` instead.
 
-Verify: `pnpm test`, then the dev dash on 13010 - probes, credits, tokens, applications and notifications pages show the same
-data as before the switch.
+Verify: `pnpm test`, then the dev dash on 13010 - probes, credits, tokens, applications and notifications pages show the same data as before the switch.
 
 ## Deploy order
 
-gp-api and gp-auth are independent of each other and can go any time after phase 1. gp-dash must go **with or after** the phase 1
-permissions migration - `account_id` filters return empty until it is applied.
+gp-api and gp-auth are independent of each other and can go any time after phase 1. gp-dash must go **with or after** the phase 1 permissions migration - `account_id` filters return empty until it is applied.

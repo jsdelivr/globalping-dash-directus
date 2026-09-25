@@ -4,8 +4,7 @@ Default Directus multi-tenancy approach with a new orgs table and an account ent
 
   1. New `gp_orgs` table. Columns: `id, github_id, name, adoption_token, extra_adoption_tokens, public_probes, user_type`.
   2. New `gp_org_members` junction table. Columns: `id, org, user, role: viewer | member | admin, notification_preferences`.
-  3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB
-trigger on insert) and removed via FK cascade, so an account always exists.
+  3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB trigger on insert) and removed via FK cascade, so an account always exists.
   4. New column `account_id` in data tables:
   - gp_probes (`userId` => `account_id`)
   - gp_tokens (+`account_id`, `user_created` stays to track creator)
@@ -81,8 +80,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Credits**
 - Probe credits are assigned based on the probe's `account_id`.
-- The `org -> user` credits redirect is no longer created; credits are assigned directly to the org. The existing ones keep
-  working until either side clears them.
+- The `org -> user` credits redirect is no longer created; credits are assigned directly to the org. The existing ones keep working until either side clears them.
 - A user can point their own sponsorship at an org they belong to (`user -> org` redirect), from the migrate section of the settings.
 
 **Notifications**
@@ -101,5 +99,4 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
     - "Tokens page" shows the user's own tokens and approvals inside the org; nobody sees other members' tokens or approvals.
     - "Generate new token" creates a token inside the org (disabled for viewers).
     - "Adopt a probe" into the org is admin-only.
-    - If the user is admin - a new "Organization" menu entry and page: the org settings first (see, copy and regenerate the org
-      adoption token), then all members, where the admin can set member roles.
+    - If the user is admin - a new "Organization" menu entry and page: the org settings first (see, copy and regenerate the org adoption token), then all members, where the admin can set member roles.
