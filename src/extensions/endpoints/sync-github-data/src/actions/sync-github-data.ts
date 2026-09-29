@@ -2,9 +2,9 @@ import { createError } from '@directus/errors';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { checkDefaultPrefix } from '../../../../lib/src/deprecate-prefix.js';
-import { getGithubOrganizations } from '../../../../lib/src/github-api-client.js';
+import { getGithubOrganizations, getGithubUsername } from '../../../../lib/src/github-api-client.js';
+import { syncOrganizations } from '../../../../lib/src/sync-orgs.js';
 import { getDirectusUser, updateDirectusUser } from '../repositories/directus.js';
-import { getGithubUsername } from '../repositories/github.js';
 
 export type User = {
 	id: string;
@@ -21,19 +21,22 @@ const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data
 
 export const syncGithubData = async (userId: string, context: EndpointExtensionContext) => {
 	const user = await getDirectusUser(userId, context);
-	const githubId = user?.external_identifier;
-	const username = user?.github_username;
 
-	if (!user || !githubId) {
+	if (!user || !user.external_identifier) {
 		throw new NotEnoughDataError();
 	}
 
-	const [ githubUsername, githubOrgs ] = await Promise.all([
+	const [ githubUsername, organizations ] = await Promise.all([
 		getGithubUsername(user, context),
 		getGithubOrganizations(user, context),
 	]);
 
-	if (username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
+	await syncOrganizations(user, organizations, context);
+
+	// PHASE5: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
+	const githubOrgs = organizations.map(org => org.login);
+
+	if (user.github_username !== githubUsername || !_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
 		await updateDirectusUser(user, {
 			github_username: githubUsername,
 			github_organizations: githubOrgs,

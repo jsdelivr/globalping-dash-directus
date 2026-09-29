@@ -15,6 +15,6 @@ export const seed = async (knex) => {
 	}
 
 	await knex('directus_users').where({ id: admin.id }).update({
-		token: 'VvLt_t0g5Wg_WYpxjRneWWwqh1Wlqhp6',
+		token: 'e2e-directus-admin-static-token',
 	});
 };

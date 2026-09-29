@@ -6,7 +6,7 @@ export const findAdoptedProbeByIp = async (ip: string, { database }: EndpointExt
 				ip = ?
 				OR JSON_CONTAINS(altIps, ?)
 			)
-			AND userId IS NOT NULL
+			AND account_id IS NOT NULL
 	`, [ ip, `"${ip}"` ]).first();
 
 	return probe;

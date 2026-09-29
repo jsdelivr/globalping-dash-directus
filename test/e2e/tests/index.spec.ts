@@ -32,6 +32,7 @@ const addData = async (user: User) => {
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',
@@ -67,6 +68,7 @@ const addData = async (user: User) => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',
@@ -108,7 +110,7 @@ test('Index page', async ({ page, user }) => {
 	await addData(user);
 	await page.goto('/');
 	await expect(page.locator('h1')).toHaveText('Overview');
-	await expect(page.getByLabel('Profile')).toHaveText('elliot');
+	await expect(page.getByLabel('Profile')).toHaveText(user.github_username);
 	await expect(page.getByTestId('probes-count')).toHaveText('2');
 	await expect(page.getByTestId('online-probes-count')).toHaveText('1');
 	await expect(page.getByTestId('offline-probes-count')).toHaveText('1');

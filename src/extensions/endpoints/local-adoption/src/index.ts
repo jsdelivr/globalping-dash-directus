@@ -3,6 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Accountability } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
+import { getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getIpFromRequest } from '../../../lib/src/client-ip.js';
 import { type Row, createAdoptedProbe, parseRow } from '../../../lib/src/create-adopted-probe.js';
@@ -18,6 +19,8 @@ const adoptLocalProbeSchema = Joi.object<Request>({
 	}).required().unknown(true),
 	body: Joi.object({
 		token: Joi.string().required(),
+		// PHASE5: make it required.
+		accountId: Joi.string(),
 	}).required(),
 }).unknown(true);
 
@@ -39,7 +42,7 @@ export default defineEndpoint((router, context) => {
 
 		const unadoptedProbes = await database('gp_probes')
 			.select('country', 'city', 'network', 'ip as publicIp', 'localAdoptionServer')
-			.whereNull('userId')
+			.whereNull('account_id')
 			.whereNotNull('localAdoptionServer')
 			.where('status', 'ready')
 			.where((query) => {
@@ -61,7 +64,7 @@ export default defineEndpoint((router, context) => {
 		const clientIp = getClientIp(req);
 
 		const row = await database('gp_probes')
-			.whereNull('userId')
+			.whereNull('account_id')
 			.whereNotNull('localAdoptionServer')
 			.where('status', 'ready')
 			.where((query) => {
@@ -76,7 +79,8 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const probe = parseRow(row);
-		const updatedProbe = await createAdoptedProbe(req.accountability.user!, probe, context);
+		const accountId = await getRequestAccountId(req.body, req.accountability, context);
+		const updatedProbe = await createAdoptedProbe(accountId, probe, context);
 
 		res.json(updatedProbe);
 	}, context));

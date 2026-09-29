@@ -32,6 +32,7 @@ const addCredits = async (user: User) => {
 		status: 'offline',
 		tags: '[]',
 		userId: user.id,
+		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
 		nodeVersion: 'v22.22.3',

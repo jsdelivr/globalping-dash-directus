@@ -57,6 +57,10 @@ describe('Remove banned users CRON handler', () => {
 		sinon.resetHistory();
 	});
 
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
 	after(() => {
 		nock.cleanAll();
 	});

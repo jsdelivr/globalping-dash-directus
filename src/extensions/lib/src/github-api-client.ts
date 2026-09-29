@@ -1,77 +1,98 @@
+import { createError, ErrorCode } from '@directus/errors';
 import type { ApiExtensionContext } from '@directus/extensions';
 import axios from 'axios';
-import axiosRetry, { type AxiosRetry } from 'axios-retry';
+import { getGithubUrl } from './service-urls.js';
 
 type User = {
 	external_identifier: string | null;
 	github_oauth_token: string | null;
 };
 
-type GithubOrgsResponse = {
+type GithubUserResponse = {
 	login: string;
-}[];
-
-export const getGithubApiClient = (userToken: string | null, context: ApiExtensionContext) => {
-	if (!userToken) {
-		return axios.create({
-			timeout: 5000,
-			headers: {
-				Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-			},
-		});
-	}
-
-	const client = axios.create({
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${userToken}`,
-		},
-	});
-
-	(axiosRetry as unknown as AxiosRetry)(client, {
-		retries: 1,
-		retryCondition: (error) => {
-			return error.response?.status === 401 || error.response?.status === 403;
-		},
-		onRetry: (_retryCount, _error, request) => {
-			request.headers!.Authorization = `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`;
-		},
-	});
-
-	return client;
 };
 
-export const getGithubOrganizations = async (user: User, context: ApiExtensionContext): Promise<string[]> => {
-	if (!user.github_oauth_token) {
-		const response = await organizationsRequestWithDefaultToken(user, context);
-		return response.data.map(org => org.login);
-	}
+type GithubOrg = {
+	id: number;
+	login: string;
+};
 
-	const response = await organizationsRequestWithUserToken(user).catch((error) => {
-		if (error.response?.status === 401 || error.response?.status === 403) {
-			return organizationsRequestWithDefaultToken(user, context);
+type GithubMembership = {
+	state: string;
+	role: string;
+	organization: GithubOrg;
+};
+
+export type GithubOrganization = {
+	githubId: string;
+	login: string;
+	role: 'admin' | 'member';
+};
+
+export const githubSyncError = (status?: number) => new (createError(
+	ErrorCode.InvalidToken,
+	`Failed to get the GitHub data${status ? ` (${status})` : ''}. Please sign out and sign in again.`,
+	400,
+))();
+
+const githubRequest = <T>(path: string, token: string | null, context: ApiExtensionContext) => {
+	return axios.get<T>(`${getGithubUrl(context)}${path}`, {
+		timeout: 5000,
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
+};
+
+// Paginate the list to get all items.
+const githubListRequest = async <T>(path: string, token: string | null, context: ApiExtensionContext): Promise<T[]> => {
+	const items: T[] = [];
+
+	for (let page = 1; ; page++) {
+		const response = await githubRequest<T[]>(`${path}?per_page=100&page=${page}`, token, context);
+		items.push(...response.data);
+
+		if (!response.headers['link']?.includes('rel="next"')) {
+			return items;
 		}
-
-		throw error;
-	});
-
-	return response.data.map(org => org.login);
+	}
 };
 
-const organizationsRequestWithUserToken = (user: User) => {
-	return axios.get<GithubOrgsResponse>(`https://api.github.com/user/orgs`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${user.github_oauth_token}`,
-		},
+const toOrganization = (org: { id: number; login: string }, role: 'admin' | 'member'): GithubOrganization => ({
+	githubId: org.id.toString(),
+	login: org.login,
+	role,
+});
+
+// Both sources are incomplete on their own: the memberships list is the only one with roles and private memberships, but orgs
+// restricting our OAuth app are silently missing from it. Those are visible in the public list, without a role, so they become members.
+export const getGithubOrganizations = async (user: User, context: ApiExtensionContext): Promise<GithubOrganization[]> => {
+	const [ memberships, publicOrgs ] = await Promise.all([
+		githubListRequest<GithubMembership>('/user/memberships/orgs', user.github_oauth_token, context),
+		// Public memberships of any user, so this one also lists the orgs restricting our OAuth app.
+		githubListRequest<GithubOrg>(`/user/${user.external_identifier}/orgs`, user.github_oauth_token, context),
+	]).catch((error) => {
+		throw githubSyncError(error.response?.status);
 	});
+
+	const organizations = memberships
+		.filter(membership => membership.state === 'active')
+		// GitHub also has the `billing_manager` role, which is treated as `member`.
+		.map(membership => toOrganization(membership.organization, membership.role === 'admin' ? 'admin' : 'member'));
+
+	const knownIds = new Set(organizations.map(org => org.githubId));
+
+	return [
+		...organizations,
+		...publicOrgs.filter(org => !knownIds.has(org.id.toString())).map(org => toOrganization(org, 'member')),
+	];
 };
 
-const organizationsRequestWithDefaultToken = (user: User, context: ApiExtensionContext) => {
-	return axios.get<GithubOrgsResponse>(`https://api.github.com/user/${user.external_identifier}/orgs`, {
-		timeout: 5000,
-		headers: {
-			Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}`,
-		},
-	});
+export const getGithubUsername = async (user: User, context: ApiExtensionContext): Promise<string> => {
+	const response = await githubRequest<GithubUserResponse>(`/user/${user.external_identifier}`, user.github_oauth_token, context)
+		.catch((error) => {
+			throw githubSyncError(error.response?.status);
+		});
+
+	return response.data.login;
 };

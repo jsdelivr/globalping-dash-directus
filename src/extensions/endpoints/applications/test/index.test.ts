@@ -9,6 +9,9 @@ import endpoint from '../src/index.js';
 describe('/applications endpoint', () => {
 	const countStub = sinon.stub();
 	const offsetStub = sinon.stub();
+	const rawStub = sinon.stub();
+	const firstStub = sinon.stub();
+	const delStub = sinon.stub();
 
 	const database = new Proxy(() => database, {
 		get: (_target, property) => {
@@ -16,6 +19,12 @@ describe('/applications endpoint', () => {
 				return countStub;
 			} else if (property === 'offset') {
 				return offsetStub;
+			} else if (property === 'raw') {
+				return rawStub;
+			} else if (property === 'first') {
+				return firstStub;
+			} else if (property === 'del') {
+				return delStub;
 			}
 
 			return database;
@@ -45,6 +54,9 @@ describe('/applications endpoint', () => {
 		sinon.resetHistory();
 		countStub.resolves([{ total: 0 }]);
 		offsetStub.resolves([]);
+		rawStub.resolves([ [{ id: 'account-id' }] ]);
+		delStub.resolves(1);
+		firstStub.resolves({ id: 'account-id' });
 
 		accountability = {
 			user: 'user-id',
@@ -80,6 +92,7 @@ describe('/applications endpoint', () => {
 					owner_name: 'Globalping',
 					owner_url: 'https://globalping.io/',
 					user_id: 'user-1',
+					user_created: 'user-1',
 				},
 			],
 			total: 1,
@@ -109,6 +122,48 @@ describe('/applications endpoint', () => {
 		expect(res.body).to.deep.equal({ applications: [], total: 0 });
 	});
 
+	it('should accept a request with accountId', async () => {
+		const res = await request(app).get('/').query({
+			accountId: 'account-id',
+		});
+
+		expect(res.status).to.equal(200);
+	});
+
+	it('should reject a request for an account the user has no access to', async () => {
+		rawStub.resolves([ [] ]);
+
+		const res = await request(app).get('/').query({
+			accountId: 'foreign-account-id',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('You can not access this account.');
+	});
+
+	it('should reject a request with both userId and accountId', async () => {
+		const res = await request(app).get('/').query({
+			userId: 'user-id',
+			accountId: 'account-id',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.include('contains a conflict');
+	});
+
+	it('should accept admin request for all accounts', async () => {
+		accountability = {
+			user: 'admin-id',
+			admin: true,
+		};
+
+		const res = await request(app).get('/').query({
+			accountId: 'all',
+		});
+
+		expect(res.status).to.equal(200);
+	});
+
 	it('should accept admin request for all users', async () => {
 		accountability = {
 			user: 'admin-id',
@@ -130,5 +185,56 @@ describe('/applications endpoint', () => {
 
 		expect(res.status).to.equal(400);
 		expect(res.text).to.equal('Allowed only for admin.');
+	});
+
+	it('should reject a revoke for all accounts', async () => {
+		accountability = {
+			user: 'admin-id',
+			admin: true,
+		};
+
+		const res = await request(app).post('/revoke').send({
+			accountId: 'all',
+			id: 'app-1',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('An application can only be revoked for a single account.');
+	});
+
+	it('should accept a revoke in the legacy form, with the user_id from the list', async () => {
+		offsetStub.resolves([{
+			id: '1',
+			app_id: 'app-1',
+			date_last_used: '2025-04-10 02:00:00',
+			user_created: 'user-id',
+			app_name: 'Client Credentials App',
+			owner_name: null,
+			owner_url: null,
+		}]);
+
+		countStub.resolves([{ total: 1 }]);
+
+		const list = await request(app).get('/').query({ userId: 'user-id' });
+		const [ application ] = list.body.applications;
+
+		const res = await request(app).post('/revoke').send({
+			userId: application.user_id,
+			id: application.id,
+		});
+
+		expect(res.status).to.equal(200);
+		expect(res.text).to.equal('Application access revoked.');
+	});
+
+	it('should reject a revoke of an application created by somebody else', async () => {
+		const res = await request(app).post('/revoke').send({
+			accountId: 'account-id',
+			userCreated: 'another-user-id',
+			id: 'app-1',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('You can only revoke your own applications.');
 	});
 });

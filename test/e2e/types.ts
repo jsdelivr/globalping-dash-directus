@@ -1,3 +1,5 @@
+import type { AxiosInstance } from 'axios';
+
 export type User = {
 	id: string;
 	external_identifier: string;
@@ -13,4 +15,27 @@ export type User = {
 	user_type: string;
 	adoption_token: string;
 	default_prefix: string;
+	github_oauth_token: string;
+	token: string;
+	account_id: string;
+};
+
+export type Actors = {
+	admin: AxiosInstance;
+	member: AxiosInstance;
+	viewer: AxiosInstance;
+	outsider: AxiosInstance;
+	otherOrgAdmin: AxiosInstance;
+	directusAdmin: AxiosInstance;
+};
+
+export type Org = {
+	id: string;
+	name: string;
+	github_id: string;
+	adoption_token: string;
+	account_id: string;
+	admin: User;
+	member: User;
+	viewer: User;
 };

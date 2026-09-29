@@ -9,7 +9,10 @@ export const getDirectusUser = async (userId: string, context: EndpointExtension
 		schema: await getSchema(),
 	});
 
-	const user = await itemsService.readOne(userId) as User | undefined;
+	const user = await itemsService.readOne(userId, {}, {
+		// `emitEvents: false` keeps `github_oauth_token` from being masked by the users.read hook.
+		emitEvents: false,
+	}) as User | undefined;
 	return user;
 };
 

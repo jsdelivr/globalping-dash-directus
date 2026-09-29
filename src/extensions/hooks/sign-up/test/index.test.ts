@@ -64,7 +64,9 @@ describe('Sign-up hook', () => {
 		},
 		database: {
 			transaction: async (f: any) => {
-				return f({});
+				const accountsQuery = { where: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'account-1' }) };
+				const trx = sinon.stub().returns(accountsQuery);
+				return f(trx);
 			},
 		},
 		getSchema: () => Promise.resolve({}),
@@ -81,15 +83,15 @@ describe('Sign-up hook', () => {
 		sinon.resetHistory();
 	});
 
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
 	after(() => {
 		nock.cleanAll();
 	});
 
 	it('filter should fulfill first_name, last_name, github_username, adoption_token', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
-
 		hook(events, context);
 
 		const payload: Partial<User> = {
@@ -115,10 +117,6 @@ describe('Sign-up hook', () => {
 	});
 
 	it('filter should use gh login as first_name if name is not provided', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
-
 		hook(events, context);
 
 		const payload = {
@@ -146,8 +144,10 @@ describe('Sign-up hook', () => {
 	it('action should fulfill organizations, credits', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.get(`/user/memberships/orgs?per_page=100&page=1`)
+			.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
 
 		creditsAdditionsService.readByQuery.resolves([{
 			amount: 10,
@@ -183,13 +183,12 @@ describe('Sign-up hook', () => {
 			{ consumed: true },
 		]);
 
-		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1' }]);
+		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1', account_id: 'account-1' }]);
 	});
 
 	it('action should fulfill user type', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
 
 		sponsorsService.readByQuery.resolves([{
 			github_id: 1834071,
@@ -206,6 +205,7 @@ describe('Sign-up hook', () => {
 				last_name: 'jimaek',
 				github_username: null,
 				github_organizations: null,
+				github_oauth_token: 'user-github-token',
 			},
 		});
 
@@ -215,8 +215,10 @@ describe('Sign-up hook', () => {
 	it('action should release a matching deprecated prefix from other users', async () => {
 		nock('https://api.github.com')
 			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+			.get(`/user/memberships/orgs?per_page=100&page=1`)
+			.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+
+		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
 
 		hook(events, context);
 
@@ -238,9 +240,8 @@ describe('Sign-up hook', () => {
 	});
 
 	it('action send welcome notification', async () => {
-		nock('https://api.github.com')
-			.get(`/user/1834071/orgs`)
-			.reply(200, [{ login: 'jsdelivr' }]);
+		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
+		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
 
 		sponsorsService.readByQuery.resolves([{
 			github_id: '1834071',
@@ -257,6 +258,7 @@ describe('Sign-up hook', () => {
 				last_name: 'jimaek',
 				github_username: null,
 				github_organizations: null,
+				github_oauth_token: 'user-github-token',
 			},
 		});
 

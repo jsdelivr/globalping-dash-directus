@@ -3,7 +3,7 @@ import { defineHook } from '@directus/extensions-sdk';
 import TTLCache from '@isaacs/ttlcache';
 import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { getDirectusUsers, deleteCreditsAdditions, clearDeprecatedPrefix, type DirectusUser } from './repositories/directus.js';
-import { joiValidateUser, validateDefaultPrefix } from './validate-fields.js';
+import { joiValidateUser, validateDefaultPrefix, filterSelectedOrgs } from './validate-fields.js';
 
 export type Fields = Partial<DirectusUser>;
 
@@ -36,9 +36,10 @@ export default defineHook(({ filter, action }, context) => {
 
 		joiValidateUser(fields);
 
-		if (fields.default_prefix) {
-			await validateDefaultPrefix(fields.default_prefix, keys, accountability, context);
-		}
+		await Promise.all([
+			fields.default_prefix && validateDefaultPrefix(fields.default_prefix, keys, accountability, context),
+			fields.selected_orgs && filterSelectedOrgs(fields, keys, context),
+		]);
 	});
 
 	// Updating deprecated_prefix in 'action' because user doesn't have access to it.

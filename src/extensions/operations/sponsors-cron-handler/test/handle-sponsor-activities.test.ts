@@ -54,6 +54,10 @@ describe('SponsorActivitiesHandler', () => {
 		clock = sinon.useFakeTimers({ now: NOW, toFake: [ 'Date' ] });
 	});
 
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
 	after(() => {
 		nock.cleanAll();
 		clock.restore();

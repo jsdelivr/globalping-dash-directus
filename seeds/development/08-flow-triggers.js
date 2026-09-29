@@ -91,6 +91,18 @@ export const seed = async (knex) => {
 			type: 'low-credits-cron-handler',
 		},
 	});
+
+	await createManualTrigger({
+		flow: {
+			id: 'ccdde62b-6f94-456e-8f24-73bb22d38547',
+			name: '[DEV] Check org members manual flow',
+		},
+		operation: {
+			name: '[DEV] Check org members manual operation',
+			key: 'check_members_manual_handler',
+			type: 'check-members-cron-handler',
+		},
+	});
 };
 
 const createManualTrigger = async (config) => {
