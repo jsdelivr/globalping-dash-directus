@@ -2,6 +2,8 @@ import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 
 const unlinkedGithubId = `9${Math.floor(Math.random() * 100000000)}`;
+const redirectSourceGithubId = '66716858';
+const redirectTargetGithubId = '6209808';
 const sponsorshipReasons = [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ];
 const sponsorshipValueSql = `COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.amountInDollars')) AS DECIMAL(18,2)), 0)
 	* CASE WHEN reason = 'recurring_sponsorship'
@@ -112,7 +114,8 @@ test.beforeEach(async ({ user, user2 }) => {
 });
 
 test.afterEach(async () => {
-	await sql('gp_credits_additions').where({ github_id: unlinkedGithubId }).delete();
+	await sql('gp_credits_additions').whereIn('github_id', [ unlinkedGithubId, redirectTargetGithubId ]).delete();
+	await sql('sponsors').where({ github_id: redirectSourceGithubId }).delete();
 });
 
 test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
@@ -246,4 +249,37 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(adminPage.getByRole('dialog', { name: 'Add credits' })).toBeVisible();
 	await adminPage.getByRole('button', { name: 'Close' }).click();
 	await expect(adminPage.getByRole('button', { name: 'Add credits' })).toBeFocused();
+});
+
+test('Redirected sponsor account', async ({ adminPage }) => {
+	await sql('sponsors').insert({
+		github_id: redirectSourceGithubId,
+		github_login: 'redirect-source',
+		monthly_amount: 30,
+		last_earning_date: previousMonthDate(1),
+	});
+
+	await sql('gp_credits_additions').insert({
+		amount: 120000,
+		consumed: 1,
+		date_created: previousMonthDate(1),
+		github_id: redirectTargetGithubId,
+		user_updated: null,
+		reason: 'recurring_sponsorship',
+		meta: JSON.stringify({ amountInDollars: 30, bonus: 0 }),
+		adopted_probe: null,
+	});
+
+	await adminPage.goto('/sponsors');
+	const accountsTable = adminPage.getByRole('heading', { name: 'Sponsor accounts' }).locator('xpath=ancestor::section[1]');
+
+	for (const search of [ redirectTargetGithubId, redirectSourceGithubId, 'redirect-source' ]) {
+		const accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${search}`));
+		await adminPage.getByLabel('Search sponsor accounts').fill(search);
+		await accountsResponse;
+		await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
+		await expect(accountsTable.locator('tbody tr').first()).toContainText('redirect-source');
+		await expect(accountsTable.locator('tbody tr').first()).toContainText('Active recurring');
+		await expect(accountsTable.locator('tbody tr').first()).toContainText('$30');
+	}
 });

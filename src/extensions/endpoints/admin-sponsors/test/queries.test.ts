@@ -16,7 +16,7 @@ describe('sponsor query normalization', () => {
 		applySearch({ where } as unknown as Knex.QueryBuilder, '66716858');
 
 		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
-		expect(builder.orWhere.calledWithExactly('current_sponsors.github_login', 'like', '%66716858%')).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhere.calledWithExactly('directus_users.github_username', 'like', '%66716858%')).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
@@ -33,7 +33,7 @@ describe('sponsor query normalization', () => {
 		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '66716858', 'added-by-expression');
 
 		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
-		expect(builder.orWhere.calledWithExactly('current_sponsors.github_login', 'like', '%66716858%')).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhere.calledWithExactly('dashboard_users.github_username', 'like', '%66716858%')).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
