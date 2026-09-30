@@ -2,7 +2,7 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import { isAxiosError } from 'axios';
-import type { Request, RequestHandler, Router } from 'express';
+import type { Request, RequestHandler } from 'express';
 import Joi from 'joi';
 import { redirectGithubId } from '../../../lib/src/add-credits.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
@@ -10,27 +10,7 @@ import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { resolveSponsorsPeriod } from './period.js';
 import { getManualAdditions, getSponsorAccounts, getSponsorsSummary, getSponsorshipEvents } from './queries.js';
-import type {
-	AccountsQuery,
-	EventsQuery,
-	ManualAddition,
-	ManualAdditionsQuery,
-	PageResult,
-	SponsorAccount,
-	SponsorsPeriod,
-	SponsorsPeriodRange,
-	SponsorsSummary,
-	SponsorshipEvent,
-} from './types.js';
-
-type QueryService = {
-	getSummary: (database: EndpointExtensionContext['database'], range: SponsorsPeriodRange) => Promise<SponsorsSummary>;
-	getEvents: (database: EndpointExtensionContext['database'], range: SponsorsPeriodRange, query: EventsQuery) => Promise<PageResult<SponsorshipEvent>>;
-	getAccounts: (database: EndpointExtensionContext['database'], range: SponsorsPeriodRange, query: AccountsQuery) => Promise<PageResult<SponsorAccount>>;
-	getManualAdditions: (database: EndpointExtensionContext['database'], query: ManualAdditionsQuery) => Promise<PageResult<ManualAddition>>;
-};
-
-type GithubLoginResolver = (githubId: string, context: EndpointExtensionContext) => Promise<string>;
+import type { AccountsQuery, EventsQuery, ManualAdditionsQuery, SponsorsPeriod } from './types.js';
 
 const periodSchema = Joi.string().default('past-year').custom((value, helpers) => {
 	try {
@@ -121,7 +101,7 @@ type ManualAdditionInput = {
 	comment: string;
 };
 
-const resolveGithubLogin: GithubLoginResolver = async (githubId, context) => {
+const resolveGithubLogin = async (githubId: string, context: EndpointExtensionContext) => {
 	const client = getGithubApiClient(null, context);
 
 	if (!context.env.GITHUB_ACCESS_TOKEN) {
@@ -133,45 +113,45 @@ const resolveGithubLogin: GithubLoginResolver = async (githubId, context) => {
 	return response.data.login;
 };
 
-export const createAdminSponsorsEndpoint = (queryService: QueryService, githubLoginResolver: GithubLoginResolver = resolveGithubLogin) => (router: Router, context: EndpointExtensionContext) => {
-	const allowAdmin: RequestHandler = (req, res, next) => {
-		const accountability = (req as Request & { accountability?: EventContext['accountability'] }).accountability;
+const allowAdmin: RequestHandler = (req, res, next) => {
+	const accountability = (req as Request & { accountability?: EventContext['accountability'] }).accountability;
 
-		if (accountability?.admin !== true) {
-			res.status(403).send('Forbidden');
-			return;
-		}
+	if (accountability?.admin !== true) {
+		res.status(403).send('Forbidden');
+		return;
+	}
 
-		next();
-	};
+	next();
+};
 
+export default defineEndpoint((router, context) => {
 	router.use(allowAdmin);
 
 	router.get('/summary', validate(summarySchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as { period: SponsorsPeriod };
 		const range = resolveSponsorsPeriod(query.period);
 
-		res.send(await queryService.getSummary(context.database, range));
+		res.send(await getSponsorsSummary(context.database, range));
 	}, context));
 
 	router.get('/events', validate(eventsSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as EventsQuery;
 		const range = resolveSponsorsPeriod(query.period);
 
-		res.send(await queryService.getEvents(context.database, range, query));
+		res.send(await getSponsorshipEvents(context.database, range, query));
 	}, context));
 
 	router.get('/accounts', validate(accountsSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as AccountsQuery;
 		const range = resolveSponsorsPeriod(query.period);
 
-		res.send(await queryService.getAccounts(context.database, range, query));
+		res.send(await getSponsorAccounts(context.database, range, query));
 	}, context));
 
 	router.get('/manual-additions', validate(manualAdditionsSchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as ManualAdditionsQuery;
 
-		res.send(await queryService.getManualAdditions(context.database, query));
+		res.send(await getManualAdditions(context.database, query));
 	}, context));
 
 	router.post('/manual-additions', validate(createManualAdditionSchema), asyncWrapper(async (req, res) => {
@@ -182,7 +162,7 @@ export const createAdminSponsorsEndpoint = (queryService: QueryService, githubLo
 		let githubLogin: string;
 
 		try {
-			githubLogin = await githubLoginResolver(githubId, context);
+			githubLogin = await resolveGithubLogin(githubId, context);
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 
@@ -209,11 +189,4 @@ export const createAdminSponsorsEndpoint = (queryService: QueryService, githubLo
 
 		res.sendStatus(201);
 	}, context));
-};
-
-export default defineEndpoint(createAdminSponsorsEndpoint({
-	getSummary: getSponsorsSummary,
-	getEvents: getSponsorshipEvents,
-	getAccounts: getSponsorAccounts,
-	getManualAdditions,
-}));
+});

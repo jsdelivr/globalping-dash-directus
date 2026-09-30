@@ -1,35 +1,41 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import express, { type NextFunction } from 'express';
+import type { Knex } from 'knex';
+import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import { createAdminSponsorsEndpoint } from '../src/index.js';
+import endpoint from '../src/index.js';
 
 describe('/admin-sponsors endpoint', () => {
-	const summary = {
-		overview: {
-			activeSponsors: 2,
-			previousMonth: { totalValue: 30, recurringValue: 20, oneTimeValue: 10 },
-			estimatedNextMonthValue: 25,
+	const stubs = {
+		where: sinon.stub(),
+		whereIn: sinon.stub(),
+		whereRaw: sinon.stub(),
+		orderByRaw: sinon.stub(),
+		offset: sinon.stub(),
+		limit: sinon.stub(),
+		first: sinon.stub(),
+		insert: sinon.stub(),
+	};
+
+	const database = new Proxy(() => database, {
+		get: (_target, property) => {
+			if (property === 'then') {
+				return (resolve: (value: unknown[]) => void) => resolve([]);
+			}
+
+			if (property in stubs) {
+				return stubs[property as keyof typeof stubs];
+			}
+
+			return database;
 		},
-		period: { sponsors: 2, sponsorshipValue: 30 },
-		allTime: { sponsors: 3 },
-		chart: [],
-	};
+	}) as unknown as Knex;
 
-	const queryService = {
-		getSummary: sinon.stub().resolves(summary),
-		getEvents: sinon.stub().resolves({ items: [], total: 0 }),
-		getAccounts: sinon.stub().resolves({ items: [], total: 0 }),
-		getManualAdditions: sinon.stub().resolves({ items: [], total: 0 }),
-	};
-
-	const insert = sinon.stub().resolves();
-	const databaseStub = sinon.stub().returns({ insert });
-	const database = databaseStub as unknown as EndpointExtensionContext['database'];
-	const githubLoginResolver = sinon.stub().resolves('jsDelivr');
 	const endpointContext = {
 		database,
+		env: { GITHUB_ACCESS_TOKEN: 'token' },
 		logger: { error: console.error },
 	} as unknown as EndpointExtensionContext;
 
@@ -44,13 +50,30 @@ describe('/admin-sponsors endpoint', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
-	createAdminSponsorsEndpoint(queryService, githubLoginResolver)(router, endpointContext);
+	(endpoint as any)(router, endpointContext);
 	app.use(router);
+
+	before(() => {
+		nock.disableNetConnect();
+		nock.enableNetConnect('127.0.0.1');
+	});
 
 	beforeEach(() => {
 		sinon.resetHistory();
-		insert.resolves();
+		Object.values(stubs).forEach(stub => stub.returns(database));
+		stubs.first.resolves({});
+		stubs.limit.resolves([]);
+		stubs.insert.resolves();
+		nock('https://api.github.com').get('/user/6191378').reply(200, { login: 'jsDelivr' });
 		accountability = { user: 'admin-id', admin: true };
+	});
+
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
+	after(() => {
+		nock.enableNetConnect();
 	});
 
 	it('forbids a request without accountability', async () => {
@@ -73,27 +96,24 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).get('/summary').query({ period: '2025' });
 
 		expect(response.status).to.equal(200);
-		expect(response.body).to.deep.equal(summary);
-		expect(queryService.getSummary.firstCall.args[0]).to.equal(database);
 
-		expect(queryService.getSummary.firstCall.args[1]).to.deep.equal({
-			from: new Date('2025-01-01T00:00:00.000Z'),
-			to: new Date('2026-01-01T00:00:00.000Z'),
-			monthKeys: [
-				'2025-01',
-				'2025-02',
-				'2025-03',
-				'2025-04',
-				'2025-05',
-				'2025-06',
-				'2025-07',
-				'2025-08',
-				'2025-09',
-				'2025-10',
-				'2025-11',
-				'2025-12',
-			],
-		});
+		expect(response.body.chart.map((point: { month: string }) => point.month)).to.deep.equal([
+			'2025-01',
+			'2025-02',
+			'2025-03',
+			'2025-04',
+			'2025-05',
+			'2025-06',
+			'2025-07',
+			'2025-08',
+			'2025-09',
+			'2025-10',
+			'2025-11',
+			'2025-12',
+		]);
+
+		expect(stubs.where.calledWith('additions.date_created', '>=', new Date('2025-01-01T00:00:00.000Z'))).to.equal(true);
+		expect(stubs.where.calledWith('additions.date_created', '<', new Date('2026-01-01T00:00:00.000Z'))).to.equal(true);
 	});
 
 	it('applies event pagination defaults and parses event filters and sorting', async () => {
@@ -105,15 +125,11 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(200);
-
-		expect(queryService.getEvents.firstCall.args[2]).to.deep.equal({
-			period: '2025',
-			offset: 0,
-			limit: 10,
-			types: [ 'recurring_sponsorship', 'tier_changed' ],
-			sort: 'sponsorshipValue',
-			direction: 'asc',
-		});
+		expect(response.body).to.deep.equal({ items: [], total: 0 });
+		expect(stubs.whereIn.calledWith('additions.reason', [ 'recurring_sponsorship', 'tier_changed' ])).to.equal(true);
+		expect(stubs.orderByRaw.firstCall.args[0]).to.include('amountInDollars').and.to.match(/ asc$/);
+		expect(stubs.offset.calledWith(0)).to.equal(true);
+		expect(stubs.limit.calledWith(10)).to.equal(true);
 	});
 
 	it('rejects invalid event pagination, filters, and sorting', async () => {
@@ -126,7 +142,7 @@ describe('/admin-sponsors endpoint', () => {
 		expect(invalidType.status).to.equal(400);
 		expect(invalidSort.status).to.equal(400);
 		expect(invalidDirection.status).to.equal(400);
-		expect(queryService.getEvents.called).to.equal(false);
+		expect(stubs.limit.called).to.equal(false);
 	});
 
 	it('parses account filters', async () => {
@@ -142,17 +158,11 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(200);
-
-		expect(queryService.getAccounts.firstCall.args[2]).to.deep.equal({
-			period: '2025',
-			offset: 10,
-			limit: 20,
-			search: 'example',
-			statuses: [ 'active', 'former' ],
-			linked: true,
-			sort: 'status',
-			direction: 'desc',
-		});
+		expect(stubs.whereRaw.calledWith('(current_sponsors.github_id IS NOT NULL OR (current_sponsors.github_id IS NULL AND history.has_recurring = 1))')).to.equal(true);
+		expect(stubs.whereRaw.calledWith('directus_users.id IS NOT NULL')).to.equal(true);
+		expect(stubs.orderByRaw.firstCall.args[0]).to.include('CASE').and.to.match(/ desc$/);
+		expect(stubs.offset.calledWith(10)).to.equal(true);
+		expect(stubs.limit.calledWith(20)).to.equal(true);
 	});
 
 	it('rejects invalid account filters and sorting', async () => {
@@ -165,7 +175,7 @@ describe('/admin-sponsors endpoint', () => {
 		expect(invalidLinked.status).to.equal(400);
 		expect(invalidSort.status).to.equal(400);
 		expect(invalidDirection.status).to.equal(400);
-		expect(queryService.getAccounts.called).to.equal(false);
+		expect(stubs.limit.called).to.equal(false);
 	});
 
 	it('applies manual-addition pagination defaults and parses filters and sorting', async () => {
@@ -177,15 +187,9 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(200);
-
-		expect(queryService.getManualAdditions.firstCall.args[1]).to.deep.equal({
-			offset: 0,
-			limit: 10,
-			search: 'example',
-			types: [ 'payment', 'other' ],
-			sort: 'credits',
-			direction: 'asc',
-		});
+		expect(stubs.orderByRaw.calledWith('additions.amount asc')).to.equal(true);
+		expect(stubs.offset.calledWith(0)).to.equal(true);
+		expect(stubs.limit.calledWith(10)).to.equal(true);
 	});
 
 	it('creates a manual addition attributed to the authenticated administrator', async () => {
@@ -199,10 +203,9 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).post('/manual-additions').send(body);
 
 		expect(response.status).to.equal(201);
-		expect(databaseStub.calledOnceWithExactly('gp_credits_additions')).to.equal(true);
-		expect(githubLoginResolver.calledOnceWithExactly('6191378', endpointContext)).to.equal(true);
+		expect(nock.isDone()).to.equal(true);
 
-		expect(insert.firstCall.args[0]).to.deep.include({
+		expect(stubs.insert.firstCall.args[0]).to.deep.include({
 			github_id: '6191378',
 			amount: 10_000,
 			reason: 'one_time_sponsorship',
@@ -210,7 +213,7 @@ describe('/admin-sponsors endpoint', () => {
 			user_updated: 'admin-id',
 		});
 
-		expect(insert.firstCall.args[0].date_created).to.be.instanceOf(Date);
+		expect(stubs.insert.firstCall.args[0].date_created).to.be.instanceOf(Date);
 	});
 
 	it('creates other credits with the user-visible comment', async () => {
@@ -223,13 +226,29 @@ describe('/admin-sponsors endpoint', () => {
 
 		expect(response.status).to.equal(201);
 
-		expect(insert.firstCall.args[0]).to.deep.include({
+		expect(stubs.insert.firstCall.args[0]).to.deep.include({
 			github_id: '6191378',
 			amount: 10_000,
 			reason: 'other',
 			meta: JSON.stringify({ comment: 'Customer support adjustment.', githubLogin: 'jsDelivr', manual: true }),
 			user_updated: 'admin-id',
 		});
+	});
+
+	it('rejects a manual addition for an unknown GitHub account', async () => {
+		nock.cleanAll();
+		nock('https://api.github.com').get('/user/6191378').reply(404);
+
+		const response = await request(app).post('/manual-additions').send({
+			type: 'other',
+			githubId: '6191378',
+			credits: 10_000,
+			comment: 'Customer support adjustment.',
+		});
+
+		expect(response.status).to.equal(400);
+		expect(response.text).to.equal('GitHub account not found.');
+		expect(stubs.insert.called).to.equal(false);
 	});
 
 	it('rejects an invalid manual-addition comment', async () => {
@@ -241,7 +260,7 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(400);
-		expect(insert.called).to.equal(false);
+		expect(stubs.insert.called).to.equal(false);
 	});
 
 	it('rejects invalid manual-addition filters and sorting', async () => {
@@ -252,6 +271,6 @@ describe('/admin-sponsors endpoint', () => {
 		expect(invalidType.status).to.equal(400);
 		expect(invalidSort.status).to.equal(400);
 		expect(invalidDirection.status).to.equal(400);
-		expect(queryService.getManualAdditions.called).to.equal(false);
+		expect(stubs.limit.called).to.equal(false);
 	});
 });
