@@ -3,9 +3,9 @@ import { randomUUID } from 'crypto';
 import { client } from './client.ts';
 import { User } from './types.ts';
 
-export const generateUser = async (suffix = ''): Promise<User> => {
+export const generateUser = async (suffix = '', roleName = 'User'): Promise<User> => {
 	const userId = randomUUID();
-	const userRole = await client('directus_roles').where({ name: 'User' }).select('id').first();
+	const userRole = await client('directus_roles').where({ name: roleName }).select('id').first();
 
 	return {
 		id: userId,
@@ -26,6 +26,7 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 };
 
 export const clearUserData = async (user: User) => {
+	await client('sponsors').where({ github_id: user.external_identifier }).delete();
 	await client('gp_credits_additions').where({ github_id: user.external_identifier }).delete();
 	await client('gp_credits').where({ user_id: user.id }).delete();
 	await client('gp_credits_deductions').where({ user_id: user.id }).delete();
