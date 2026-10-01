@@ -1,6 +1,6 @@
 {
 	"name": "gp-orgs",
-	"description": "Strips the org adoption token from reads for everyone but the admins of that org.",
+	"description": "Exposes the org adoption tokens to the admins of that org, and accepts only removals from extra_adoption_tokens.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
@@ -43,6 +43,7 @@
 		"typescript": "^5.8.3"
 	},
 	"dependencies": {
-		"@directus/errors": "^2.3.1"
+		"@directus/errors": "^2.3.1",
+		"joi": "^18.0.1"
 	}
 }

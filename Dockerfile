@@ -18,6 +18,7 @@ COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/met
 COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
 COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/endpoints/sponsorship-details/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
+COPY src/extensions/endpoints/transfer-data/package.json src/extensions/endpoints/transfer-data/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
 COPY src/extensions/hooks/cors/package.json src/extensions/hooks/cors/
 COPY src/extensions/hooks/directus-users/package.json src/extensions/hooks/directus-users/

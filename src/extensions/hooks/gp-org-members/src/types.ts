@@ -8,3 +8,7 @@ export type Membership = {
 	org: string;
 	user: string;
 };
+
+export type MemberRow = {
+	id?: string;
+};

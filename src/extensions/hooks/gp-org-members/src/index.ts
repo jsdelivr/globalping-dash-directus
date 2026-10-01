@@ -1,14 +1,26 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
+import { addUsernames } from './actions/add-usernames.js';
 import { validatePreferences, validateRole } from './actions/validate.js';
 import { getMemberships } from './repositories/directus.js';
-import type { Fields } from './types.js';
+import type { Fields, MemberRow } from './types.js';
 
 const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 
-// `role` and `notification_preferences` need different update rules, but a Directus permission applies a single rule to the
-// whole update - so they are authorized here instead.
 export default defineHook(({ filter }) => {
+	filter('gp_org_members.items.read', async (payload, _meta, context) => {
+		const members = payload as MemberRow[];
+		const { accountability } = context;
+
+		if (!accountability?.user) { return payload; }
+
+		// The github_username of a membership is not readable by permissions, so usernames for the memberships the caller may see are added here.
+		await addUsernames(members, context);
+
+		return payload;
+	});
+
+	// `role` and `notification_preferences` need different update rules, but a Directus permission applies a single rule to the whole update - so they are authorized here instead.
 	filter('gp_org_members.items.update', async (payload, meta, context) => {
 		const fields = payload as Fields;
 		const keys = meta.keys as string[];
