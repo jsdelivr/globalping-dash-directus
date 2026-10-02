@@ -19,10 +19,16 @@ const openAccounts = async (page: Page) => {
 	await page.getByRole('menuitem', { name: 'Act as organization' }).click();
 };
 
+const openAddOrganization = async (page: Page) => {
+	await openAccounts(page);
+	await page.getByRole('menuitem', { name: 'Add organization' }).click();
+};
+
+const orgRow = (page: Page, name: string) => page.getByRole('dialog').getByRole('row', { name });
+
 const switchTo = async (page: Page, name: string) => {
 	await openAccounts(page);
-	await page.getByRole('menuitem', { name, exact: true }).click();
-	await page.waitForLoadState('load');
+	await Promise.all([ page.waitForEvent('load'), page.getByRole('menuitem', { name, exact: true }).click() ]);
 };
 
 test('an org added through "Add organization" appears in the menu without becoming active', async ({ browser, org }) => {
@@ -33,12 +39,11 @@ test('an org added through "Add organization" appears in the menu without becomi
 	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toHaveCount(0);
 
 	await page.getByRole('menuitem', { name: 'Add organization' }).click();
-	const dialog = page.getByRole('dialog');
-	await dialog.getByRole('row', { name: org.name }).getByRole('button', { name: 'Add' }).click();
-	await expect(dialog.getByRole('row', { name: org.name }).getByRole('button', { name: 'Remove' })).toBeVisible();
+	await orgRow(page, org.name).getByRole('button', { name: 'Add' }).click();
+	await expect(orgRow(page, org.name).getByRole('button', { name: 'Remove' })).toBeVisible();
 	expect(await selectedOrgsOf(org.member)).toEqual([ org.id ]);
 
-	await dialog.getByRole('button', { name: 'Close' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 	await openAccounts(page);
 	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toBeVisible();
 
@@ -85,8 +90,7 @@ test('the mobile menu switches the account too', async ({ browser, org }) => {
 	await page.goto('/');
 
 	await page.getByLabel('Menu').click();
-	await page.locator('[data-pc-name="drawer"]').getByRole('button', { name: org.name }).click();
-	await page.waitForLoadState('load');
+	await Promise.all([ page.waitForEvent('load'), page.locator('[data-pc-name="drawer"]').getByRole('button', { name: org.name }).click() ]);
 
 	expect(await activeAccountCookie(page)).toBe(`${org.member.id}:${org.account_id}`);
 });
@@ -95,8 +99,7 @@ test('a user in no org is told so in "Add organization"', async ({ browser, user
 	const page = await pageAs(browser, user.email, 'user');
 	await page.goto('/');
 
-	await openAccounts(page);
-	await page.getByRole('menuitem', { name: 'Add organization' }).click();
+	await openAddOrganization(page);
 	await expect(page.getByRole('dialog')).toContainText('You are not a member of any organization on GitHub.');
 });
 
@@ -121,10 +124,8 @@ test('removing the active org, or its disappearing from the selection, switches 
 	await switchTo(page, org.name);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
 
-	await openAccounts(page);
-	await page.getByRole('menuitem', { name: 'Add organization' }).click();
-	await page.getByRole('dialog').getByRole('row', { name: org.name }).getByRole('button', { name: 'Remove' }).click();
-	await page.waitForLoadState('load');
+	await openAddOrganization(page);
+	await Promise.all([ page.waitForEvent('load'), orgRow(page, org.name).getByRole('button', { name: 'Remove' }).click() ]);
 
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
 	expect(await activeAccountCookie(page)).toBeUndefined();
@@ -133,6 +134,7 @@ test('removing the active org, or its disappearing from the selection, switches 
 	await selectOrgs(org.member, [ org.id ]);
 	await page.reload();
 	await switchTo(page, org.name);
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
 	await selectOrgs(org.member, []);
 	await page.reload();
 
@@ -166,6 +168,7 @@ test('leaving the active org switches back to the personal account', async ({ br
 
 test('the active org stays after signing out, and another user signing in ignores it', async ({ browser, org }) => {
 	await selectOrgs(org.member, [ org.id ]);
+	await selectOrgs(org.admin, [ org.id ]);
 
 	const page = await pageAs(browser, org.member.email, 'user');
 	await page.goto('/');
@@ -185,6 +188,7 @@ test('the active org stays after signing out, and another user signing in ignore
 });
 
 test('an admin impersonating a user acts as that user\'s orgs, without touching their own cookie', async ({ browser, org }) => {
+	await selectOrgs(org.member, [ org.id ]);
 	await addProbe({ account_id: org.account_id, name: 'e2e-probe-of-the-org' });
 
 	const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
@@ -195,17 +199,20 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 	await page.getByRole('button', { name: 'Apply' }).click();
 	await expect(page.getByText(`Impersonating ${org.member.github_username}`)).toBeVisible();
 
-	await openAccounts(page);
-	await page.getByRole('menuitem', { name: 'Add organization' }).click();
-	await page.getByRole('dialog').getByRole('row', { name: org.name }).getByRole('button', { name: 'Add' }).click();
-	await expect(page.getByRole('dialog').getByRole('row', { name: org.name }).getByRole('button', { name: 'Remove' })).toBeVisible();
-	expect(await selectedOrgsOf(org.member)).toEqual([ org.id ]);
+	const admin = await sql('directus_users').where({ email: process.env.ADMIN_EMAIL }).first('id');
+	const adminCookie = `${admin.id}:${randomUUID()}`;
+	await page.context().addCookies([{ name: 'gp_active_account', value: adminCookie, url: process.env.DASH_URL! }]);
+
+	await openAddOrganization(page);
+	await expect(orgRow(page, org.name).getByRole('button', { name: 'Remove' })).toBeDisabled();
 	await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
 	await switchTo(page, org.name);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	await expect(page.getByText('Organization role: Member')).toBeVisible();
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect(await page.evaluate(() => sessionStorage.getItem('impersonationActiveAccount'))).toBe(`${org.member.id}:${org.account_id}`);
+	expect(await activeAccountCookie(page)).toBe(adminCookie);
 });
 
 test('admin mode offers no account to act as, and leaving it brings the active org back', async ({ browser, org }) => {
@@ -213,25 +220,27 @@ test('admin mode offers no account to act as, and leaving it brings the active o
 	await sql('gp_org_members').insert({ id: randomUUID(), org: org.id, user: admin.id, role: 'member' });
 	await sql('directus_users').where({ id: admin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 
-	const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
-	await page.goto('/probes');
-	await switchTo(page, org.name);
-	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	try {
+		const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
+		await page.goto('/probes');
+		await switchTo(page, org.name);
+		await expect(page.getByLabel('Profile')).toContainText(org.name);
 
-	await page.getByLabel('Admin Panel').click();
-	await page.getByRole('switch').click();
-	await expect(page.getByText('Admin Mode')).toBeVisible();
+		await page.getByLabel('Admin Panel').click();
+		await page.getByRole('switch').click();
+		await expect(page.getByText('Admin Mode')).toBeVisible();
 
-	await page.getByLabel('Profile').click();
-	await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
-	await expect(page.getByRole('menuitem', { name: 'Act as organization' })).toHaveCount(0);
-	await page.keyboard.press('Escape');
+		await page.getByLabel('Profile').click();
+		await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
+		await expect(page.getByRole('menuitem', { name: 'Act as organization' })).toHaveCount(0);
+		await page.keyboard.press('Escape');
 
-	expect(await activeAccountCookie(page)).toBe(`${admin.id}:${org.account_id}`);
+		expect(await activeAccountCookie(page)).toBe(`${admin.id}:${org.account_id}`);
 
-	await page.getByLabel('Admin Panel').click();
-	await page.getByRole('switch').click();
-	await expect(page.getByLabel('Profile')).toContainText(org.name);
-
-	await sql('directus_users').where({ id: admin.id }).update({ selected_orgs: '[]' });
+		await page.getByLabel('Admin Panel').click();
+		await page.getByRole('switch').click();
+		await expect(page.getByLabel('Profile')).toContainText(org.name);
+	} finally {
+		await sql('directus_users').where({ id: admin.id }).update({ selected_orgs: '[]' });
+	}
 });
