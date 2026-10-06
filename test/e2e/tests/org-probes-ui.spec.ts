@@ -1,17 +1,10 @@
-import type { Browser, Locator } from '@playwright/test';
+import type { Locator } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
-import type { Org, User } from '../types.ts';
-import { addProbe, pageAs } from '../utils.ts';
+import type { User } from '../types.ts';
+import { actAsOrg, addProbe, pageAs } from '../utils.ts';
 
 const ADMIN_ONLY_HINT = 'Only organization admins can do this';
-
-const actAsOrg = async (browser: Browser, org: Org, user: User) => {
-	await sql('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
-	const page = await pageAs(browser, user.email, 'user');
-	await page.context().addCookies([{ name: 'gp_active_account', value: `${user.id}:${org.account_id}`, url: process.env.DASH_URL! }]);
-	return page;
-};
 
 const expectEditable = async (locator: Locator, editable: boolean) => editable ? expect(locator).toBeEnabled() : expect(locator).toBeDisabled();
 

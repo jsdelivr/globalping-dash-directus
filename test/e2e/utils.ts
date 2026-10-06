@@ -218,3 +218,10 @@ export const pageAs = async (browser: Browser, email: string, password: string) 
 
 	return context.newPage();
 };
+
+export const actAsOrg = async (browser: Browser, org: Org, user: User) => {
+	await client('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+	const page = await pageAs(browser, user.email, 'user');
+	await page.context().addCookies([{ name: 'gp_active_account', value: `${user.id}:${org.account_id}`, url: process.env.DASH_URL! }]);
+	return page;
+};
