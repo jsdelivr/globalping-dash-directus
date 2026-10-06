@@ -50,9 +50,9 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 
 ## 5. Tokens, approvals and the clients
 
-5.1 **Tokens page in org mode** shows the user's own tokens and approvals inside the org; "generate token" creates an org item and is disabled for viewers. The create call passes `account_id` of the active account: without it a database trigger fills in the creator's personal account, so a token generated in org mode lands in the personal list and never appears in the org's.
+5.1 **Tokens page in org mode** shows the user's own tokens and approvals inside the org; "generate token" creates an org item and is disabled for viewers, with a tooltip saying why. The create call passes `account_id` of the active account: without it a database trigger fills in the creator's personal account, so a token generated in org mode lands in the personal list and never appears in the org's.
 
-5.2 **The OAuth approval screen gains the account picker** and posts `accountId` on every approval, the personal account included. The picker offers the personal account and the `selected_orgs` where the role is admin or member: gp-auth refuses an approval for an org where the user is a viewer, so a viewer's orgs are left out rather than offered and refused. Until this ships the field stays optional in gp-auth: the deployed screen posts only `approved`, and a missing `accountId` has to keep meaning the personal account.
+5.2 **The OAuth approval screen gains the account picker** and posts `accountId` on every approval, the personal account included. The picker offers the personal account and the `selected_orgs` where the role is admin or member: gp-auth refuses an approval for an org where the user is a viewer, so a viewer's orgs are left out rather than offered and refused. The picker is a select that starts on the active account when it is offered, and on the personal account otherwise. Until this ships the field stays optional in gp-auth: the deployed screen posts only `approved`, and a missing `accountId` has to keep meaning the personal account.
 
 5.3 **The CLI, the chat bots and the MCP server** (`globalping-cli`, `globalping-chat-bots`, `globalping-mcp-server`) read `organization` from `/oauth/token/introspect` and say which account a token acts for. Without it "Logged in as john" hides the fact that the credits come from an org.
 
