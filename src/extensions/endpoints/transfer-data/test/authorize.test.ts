@@ -56,6 +56,7 @@ describe('authorize', () => {
 			orgId: ORG,
 			orgAccountId: 'org-account',
 			orgGithubId: 'gh-org',
+			becameAdmin: true,
 		});
 	});
 
@@ -91,8 +92,7 @@ describe('authorize', () => {
 	it('should allow credits from a member when the org already has an admin, and not make them an admin', async () => {
 		admin = { id: 'somebody-else' };
 
-		await authorize(ORG, USER, 'credits', trx);
-
+		expect((await authorize(ORG, USER, 'credits', trx)).becameAdmin).to.equal(false);
 		expect(update.callCount).to.equal(0);
 	});
 

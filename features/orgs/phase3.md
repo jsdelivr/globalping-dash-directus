@@ -121,7 +121,9 @@ the removal UI of phase 4 reachable, and 2.1 is what makes it safe.
 3.1 **Shape.** One Directus extension, five endpoints:
 
 - `transfer probes`, `transfer tokens`, `transfer credits` - one per entity kind, each its own transaction. A user may hand over
-  their probes and keep their credits; nothing forces the three to happen together or in any order.
+  their probes and keep their credits; nothing forces the three to happen together or in any order. Each answers with what it
+  moved - `{ probes }`, `{ tokens, approvals }` or `{ credits }` - and `becameAdmin` (3.3), and refuses with 400 when there is
+  nothing to move, so an empty transfer neither reports success nor makes anybody an admin.
 - `credits-redirect` GET - the redirects where the active account's github id is the source or the target. It is the only
   reader of the table (1.4), and the org half of it is admin-only for the reason 1.4 gives: the counterparty of an org's redirect
   is a person no other row a member can read names. Each side comes back with its name - the user's

@@ -52,5 +52,6 @@ export const authorize = async (orgId: string, userId: string, operation: Operat
 		orgId,
 		orgAccountId: orgAccount.id,
 		orgGithubId: org.github_id,
+		becameAdmin: !admin,
 	};
 };

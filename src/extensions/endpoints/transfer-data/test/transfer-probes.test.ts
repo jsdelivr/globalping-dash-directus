@@ -11,6 +11,7 @@ describe('transfer probes', () => {
 		orgId: 'org-1',
 		orgAccountId: 'org-account',
 		orgGithubId: 'gh-org',
+		becameAdmin: false,
 	};
 
 	let movedProbes = 1;
@@ -39,7 +40,7 @@ describe('transfer probes', () => {
 	});
 
 	it('should move the probes, add the user adoption token to the org and generate a new token for the user', async () => {
-		await transferProbes(TRANSFER, trx);
+		expect(await transferProbes(TRANSFER, trx)).to.deep.equal({ probes: 1 });
 
 		expect(updates.gp_probes).to.deep.equal([{ account_id: 'org-account' }]);
 		expect(raw.firstCall.args[1]).to.deep.equal({ username: 'alice', token: 'old-token', org: 'org-1' });
@@ -47,12 +48,13 @@ describe('transfer probes', () => {
 		expect((updates.directus_users?.[0] as { adoption_token: string }).adoption_token).to.not.equal('old-token');
 	});
 
-	it('should not change any token when the user has no probes', async () => {
+	it('should reject and not change any token when the user has no probes', async () => {
 		movedProbes = 0;
 
-		await transferProbes(TRANSFER, trx);
+		const error = await transferProbes(TRANSFER, trx).catch(err => err);
 
-		expect(updates.gp_probes).to.have.length(1);
+		expect((error as Error).message).to.equal('You have no probes to transfer.');
+		expect((error as { status: number }).status).to.equal(400);
 		expect(raw.callCount).to.equal(0);
 		expect(updates.directus_users).to.equal(undefined);
 	});
