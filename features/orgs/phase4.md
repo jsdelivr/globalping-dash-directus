@@ -44,6 +44,8 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 
 3.3 **Every adoption call passes `accountId` explicitly** - the active account, personal or org: adoption-code `send-code` and `verify-code`, and local-adoption `/adopt`. The legacy `userId` form and the implicit personal-account default stay only for the old dashboard and are dropped in phase 5.
 
+3.4 **The personal default tag prefix is softly retired.** The settings page hides "Default tag prefix" while `default_prefix` equals the `github_username`, along with the copy that offers switching to an org name ("To use your organization name instead, change your default tag prefix above"): a user who never moved off the username is not invited to start using an org name now, since org-named probes belong in the org (6.2). A user whose `default_prefix` is an org name still sees the selector, with two options - the current value and the `github_username` - so they can move back to the username; once they do, the selector disappears for good. The backend keeps accepting `github_organizations` until phase 5, which narrows `validateDefaultPrefix` to the same two values.
+
 ## 4. Credits
 
 4.1 **Org stats and history in org view**, scoped by account like every other list. Redirects are not managed here: a user routes their sponsorship from the migrate section (7.3), and an org's own redirect is on the Organization screen (6.2).
