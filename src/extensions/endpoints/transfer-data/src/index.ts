@@ -52,12 +52,12 @@ export default defineEndpoint((router, context) => {
 			const req = _req as Request;
 			const { orgId } = req.body as { orgId: string };
 
-			await database.transaction(async (trx) => {
+			const result = await database.transaction(async (trx) => {
 				const authorized = await authorize(orgId, req.accountability.user!, operation, trx);
-				await transfer(authorized, trx);
+				return { ...await transfer(authorized, trx), becameAdmin: authorized.becameAdmin };
 			});
 
-			res.send('Transferred to the organization.');
+			res.send(result);
 		}, context));
 	});
 

@@ -26,9 +26,17 @@ test('a member of an org with no admin can move probes, tokens and credits, and 
 	await addApplication({ accountId: org.member.account_id, userId: org.member.id });
 	await sql('gp_credits').insert({ account_id: org.member.account_id, amount: 500 });
 
-	for (const what of [ 'credits', 'tokens', 'probes' ]) {
-		expect((await transfer(actors.member, what, org.id)).status, what).toBe(200);
-	}
+	const credits = await transfer(actors.member, 'credits', org.id);
+	expect(credits.status).toBe(200);
+	expect(credits.data).toEqual({ credits: 500, becameAdmin: true });
+
+	const tokens = await transfer(actors.member, 'tokens', org.id);
+	expect(tokens.status).toBe(200);
+	expect(tokens.data).toEqual({ tokens: 1, approvals: 1, becameAdmin: false });
+
+	const probes = await transfer(actors.member, 'probes', org.id);
+	expect(probes.status).toBe(200);
+	expect(probes.data).toEqual({ probes: 1, becameAdmin: false });
 
 	expect(await roleOf(org, org.member)).toBe('admin');
 	expect(await creditsOf(org.account_id)).toBe(500);
@@ -103,6 +111,8 @@ test('when the same app is approved in both accounts, the org approval is kept a
 });
 
 test('a member can not move probes when the org already has an admin, but can move tokens and credits', async ({ org, actors }) => {
+	await addProbe({ userId: org.member.id, account_id: org.member.account_id });
+	await addApplication({ accountId: org.member.account_id, userId: org.member.id });
 	await sql('gp_credits').insert({ account_id: org.member.account_id, amount: 500 });
 
 	const refused = await transfer(actors.member, 'probes', org.id);
@@ -123,6 +133,22 @@ test('a member can not move probes when the org already has an admin, but can mo
 	} finally {
 		await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).delete();
 	}
+});
+
+test('a transfer with nothing to move is rejected and does not make the user an admin', async ({ org, actors }) => {
+	await emptyTheOrg(org);
+
+	for (const [ what, message ] of [
+		[ 'probes', 'You have no probes to transfer.' ],
+		[ 'tokens', 'You have no tokens or app approvals to transfer.' ],
+		[ 'credits', 'You have no credits to transfer.' ],
+	]) {
+		const refused = await transfer(actors.member, what, org.id);
+		expect(refused.status, what).toBe(400);
+		expect(refused.data, what).toBe(message);
+	}
+
+	expect(await roleOf(org, org.member)).toBe('member');
 });
 
 test('a viewer, a user from another org and an unknown org are rejected', async ({ org, org2, actors }) => {
@@ -212,6 +238,7 @@ test('a user can delete a redirect from an org to them, and creating their own r
 
 test('moving credits does not delete any redirect', async ({ org, org2, actors }) => {
 	await emptyTheOrg(org);
+	await sql('gp_credits').insert({ account_id: org.member.account_id, amount: 500 });
 
 	await sql('gp_credits_redirects').insert([
 		{ id: randomUUID(), source_github_id: org.github_id, target_github_id: org.member.external_identifier },
@@ -242,7 +269,7 @@ test('a user with no probes keeps their adoption token, even after several probe
 	await emptyTheOrg(org);
 
 	for (const attempt of [ 1, 2, 3 ]) {
-		expect((await transfer(actors.member, 'probes', org.id)).status, `attempt ${attempt}`).toBe(200);
+		expect((await transfer(actors.member, 'probes', org.id)).status, `attempt ${attempt}`).toBe(400);
 	}
 
 	// Without probes the org has no use for the token, and handing it over anyway would add an entry per call.

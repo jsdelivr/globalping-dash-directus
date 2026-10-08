@@ -7,4 +7,5 @@ export type Transfer = {
 	orgId: string;
 	orgAccountId: string;
 	orgGithubId: string;
+	becameAdmin: boolean;
 };

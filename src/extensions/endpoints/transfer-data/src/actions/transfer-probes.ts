@@ -4,6 +4,7 @@ import { generateBytes } from '../../../../lib/src/bytes.js';
 import type { Transfer } from '../types.js';
 
 const NoGithubUsernameError = createError('INVALID_PAYLOAD_ERROR', 'A GitHub username is required to hand the probes over.', 400);
+const NoProbesError = createError('INVALID_PAYLOAD_ERROR', 'You have no probes to transfer.', 400);
 
 // The probes keep reporting the user's adoption token, so the token moves with them and the user gets a fresh one.
 const handOverAdoptionToken = async ({ userId, orgId }: Transfer, trx: Knex.Transaction) => {
@@ -29,9 +30,13 @@ const handOverAdoptionToken = async ({ userId, orgId }: Transfer, trx: Knex.Tran
 };
 
 export const transferProbes = async (transfer: Transfer, trx: Knex.Transaction) => {
-	const moved = await trx('gp_probes').where({ account_id: transfer.userAccountId }).update({ account_id: transfer.orgAccountId });
+	const probes = await trx('gp_probes').where({ account_id: transfer.userAccountId }).update({ account_id: transfer.orgAccountId });
 
-	if (moved) {
-		await handOverAdoptionToken(transfer, trx);
+	if (!probes) {
+		throw new NoProbesError();
 	}
+
+	await handOverAdoptionToken(transfer, trx);
+
+	return { probes };
 };

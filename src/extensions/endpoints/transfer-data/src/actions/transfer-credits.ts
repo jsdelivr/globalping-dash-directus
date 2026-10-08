@@ -1,5 +1,8 @@
+import { createError } from '@directus/errors';
 import type { Knex } from 'knex';
 import type { Transfer } from '../types.js';
+
+const NoCreditsError = createError('INVALID_PAYLOAD_ERROR', 'You have no credits to transfer.', 400);
 
 export const transferCredits = async ({ userAccountId, orgAccountId, userGithubId, orgGithubId }: Transfer, trx: Knex.Transaction) => {
 	const credits = await trx('gp_credits').where({ account_id: userAccountId }).first<{ amount: number } | undefined>('amount');
@@ -21,10 +24,18 @@ export const transferCredits = async ({ userAccountId, orgAccountId, userGithubI
 		ON DUPLICATE KEY UPDATE amount = gp_credits_deductions.amount + VALUES(amount)
 	`, { org: orgAccountId, user: userAccountId });
 
-	await trx('gp_credits_deductions').where({ account_id: userAccountId }).delete();
+	const deductions = await trx('gp_credits_deductions').where({ account_id: userAccountId }).delete();
 
-	await trx.raw(`
+	const [{ affectedRows: additions }] = (await trx.raw(`
 		UPDATE gp_credits_additions FORCE INDEX (github_id_and_date_created_index)
 		SET github_id = :org WHERE github_id = :user
-	`, { org: orgGithubId, user: userGithubId });
+	`, { org: orgGithubId, user: userGithubId })) as [{ affectedRows: number }];
+
+	const amount = credits?.amount ?? 0;
+
+	if (!amount && !deductions && !additions) {
+		throw new NoCreditsError();
+	}
+
+	return { credits: amount };
 };
