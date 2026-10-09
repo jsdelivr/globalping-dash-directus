@@ -1,4 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
+import { setSponsorshipTier } from '../../../../lib/src/sponsorship-tier.js';
 import type { CreditsAddition, DirectusSponsor, GithubSponsor } from '../types.js';
 
 export const getDirectusSponsors = async ({ services, getSchema }: OperationContext): Promise<DirectusSponsor[]> => {
@@ -12,8 +13,9 @@ export const getDirectusSponsors = async ({ services, getSchema }: OperationCont
 	return result;
 };
 
-export const createDirectusSponsor = async (githubSponsor: GithubSponsor, lastEarningDate: Date, { services, database, getSchema }: OperationContext) => {
-	const { ItemsService, UsersService } = services;
+export const createDirectusSponsor = async (githubSponsor: GithubSponsor, lastEarningDate: Date, context: OperationContext) => {
+	const { services, database, getSchema } = context;
+	const { ItemsService } = services;
 
 	const result = await database.transaction(async (trx) => {
 		const sponsorsService = new ItemsService('sponsors', {
@@ -21,19 +23,7 @@ export const createDirectusSponsor = async (githubSponsor: GithubSponsor, lastEa
 			knex: trx,
 		});
 
-		const usersService = new UsersService({
-			schema: await getSchema(),
-			knex: trx,
-		});
-
-		await usersService.updateByQuery({
-			filter: {
-				external_identifier: { _eq: githubSponsor.githubId },
-				user_type: { _neq: 'special' },
-			},
-		}, {
-			user_type: 'sponsor',
-		});
+		await setSponsorshipTier(githubSponsor.githubId, 'sponsor', context, trx);
 
 		const result = await sponsorsService.createOne({
 			github_login: githubSponsor.githubLogin,
@@ -59,8 +49,9 @@ export const updateDirectusSponsor = async (id: number, data: Partial<DirectusSp
 	return result;
 };
 
-export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { services, database, getSchema }: OperationContext) => {
-	const { ItemsService, UsersService } = services;
+export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, context: OperationContext) => {
+	const { services, database, getSchema } = context;
+	const { ItemsService } = services;
 
 	const result = await database.transaction(async (trx) => {
 		const sponsorsService = new ItemsService('sponsors', {
@@ -68,19 +59,7 @@ export const deleteDirectusSponsor = async (directusSponsor: DirectusSponsor, { 
 			knex: trx,
 		});
 
-		const usersService = new UsersService({
-			schema: await getSchema(),
-			knex: trx,
-		});
-
-		await usersService.updateByQuery({
-			filter: {
-				external_identifier: { _eq: directusSponsor.github_id },
-				user_type: { _neq: 'special' },
-			},
-		}, {
-			user_type: 'member',
-		});
+		await setSponsorshipTier(directusSponsor.github_id, 'member', context, trx);
 
 		const result = await sponsorsService.deleteOne(directusSponsor.id);
 		return result;

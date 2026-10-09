@@ -58,6 +58,7 @@ export type CreditsAddition = {
 	meta: {
 		amountInDollars: number;
 		tierId: string;
+		sponsorGithubId: string;
 	};
 	date_created: string;
 };

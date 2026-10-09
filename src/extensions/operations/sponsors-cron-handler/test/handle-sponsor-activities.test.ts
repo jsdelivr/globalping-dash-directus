@@ -10,9 +10,10 @@ describe('SponsorActivitiesHandler', () => {
 	// windowEnd  = 2026-05-06T11:50:00Z (−10 min)
 	const NOW = new Date('2026-05-06T12:00:00.000Z');
 
-	const database = {
-		transaction: async (f: any) => f({}),
-	} as unknown as OperationContext['database'];
+	const redirect = sinon.stub().resolves(undefined);
+	const database = Object.assign(() => ({ where: () => ({ first: redirect }) }), {
+		transaction: (f: (trx: object) => unknown) => Promise.resolve(f({})),
+	}) as unknown as OperationContext['database'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
@@ -31,6 +32,9 @@ describe('SponsorActivitiesHandler', () => {
 		createOne: sinon.stub().resolves(7),
 		readByQuery: sinon.stub().resolves([]),
 	};
+	const orgsService = {
+		updateByQuery: sinon.stub().resolves([]),
+	};
 	const usersService = {
 		updateByQuery: sinon.stub(),
 	};
@@ -39,6 +43,8 @@ describe('SponsorActivitiesHandler', () => {
 			if (collection === 'gp_credits_additions') { return creditsAdditionsService; }
 
 			if (collection === 'sponsors') { return sponsorsService; }
+
+			if (collection === 'gp_orgs') { return orgsService; }
 
 			throw new Error(`Unexpected collection: ${collection}`);
 		}),
@@ -65,6 +71,7 @@ describe('SponsorActivitiesHandler', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		redirect.resolves(undefined);
 		creditsAdditionsService.readByQuery.resolves([]);
 		sponsorsService.readByQuery.resolves([]);
 	});
@@ -108,7 +115,7 @@ describe('SponsorActivitiesHandler', () => {
 			github_id: '10',
 			amount: 50000,
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_ot_1' },
+			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_ot_1', sponsorGithubId: '10' },
 		}]);
 
 		expect(results).to.have.length(1);
@@ -128,7 +135,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '10',
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, tierId: 'tier_ot_1' },
+			meta: { amountInDollars: 5, tierId: 'tier_ot_1', sponsorGithubId: '10' },
 			date_created: '2026-05-05T15:00:05.000Z',
 		}]);
 
@@ -153,7 +160,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '10',
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5 },
+			meta: { amountInDollars: 5, sponsorGithubId: '10' },
 			date_created: '2026-05-05T15:00:30.000Z',
 		}]);
 
@@ -224,14 +231,16 @@ describe('SponsorActivitiesHandler', () => {
 			github_id: '20',
 			amount: 100000,
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0, tierId: 'tier_rec_1' },
+			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0, tierId: 'tier_rec_1', sponsorGithubId: '20' },
 		}]);
 
 		expect(results).to.have.length(1);
 	});
 
 	it('stores un-redirected github_id in sponsors table for redirected recurring sponsor', async () => {
-		// 66716858 → '6209808' per SOURCE_ID_TO_TARGET_ID.
+		// 66716858 → '6209808' per the redirects table.
+		redirect.resolves({ target_github_id: '6209808' });
+
 		mockActivities([{
 			id: 'SA_redirect_rec',
 			action: 'NEW_SPONSORSHIP',
@@ -300,7 +309,7 @@ describe('SponsorActivitiesHandler', () => {
 			github_id: '30',
 			amount: 50000, // diff = 5, 5 * 10000 = 50000
 			reason: 'tier_changed',
-			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_2' },
+			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_2', sponsorGithubId: '30' },
 		}]);
 
 		expect(results).to.have.length(1);
@@ -338,7 +347,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '30',
 			reason: 'tier_changed',
-			meta: { amountInDollars: 5, tierId: 'tier_2' },
+			meta: { amountInDollars: 5, tierId: 'tier_2', sponsorGithubId: '30' },
 			date_created: '2026-05-05T15:00:04.000Z',
 		}]);
 
@@ -351,8 +360,8 @@ describe('SponsorActivitiesHandler', () => {
 
 	// ── ID redirect ───────────────────────────────────────────────────────────
 
-	it('skips one-time credit when existing credit found under redirect', async () => {
-		// 66716858 → '6209808'; existing credit stored under redirected ID should match
+	it('skips one-time credit when the existing credit was paid to the redirect target', async () => {
+		// 66716858 → '6209808' per the redirects table; the addition names the sponsor, not the destination.
 		mockActivities([{
 			id: 'SA_11',
 			action: 'NEW_SPONSORSHIP',
@@ -365,7 +374,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '6209808',
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, tierId: 'tier_ot_x' },
+			meta: { amountInDollars: 5, tierId: 'tier_ot_x', sponsorGithubId: '66716858' },
 			date_created: '2026-05-05T15:00:05.000Z',
 		}]);
 
@@ -376,8 +385,36 @@ describe('SponsorActivitiesHandler', () => {
 		expect(results).to.deep.equal([]);
 	});
 
-	it('redirects github_id via SOURCE_ID_TO_TARGET_ID before creating credit', async () => {
-		// 66716858 → '6209808' per SOURCE_ID_TO_TARGET_ID in add-credits.ts
+	it('creates one-time credit when an addition to the same account came from another sponsor', async () => {
+		mockActivities([{
+			id: 'SA_13',
+			action: 'NEW_SPONSORSHIP',
+			timestamp: activityTimestamp,
+			sponsor: { databaseId: 41, login: 'erin' },
+			sponsorsTier: { id: 'tier_ot_y', monthlyPriceInDollars: 5, isOneTime: true },
+			previousSponsorsTier: null,
+		}]);
+
+		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
+			github_id: '41',
+			reason: 'one_time_sponsorship',
+			meta: { amountInDollars: 5, tierId: 'tier_ot_y', sponsorGithubId: '42' },
+			date_created: '2026-05-05T15:00:05.000Z',
+		}]);
+
+		creditsAdditionsService.readByQuery.onSecondCall().resolves([]);
+
+		const handler = new SponsorActivitiesHandler();
+		const results = await handler.handle(context);
+
+		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
+		expect(results).to.have.length(1);
+	});
+
+	it('redirects github_id before creating credit', async () => {
+		// 66716858 → '6209808' per the redirects table.
+		redirect.resolves({ target_github_id: '6209808' });
+
 		mockActivities([{
 			id: 'SA_10',
 			action: 'NEW_SPONSORSHIP',
@@ -484,7 +521,7 @@ describe('SponsorActivitiesHandler', () => {
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
 			github_id: '50',
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, tierId: 'tier_ot_dup' },
+			meta: { amountInDollars: 5, tierId: 'tier_ot_dup', sponsorGithubId: '50' },
 			date_created: '2026-05-05T15:00:05.000Z',
 		}]);
 
