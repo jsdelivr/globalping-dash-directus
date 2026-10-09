@@ -288,6 +288,23 @@ resolves relational data without emitting the read filter, so `members` under `g
 back without it: the members list is its own `/items/gp_org_members?fields=id,...` request, and the name is taken off the rows
 rather than asked for.
 
+## 5b. The default account and the org profile
+
+Both ship here so that the onboarding of phase 4 is a dash deploy only.
+
+5b.1 **`directus_users.default_account`**, a nullable M2O to `gp_accounts`: the account a new dashboard session starts in. `null`
+means the user has not picked one yet, which is what shows them the onboarding. The user reads and writes it on their own row,
+and the permission `validation` of that row limits it to their own account or the account of an org they are a member of, any
+role: `default_account _in [$CURRENT_USER.account.id, $CURRENT_USER.memberships.org.account.id]`. Directus resolves both paths per
+request and flattens the nested arrays, so no hook is needed. The foreign key is `ON DELETE SET NULL`: an org that is deleted
+sends its members back to the onboarding rather than to a dangling id. Leaving an org does not clear it; the dash falls back to the
+personal account while the org is not offered.
+
+5b.2 **`gp_orgs.website` and `gp_orgs.description`**, readable by every member like the other org fields and writable only by an
+admin of the org, through the same update rule as `public_probes`. The website must be an `https://` URL (a field validation, so
+it holds for every API writer), the description is a `varchar(200)` and longer values are refused by the database. Where they are
+shown publicly is a later step.
+
 ## 6. Tests
 
 6.1 **Unit**, per extension: the authorization matrix (3.2) with every cell, the promotion window (3.3), the subset validation
@@ -302,11 +319,13 @@ grows, the first entry survives); a transfer into an org that already holds an a
 created, overwritten, refused by the side receiving it and deleted; a rollback on a forced failure leaving nothing moved; an org admin reading the name of every
 member of the org while a member and a viewer read only their own, the name refused in every part of a query that names a field,
 and nothing of a co-member reachable through `/users` - not by a filter on the adoption token and not by an aggregate over the
-emails.
+emails. The default account accepted for the user's own account and for an org of any role, refused for another org or user (5b.1);
+the org website and description written by an admin only, an invalid URL and a 201 character description refused (5b.2).
 
 ## Deploy
 
-Directus: `schema:apply` for `gp_credits_redirects` and `gp_orgs.user_type`, then the migrations (redirect seed, sponsor id
-backfill, the `gp_orgs` permission), then restart. The member names (5) are extension code only, so they ship with that restart.
+Directus: `schema:apply` for `gp_credits_redirects`, `gp_orgs.user_type`, `directus_users.default_account` and the org profile
+fields, then the migrations (redirect seed, sponsor id backfill, the `gp_orgs` permission, the default account and org profile
+permissions), then restart. The member names (5) are extension code only, so they ship with that restart.
 gp-api is redeployed too, for the account tier of 4.2. The dash is not, so the endpoints have to be correct against the phase 2
 readers as they already run in prod.
