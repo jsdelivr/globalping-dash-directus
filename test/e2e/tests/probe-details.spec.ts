@@ -87,6 +87,17 @@ test('Manage probe tags', async ({ page, user }) => {
 	await expect(page.getByText(`u-${user.github_username}:home`, { exact: true })).not.toBeVisible();
 });
 
+test('Set a custom probe location', async ({ page, user }) => {
+	const probe = await addProbe(user);
+	await page.goto(`/probes/${probe.id}`);
+	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Prague');
+	await page.getByRole('combobox', { name: 'City name' }).fill('Brno');
+	await page.getByRole('button', { name: 'Save', exact: true }).click();
+	await expect(page.getByText('The probe has been successfully updated', { exact: true })).toBeVisible();
+	await page.reload();
+	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Brno');
+});
+
 test('Reset a custom probe location', async ({ page, user }) => {
 	const probe = await addProbe(user, {
 		city: 'Brno',
