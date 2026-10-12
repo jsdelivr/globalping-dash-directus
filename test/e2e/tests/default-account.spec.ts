@@ -1,53 +1,161 @@
-import type { AxiosInstance } from 'axios';
+import type { Browser, Page } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
+import type { Org, User } from '../types.ts';
+import { activeAccountCookie, pageAs } from '../utils.ts';
 
-const setDefaultAccount = (api: AxiosInstance, accountId: string | null) => api.patch('/users/me', { default_account: accountId });
+// A user who hasn't picked a default account yet, signed in.
+const onboard = async (browser: Browser, user: User) => {
+	await sql('directus_users').where({ id: user.id }).update({ default_account: null, selected_orgs: JSON.stringify([]) });
+	return pageAs(browser, user.email, 'user');
+};
 
-const defaultAccountOf = async (userId: string) => (await sql('directus_users').where({ id: userId }).first('default_account')).default_account as string | null;
+const userRow = (user: User) => sql('directus_users').where({ id: user.id }).first('default_account', 'selected_orgs', 'public_probes');
+const orgRow = (org: Org) => sql('gp_orgs').where({ id: org.id }).first('public_probes', 'website', 'description');
 
-test('a user can make their own account or the account of an org they are in the default one', async ({ org, actors }) => {
-	expect(await defaultAccountOf(org.member.id)).toBeNull();
+const dialogOf = async (page: Page) => {
+	await page.goto('/');
+	const dialog = page.getByRole('dialog', { name: 'Few more steps to go!' });
+	await expect(dialog).toBeVisible();
+	return dialog;
+};
 
-	expect((await setDefaultAccount(actors.member, org.member.account_id)).status).toBe(200);
-	expect(await defaultAccountOf(org.member.id)).toBe(org.member.account_id);
+const pickOrg = async (page: Page, org: Org) => {
+	const dialog = page.getByRole('dialog');
+	await dialog.locator('label').filter({ has: page.getByRole('radio', { name: /^Organization/ }) }).click();
+	await dialog.getByRole('combobox').click();
+	await page.locator('[data-pc-section=option]').filter({ hasText: org.name }).click();
+	return dialog;
+};
 
-	for (const role of [ 'admin', 'member', 'viewer' ] as const) {
-		expect((await setDefaultAccount(actors[role], org.account_id)).status, role).toBe(200);
-		expect(await defaultAccountOf(org[role].id), role).toBe(org.account_id);
-	}
+test('skipping the onboarding makes the personal account the default', async ({ browser, user }) => {
+	const page = await onboard(browser, user);
+	const dialog = await dialogOf(page);
 
-	expect((await setDefaultAccount(actors.member, null)).status).toBe(200);
-	expect(await defaultAccountOf(org.member.id)).toBeNull();
+	await dialog.getByRole('button', { name: 'Skip' }).click();
+	await expect(dialog).toBeHidden();
+	expect((await userRow(user)).default_account).toBe(user.account_id);
+
+	await page.reload();
+	await expect(page.getByLabel('Profile')).toContainText(user.github_username);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
-test('a user can not make the default account an org they are not in or another user\'s account', async ({ org, org2, user, actors }) => {
-	const attempts = [
-		{ api: actors.member, userId: org.member.id, accountId: org2.account_id },
-		{ api: actors.member, userId: org.member.id, accountId: org.admin.account_id },
-		{ api: actors.outsider, userId: user.id, accountId: org.account_id },
-	];
+test('a user in no org can only pick the personal account, and make their probes public', async ({ browser, user }) => {
+	const page = await onboard(browser, user);
+	const dialog = await dialogOf(page);
 
-	for (const { api, userId, accountId } of attempts) {
-		for (const request of [
-			() => setDefaultAccount(api, accountId),
-			() => api.patch(`/users/${userId}`, { default_account: accountId }),
-			() => api.patch('/users', { keys: [ userId ], data: { default_account: accountId } }),
-		]) {
-			const response = await request();
-			expect(response.status).toBe(400);
-			expect(response.data.errors[0].extensions.field).toBe('default_account');
-		}
+	await expect(dialog.getByRole('radio', { name: /^Organization/ })).toBeDisabled();
+	await expect(dialog).toContainText('You aren\'t a member of any GitHub organization yet.');
 
-		expect(await defaultAccountOf(userId)).toBeNull();
-	}
+	await dialog.locator('#onboarding-public-probes').check();
+	await dialog.getByRole('button', { name: 'Apply' }).click();
+	await expect(dialog).toBeHidden();
+
+	const row = await userRow(user);
+	expect(row.default_account).toBe(user.account_id);
+	expect(row.public_probes).toBe(1);
 });
 
-test('the default account is left alone by the other settings and is cleared with the org', async ({ org, actors }) => {
-	await setDefaultAccount(actors.member, org.account_id);
-	expect((await actors.member.patch('/users/me', { public_probes: true })).status).toBe(200);
-	expect(await defaultAccountOf(org.member.id)).toBe(org.account_id);
+test('an org admin picks the org: it is selected, becomes the default and active, and gets its settings and profile', async ({ browser, org }) => {
+	const page = await onboard(browser, org.admin);
+	await dialogOf(page);
+	const dialog = await pickOrg(page, org);
 
-	await sql('gp_orgs').where({ id: org.id }).delete();
-	expect(await defaultAccountOf(org.member.id)).toBeNull();
+	await dialog.locator('#onboarding-org-public-probes').check();
+	await dialog.getByLabel('Website URL').fill('example.com');
+	await dialog.getByLabel('Website URL').blur();
+	await expect(dialog).toContainText('Enter a full URL, e.g. https://example.com');
+	await expect(dialog.getByRole('button', { name: 'Apply' })).toBeDisabled();
+	await dialog.getByLabel('Website URL').fill('https://example.com');
+	await dialog.getByLabel('Description').fill('We measure the internet.');
+
+	await Promise.all([ page.waitForEvent('load'), dialog.getByRole('button', { name: 'Apply' }).click() ]);
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+
+	const row = await userRow(org.admin);
+	expect(row.default_account).toBe(org.account_id);
+	expect(JSON.parse(row.selected_orgs)).toEqual([ org.id ]);
+	expect(await orgRow(org)).toEqual({ public_probes: 1, website: 'https://example.com', description: 'We measure the internet.' });
+	expect((await activeAccountCookie(page))?.value).toBe(`${org.admin.id}:${org.account_id}`);
+});
+
+test('the org profile is offered only to admins and only while it is empty', async ({ browser, org }) => {
+	const memberPage = await onboard(browser, org.member);
+	await dialogOf(memberPage);
+	const memberDialog = await pickOrg(memberPage, org);
+
+	await expect(memberDialog.getByText('Make the organization probes public')).toHaveCount(0);
+	await expect(memberDialog.getByLabel('Website URL')).toHaveCount(0);
+	await Promise.all([ memberPage.waitForEvent('load'), memberDialog.getByRole('button', { name: 'Apply' }).click() ]);
+	expect((await userRow(org.member)).default_account).toBe(org.account_id);
+
+	await sql('gp_orgs').where({ id: org.id }).update({ website: 'https://example.com' });
+	const adminPage = await onboard(browser, org.admin);
+	await dialogOf(adminPage);
+	const adminDialog = await pickOrg(adminPage, org);
+
+	await expect(adminDialog.getByText('Make the organization probes public')).toBeVisible();
+	await expect(adminDialog.getByLabel('Website URL')).toHaveCount(0);
+});
+
+test('the active account cookie outlives the browser session, and a new session opens the default account or falls back to the personal one', async ({ browser, org }) => {
+	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
+
+	const page = await pageAs(browser, org.member.email, 'user');
+	await page.goto('/');
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
+
+	const cookie = await activeAccountCookie(page);
+	expect(cookie?.value).toBe(`${org.member.id}:${org.account_id}`);
+	expect(cookie!.expires * 1000).toBeGreaterThan(Date.now() + 300 * 24 * 60 * 60 * 1000);
+
+	// A default org that is no longer offered falls back to the personal account.
+	await sql('directus_users').where({ id: org.member.id }).update({ selected_orgs: JSON.stringify([]) });
+	const nextPage = await pageAs(browser, org.member.email, 'user');
+	await nextPage.goto('/');
+	await expect(nextPage.getByLabel('Profile')).toContainText(org.member.github_username);
+	expect((await activeAccountCookie(nextPage))?.value).toBe(`${org.member.id}:${org.member.account_id}`);
+	expect((await userRow(org.member)).default_account).toBe(org.account_id);
+});
+
+test('signing in again starts in the default account, not in the account left active by a previous session', async ({ browser, org }) => {
+	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
+
+	const page = await pageAs(browser, org.member.email, 'user');
+	await page.context().clearCookies({ name: 'dash_session_token' });
+	await page.context().addCookies([{ name: 'gp_active_account', value: `${org.member.id}:${org.member.account_id}`, url: process.env.DASH_URL! }]);
+	await page.route(`${process.env.DIRECTUS_URL}/auth/login/github*`, route => route.abort());
+
+	await page.goto('/login');
+	await page.getByRole('button', { name: 'Sign in with GitHub' }).click();
+	await expect.poll(async () => (await activeAccountCookie(page))?.value).toBeUndefined();
+});
+
+test('the default account can be changed in the settings', async ({ browser, org }) => {
+	await sql('directus_users').where({ id: org.member.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+
+	const page = await pageAs(browser, org.member.email, 'user');
+	await page.goto('/settings');
+	await page.getByLabel('Default account').click();
+	await page.locator('[data-pc-section=option]').filter({ hasText: org.name }).click();
+	await page.getByRole('button', { name: 'Apply settings' }).click();
+
+	await expect.poll(async () => (await userRow(org.member)).default_account).toBe(org.account_id);
+});
+
+test('an admin impersonating a user who has not picked a default account sees no onboarding', async ({ browser, user }) => {
+	await sql('directus_users').where({ id: user.id }).update({ default_account: null });
+
+	const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
+	await page.goto('/probes');
+	await page.getByLabel('Admin Panel').click();
+	await page.getByPlaceholder('Enter username').fill(user.github_username);
+	await page.getByRole('button', { name: 'Apply' }).click();
+	await expect(page.getByText(`Impersonating ${user.github_username}`)).toBeVisible();
+
+	await page.reload();
+	await expect(page.getByText(`Impersonating ${user.github_username}`)).toBeVisible();
+	await expect(page.getByRole('dialog', { name: 'Few more steps to go!' })).toHaveCount(0);
 });

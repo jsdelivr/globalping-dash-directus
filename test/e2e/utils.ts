@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { setTimeout } from 'node:timers/promises';
 import { randomUUID } from 'crypto';
-import { type Browser, request } from '@playwright/test';
+import { type Browser, type Page, request } from '@playwright/test';
 import axios from 'axios';
 import { client } from './client.ts';
 import { Actors, Org, User } from './types.ts';
@@ -35,6 +35,9 @@ export const generateUser = async (suffix = ''): Promise<User> => {
 
 	// The account row is created by a trigger when the user is inserted.
 	const account = await client('gp_accounts').where({ user: userId }).first('id') as { id: string };
+
+	// Sets the default account so the onboarding modal does not open.
+	await client('directus_users').where({ id: userId }).update({ default_account: account.id });
 	return { ...user, account_id: account.id };
 };
 
@@ -218,6 +221,8 @@ export const pageAs = async (browser: Browser, email: string, password: string) 
 
 	return context.newPage();
 };
+
+export const activeAccountCookie = async (page: Page) => (await page.context().cookies()).find(cookie => cookie.name === 'gp_active_account');
 
 export const actAsOrg = async (browser: Browser, org: Org, user: User) => {
 	await client('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });

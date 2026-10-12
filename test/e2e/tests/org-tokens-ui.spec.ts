@@ -92,6 +92,17 @@ test('the approval screen offers the personal account and the orgs where the use
 	expect(posted[0]!.get('accountId')).toBe(org.member.account_id);
 });
 
+test('the approval screen falls back to the default account when the active one can not be offered', async ({ browser, org, org2 }) => {
+	await sql('gp_org_members').insert({ id: randomUUID(), org: org2.id, user: org.member.id, role: 'viewer' });
+
+	const page = await actAsOrg(browser, org2, org.member);
+	await sql('directus_users').where({ id: org.member.id }).update({ selected_orgs: JSON.stringify([ org.id, org2.id ]), default_account: org.account_id });
+	await mockApproval(page);
+	await page.goto('/authorize/e2e-public-code');
+
+	await expect(page.getByRole('combobox', { name: 'Account' })).toHaveText(org.name);
+});
+
 test('the approval screen names the personal account without a picker when no org can be offered', async ({ browser, org }) => {
 	const page = await actAsOrg(browser, org, org.viewer);
 	const posted = await mockApproval(page);

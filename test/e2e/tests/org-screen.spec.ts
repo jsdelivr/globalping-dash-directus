@@ -126,3 +126,20 @@ test('an org admin changes roles: promotion applies at once, demotion from admin
 	await page.getByRole('dialog').getByRole('button', { name: 'Change to viewer' }).click();
 	await expect.poll(() => roleOf(org.id, org.member.id)).toBe('viewer');
 });
+
+test('an org admin edits the org website and description', async ({ browser, org }) => {
+	const page = await actAsOrg(browser, org, org.admin);
+	await page.goto('/organization');
+
+	await page.getByLabel('Website URL').fill('https://john-org');
+	await page.getByLabel('Website URL').blur();
+	await expect(page.getByText('Enter a full URL, e.g. https://example.com')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Apply settings' })).toBeDisabled();
+
+	await page.getByLabel('Website URL').fill('https://example.org/about');
+	await page.getByLabel('Description').fill('Probes everywhere.');
+	await expect(page.getByText('18/200')).toBeVisible();
+	await page.getByRole('button', { name: 'Apply settings' }).click();
+
+	await expect.poll(() => sql('gp_orgs').where({ id: org.id }).first('website', 'description')).toEqual({ website: 'https://example.org/about', description: 'Probes everywhere.' });
+});
