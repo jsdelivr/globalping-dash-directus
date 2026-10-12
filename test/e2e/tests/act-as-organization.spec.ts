@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import type { User } from '../types.ts';
-import { addProbe, pageAs } from '../utils.ts';
+import { activeAccountCookie, addProbe, pageAs } from '../utils.ts';
 
 const selectOrgs = (user: User, orgIds: string[]) => sql('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify(orgIds) });
 
@@ -12,7 +12,7 @@ const selectedOrgsOf = async (user: User) => {
 	return JSON.parse(row.selected_orgs) as string[];
 };
 
-const activeAccountCookie = async (page: Page) => (await page.context().cookies()).find(cookie => cookie.name === 'gp_active_account')?.value;
+const personalCookie = (user: User) => `${user.id}:${user.account_id}`;
 
 const openAccounts = async (page: Page) => {
 	await page.getByLabel('Profile').click();
@@ -48,7 +48,7 @@ test('an org added through "Add organization" appears in the menu without becomi
 	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toBeVisible();
 
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.member));
 });
 
 test('acting as an org switches every list and the header to it, and back', async ({ browser, org }) => {
@@ -67,7 +67,7 @@ test('acting as an org switches every list and the header to it, and back', asyn
 	await expect(page.getByText('e2e-probe-of-the-member')).toHaveCount(0);
 
 	// gp-api reads the same cookie, as the user and the account separated by a colon.
-	expect(await activeAccountCookie(page)).toBe(`${org.member.id}:${org.account_id}`);
+	expect((await activeAccountCookie(page))?.value).toBe(`${org.member.id}:${org.account_id}`);
 
 	// The choice survives a reload.
 	await page.goto('/');
@@ -79,7 +79,7 @@ test('acting as an org switches every list and the header to it, and back', asyn
 	await expect(page.getByTestId('total-credits')).toHaveText('0');
 	await page.goto('/probes');
 	await expect(page.getByText('e2e-probe-of-the-member').first()).toBeVisible();
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.member));
 });
 
 test('the mobile menu switches the account too', async ({ browser, org }) => {
@@ -92,7 +92,7 @@ test('the mobile menu switches the account too', async ({ browser, org }) => {
 	await page.getByLabel('Menu').click();
 	await Promise.all([ page.waitForEvent('load'), page.locator('[data-pc-name="drawer"]').getByRole('button', { name: org.name }).click() ]);
 
-	expect(await activeAccountCookie(page)).toBe(`${org.member.id}:${org.account_id}`);
+	expect((await activeAccountCookie(page))?.value).toBe(`${org.member.id}:${org.account_id}`);
 });
 
 test('a user in no org is told so in "Add organization"', async ({ browser, user }) => {
@@ -128,9 +128,9 @@ test('removing the active org, or its disappearing from the selection, switches 
 	await Promise.all([ page.waitForEvent('load'), orgRow(page, org.name).getByRole('button', { name: 'Remove' }).click() ]);
 
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.member));
 
-	// The same when the selection changes elsewhere, e.g. on another device: the stale cookie is dropped, so gp-api follows too.
+	// The same when the selection changes elsewhere, e.g. on another device: the stale cookie is replaced by the personal account, so gp-api follows too.
 	await selectOrgs(org.member, [ org.id ]);
 	await page.reload();
 	await switchTo(page, org.name);
@@ -139,16 +139,16 @@ test('removing the active org, or its disappearing from the selection, switches 
 	await page.reload();
 
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.member));
 });
 
-test('a cookie naming an org the user is not in is ignored and dropped', async ({ browser, org, user }) => {
+test('a cookie naming an org the user is not in is ignored and replaced by the personal account', async ({ browser, org, user }) => {
 	const page = await pageAs(browser, user.email, 'user');
 	await page.context().addCookies([{ name: 'gp_active_account', value: `${user.id}:${org.account_id}`, url: process.env.DASH_URL! }]);
 	await page.goto('/');
 
 	await expect(page.getByLabel('Profile')).toContainText(user.github_username);
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(user));
 });
 
 test('leaving the active org switches back to the personal account', async ({ browser, org }) => {
@@ -163,12 +163,13 @@ test('leaving the active org switches back to the personal account', async ({ br
 	await page.reload();
 
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
-	expect(await activeAccountCookie(page)).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.member));
 });
 
-test('the active org stays after signing out, and another user signing in ignores it', async ({ browser, org }) => {
+test('signing out clears the active account, and the next user starts in their default account', async ({ browser, org }) => {
 	await selectOrgs(org.member, [ org.id ]);
 	await selectOrgs(org.admin, [ org.id ]);
+	await sql('directus_users').where({ id: org.admin.id }).update({ default_account: org.account_id });
 
 	const page = await pageAs(browser, org.member.email, 'user');
 	await page.goto('/');
@@ -177,14 +178,14 @@ test('the active org stays after signing out, and another user signing in ignore
 	await page.getByLabel('Profile').click();
 	await page.getByRole('menuitem', { name: 'Sign out' }).click();
 	await expect(page).toHaveURL(/\/login/);
-	expect(await activeAccountCookie(page)).toBe(`${org.member.id}:${org.account_id}`);
+	expect((await activeAccountCookie(page))?.value).toBeUndefined();
 
 	const response = await page.request.post(`${process.env.DIRECTUS_URL}/auth/login`, { data: { email: org.admin.email, password: 'user', mode: 'session' } });
 	expect(response.ok()).toBe(true);
 	await page.goto('/');
 
-	await expect(page.getByLabel('Profile')).toContainText(org.admin.github_username);
-	expect(await activeAccountCookie(page)).toBe(`${org.member.id}:${org.account_id}`);
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	expect((await activeAccountCookie(page))?.value).toBe(`${org.admin.id}:${org.account_id}`);
 });
 
 test('an admin impersonating a user acts as that user\'s orgs, without touching their own cookie', async ({ browser, org }) => {
@@ -212,7 +213,7 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 	await expect(page.getByText('Organization role: Member')).toBeVisible();
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
 	expect(await page.evaluate(() => sessionStorage.getItem('impersonationActiveAccount'))).toBe(`${org.member.id}:${org.account_id}`);
-	expect(await activeAccountCookie(page)).toBe(adminCookie);
+	expect((await activeAccountCookie(page))?.value).toBe(adminCookie);
 });
 
 test('admin mode offers no account to act as, and leaving it brings the active org back', async ({ browser, org }) => {
@@ -235,7 +236,7 @@ test('admin mode offers no account to act as, and leaving it brings the active o
 		await expect(page.getByRole('menuitem', { name: 'Act as organization' })).toHaveCount(0);
 		await page.keyboard.press('Escape');
 
-		expect(await activeAccountCookie(page)).toBe(`${admin.id}:${org.account_id}`);
+		expect((await activeAccountCookie(page))?.value).toBe(`${admin.id}:${org.account_id}`);
 
 		await page.getByLabel('Admin Panel').click();
 		await page.getByRole('switch').click();
