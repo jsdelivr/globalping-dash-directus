@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import usersHook from '../../directus-users/src/index.js';
 import hook from '../src/index.js';
 
 type ActionCallback = (meta: any) => Promise<void>;
@@ -113,6 +114,49 @@ describe('Sign-in hook', () => {
 	});
 
 	describe('auth.login', () => {
+		it('should sync private organizations when user reads redact GitHub tokens', async () => {
+			const userActions: Record<string, (meta: any) => void> = {};
+			usersHook({
+				filter: () => {},
+				action: (name: string, callback: (meta: any) => void) => { userActions[name] = callback; },
+			} as any, context);
+
+			expect(userActions['users.read']).to.be.a('function');
+
+			itemsService.readOne.callsFake(async (_userId: string, _query: unknown, options?: { emitEvents?: boolean }) => {
+				const user = {
+					id: '123',
+					external_identifier: '456',
+					github_username: 'test-user',
+					github_organizations: [],
+					github_oauth_token: 'user-github-token',
+				};
+
+				if (options?.emitEvents !== false) {
+					userActions['users.read']?.({ payload: [ user ] });
+				}
+
+				return user;
+			});
+
+			nock('https://api.github.com').get('/user/orgs').reply(function (): [number, object] {
+				return this.req.headers['authorization'] === 'Bearer user-github-token'
+					? [ 200, [{ login: 'private-org' }] ]
+					: [ 401, { message: 'Bad credentials' }];
+			});
+
+			nock('https://api.github.com').get('/user/456/orgs').reply(200, []);
+
+			try {
+				hook(events, context);
+				await callbacks.action['auth.login']?.({ user: '123', provider: 'github' });
+				expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'private-org' ] }]);
+			} finally {
+				itemsService.readOne.resetBehavior();
+				nock.cleanAll();
+			}
+		});
+
 		it('should sync GitHub username and organizations if data is different', async () => {
 			const userId = '123';
 			const githubId = '456';
@@ -129,7 +173,7 @@ describe('Sign-in hook', () => {
 			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ userId, {}, { emitEvents: false }]);
 			expect(nock.isDone()).to.equal(true);
 			expect(usersService.updateOne.callCount).to.equal(1);
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
@@ -151,7 +195,7 @@ describe('Sign-in hook', () => {
 			await callbacks.action['auth.login']?.({ user: userId, provider: 'github' });
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ userId, {}, { emitEvents: false }]);
 			expect(nock.isDone()).to.equal(true);
 			expect(usersService.updateOne.callCount).to.equal(0);
 		});
@@ -251,7 +295,7 @@ describe('Sign-in hook', () => {
 			expect(error.message).to.equal('Not enough data to sync with GitHub');
 
 			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ userId ]);
+			expect(itemsService.readOne.args[0]).to.deep.equal([ userId, {}, { emitEvents: false }]);
 		});
 	});
 

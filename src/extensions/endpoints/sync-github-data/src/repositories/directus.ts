@@ -9,7 +9,7 @@ export const getDirectusUser = async (userId: string, context: EndpointExtension
 		schema: await getSchema(),
 	});
 
-	const user = await itemsService.readOne(userId) as User | undefined;
+	const user = await itemsService.readOne(userId, {}, { emitEvents: false }) as User | undefined;
 	return user;
 };
 

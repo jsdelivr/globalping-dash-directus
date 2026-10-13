@@ -94,7 +94,7 @@ const syncGithubData = async (userId: string, provider: string, context: HookExt
 		schema: await getSchema(),
 	});
 
-	const user = await itemsService.readOne(userId) as User | undefined;
+	const user = await itemsService.readOne(userId, {}, { emitEvents: false }) as User | undefined;
 
 	if (!user || !user.external_identifier) {
 		throw new Error('Not enough data to sync with GitHub');

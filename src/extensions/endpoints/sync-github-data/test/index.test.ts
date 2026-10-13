@@ -1,9 +1,10 @@
-import type { EndpointExtensionContext } from '@directus/extensions';
+import type { EndpointExtensionContext, HookExtensionContext } from '@directus/extensions';
 import { expect } from 'chai';
 import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
+import usersHook from '../../../hooks/directus-users/src/index.js';
 import { getLinkGenerator } from '../../../lib/src/link-generator.js';
 import endpoint, { rateLimiter } from '../src/index.js';
 
@@ -115,6 +116,55 @@ describe('/sync-github-data endpoint', () => {
 			github_username: 'new-username',
 			github_organizations: [ 'new-org' ],
 		});
+	});
+
+	it('should sync private organizations when user reads redact GitHub tokens', async () => {
+		const userActions: Record<string, (meta: any) => void> = {};
+		usersHook({
+			filter: () => {},
+			action: (name: string, callback: (meta: any) => void) => { userActions[name] = callback; },
+		} as any, endpointContext as unknown as HookExtensionContext);
+
+		expect(userActions['users.read']).to.be.a('function');
+
+		readOne.callsFake(async (_userId: string, _query: unknown, options?: { emitEvents?: boolean }) => {
+			const user = {
+				id: 'directus-id',
+				external_identifier: 'github-id',
+				github_username: 'test-user',
+				github_organizations: [],
+				github_oauth_token: 'user-github-token',
+			};
+
+			if (options?.emitEvents !== false) {
+				userActions['users.read']?.({ payload: [ user ] });
+			}
+
+			return user;
+		});
+
+		nock('https://api.github.com').get('/user/github-id').reply(200, { login: 'test-user' });
+
+		nock('https://api.github.com').get('/user/orgs').reply(function (): [number, object] {
+			return this.req.headers['authorization'] === 'Bearer user-github-token'
+				? [ 200, [{ login: 'private-org' }] ]
+				: [ 401, { message: 'Bad credentials' }];
+		});
+
+		nock('https://api.github.com').get('/user/github-id/orgs').reply(200, []);
+
+		try {
+			const res = await request(app).post('/').send({ userId: 'directus-id' });
+			expect(res.status).to.equal(200);
+			expect(res.body.github_organizations).to.deep.equal([ 'private-org' ]);
+
+			expect(updateOne.args[0]?.[1]).to.deep.equal({
+				github_username: 'test-user',
+				github_organizations: [ 'private-org' ],
+			});
+		} finally {
+			nock.cleanAll();
+		}
 	});
 
 	it('should work if requester is admin', async () => {
