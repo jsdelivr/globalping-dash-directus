@@ -82,7 +82,7 @@ describe('Low credits cron handler', () => {
 		expect(creditsUpdateOne.args[0]).to.deep.equal([ 1, { low_credits_notified: [ 'user-1' ] }]);
 	});
 
-	it('notifies everybody it can and reports the failures together', async () => {
+	it('does not remember anybody when a notification fails', async () => {
 		seed([
 			candidate({ recipient: 'admin-1' }),
 			candidate({ recipient: 'admin-2' }),
@@ -91,10 +91,10 @@ describe('Low credits cron handler', () => {
 		createOne.onFirstCall().rejects(new Error('nope'));
 
 		const error = await checkLowCredits(ctx()).catch((error: Error) => error) as Error;
-		expect(error.message).to.equal('Failed to notify 1 of 2 recipients.');
+		expect(error.message).to.equal('nope');
 
-		expect(createOne.callCount).to.equal(2);
-		expect(createOne.args[1]?.[0]).to.include({ recipient: 'admin-2' });
+		expect(createOne.callCount).to.equal(1);
+		expect(creditsUpdateOne.callCount).to.equal(0);
 	});
 
 	it('does not notify a recipient twice within the same episode', async () => {
