@@ -6,11 +6,11 @@ type FilterCallback = (payload: any, meta?: any, context?: any) => Promise<any>;
 
 describe('notifications hooks', () => {
 	const readOne = sinon.stub();
-	const createOne = sinon.stub();
+	const createMany = sinon.stub();
 	const getSchema = sinon.stub().resolves({});
 
 	const UsersService = sinon.stub().returns({ readOne });
-	const NotificationsService = sinon.stub().returns({ createOne });
+	const NotificationsService = sinon.stub().returns({ createMany });
 	const readByQuery = sinon.stub();
 	const ItemsService = sinon.stub().returns({ readByQuery });
 
@@ -297,7 +297,7 @@ describe('notifications hooks', () => {
 			first.reset();
 			select.reset();
 			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
-			createOne.resolves('notification-id');
+			createMany.resolves([ 'notification-id' ]);
 		});
 
 		it('should reject a payload with neither recipient nor account', async () => {
@@ -341,7 +341,7 @@ describe('notifications hooks', () => {
 
 			// The personal preferences of that user are not read at all.
 			expect(readOne.callCount).to.equal(0);
-			expect(createOne.callCount).to.equal(0);
+			expect(createMany.callCount).to.equal(0);
 
 			expect(result).to.deep.equal({
 				type: 'low_credits',
@@ -405,10 +405,10 @@ describe('notifications hooks', () => {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
 			}
 
-			// admin-2 has the type disabled in the org preferences.
-			expect(createOne.callCount).to.equal(1);
+			// admin-2 has the type disabled in the org preferences; the admins are notified in one batch.
+			expect(createMany.callCount).to.equal(1);
 
-			expect(createOne.args[0]?.[0]).to.deep.equal({
+			expect(createMany.args[0]?.[0]).to.deep.equal([{
 				recipient: 'admin-1',
 				type: 'probe_adopted',
 				subject: 'test',
@@ -417,9 +417,9 @@ describe('notifications hooks', () => {
 				item: 'probe-1',
 				secondary_type: 'v20.13.0',
 				email_status: 'not-required',
-			});
+			}]);
 
-			expect(createOne.args[0]?.[1]).to.deep.equal({ emitEvents: false });
+			expect(createMany.args[0]?.[1]).to.deep.equal({ emitEvents: false });
 		});
 
 		it('should compute the email status from the admin org preferences', async () => {
@@ -437,9 +437,8 @@ describe('notifications hooks', () => {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
 			}
 
-			expect(createOne.callCount).to.equal(2);
-			expect(createOne.args[0]?.[0].email_status).to.equal('disabled-by-user');
-			expect(createOne.args[1]?.[0].email_status).to.equal('no-email');
+			expect(createMany.callCount).to.equal(1);
+			expect(createMany.args[0]?.[0].map((notification: { email_status: string }) => notification.email_status)).to.deep.equal([ 'disabled-by-user', 'no-email' ]);
 		});
 	});
 });
