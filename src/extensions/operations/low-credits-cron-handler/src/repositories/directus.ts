@@ -25,41 +25,23 @@ export const getCandidates = async ({ database }: OperationContext): Promise<Can
 	return rows.map(row => ({ ...row, allNotifiedUsers: JSON.parse(row.allNotifiedUsers) as string[], enabled: Boolean(row.enabled) }));
 };
 
-export const notifyRecipients = async (context: OperationContext, toNotify: CandidateRow[]): Promise<void> => {
-	const { logger } = context;
-	const errors: unknown[] = [];
-
+export const notifyRecipients = async (context: OperationContext, toNotify: CandidateRow[], trx: OperationContext['database']): Promise<void> => {
 	for (const row of toNotify) {
-		try {
-			await sendNotification({
-				account: row.account_id,
-				recipient: row.recipient,
-				type: 'low_credits',
-				subject: 'Your Globalping credits are running low',
-				message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
-			}, context);
-		} catch (error) {
-			logger.error(error);
-			errors.push(error);
-		}
-	}
-
-	if (errors.length > 0) {
-		throw new AggregateError(errors, `Failed to notify ${errors.length} of ${toNotify.length} recipients.`);
+		await sendNotification({
+			account: row.account_id,
+			recipient: row.recipient,
+			type: 'low_credits',
+			subject: 'Your Globalping credits are running low',
+			message: `You have ${row.amount} credits remaining, which may run out soon. You can host more probes or become a [sponsor](https://github.com/sponsors/jsdelivr) to get more credits.`,
+		}, context, trx);
 	}
 };
 
-export const saveNotifiedList = async ({ database, services, getSchema }: OperationContext, updates: NotifiedListUpdate[]): Promise<void> => {
-	if (updates.length === 0) { return; }
-
+export const saveNotifiedList = async ({ services, getSchema }: OperationContext, updates: NotifiedListUpdate[], trx: OperationContext['database']): Promise<void> => {
 	const { ItemsService } = services;
-	const schema = await getSchema();
+	const creditsService = new ItemsService('gp_credits', { schema: await getSchema(), knex: trx });
 
-	await database.transaction(async (trx) => {
-		const creditsService = new ItemsService('gp_credits', { schema, knex: trx });
-
-		for (const { id, recipients } of updates) {
-			await creditsService.updateOne(id, { low_credits_notified: recipients });
-		}
-	});
+	for (const { id, recipients } of updates) {
+		await creditsService.updateOne(id, { low_credits_notified: recipients });
+	}
 };

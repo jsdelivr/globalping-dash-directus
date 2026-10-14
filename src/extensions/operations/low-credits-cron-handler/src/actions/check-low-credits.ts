@@ -6,8 +6,12 @@ export const checkLowCredits = async (ctx: OperationContext): Promise<{ notified
 	const candidates = await getCandidates(ctx);
 	const { toNotify, updates } = getUpdates(candidates);
 
-	await saveNotifiedList(ctx, updates);
-	await notifyRecipients(ctx, toNotify);
+	if (updates.length > 0) {
+		await ctx.database.transaction(async (trx) => {
+			await notifyRecipients(ctx, toNotify, trx);
+			await saveNotifiedList(ctx, updates, trx);
+		});
+	}
 
 	return {
 		notified: toNotify.map(row => row.recipient),
