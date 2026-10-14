@@ -108,18 +108,13 @@ export default defineHook(({ filter }, hookContext) => {
 		const notificationsService = new NotificationsService({ schema: await getSchema() });
 		const admins = await getOrgAdmins(orgId, hookContext);
 
-		for (const admin of admins) {
-			const user: User = { email: admin.user.email, notification_preferences: admin.notification_preferences };
+		const notifications = admins
+			.map(admin => ({ admin, user: { email: admin.user.email, notification_preferences: admin.notification_preferences } }))
+			.filter(({ user }) => getShouldSend(type, user))
+			.map(({ admin, user }) => ({ ...payload, recipient: admin.user.id, email_status: getEmailStatus(type, user) }));
 
-			if (!getShouldSend(type, user)) {
-				continue;
-			}
-
-			await notificationsService.createOne({
-				...payload,
-				recipient: admin.user.id,
-				email_status: getEmailStatus(type, user),
-			}, { emitEvents: false });
+		if (notifications.length > 0) {
+			await notificationsService.createMany(notifications, { emitEvents: false });
 		}
 	};
 });
