@@ -1,3 +1,4 @@
+import { ErrorCode, isDirectusError } from '@directus/errors';
 import type { ApiExtensionContext } from '@directus/extensions';
 import { generateBytes } from './bytes.js';
 import type { GithubOrganization } from './github-api-client.js';
@@ -41,20 +42,36 @@ const createOrgs = async (githubOrgs: GithubOrganization[], context: ApiExtensio
 		const directusOrg = directusOrgs.get(githubOrg.githubId);
 
 		if (!directusOrg) {
-			const id = await orgsService.createOne({
-				name: githubOrg.login,
-				github_id: githubOrg.githubId,
-				adoption_token: await generateBytes(),
-			}) as string;
-			// Org credits are assigned to the org by a trigger.
-
-			directusOrgs.set(githubOrg.githubId, { id, name: githubOrg.login, github_id: githubOrg.githubId });
+			directusOrgs.set(githubOrg.githubId, await createOrg(githubOrg, context));
 		} else if (directusOrg.name !== githubOrg.login) {
 			await orgsService.updateOne(directusOrg.id, { name: githubOrg.login });
 		}
 	}));
 
 	return directusOrgs;
+};
+
+const createOrg = async (githubOrg: GithubOrganization, { services, getSchema }: ApiExtensionContext): Promise<Org> => {
+	const orgsService = new services.ItemsService('gp_orgs', { schema: await getSchema() });
+
+	try {
+		const id = await orgsService.createOne({
+			name: githubOrg.login,
+			github_id: githubOrg.githubId,
+			adoption_token: await generateBytes(),
+		}) as string;
+		// Org credits are assigned to the org by a trigger.
+
+		return { id, name: githubOrg.login, github_id: githubOrg.githubId };
+	} catch (error) {
+		// A concurrent sync of another member may create the org first; the loser then reads the winner's row.
+		if (!isDirectusError(error, ErrorCode.RecordNotUnique)) {
+			throw error;
+		}
+
+		const [ org ] = await orgsService.readByQuery({ filter: { github_id: { _eq: githubOrg.githubId } } }) as Org[];
+		return org!;
+	}
 };
 
 const getMemberships = async (user: User, { services, getSchema }: ApiExtensionContext) => {
@@ -80,6 +97,11 @@ const createMemberships = async (user: User, githubOrgs: GithubOrganization[], d
 				org: directusOrgs.get(githubOrg.githubId)!.id,
 				user: user.id,
 				role: githubOrg.role,
+			}).catch((error: unknown) => {
+				// A concurrent sync of the same user may create the membership first.
+				if (!isDirectusError(error, ErrorCode.RecordNotUnique)) {
+					throw error;
+				}
 			});
 		// An org admin can assign the roles here too, so GitHub only promotes: a manually promoted admin stays an admin.
 		} else if (githubOrg.role === 'admin' && membership.role !== 'admin') {
