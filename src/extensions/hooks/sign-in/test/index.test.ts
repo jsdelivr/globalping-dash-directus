@@ -1,3 +1,4 @@
+import { RecordNotUniqueError } from '@directus/errors';
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
@@ -157,6 +158,47 @@ describe('Sign-in hook', () => {
 
 			// The legacy organizations list is updated.
 			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
+		});
+
+		it('should use the org created by a concurrent sync of another member', async () => {
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+
+			nock('https://api.github.com')
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
+
+			// The org is missing on the first read, but exists by the time it is created.
+			itemsService.createOne.onFirstCall().rejects(new RecordNotUniqueError({ collection: 'gp_orgs', field: 'github_id', value: '1' }));
+			itemsService.readByQuery.onSecondCall().resolves([{ id: 'winner-id', name: 'jsdelivr', github_id: '1' }]);
+
+			hook(events, context);
+
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => usersService.updateOne.callCount === 1);
+
+			expect(itemsService.createOne.args[1]?.[0]).to.deep.include({ org: 'winner-id', user: '123', role: 'admin' });
+		});
+
+		it('should keep going when a parallel sync of the same user created the membership first', async () => {
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+
+			nock('https://api.github.com')
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
+
+			itemsService.createOne.onSecondCall().rejects(new RecordNotUniqueError({ collection: 'gp_org_members', field: 'org', value: 'created-id' }));
+
+			hook(events, context);
+
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => usersService.updateOne.callCount === 1);
+
+			expect(itemsService.createOne.callCount).to.equal(2);
+			expect(context.logger.error.callCount).to.equal(0);
 		});
 
 		it('should run the same sync on a token refresh, not only on login', async () => {
