@@ -1,5 +1,6 @@
 import type { OperationContext } from '@directus/extensions';
 import { getFullMonthsSinceWithAdvance, addRecurringCredits } from '../../../../lib/src/add-credits.js';
+import { setSponsorshipTier } from '../../../../lib/src/sponsorship-tier.js';
 import { deleteDirectusSponsor, updateDirectusSponsor } from '../repositories/directus.js';
 import type { DirectusSponsor, GithubSponsor } from '../types.js';
 
@@ -26,6 +27,8 @@ export const handleDirectusSponsor = async ({ directusSponsor, githubSponsors }:
 		await deleteDirectusSponsor(directusSponsor, context);
 		return `Sponsorship of user with github id: ${id} is one-time. Sponsor deleted from directus.`;
 	}
+
+	await setSponsorshipTier(id, 'sponsor', context, context.database);
 
 	if (githubSponsor.monthlyAmount !== directusSponsor.monthly_amount) {
 		await updateDirectusSponsor(directusSponsor.id, { monthly_amount: githubSponsor.monthlyAmount }, context);
