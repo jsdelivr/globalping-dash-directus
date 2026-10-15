@@ -28,7 +28,7 @@ const previousMonthDate = (day: number) => {
 	return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, day, 12));
 };
 
-test.beforeEach(async ({ user, user2 }) => {
+test.beforeEach(async ({ user, user2, org }) => {
 	const now = new Date();
 	const pastYear = new Date(now);
 	pastYear.setUTCFullYear(pastYear.getUTCFullYear() - 1);
@@ -83,6 +83,8 @@ test.beforeEach(async ({ user, user2 }) => {
 		{ github_id: user2.external_identifier, reason: 'recurring_sponsorship', amount: 80000, dollars: 20 },
 		{ github_id: user2.external_identifier, reason: 'recurring_sponsorship', amount: 80000, dollars: 20 },
 		{ github_id: user2.external_identifier, reason: 'recurring_sponsorship', amount: 80000, dollars: 20 },
+		// An org sponsor: linked to the dashboard through the org, not through a user.
+		{ github_id: org.github_id, reason: 'recurring_sponsorship', amount: 40000, dollars: 10 },
 		{ github_id: unlinkedGithubId, reason: 'one_time_sponsorship', amount: 200000, dollars: 50 },
 	];
 
@@ -111,14 +113,25 @@ test.beforeEach(async ({ user, user2 }) => {
 		meta: JSON.stringify({ amountInDollars: 25, bonus: 0 }),
 		adopted_probe: null,
 	});
+
+	await sql('gp_credits_additions').insert({
+		amount: 10000,
+		consumed: 1,
+		date_created: new Date('2025-01-10T12:00:00.000Z'),
+		github_id: org.github_id,
+		user_updated: null,
+		reason: 'other',
+		meta: JSON.stringify({ manual: true, comment: 'Org bonus' }),
+		adopted_probe: null,
+	});
 });
 
-test.afterEach(async () => {
-	await sql('gp_credits_additions').whereIn('github_id', [ unlinkedGithubId, redirectTargetGithubId ]).delete();
+test.afterEach(async ({ org }) => {
+	await sql('gp_credits_additions').whereIn('github_id', [ unlinkedGithubId, redirectTargetGithubId, org.github_id ]).delete();
 	await sql('sponsors').where({ github_id: redirectSourceGithubId }).delete();
 });
 
-test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
+test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	for (const route of [ 'summary', 'events', 'accounts', 'manual-additions' ]) {
 		const response = await page.request.get(`${process.env.DIRECTUS_URL}/admin-sponsors/${route}`);
 		expect(response.status()).toBe(403);
@@ -130,11 +143,11 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 
 	const formatMoney = (value: number) => `$${new Intl.NumberFormat('en-US').format(value)}`;
 	await expect(adminPage.getByTestId('active-sponsors')).toHaveText(String(baseline.active + 1));
-	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(baseline.previousValue + 235));
+	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(baseline.previousValue + 245));
 	await expect(adminPage.getByTestId('next-month-value')).toHaveText(formatMoney(baseline.monthly + 10));
-	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.periodSponsors + 3));
-	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.periodValue + 235));
-	await expect(adminPage.getByText(`${formatMoney(baseline.periodRecurring + 185)} recurring · ${formatMoney(baseline.periodOneTime + 50)} one-time`, { exact: true })).toBeVisible();
+	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.periodSponsors + 4));
+	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.periodValue + 245));
+	await expect(adminPage.getByText(`${formatMoney(baseline.periodRecurring + 195)} recurring · ${formatMoney(baseline.periodOneTime + 50)} one-time`, { exact: true })).toBeVisible();
 	await expect(adminPage.getByText('Credits issued', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByText('Bonus', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByText('Sponsors credited', { exact: true })).toHaveCount(0);
@@ -147,6 +160,13 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(eventsTable.locator('tbody tr')).toHaveCount(10);
 	await eventsTable.getByLabel('Page 2').click();
 	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
+
+	const orgEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${org.github_id}`));
+	await adminPage.getByLabel('Search sponsorship events').fill(org.github_id);
+	await orgEventsResponse;
+	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
+	await expect(eventsTable.locator('tbody tr').first().getByRole('link', { name: org.name })).toBeVisible();
+	await expect(eventsTable.locator('tbody tr').first().getByLabel('Dashboard account linked')).toBeVisible();
 
 	let filteredEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${unlinkedGithubId}`));
 	await adminPage.getByLabel('Search sponsorship events').fill(unlinkedGithubId);
@@ -195,6 +215,12 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(accountsTable.locator('tbody tr').first()).toContainText('Former recurring');
 	await expect(accountsTable.locator('tbody tr').first().getByRole('link', { name: user2.github_username })).toBeVisible();
 
+	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${org.github_id}`));
+	await adminPage.getByLabel('Search sponsor accounts').fill(org.github_id);
+	await accountsResponse;
+	await expect(accountsTable.locator('tbody tr').first().getByRole('link', { name: org.name })).toBeVisible();
+	await expect(accountsTable.locator('tbody tr').first().getByLabel('Dashboard account linked')).toBeVisible();
+
 	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${unlinkedGithubId}`));
 	await adminPage.getByLabel('Search sponsor accounts').fill(unlinkedGithubId);
 	await accountsResponse;
@@ -237,6 +263,15 @@ test('Sponsors page', async ({ page, adminPage, user, user2 }) => {
 	await expect(manualAdditionsRows.nth(1)).toContainText('Other credits');
 	await expect(manualAdditionsDialog.locator('tbody').getByText('Admin User', { exact: true })).toHaveCount(10);
 	await expect(manualAdditionsDialog.getByRole('button', { name: 'Page 2' })).toBeVisible();
+
+	const orgManualAdditionsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.url().includes(`search=${org.github_id}`));
+	await manualAdditionsDialog.getByLabel('Search manual additions').fill(org.github_id);
+	await orgManualAdditionsResponse;
+	await expect(manualAdditionsRows).toHaveCount(1);
+	await expect(manualAdditionsRows.first()).toContainText('Org bonus');
+	await expect(manualAdditionsRows.first().getByRole('link', { name: org.name })).toBeVisible();
+	await expect(manualAdditionsRows.first().getByLabel('Dashboard account linked')).toBeVisible();
+	await manualAdditionsDialog.getByLabel('Search manual additions').clear();
 
 	const sortedManualAdditionsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.url().includes('sort=credits') && response.url().includes('direction=asc'));
 	await manualAdditionsDialog.getByRole('columnheader', { name: 'Credits' }).click();

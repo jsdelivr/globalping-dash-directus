@@ -125,6 +125,38 @@ describe('/generator', () => {
 		});
 	});
 
+	describe('gp_orgs.items.update hook', () => {
+		it('should accept no token in the payload', async () => {
+			callbacks.filter['gp_orgs.items.update']?.({
+				name: 'my-org',
+			});
+		});
+
+		it('should accept a generated token', async () => {
+			const res = await request(app).post('/').send({});
+
+			expect(res.status).to.equal(200);
+
+			callbacks.filter['gp_orgs.items.update']?.({
+				adoption_token: res.body.data,
+			});
+		});
+
+		it('should reject a token it did not generate', async () => {
+			let error = null;
+
+			try {
+				callbacks.filter['gp_orgs.items.update']?.({
+					adoption_token: 'somebody-elses-token',
+				});
+			} catch (err) {
+				error = err;
+			}
+
+			expect(error).to.deep.equal(new WrongValueError());
+		});
+	});
+
 	describe('gp_apps.items.create hook', () => {
 		it('should generate bigger amount of bytes', async () => {
 			const res = await request(app).post('/').send({
