@@ -43,6 +43,29 @@ test('the members cron removes the memberships of everyone who left, with their 
 	expect(await sql('gp_orgs').where({ id: org.id }).first('id')).toBeTruthy();
 });
 
+test('the members cron removes the last members who left, and the org waits for whoever comes back', async ({ org }) => {
+	const memberApi = await loginUser(org.member);
+	const memberToken = await createOrgToken(memberApi, org.account_id);
+
+	await Promise.all([
+		prepareMockMember(org.admin, []),
+		prepareMockMember(org.member, [{ id: 1, login: 'e2e-some-other-org' }]),
+		prepareMockMember(org.viewer, []),
+		selectOrgs(org.member, [ org.id ]),
+	]);
+
+	await trigger(FLOW.checkMembers);
+
+	expect(await sql('gp_org_members').where({ org: org.id }).select('id')).toHaveLength(0);
+	expect(await getSelectedOrgs(org.member)).toEqual([]);
+	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeUndefined();
+	expect(await sql('gp_orgs').where({ id: org.id }).first('id')).toBeTruthy();
+
+	// An org without members is not in the next check at all.
+	await trigger(FLOW.checkMembers);
+	expect(await sql('gp_orgs').where({ id: org.id }).first('id')).toBeTruthy();
+});
+
 /*
  * A member who renamed themselves on GitHub must not be taken for a leaver: the cron would delete their membership, and the
  * database trigger their org tokens and approvals with it. The cron gets there in three steps:
@@ -79,20 +102,19 @@ test('the members cron does not take a member who renamed themselves on GitHub f
 	expect(await sql('gp_tokens').where({ id: adminToken }).first('id')).toBeTruthy();
 });
 
-test('the members cron refreshes the stored org name instead of checking the org by it', async ({ org }) => {
+test('the members cron checks a renamed org by its id and refreshes the stored name', async ({ org }) => {
 	const newLogin = `${org.name}-renamed`;
-	// Someone else holds the name we still have stored.
+	// Someone else holds the name we still have stored; their members must not count as ours.
 	const squatter = { id: 1, login: org.name };
 	const renamed = { id: Number(org.github_id), login: newLogin };
 	const memberApi = await loginUser(org.member);
 	const memberToken = await createOrgToken(memberApi, org.account_id);
 
 	await Promise.all([
-		// The admin is in both, so the stale name still finds a checker and the run gets as far as the bulk check.
-		prepareMockMember(org.admin, [ squatter, renamed ]),
-		prepareMockMember(org.viewer, [ renamed ]),
-		// Really out of the org, but nothing may be removed until the name is verified.
-		prepareMockMember(org.member, [{ id: 2, login: 'e2e-some-other-org' }]),
+		prepareMockMember(org.admin, [ renamed ]),
+		prepareMockMember(org.viewer, [ squatter, renamed ]),
+		// In the squatter org only.
+		prepareMockMember(org.member, [ squatter ]),
 		selectOrgs(org.member, [ org.id ]),
 	]);
 
@@ -101,9 +123,9 @@ test('the members cron refreshes the stored org name instead of checking the org
 	expect(await sql('gp_orgs').where({ id: org.id }).first('name')).toMatchObject({ name: newLogin });
 
 	const memberships = await sql('gp_org_members').where({ org: org.id }).select('user');
-	expect(memberships.map(item => item.user).sort()).toEqual([ org.admin.id, org.member.id, org.viewer.id ].sort());
-	expect(await getSelectedOrgs(org.member)).toEqual([ org.id ]);
-	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeTruthy();
+	expect(memberships.map(item => item.user).sort()).toEqual([ org.admin.id, org.viewer.id ].sort());
+	expect(await getSelectedOrgs(org.member)).toEqual([]);
+	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeUndefined();
 });
 
 /*

@@ -57,7 +57,7 @@ describe('Check org members CRON handler', () => {
 
 	const nockSelfCheck = (token: string, status: number, state = 'active') => {
 		nock('https://api.github.com', { reqheaders: { authorization: `Bearer ${token}` } })
-			.get(`/user/memberships/orgs/${org.orgName}`)
+			.get(`/user/memberships/orgs/${org.orgGithubId}`)
 			.reply(status, { state });
 	};
 
@@ -114,6 +114,30 @@ describe('Check org members CRON handler', () => {
 		expect(nock.isDone()).to.equal(true);
 		expect(deleteMany.callCount).to.equal(0);
 		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
+	});
+
+	it('should remove the only member when their own token says they left', async () => {
+		rows = [ member(1) ];
+		nockSelfCheck('token-1', 404);
+
+		const result = await operationApi.handler({}, context as any);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(deleteMany.args[0]![0]).to.deep.equal([ 'membership-1' ]);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: [membership-1]. Errors: [].');
+	});
+
+	it('should not ask the checker about a member whose own token already says they left', async () => {
+		rows = [ member(1), member(2) ];
+		nockSelfCheck('token-1', 404);
+		nockSelfCheck('token-2', 200);
+		nockGraphql({ 2: [ org.orgGithubId ] });
+
+		const result = await operationApi.handler({}, context as any);
+
+		expect(nock.isDone()).to.equal(true);
+		expect(deleteMany.args[0]![0]).to.deep.equal([ 'membership-1' ]);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: [membership-1]. Errors: [].');
 	});
 
 	it('should remove the membership of a user who left', async () => {
@@ -182,7 +206,7 @@ describe('Check org members CRON handler', () => {
 		nockGraphql({ 1: [ org.orgGithubId ], 2: null });
 		nockSelfCheck('token-2', 401);
 		nock('https://api.github.com').get('/user/2').reply(200, { login: 'renamed-user' });
-		nock('https://api.github.com').get(`/orgs/${org.orgName}/members/renamed-user`).reply(404);
+		nock('https://api.github.com').get(`/orgs/${org.orgGithubId}/members/renamed-user`).reply(404);
 
 		await operationApi.handler({}, context as any);
 
@@ -195,7 +219,7 @@ describe('Check org members CRON handler', () => {
 		nockSelfCheck('token-1', 200);
 		nockGraphql({ 1: [ org.orgGithubId ], 2: null });
 		nock('https://api.github.com').get('/user/2').reply(200, { login: 'renamed-user' });
-		nock('https://api.github.com').get(`/orgs/${org.orgName}/members/renamed-user`).reply(204);
+		nock('https://api.github.com').get(`/orgs/${org.orgGithubId}/members/renamed-user`).reply(204);
 
 		await operationApi.handler({}, context as any);
 
@@ -278,16 +302,16 @@ describe('Check org members CRON handler', () => {
 		expect(result).to.equal(`Checked 1 orgs. Removed memberships: []. Errors: [Org jsdelivr has no member with a working token, memberships can't be verified.].`);
 	});
 
-	it('should refresh the stored org name when GitHub answers with a new one', async () => {
+	it('should refresh the stored org name and still remove the leavers in the same run', async () => {
 		rows = [ member(1), member(2) ];
 		nockSelfCheck('token-1', 200);
-		nockGraphql({ 1: [ org.orgGithubId ], 2: null }, { [org.orgGithubId]: 'jsdelivr-renamed' });
+		nockGraphql({ 1: [ org.orgGithubId ], 2: [] }, { [org.orgGithubId]: 'jsdelivr-renamed' });
 
 		const result = await operationApi.handler({}, context as any);
 
 		expect(orgUpdateOne.args[0]).to.deep.equal([ org.orgId, { name: 'jsdelivr-renamed' }]);
-		expect(deleteMany.callCount).to.equal(0);
-		expect(result).to.equal('Checked 1 orgs. Removed memberships: []. Errors: [].');
+		expect(deleteMany.args[0]![0]).to.deep.equal([ 'membership-2' ]);
+		expect(result).to.equal('Checked 1 orgs. Removed memberships: [membership-2]. Errors: [].');
 	});
 
 	it('should keep removing leavers while the stored org name still matches', async () => {
@@ -308,7 +332,7 @@ describe('Check org members CRON handler', () => {
 		nockSelfCheck('token-1', 200);
 
 		nock('https://api.github.com', { reqheaders: { authorization: 'Bearer token-2' } })
-			.get(`/user/memberships/orgs/${otherOrg.orgName}`)
+			.get(`/user/memberships/orgs/${otherOrg.orgGithubId}`)
 			.reply(200, { state: 'active' });
 
 		// One bulk call per org; the combined map answers correctly for both members whichever org asks first.

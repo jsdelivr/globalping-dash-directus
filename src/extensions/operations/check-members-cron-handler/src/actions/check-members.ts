@@ -13,9 +13,7 @@ export const checkMembers = async (context: OperationContext) => {
 			const { left, orgName } = await findLeftMemberships(org, context);
 
 			if (orgName && orgName !== org.name) {
-				// Org name has changed, so membership check is not valid on this run.
 				await renameOrg(org.id, orgName, context);
-				return;
 			}
 
 			await removeMemberships(left, context);

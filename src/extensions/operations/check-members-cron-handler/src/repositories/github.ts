@@ -55,6 +55,12 @@ export const findLeftMemberships = async (org: Org, context: ApiExtensionContext
 			break;
 		}
 
+		// A member whose own token says they left is a leaver already.
+		if (ownMembership === 'left') {
+			left.push(member);
+			continue;
+		}
+
 		// The restriction is org-wide, so no member's token can be active here, but any of them still reads public lists.
 		if (ownMembership === 'org-inaccessible') {
 			publicChecker = member;
@@ -65,17 +71,16 @@ export const findLeftMemberships = async (org: Org, context: ApiExtensionContext
 	const checker = orgChecker ?? publicChecker;
 
 	if (!checker) {
+		if (left.length > 0) {
+			return { left: left.map(member => member.membershipId), orgName: null };
+		}
+
 		throw new Error(`Org ${org.name} has no member with a working token, memberships can't be verified.`);
 	}
 
 	// 2. Bulk check of all members.
-	const { verdicts, orgName } = await getVerdicts(org, org.members, checker.githubOauthToken!, context);
-
-	// The org name only reaches us through a member's login, so a rename can be days old. Everything below reads
-	// the org by name, which after a rename may point at a different org, so the run stops and the name is refreshed.
-	if (orgName && orgName !== org.name) {
-		return { left: [], orgName };
-	}
+	const members = org.members.filter(member => !left.includes(member));
+	const { verdicts, orgName } = await getVerdicts(org, members, checker.githubOauthToken!, context);
 
 	for (const [ member, verdict ] of verdicts) {
 		if (verdict === 'left') {
@@ -94,7 +99,7 @@ export const findLeftMemberships = async (org: Org, context: ApiExtensionContext
 
 // GET /user/memberships/orgs/{org} answers for the token's owner, so it sees even a private membership.
 const getOwnMembership = async (org: Org, member: OrgMember, context: ApiExtensionContext): Promise<OwnMembership> => {
-	const response = await githubGet<{ state: string }>(`/user/memberships/orgs/${org.name}`, member.githubOauthToken!, context);
+	const response = await githubGet<{ state: string }>(`/user/memberships/orgs/${org.githubId}`, member.githubOauthToken!, context);
 
 	if (response.status === 200 && response.data.state === 'active') {
 		return 'active';
@@ -213,7 +218,7 @@ const hasLeftOrg = async (org: Org, member: OrgMember, checker: OrgMember, conte
 		return false;
 	}
 
-	const membershipResponse = await githubGet(`/orgs/${org.name}/members/${userResponse.data.login}`, token, context, {
+	const membershipResponse = await githubGet(`/orgs/${org.githubId}/members/${userResponse.data.login}`, token, context, {
 		// A redirect means the checker himself is not a member anymore - never follow it to the public-only check.
 		maxRedirects: 0,
 	});
