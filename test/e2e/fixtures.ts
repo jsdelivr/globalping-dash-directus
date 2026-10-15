@@ -1,11 +1,11 @@
-import { test as baseTest, request } from '@playwright/test';
+import { test as baseTest, request, type Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
 import { clearOrgData, clearUserData, generateOrg, generateUser, loginDirectusAdmin, loginUser } from './utils.ts';
 import { Actors, Org, User } from './types.ts';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{ user: User; user2: User; org: Org; org2: Org; actors: Actors }>({
+export const test = baseTest.extend<{ user: User; user2: User; org: Org; org2: Org; actors: Actors; admin: User; adminPage: Page }>({
 	user: async ({}, use) => {
 		const user = await generateUser();
 		await use(user);
@@ -25,6 +25,33 @@ export const test = baseTest.extend<{ user: User; user2: User; org: Org; org2: O
 		const org2 = await generateOrg('2');
 		await use(org2);
 		await clearOrgData(org2);
+	},
+	admin: async ({}, use) => {
+		const admin = await generateUser('Admin', 'Administrator');
+		await use(admin);
+		await clearUserData(admin);
+	},
+	adminPage: async ({ browser, admin, baseURL }, use) => {
+		const context = await browser.newContext({ baseURL });
+		const loginResponse = await context.request.post(`${process.env.DIRECTUS_URL}/auth/login`, {
+			data: {
+				email: admin.email,
+				password: 'user',
+				mode: 'session',
+			},
+		});
+
+		if (!loginResponse.ok()) {
+			throw new Error(`${loginResponse.status()} ${loginResponse.statusText()}`);
+		}
+
+		await context.addInitScript(() => {
+			sessionStorage.setItem('adminConfig', JSON.stringify({ adminMode: true, impersonation: null }));
+		});
+
+		const page = await context.newPage();
+		await use(page);
+		await context.close();
 	},
 	actors: async ({ org, org2, user }, use) => {
 		const [ admin, member, viewer, outsider, otherOrgAdmin, directusAdmin ] = await Promise.all([

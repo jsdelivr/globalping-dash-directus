@@ -28,6 +28,8 @@ export type City = {
 	adminName1: string;
 };
 
+export type CityLocation = Pick<City, 'toponymName' | 'countryCode' | 'adminCode1' | 'lat' | 'lng'>;
+
 const settingsSchema = Joi.object({
 	meteredConnection: Joi.boolean().strict().required(),
 }).unknown(false).required();
@@ -121,27 +123,40 @@ export const patchCustomLocationAllowedFields = async (fields: Fields, keys: str
 		throw payloadError('State changing is only allowed for US probes.');
 	}
 
-	const response = await axios<{ totalResultsCount?: number; geonames?: City[] }>('http://api.geonames.org/searchJSON', {
-		params: {
-			featureClass: 'P',
-			style: 'medium',
-			isNameRequired: 'true',
-			maxRows: '1',
-			username: env.GEONAMES_USERNAME,
-			country,
-			name: fields.city || probe.city,
-			...fields.state ? { adminCode1: fields.state } : {},
-		},
-		timeout: 5000,
-	});
+	let city: CityLocation;
 
-	const cities = response.data.geonames;
+	if (env.ENABLE_E2E_MOCKS === true) {
+		city = {
+			toponymName: fields.city || probe.city,
+			countryCode: country,
+			adminCode1: fields.state || probe.state || '',
+			lat: String(probe.latitude),
+			lng: String(probe.longitude),
+		};
+	} else {
+		const response = await axios<{ totalResultsCount?: number; geonames?: City[] }>('http://api.geonames.org/searchJSON', {
+			params: {
+				featureClass: 'P',
+				style: 'medium',
+				isNameRequired: 'true',
+				maxRows: '1',
+				username: env.GEONAMES_USERNAME,
+				country,
+				name: fields.city || probe.city,
+				...fields.state ? { adminCode1: fields.state } : {},
+			},
+			timeout: 5000,
+		});
 
-	if (!cities || cities.length === 0) {
-		throw payloadError('No matching cities found. Please check the "city" and "country" values, and try using the English version of the name.');
+		const cities = response.data.geonames;
+
+		if (!cities || cities.length === 0) {
+			throw payloadError('No matching cities found. Please check the "city" and "country" values, and try using the English version of the name.');
+		}
+
+		city = cities[0]!;
 	}
 
-	const city = cities[0]!;
 	city.toponymName = normalizeCityName(city.toponymName);
 
 	fields.city = city.toponymName;

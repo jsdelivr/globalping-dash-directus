@@ -2,10 +2,10 @@ import type { HookExtensionContext } from '@directus/extensions';
 import _ from 'lodash';
 import { getContinentByCountry, getContinentName, getCountryByIso, getRegionByCountry, getStateNameByIso } from '../../../lib/src/location/location.js';
 import { getResetUserFields } from '../../../lib/src/reset-fields.js';
-import { type City } from './update-with-user.js';
+import { type CityLocation } from './update-with-user.js';
 import { type Fields, type Probe, payloadError } from './index.js';
 
-export const patchCustomLocationRootFields = (fields: Fields, keys: string[], city: City, originalProbe: Probe) => {
+export const patchCustomLocationRootFields = (fields: Fields, keys: string[], city: CityLocation, originalProbe: Probe) => {
 	if (keys.length > 1) {
 		throw payloadError('Batch probe location update is not supported.');
 	}
