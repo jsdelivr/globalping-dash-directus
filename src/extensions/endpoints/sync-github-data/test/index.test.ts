@@ -16,6 +16,8 @@ describe('/sync-github-data endpoint', () => {
 	const itemsCreateOne = sinon.stub();
 	const itemsUpdateOne = sinon.stub();
 	const deleteMany = sinon.stub();
+	const userRow = sinon.stub();
+	const trx = sinon.stub().returns({ where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: userRow });
 	const itemsServiceStub = sinon.stub().returns({
 		readOne,
 		readByQuery,
@@ -46,7 +48,7 @@ describe('/sync-github-data endpoint', () => {
 			NotificationsService: notificationsServiceStub,
 		},
 		database: {
-			transaction: async (callback: (trx: unknown) => unknown) => callback({}),
+			transaction: async (callback: (trx: unknown) => unknown) => callback(trx),
 		},
 		getSchema: sinon.stub().resolves({}),
 	} as unknown as EndpointExtensionContext;
@@ -85,6 +87,7 @@ describe('/sync-github-data endpoint', () => {
 		readByQuery.resolves([]);
 		itemsCreateOne.resolves('created-id');
 		deleteMany.resolves();
+		userRow.resolves({ selected_orgs: null });
 
 		readOne.resolves({
 			id: 'directus-id',
@@ -282,14 +285,7 @@ describe('/sync-github-data endpoint', () => {
 		});
 
 		it('should drop an org the user left from their selected list', async () => {
-			readOne.resolves({
-				id: 'directus-id',
-				external_identifier: '123456',
-				github_username: 'new-username',
-				github_organizations: [ 'jsdelivr' ],
-				github_oauth_token: 'user-github-token',
-				selected_orgs: [ 'org-1', 'org-2' ],
-			});
+			userRow.resolves({ selected_orgs: JSON.stringify([ 'org-1', 'org-2' ]) });
 
 			seedDirectus({
 				orgs: [],

@@ -32,6 +32,10 @@ describe('Check org members CRON handler', () => {
 	query.select = sinon.stub().callsFake((arg: unknown) => typeof arg === 'string' ? query : Promise.resolve(rows));
 
 	const database = sinon.stub().returns(query) as any;
+	const userRow = sinon.stub();
+	const userQuery = { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: userRow };
+	const trx = sinon.stub().returns(userQuery);
+	database.transaction = (callback: (trx: unknown) => unknown) => callback(trx);
 
 	const deleteMany = sinon.stub().resolves([]);
 	const readMany = sinon.stub().resolves([]);
@@ -92,6 +96,7 @@ describe('Check org members CRON handler', () => {
 		sinon.resetHistory();
 		deleteMany.resolves([]);
 		readMany.resolves([]);
+		userRow.resolves({ selected_orgs: null });
 		rows = [];
 	});
 
@@ -156,11 +161,15 @@ describe('Check org members CRON handler', () => {
 		rows = [ member(1), member(2) ];
 		nockSelfCheck('token-1', 200);
 		nockGraphql({ 1: [ org.orgGithubId ], 2: [ '555' ] });
-		readMany.resolves([{ org: org.orgId, user: { id: 'user-2', selected_orgs: [ org.orgId, 'other-org' ] } }]);
+		readMany.resolves([{ org: org.orgId, user: 'user-2' }]);
+		userRow.resolves({ selected_orgs: JSON.stringify([ org.orgId, 'other-org' ]) });
 
 		await operationApi.handler({}, context as any);
 
-		expect(readMany.args[0]).to.deep.equal([ [ 'membership-2' ], { fields: [ 'org', 'user.id', 'user.selected_orgs' ] }]);
+		expect(readMany.args[0]).to.deep.equal([ [ 'membership-2' ], { fields: [ 'org', 'user' ] }]);
+		expect(userQuery.where.args[0]).to.deep.equal([{ id: 'user-2' }]);
+		expect(userQuery.forUpdate.callCount).to.equal(1);
+		expect(services.UsersService.args[0]![0].knex).to.equal(trx);
 		expect(updateOne.args[0]).to.deep.equal([ 'user-2', { selected_orgs: [ 'other-org' ] }, { emitEvents: false }]);
 	});
 
@@ -168,7 +177,8 @@ describe('Check org members CRON handler', () => {
 		rows = [ member(1), member(2) ];
 		nockSelfCheck('token-1', 200);
 		nockGraphql({ 1: [ org.orgGithubId ], 2: [ '555' ] });
-		readMany.resolves([{ org: org.orgId, user: { id: 'user-2', selected_orgs: [ 'other-org' ] } }]);
+		readMany.resolves([{ org: org.orgId, user: 'user-2' }]);
+		userRow.resolves({ selected_orgs: JSON.stringify([ 'other-org' ]) });
 
 		await operationApi.handler({}, context as any);
 

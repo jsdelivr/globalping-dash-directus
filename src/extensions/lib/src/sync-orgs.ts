@@ -6,7 +6,6 @@ import type { GithubOrganization } from './github-api-client.js';
 type User = {
 	id: string;
 	external_identifier: string | null;
-	selected_orgs?: string[];
 };
 
 type Org = {
@@ -124,18 +123,21 @@ const removeMemberships = async (user: User, githubOrgs: GithubOrganization[], m
 	await Promise.all([
 		// The member's org tokens and approvals are removed by a database trigger.
 		membersService.deleteMany(removed.map(membership => membership.id)),
-		unselectOrgs(user, removed.map(membership => membership.org.id), context),
+		unselectOrgs(user.id, removed.map(membership => membership.org.id), context),
 	]);
 };
 
-export const unselectOrgs = async (user: Pick<User, 'id' | 'selected_orgs'>, removedOrgIds: string[], { services, getSchema }: ApiExtensionContext) => {
-	const selectedOrgs = user.selected_orgs ?? [];
-	const remaining = selectedOrgs.filter(orgId => !removedOrgIds.includes(orgId));
+export const unselectOrgs = async (userId: string, removedOrgIds: string[], { database, services, getSchema }: ApiExtensionContext) => {
+	await database.transaction(async (trx) => {
+		const user = await trx('directus_users').where({ id: userId }).forUpdate().first('selected_orgs');
+		const selectedOrgs: string[] = JSON.parse(user?.selected_orgs || '[]');
+		const remaining = selectedOrgs.filter(orgId => !removedOrgIds.includes(orgId));
 
-	if (remaining.length === selectedOrgs.length) {
-		return;
-	}
+		if (remaining.length === selectedOrgs.length) {
+			return;
+		}
 
-	const usersService = new services.UsersService({ schema: await getSchema() });
-	await usersService.updateOne(user.id, { selected_orgs: remaining }, { emitEvents: false });
+		const usersService = new services.UsersService({ schema: await getSchema(), knex: trx });
+		await usersService.updateOne(userId, { selected_orgs: remaining }, { emitEvents: false });
+	});
 };

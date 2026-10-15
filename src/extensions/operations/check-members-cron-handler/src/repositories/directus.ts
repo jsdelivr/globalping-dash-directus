@@ -4,7 +4,7 @@ import type { Org } from '../types.js';
 
 type RemovedMembership = {
 	org: string;
-	user: { id: string; selected_orgs?: string[] };
+	user: string;
 };
 
 type Row = {
@@ -57,7 +57,7 @@ export const removeMemberships = async (membershipIds: string[], context: Operat
 	const { services, getSchema } = context;
 	const { ItemsService } = services;
 	const membersService = new ItemsService('gp_org_members', { schema: await getSchema() });
-	const removed = await membersService.readMany(membershipIds, { fields: [ 'org', 'user.id', 'user.selected_orgs' ] }) as RemovedMembership[];
+	const removed = await membersService.readMany(membershipIds, { fields: [ 'org', 'user' ] }) as RemovedMembership[];
 
 	await membersService.deleteMany(membershipIds);
 	// The members' org tokens and app approvals are removed by a database trigger.
