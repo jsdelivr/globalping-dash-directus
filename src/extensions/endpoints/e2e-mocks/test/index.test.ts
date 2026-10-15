@@ -55,6 +55,12 @@ describe('/e2e-mocks endpoint', () => {
 			expect(userRes.body).to.deep.equal({ login: 'new-username' });
 		});
 
+		it('should answer the self-check of an org by its numeric id too', async () => {
+			const res = await request(app).get('/github/user/memberships/orgs/1').set('Authorization', 'Bearer user-token');
+
+			expect(res.body).to.deep.equal(memberships[0]);
+		});
+
 		it('should report a user nobody registered as gone', async () => {
 			const res = await request(app).get('/github/user/999').set('Authorization', 'Bearer user-token');
 

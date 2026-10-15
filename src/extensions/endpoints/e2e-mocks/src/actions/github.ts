@@ -19,6 +19,10 @@ type GithubState = {
 };
 
 const states = new TTLCache<string, GithubState>({ ttl: 30 * 60 * 1000 });
+// Org endpoints take the login or the numeric id.
+const isOrg = (org: { id: number; login: string }, param: string) => org.login === param || org.id.toString() === param;
+
+const findOrg = (param: string) => [ ...states.values() ].flatMap(state => [ ...state.memberships.map(item => item.organization), ...state.orgs ]).find(org => isOrg(org, param));
 
 // The sponsorship queries are about the jsDelivr org rather than about the caller, so they read one shared list.
 type SponsorEdge = { login: string; githubId: number; monthlyAmount: number; isActive?: boolean; isOneTimePayment?: boolean; tierId?: string };
@@ -73,11 +77,11 @@ export const githubRoutes = (router: Router) => {
 			return proxy(req, res);
 		}
 
-		if (state.restrictedOrgs.includes(req.params.org)) {
+		if (state.restrictedOrgs.includes(findOrg(req.params.org)?.login ?? req.params.org)) {
 			return res.status(403).send({ message: 'Forbidden' });
 		}
 
-		const membership = state.memberships.find(item => item.organization.login === req.params.org);
+		const membership = state.memberships.find(item => isOrg(item.organization, req.params.org));
 		return membership ? res.send(membership) : res.status(404).send({ message: 'Not Found' });
 	});
 
