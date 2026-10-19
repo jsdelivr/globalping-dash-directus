@@ -53,13 +53,13 @@ pnpm run seed
 ## Prod first deploy
 
 1. copy `.env.scripts.development.example` to `.env.scripts.production` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.
-2. copy `.env.docker.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID` and `AUTH_DISABLE_DEFAULT`.
+2. copy `.env.docker.production.example` to the env vars of the container and fulfill all empty values except `AUTH_GITHUB_DEFAULT_ROLE_ID`.
 3. run the remote container.
 4. `pnpm run schema:apply:production`
 5. `pnpm run migrate:production`
 6. get default role id and set it to the `AUTH_GITHUB_DEFAULT_ROLE_ID` env var
 7. restart the container
-8. login using github. Re-login as admin and give github user admin rights. Then set that value `AUTH_DISABLE_DEFAULT=true`. Then restart the container
+8. login using github. Re-login as admin and give github user admin rights.
 9. Login using github. Generate a static access token for your user and save it to the local .env file as `ADMIN_ACCESS_TOKEN`
 
 ### Prod updates
