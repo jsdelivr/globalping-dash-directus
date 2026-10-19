@@ -26,9 +26,7 @@ export const generateUser = async (suffix = '', roleName = 'User'): Promise<User
 		user_type: 'sponsor',
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
 		default_prefix: login,
-		// Code sends sync request to GH with github_oauth_token as header, and e2e GH mock reads it to auth as user, so we need github_oauth_token === token.
 		github_oauth_token: `e2e-github-${userId}`,
-		token: `e2e-github-${userId}`,
 	};
 
 	await client('directus_users').insert(user);

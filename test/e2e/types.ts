@@ -16,7 +16,6 @@ export type User = {
 	adoption_token: string;
 	default_prefix: string;
 	github_oauth_token: string;
-	token: string;
 	account_id: string;
 };
 

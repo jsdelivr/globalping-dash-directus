@@ -4,16 +4,11 @@ import { test, expect } from '../../fixtures.ts';
 import { client as sql } from '../../client.ts';
 import { FLOW, trigger } from './shared.ts';
 
-const OPS_TOKEN = process.env.GITHUB_ACCESS_TOKEN ?? '';
-
 // The cron walks every user, so anyone the mock does not know is treated as banned. The mock resolves a login by
 // scanning all the states it holds, which is why each surviving user is registered under a key of their own.
 const mockGithubUsersExcept = async (goneLogins: string[]) => {
 	const users = await sql('directus_users').whereNotNull('github_username').select('github_username', 'external_identifier');
 	const surviving = users.filter(user => !goneLogins.includes(user.github_username));
-
-	// The ops token itself needs a state, otherwise the mock proxies the request to the real GitHub.
-	await axios.post(`${process.env.DIRECTUS_URL}/e2e-mocks/github/state`, { token: OPS_TOKEN, username: 'e2e-ops', githubId: 0 });
 
 	await Promise.all(surviving.map(user => axios.post(`${process.env.DIRECTUS_URL}/e2e-mocks/github/state`, {
 		token: `e2e-exists-${user.external_identifier}`,

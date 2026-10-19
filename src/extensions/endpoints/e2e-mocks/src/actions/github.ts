@@ -30,14 +30,22 @@ let sponsors: SponsorEdge[] = [];
 let sponsorsActivities: unknown[] = [];
 
 // Clients spell the scheme differently - octokit sends `token`, axios `Bearer` - and the token itself is what identifies the state.
-const getToken = (req: Request) => (req.headers.authorization ?? '').replace(/^(bearer|token)\s+/i, '');
+const getToken = (req: Request) => (req.header('x-github-authorization') ?? '').replace(/^(bearer|token)\s+/i, '');
+
+// Only a token GitHub itself issued leaves the mock; a test token nobody registered is answered from the states held here.
+const isGithubToken = (token: string) => /^(gh[opsru]_|github_pat_)/.test(token);
+
+const shouldProxy = (req: Request) => {
+	const token = getToken(req);
+	return !states.has(token) && isGithubToken(token);
+};
 
 const proxy = async (req: Request, res: Response) => {
 	try {
 		const response = await axios({
 			method: req.method,
 			url: `${GITHUB_API_URL}${req.url.replace('/github', '')}`,
-			headers: { Authorization: req.headers.authorization },
+			headers: { Authorization: req.header('x-github-authorization') },
 			data: req.method === 'GET' ? undefined : req.body,
 			validateStatus: () => true,
 		});
@@ -48,14 +56,12 @@ const proxy = async (req: Request, res: Response) => {
 	}
 };
 
-const answer = (req: Request, res: Response, value: (state: GithubState) => unknown) => {
-	const state = states.get(getToken(req));
-
-	if (!state) {
+const answer = (req: Request, res: Response, value: (state: GithubState | undefined) => unknown) => {
+	if (shouldProxy(req)) {
 		return proxy(req, res);
 	}
 
-	const body = value(state);
+	const body = value(states.get(getToken(req)));
 	return body === undefined ? res.status(404).send({ message: 'Not Found' }) : res.send(body);
 };
 
@@ -66,15 +72,19 @@ export const githubRoutes = (router: Router) => {
 		res.sendStatus(200);
 	});
 
-	router.get('/github/user/memberships/orgs', (req, res) => answer(req, res, state => state.memberships));
+	router.get('/github/user/memberships/orgs', (req, res) => answer(req, res, state => state?.memberships));
 
-	router.get('/github/user/:githubId/orgs', (req, res) => answer(req, res, state => state.orgs));
+	router.get('/github/user/:githubId/orgs', (req, res) => answer(req, res, state => state?.orgs));
 
 	router.get('/github/user/memberships/orgs/:org', (req, res) => {
+		if (shouldProxy(req)) {
+			return proxy(req, res);
+		}
+
 		const state = states.get(getToken(req));
 
 		if (!state) {
-			return proxy(req, res);
+			return res.status(404).send({ message: 'Not Found' });
 		}
 
 		if (state.restrictedOrgs.includes(findOrg(req.params.org)?.login ?? req.params.org)) {
@@ -122,7 +132,7 @@ export const githubRoutes = (router: Router) => {
 			});
 		}
 
-		if (!states.get(getToken(req))) {
+		if (shouldProxy(req)) {
 			return proxy(req, res);
 		}
 
