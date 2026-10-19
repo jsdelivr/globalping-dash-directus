@@ -10,7 +10,7 @@ type AdoptedProbe = {
 
 type User = {
 	id: string;
-	external_identifier: string;
+	external_identifier: string | null;
 };
 
 export const getAdoptedProbes = async ({ services, getSchema }: OperationContext) => {
@@ -51,8 +51,13 @@ export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services,
 
 	const users = await usersService.readMany(adoptedProbes.map(({ userId }) => userId)) as User[];
 	const usersMap = new Map(users.map(user => [ user.id, user ]));
+	const eligibleProbes = adoptedProbes.filter(({ userId }) => usersMap.get(userId)?.external_identifier);
 
-	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ id, userId, ip, name }) => ({
+	if (eligibleProbes.length === 0) {
+		return [];
+	}
+
+	const result = await creditsAdditionsService.createMany(eligibleProbes.map(({ id, userId, ip, name }) => ({
 		github_id: usersMap.get(userId)?.external_identifier,
 		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
 		reason: 'adopted_probe',

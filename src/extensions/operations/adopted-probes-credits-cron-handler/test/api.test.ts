@@ -75,6 +75,49 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.equal('Created credits with ids: 1');
 	});
 
+	it('should skip non-GitHub owners without blocking other owners credits or the online hours reset', async () => {
+		readByQuery.resolves([
+			{ id: '1', ip: '1.2.3.4', userId: 'github-user', onlineTimesToday: 120 },
+			{ id: '2', ip: '1.2.3.5', userId: 'non-github-user', onlineTimesToday: 120 },
+		]);
+
+		readMany.resolves([
+			{ id: 'github-user', external_identifier: '123456' },
+			{ id: 'non-github-user', external_identifier: null },
+		]);
+
+		createMany.resolves([ 1 ]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(createMany.args[0]).to.deep.equal([ [{
+			github_id: '123456',
+			amount: 100,
+			reason: 'adopted_probe',
+			meta: { id: '1', ip: '1.2.3.4', name: null },
+			adopted_probe: '1',
+		}] ]);
+
+		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
+		expect(result).to.equal('Created credits with ids: 1');
+	});
+
+	it('should reset online hours without creating credits when all owners lack GitHub IDs', async () => {
+		readByQuery.resolves([
+			{ id: '1', ip: '1.2.3.4', userId: 'non-github-user', onlineTimesToday: 120 },
+		]);
+
+		readMany.resolves([
+			{ id: 'non-github-user', external_identifier: null },
+		]);
+
+		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
+
+		expect(createMany.callCount).to.equal(0);
+		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
+		expect(result).to.equal('No credits created');
+	});
+
 	it('should not assign credits for <20 hours online and still reset online hours', async () => {
 		readByQuery.resolves([{
 			id: '1',
