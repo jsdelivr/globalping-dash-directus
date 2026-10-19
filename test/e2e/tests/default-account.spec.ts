@@ -2,7 +2,7 @@ import type { Browser, Page } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import type { Org, User } from '../types.ts';
-import { activeAccountCookie, pageAs } from '../utils.ts';
+import { activeAccountCookie, pageAs, png } from '../utils.ts';
 
 // A user who hasn't picked a default account yet, signed in.
 const onboard = async (browser: Browser, user: User) => {
@@ -81,6 +81,27 @@ test('an org admin picks the org: it is selected, becomes the default and active
 	expect((await activeAccountCookie(page))?.value).toBe(`${org.admin.id}:${org.account_id}`);
 });
 
+test('an org admin adds a banner during the onboarding, which is uploaded on "Apply"', async ({ browser, org }) => {
+	const page = await onboard(browser, org.admin);
+	await dialogOf(page);
+	const dialog = await pickOrg(page, org);
+	const pick = (width: number, height: number) => dialog.getByLabel('Banner file').setInputFiles({ name: 'banner.png', mimeType: 'image/png', buffer: png(width, height) });
+
+	await pick(1224, 100);
+	await expect(dialog.locator('#onboarding-banner-error')).toHaveText('The banner must be at least 1224×200 px.');
+
+	await pick(1224, 200);
+	await expect(dialog.getByRole('img', { name: 'Banner preview' })).toHaveAttribute('src', /^blob:/);
+	expect((await sql('gp_orgs').where({ id: org.id }).first('banner')).banner).toBe(null);
+
+	await Promise.all([ page.waitForEvent('load'), dialog.getByRole('button', { name: 'Apply' }).click() ]);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+
+	const { banner } = await sql('gp_orgs').where({ id: org.id }).first('banner');
+	expect(await sql('directus_files').where({ id: banner }).first('type')).toEqual({ type: 'image/png' });
+	expect((await userRow(org.admin)).default_account).toBe(org.account_id);
+});
+
 test('the org profile is offered only to admins and only while it is empty', async ({ browser, org }) => {
 	const memberPage = await onboard(browser, org.member);
 	await dialogOf(memberPage);
@@ -120,17 +141,41 @@ test('the active account cookie outlives the browser session, and a new session 
 	expect((await userRow(org.member)).default_account).toBe(org.account_id);
 });
 
-test('signing in again starts in the default account, not in the account left active by a previous session', async ({ browser, org }) => {
+test('an active account cookie naming an org the user is not in falls back to the default account', async ({ browser, org, org2 }) => {
 	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
 
 	const page = await pageAs(browser, org.member.email, 'user');
+	await page.context().addCookies([{ name: 'gp_active_account', value: `${org.member.id}:${org2.account_id}`, url: process.env.DASH_URL! }]);
+	await page.goto('/');
+
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	expect((await activeAccountCookie(page))?.value).toBe(`${org.member.id}:${org.account_id}`);
+});
+
+test('signing in again resumes the account left active by the previous session, not the default one', async ({ browser, org }) => {
+	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
+	const previousCookie = `${org.member.id}:${org.member.account_id}`;
+
+	const page = await pageAs(browser, org.member.email, 'user');
 	await page.context().clearCookies({ name: 'dash_session_token' });
-	await page.context().addCookies([{ name: 'gp_active_account', value: `${org.member.id}:${org.member.account_id}`, url: process.env.DASH_URL! }]);
+	await page.context().addCookies([{ name: 'gp_active_account', value: previousCookie, url: process.env.DASH_URL! }]);
 	await page.route(`${process.env.DIRECTUS_URL}/auth/login/github*`, route => route.abort());
 
 	await page.goto('/login');
-	await page.getByRole('button', { name: 'Sign in with GitHub' }).click();
-	await expect.poll(async () => (await activeAccountCookie(page))?.value).toBeUndefined();
+
+	await Promise.all([
+		page.waitForRequest(`${process.env.DIRECTUS_URL}/auth/login/github*`),
+		page.getByRole('button', { name: 'Sign in with GitHub' }).click(),
+	]);
+
+	expect((await activeAccountCookie(page))?.value).toBe(previousCookie);
+
+	const response = await page.request.post(`${process.env.DIRECTUS_URL}/auth/login`, { data: { email: org.member.email, password: 'user', mode: 'session' } });
+	expect(response.ok()).toBe(true);
+	await page.goto('/');
+
+	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
+	expect((await activeAccountCookie(page))?.value).toBe(previousCookie);
 });
 
 test('the default account can be changed in the settings', async ({ browser, org }) => {

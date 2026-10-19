@@ -3906,7 +3906,7 @@ fields:
       numeric_scale: null
       is_nullable: false
       is_unique: false
-      is_indexed: false
+      is_indexed: true
       is_primary_key: false
       is_generated: false
       generation_expression: null
@@ -4256,6 +4256,48 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: gp_orgs
+    field: banner
+    type: uuid
+    meta:
+      collection: gp_orgs
+      conditions: null
+      display: image
+      display_options: null
+      field: banner
+      group: null
+      hidden: false
+      interface: file-image
+      note: Set by the /organizations/:id/banner endpoint.
+      options:
+        folder: 5f0b6a52-3c1e-4b8e-9d6a-1c2f7e4a9b30
+      readonly: true
+      required: false
+      searchable: true
+      sort: 12
+      special:
+        - file
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: banner
+      table: gp_orgs
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: directus_files
+      foreign_key_column: id
   - collection: gp_probes
     field: asn
     type: integer
@@ -8484,6 +8526,27 @@ relations:
       constraint_name: gp_org_members_user_foreign
       on_update: RESTRICT
       on_delete: CASCADE
+  - collection: gp_orgs
+    field: banner
+    related_collection: directus_files
+    meta:
+      junction_field: null
+      many_collection: gp_orgs
+      many_field: banner
+      one_allowed_collections: null
+      one_collection: directus_files
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: gp_orgs
+      column: banner
+      foreign_key_table: directus_files
+      foreign_key_column: id
+      constraint_name: gp_orgs_banner_foreign
+      on_update: RESTRICT
+      on_delete: SET NULL
   - collection: gp_probes
     field: userId
     related_collection: directus_users

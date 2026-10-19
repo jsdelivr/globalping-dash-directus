@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
-import { actAsOrg, pageAs } from '../utils.ts';
+import { actAsOrg, pageAs, png } from '../utils.ts';
 
 const orgRow = (orgId: string) => sql('gp_orgs').where({ id: orgId }).first('adoption_token', 'public_probes', 'extra_adoption_tokens');
 const roleOf = async (orgId: string, userId: string) => (await sql('gp_org_members').where({ org: orgId, user: userId }).first('role')).role as string;
@@ -142,4 +142,61 @@ test('an org admin edits the org website and description', async ({ browser, org
 	await page.getByRole('button', { name: 'Apply settings' }).click();
 
 	await expect.poll(() => sql('gp_orgs').where({ id: org.id }).first('website', 'description')).toEqual({ website: 'https://example.org/about', description: 'Probes everywhere.' });
+});
+
+test('an org admin stages a banner and it is uploaded, replaced and removed with "Apply settings"', async ({ browser, org }) => {
+	const bannerOf = async () => (await sql('gp_orgs').where({ id: org.id }).first('banner')).banner as string | null;
+	const page = await actAsOrg(browser, org, org.admin);
+	await page.goto('/organization');
+
+	const preview = page.getByRole('img', { name: 'Banner preview' });
+	const apply = page.getByRole('button', { name: 'Apply settings' });
+	const pick = (width: number, height: number) => page.getByLabel('Banner file').setInputFiles({ name: 'banner.png', mimeType: 'image/png', buffer: png(width, height) });
+
+	await expect(page.getByText('No banner')).toBeVisible();
+
+	// A banner below the minimum size is refused before anything is sent.
+	await pick(1000, 200);
+	await expect(page.locator('#org-banner-error')).toHaveText('The banner must be at least 1224×200 px.');
+	await expect(preview).toHaveCount(0);
+	await expect(apply).toBeDisabled();
+
+	// The picked file is only previewed until the settings are applied.
+	await pick(1224, 200);
+	await expect(page.locator('#org-banner-error')).toHaveText('');
+	await expect(preview).toHaveAttribute('src', /^blob:/);
+	await expect(page.getByText('New image, applied when you save')).toBeVisible();
+	expect(await bannerOf()).toBe(null);
+
+	await apply.click();
+	await expect(page.getByText('Organization settings saved')).toBeVisible();
+	await expect.poll(bannerOf).not.toBe(null);
+	const first = await bannerOf();
+	await expect(preview).toHaveAttribute('src', `${process.env.DIRECTUS_URL}/assets/${first}?key=banner`);
+	await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1224);
+	await expect(apply).toBeDisabled();
+
+	const [ chooser ] = await Promise.all([ page.waitForEvent('filechooser'), page.getByRole('button', { name: 'Replace banner' }).click() ]);
+	await chooser.setFiles({ name: 'banner.png', mimeType: 'image/png', buffer: png(1300, 300) });
+	await expect(preview).toHaveAttribute('src', /^blob:/);
+	await apply.click();
+	await expect.poll(bannerOf).not.toBe(first);
+	await expect(preview).toHaveAttribute('src', `${process.env.DIRECTUS_URL}/assets/${await bannerOf()}?key=banner`);
+	expect(await sql('directus_files').where({ id: first }).first('id')).toBeUndefined();
+
+	// A staged removal can be undone, and is applied only on save.
+	await page.getByRole('button', { name: 'Remove banner' }).click();
+	await expect(page.getByText('The banner will be removed when you save')).toBeVisible();
+	await page.getByRole('button', { name: 'Undo' }).click();
+	await expect(preview).toHaveAttribute('src', /\/assets\//);
+	await expect(apply).toBeDisabled();
+
+	await page.getByRole('button', { name: 'Remove banner' }).click();
+	await expect(page.getByText('No banner')).toBeVisible();
+	await expect(apply).toBeEnabled();
+	expect(await bannerOf()).not.toBe(null);
+
+	await apply.click();
+	await expect.poll(bannerOf).toBe(null);
+	await expect(page.getByRole('button', { name: 'Upload image' })).toBeVisible();
 });

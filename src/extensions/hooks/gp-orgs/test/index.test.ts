@@ -8,27 +8,38 @@ type FilterCallback = (payload: any, meta: any, context: any) => Promise<any> | 
 describe('org hooks', () => {
 	const callbacks = {
 		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, (meta: any) => Promise<void>>,
 	};
 	const events = {
 		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
+		action: (name: string, cb: (meta: any) => Promise<void>) => {
+			callbacks.action[name] = cb;
+		},
 	} as any;
 
-	hook(events, {} as HookExtensionContext);
+	const deleteMany = sinon.stub().resolves();
+	const FilesService = sinon.stub().returns({ deleteMany });
+
+	hook(events, { services: { FilesService }, getSchema: async () => ({}) } as unknown as HookExtensionContext);
 
 	const select = sinon.stub();
 	const first = sinon.stub();
+	const pluck = sinon.stub();
 	const queryBuilder = {
 		join: sinon.stub(),
 		whereIn: sinon.stub(),
 		where: sinon.stub(),
+		whereNotNull: sinon.stub(),
 		select,
 		first,
+		pluck,
 	};
 	queryBuilder.join.returns(queryBuilder);
 	queryBuilder.whereIn.returns(queryBuilder);
 	queryBuilder.where.returns(queryBuilder);
+	queryBuilder.whereNotNull.returns(queryBuilder);
 	const database = sinon.stub().returns(queryBuilder);
 	const accountability = { user: 'user-id', admin: false };
 
@@ -55,6 +66,7 @@ describe('org hooks', () => {
 		sinon.resetHistory();
 		select.reset();
 		first.reset();
+		pluck.reset();
 	});
 
 	it('should add the token to the orgs the user is an admin of, and not to others', async () => {
@@ -165,5 +177,50 @@ describe('org hooks', () => {
 		}
 
 		expect(database.callCount).to.equal(0);
+	});
+
+	const deleteOrgs = async (keys: string[]) => {
+		const filtered = await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
+		await callbacks.action['gp_orgs.items.delete']?.({ keys: filtered });
+		return filtered;
+	};
+
+	it('should delete the banners of the deleted orgs after the orgs are deleted', async () => {
+		pluck.resolves([ 'banner-1', 'banner-2' ]);
+		const keys = [ 'org-1', 'org-2', 'org-3' ];
+
+		expect(await deleteOrgs(keys)).to.equal(keys);
+		expect(queryBuilder.whereIn.args[0]).to.deep.equal([ 'id', keys ]);
+		expect(queryBuilder.whereNotNull.args[0]).to.deep.equal([ 'banner' ]);
+		expect(deleteMany.args).to.deep.equal([ [ [ 'banner-1', 'banner-2' ] ] ]);
+	});
+
+	it('should delete nothing in the filter, which runs before the access check', async () => {
+		pluck.resolves([ 'banner-1' ]);
+		const keys = [ 'org-1' ];
+
+		await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
+		expect(deleteMany.callCount).to.equal(0);
+
+		await callbacks.action['gp_orgs.items.delete']?.({ keys });
+		expect(deleteMany.args).to.deep.equal([ [ [ 'banner-1' ] ] ]);
+	});
+
+	it('should not delete files when the deleted orgs have no banners', async () => {
+		pluck.resolves([]);
+
+		await deleteOrgs([ 'org-1' ]);
+
+		expect(deleteMany.callCount).to.equal(0);
+	});
+
+	it('should not delete files twice for a repeated action', async () => {
+		pluck.resolves([ 'banner-1' ]);
+		const keys = [ 'org-1' ];
+
+		await deleteOrgs(keys);
+		await callbacks.action['gp_orgs.items.delete']?.({ keys });
+
+		expect(deleteMany.callCount).to.equal(1);
 	});
 });

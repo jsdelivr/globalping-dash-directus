@@ -17,6 +17,7 @@ COPY src/extensions/endpoints/e2e-mocks/package.json src/extensions/endpoints/e2
 COPY src/extensions/endpoints/email-unsubscribe/package.json src/extensions/endpoints/email-unsubscribe/
 COPY src/extensions/endpoints/local-adoption/package.json src/extensions/endpoints/local-adoption/
 COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/metadata/
+COPY src/extensions/endpoints/organizations/package.json src/extensions/endpoints/organizations/
 COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
 COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/endpoints/sponsorship-details/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/

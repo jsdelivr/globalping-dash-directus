@@ -166,10 +166,10 @@ test('leaving the active org switches back to the personal account', async ({ br
 	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.member));
 });
 
-test('signing out clears the active account, and the next user starts in their default account', async ({ browser, org }) => {
+test('signing out keeps the active account, and another user ignores it and starts in their default account', async ({ browser, org }) => {
 	await selectOrgs(org.member, [ org.id ]);
 	await selectOrgs(org.admin, [ org.id ]);
-	await sql('directus_users').where({ id: org.admin.id }).update({ default_account: org.account_id });
+	await sql('directus_users').where({ id: org.admin.id }).update({ default_account: org.admin.account_id });
 
 	const page = await pageAs(browser, org.member.email, 'user');
 	await page.goto('/');
@@ -178,14 +178,14 @@ test('signing out clears the active account, and the next user starts in their d
 	await page.getByLabel('Profile').click();
 	await page.getByRole('menuitem', { name: 'Sign out' }).click();
 	await expect(page).toHaveURL(/\/login/);
-	expect((await activeAccountCookie(page))?.value).toBeUndefined();
+	expect((await activeAccountCookie(page))?.value).toBe(`${org.member.id}:${org.account_id}`);
 
 	const response = await page.request.post(`${process.env.DIRECTUS_URL}/auth/login`, { data: { email: org.admin.email, password: 'user', mode: 'session' } });
 	expect(response.ok()).toBe(true);
 	await page.goto('/');
 
-	await expect(page.getByLabel('Profile')).toContainText(org.name);
-	expect((await activeAccountCookie(page))?.value).toBe(`${org.admin.id}:${org.account_id}`);
+	await expect(page.getByLabel('Profile')).toContainText(org.admin.github_username);
+	expect((await activeAccountCookie(page))?.value).toBe(personalCookie(org.admin));
 });
 
 test('an admin impersonating a user acts as that user\'s orgs, without touching their own cookie', async ({ browser, org }) => {
