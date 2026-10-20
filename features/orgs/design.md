@@ -37,19 +37,19 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
-- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and in the
-  `gp_active_account` cookie on `.globalping.io` (the account id, not the org id). The cookie is unsigned, so gp-api checks
-  the membership on every request and falls back to the personal account; it is per device, which is the point - the same user
-  can act as the org on one machine and as themselves on another. The session cookie's signed `user_account_id` claim stays
-  the personal account.
-- The cookie value is scoped to the user (`<userId>:<accountId>`) and ignored when the user does not match, so the choice left
-  on a shared machine never carries over to whoever logs in next. Clearing it on logout would not be enough: sessions expire
-  without one, and globalping.io sends the cookie to the API without ever loading the dashboard, so nothing there could clear it.
-- What each user picked is remembered by the dashboard in `localStorage`, keyed by the user id, and the cookie carries only the
-  current choice. Coming back to a machine restores that user's last org without the cookie having to hold a map of everyone who
-  ever logged in there, and without the choice leaking across devices the way a column on `directus_users` would.
-- OAuth is the exception: gp-auth ignores the cookie entirely and asks on the approval screen instead. Connecting an app is a
-  durable, hard-to-notice decision, so it is never made by ambient browser state. The cookie only preselects the entry there.
+- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and on the server:
+  `POST /accounts/active` writes the account id (not the org id) into `directus_sessions.active_account` after checking
+  the membership. The `auth.jwt` filter copies it on every refresh into the next session row and emits it as the signed
+  claims `active_account_id` / `active_account_role`, which gp-api trusts without a database lookup; `GET /accounts/active`
+  returns the claim of the cookie, so the dashboard shows what the readers bill. The signed `user_account_id` claim stays the
+  personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves
+  on another.
+- Losing the membership is noticed on the next refresh (the filter falls back to the personal account), so a stale claim lives
+  at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts with the personal
+  account; a default account is a later phase.
+- OAuth is the exception: gp-auth ignores the active account entirely and asks on the approval screen instead. Connecting an
+  app is a durable, hard-to-notice decision, so it is never made by ambient session state. The active account only preselects
+  the entry there.
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
 - Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the admin before saving.
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.
@@ -91,7 +91,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 ### Dash UI updates
 
-- New header menu item - "Act as organization", which opens a select org modal. The selected org is stored in a cookie and the FE store and shown in the header instead of the username.
+- New header menu item - "Act as organization", which opens a select org modal. The selected org is stored on the session (see "Users" above) and shown in the header instead of the username.
 - User doesn't have a "show all" option. So we don't have combined views.
 - If an org is selected:
     - "Probes page" shows org probes in read-only/read-write state (based on role).

@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import hook from '../src/index.js';
 
 type ActionCallback = (meta: any) => Promise<void>;
-type FilterCallback = (payload: any, meta: any) => Promise<void>;
+type FilterCallback = (payload: any, meta: any) => Promise<any>;
 
 describe('Sign-in hook', () => {
 	const callbacks = {
@@ -34,6 +34,27 @@ describe('Sign-in hook', () => {
 	const notificationsService = {
 		createOne: sinon.stub(),
 	};
+	const firstStub = sinon.stub();
+	const updateStub = sinon.stub();
+	const rawStub = sinon.stub();
+	const whereStub = sinon.stub();
+	const database = new Proxy(() => database, {
+		get: (_target, property) => {
+			if (property === 'first') {
+				return firstStub;
+			} else if (property === 'update') {
+				return updateStub;
+			} else if (property === 'raw') {
+				return rawStub;
+			} else if (property === 'where') {
+				return whereStub;
+			} else if (property === 'transaction') {
+				return async (callback: (trx: unknown) => unknown) => callback({});
+			}
+
+			return database;
+		},
+	});
 	const context = {
 		services: {
 			ItemsService: sinon.stub(),
@@ -46,9 +67,7 @@ describe('Sign-in hook', () => {
 			PUBLIC_URL: 'https://dash-directus.globalping.io',
 			SECRET: 'test-secret',
 		},
-		database: {
-			transaction: async (callback: (trx: unknown) => unknown) => callback({}),
-		},
+		database,
 		getSchema: () => Promise.resolve({}),
 		logger: {
 			error: sinon.stub(),
@@ -67,6 +86,10 @@ describe('Sign-in hook', () => {
 		itemsService.readByQuery.resolves([]);
 		itemsService.createOne.resolves('created-id');
 		itemsService.deleteMany.resolves();
+		whereStub.returns(database);
+		firstStub.resolves({ active_account: null });
+		updateStub.resolves(1);
+		rawStub.resolves([ [] ]);
 	});
 
 	afterEach(() => {
@@ -421,7 +444,69 @@ describe('Sign-in hook', () => {
 			expect(result).to.deep.equal({
 				...payload,
 				user_account_id: 'account-id',
+				active_account_id: 'account-id',
+				active_account_role: 'owner',
 			});
+		});
+	});
+
+	describe('auth.jwt active account', () => {
+		const payload = { id: '123', session: 'new-session-token' };
+
+		beforeEach(() => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ] });
+		});
+
+		it('should copy the stored account to the new session and emit its claims on refresh', async () => {
+			firstStub.resolves({ active_account: 'org-account-id' });
+			rawStub.resolves([ [{ role: 'member' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(whereStub.args[0]).to.deep.equal([{ next_token: 'new-session-token' }]);
+			expect(rawStub.args[0]?.[1]).to.deep.equal({ user: '123', account: 'org-account-id' });
+			expect(whereStub.args[1]).to.deep.equal([{ token: 'new-session-token' }]);
+			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'org-account-id' }]);
+			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'member' });
+		});
+
+		it('should fall back to the personal account on refresh when the membership is lost', async () => {
+			firstStub.resolves({ active_account: 'org-account-id' });
+			rawStub.resolves([ [] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(updateStub.callCount).to.equal(0);
+			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
+		});
+
+		it('should not read the old session on login or on a refresh without a session claim (JSON mode) and emit the personal claims', async () => {
+			firstStub.resolves({ active_account: 'org-account-id' });
+
+			hook(events, context);
+
+			for (const [ jwtPayload, type ] of [ [{ ...payload }, 'login' ], [{ id: '123' }, 'refresh' ] ] as const) {
+				const result = await callbacks.filter['auth.jwt']?.(jwtPayload, { user: '123', type });
+
+				expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
+			}
+
+			expect(firstStub.callCount).to.equal(0);
+			expect(updateStub.callCount).to.equal(0);
+		});
+
+		it('should emit no active account claims without user_account_id', async () => {
+			itemsService.readOne.resolves({ id: '123' });
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
+
+			expect(result).to.not.have.any.keys('active_account_id', 'active_account_role');
 		});
 	});
 });

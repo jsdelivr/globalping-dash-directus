@@ -1,6 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
+import { type AccountRole, getAccountRole } from '../../../lib/src/accounts.js';
 import { checkDefaultPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations, type GithubOrganization } from '../../../lib/src/github-api-client.js';
 import { syncOrganizations } from '../../../lib/src/sync-orgs.js';
@@ -26,8 +27,12 @@ type AuthPayload = {
 	github_username?: string;
 	user_type?: string;
 	user_account_id?: string;
-	session: string;
+	active_account_id?: string;
+	active_account_role?: AccountRole;
+	session?: string;
 };
+
+type AuthJwtMeta = { user?: string; provider?: string; type?: 'login' | 'refresh' };
 
 type GithubAuthMeta = {
 	event: 'auth.create' | 'auth.update';
@@ -57,8 +62,9 @@ export default defineHook(({ filter }, context) => {
 	});
 
 	filter('auth.jwt', async (payload: AuthPayload, meta) => {
-		const { user: userId, provider } = meta as { user?: string; provider?: string };
-		const { services, getSchema } = context;
+		const jwtMeta = meta as AuthJwtMeta;
+		const { user: userId, provider } = jwtMeta;
+		const { services, getSchema, database } = context;
 		const { ItemsService } = services;
 
 		if (!userId) {
@@ -88,9 +94,49 @@ export default defineHook(({ filter }, context) => {
 			payload.user_account_id = user.account[0];
 		}
 
+		const activeAccount = await getActiveAccount(jwtMeta, payload, database);
+
+		if (activeAccount) {
+			payload.active_account_id = activeAccount.id;
+			payload.active_account_role = activeAccount.role;
+		}
+
 		return payload;
 	});
 });
+
+const getActiveAccount = async ({ user, type }: AuthJwtMeta, payload: AuthPayload, database: HookExtensionContext['database']) => {
+	if (type === 'refresh' && payload.session) {
+		// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
+		// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
+		const carried = await carryOverActiveAccount(user!, payload.session, database);
+
+		if (carried) { return carried; }
+	}
+
+	if (payload.user_account_id) { return { id: payload.user_account_id, role: 'owner' as const }; }
+
+	return null;
+};
+
+
+const carryOverActiveAccount = async (userId: string, sessionToken: string, database: HookExtensionContext['database']) => {
+	const previous = await database('directus_sessions')
+		.where({ next_token: sessionToken })
+		.first<{ active_account: string | null } | undefined>('active_account');
+
+	if (!previous?.active_account) { return null; }
+
+	const role = await getAccountRole(previous.active_account, userId, database);
+
+	if (!role) { return null; }
+
+	await database('directus_sessions')
+		.where({ token: sessionToken })
+		.update({ active_account: previous.active_account });
+
+	return { id: previous.active_account, role };
+};
 
 const syncGithubData = async (userId: string, context: HookExtensionContext) => {
 	const { services, getSchema } = context;

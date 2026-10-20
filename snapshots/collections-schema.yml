@@ -566,6 +566,48 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: directus_sessions
+    field: active_account
+    type: uuid
+    meta:
+      collection: directus_sessions
+      conditions: null
+      display: null
+      display_options: null
+      field: active_account
+      group: null
+      hidden: true
+      interface: select-dropdown-m2o
+      note: The account the session acts as; null means the user's own account.
+      options:
+        enableCreate: false
+      readonly: false
+      required: false
+      searchable: true
+      sort: 1
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: active_account
+      table: directus_sessions
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: false
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: gp_accounts
+      foreign_key_column: id
   - collection: directus_users
     field: github_organizations
     type: json
@@ -7745,6 +7787,27 @@ systemFields:
     schema:
       is_indexed: true
 relations:
+  - collection: directus_sessions
+    field: active_account
+    related_collection: gp_accounts
+    meta:
+      junction_field: null
+      many_collection: directus_sessions
+      many_field: active_account
+      one_allowed_collections: null
+      one_collection: gp_accounts
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: directus_sessions
+      column: active_account
+      foreign_key_table: gp_accounts
+      foreign_key_column: id
+      constraint_name: directus_sessions_active_account_foreign
+      on_update: RESTRICT
+      on_delete: SET NULL
   - collection: gp_accounts
     field: user
     related_collection: directus_users

@@ -26,11 +26,10 @@ tests, verify on the dev instance (Directus 18055 with phase 1 applied, gp-api 3
    `accountId`. A token whose `user_created` is NULL keeps a NULL account (client-credentials pairs) - stays
    "no owner", never an error. A session cookie carries the user's own account as the `user_account_id` claim (phase 1); the sessions issued
    before that do not, so a `gp_accounts` lookup stays as a `// PHASE5: remove` fallback for one session lifetime.
-1a. **Acting as an org**: the dashboard sets `gp_active_account` on `.globalping.io` when the user switches (phase 4 UI, the
-   readers ship now). It is a plain cookie - the browser can put anything in it - so it is authorized on every request:
-   the account must be the user's own or an org where their role is admin or member, cached for a minute, and anything that
-   does not pass silently falls back to the personal account. Per device by construction: the choice lives in the browser,
-   nothing is stored server-side, so a laptop can act as the org while the phone stays personal.
+1a. **Acting as an org** (rules in design.md, "Act as organization"): the column `directus_sessions.active_account`;
+   `POST /accounts/active` (checks the membership, stores the account); the `auth.jwt` filter emits the signed claims
+   `active_account_id` / `active_account_role`; `GET /accounts/active` returns the claim of the cookie. Phase 4 ships the UI,
+   the readers ship now.
 2. **Credits**: `credits.consume` / `getRemainingCredits` and `CreditsMaster` key on `account_id` instead of `user_id`
    (`gp_credits.account_id` is unique). Callers: `rate-limiter-post.ts`, `get-limits.ts`. Deductions need no work - gp-api only
    decrements `gp_credits`, the `after_gp_credits_update` trigger writes the deduction row with both columns.
@@ -52,7 +51,7 @@ Verify: unit + integration suites; on dev - adopt a probe into an org, see its t
 ## 2. gp-auth (`globalping-auth`)
 
 1. The account is picked on the approval screen, never taken from the browser state: gp-auth does not read
-   `gp_active_account` at all. The screen sends the chosen account as a request parameter; with nothing sent the approval is
+   the session's active account at all. The screen sends the chosen account as a request parameter; with nothing sent the approval is
    personal, taken from the session's `user_account_id` claim (same `// PHASE5: remove` lookup fallback as gp-api). That keeps
    the old dashboard working against the new gp-auth, so it can be deployed first.
 1a. **The screen is skipped only when there is nothing to pick.** A remembered approval short-circuits it as before, but only

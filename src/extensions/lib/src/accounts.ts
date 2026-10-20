@@ -5,7 +5,9 @@ type AccountInput = { accountId?: string; userId?: string };
 
 type Accountability = { user?: string | null; admin?: boolean };
 
-const ForbiddenAccountError = createError('INVALID_PAYLOAD_ERROR', 'You can not access this account.', 400);
+export type AccountRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+export const ForbiddenAccountError = createError('INVALID_PAYLOAD_ERROR', 'You can not access this account.', 400);
 const AccountNotFoundError = createError('INVALID_PAYLOAD_ERROR', 'Account not found.', 400);
 
 // The admin-only "show everything" mode of the dashboard lists.
@@ -30,6 +32,17 @@ export const isAccountAvailable = async (accountId: string, userId: string, data
 	`, { user: userId, account: accountId, roles }) as [{ id: string }[]];
 
 	return rows.length > 0;
+};
+
+// The user's role on the account: `owner` of their own account, their org membership role otherwise.
+export const getAccountRole = async (accountId: string, userId: string, database: ApiExtensionContext['database']): Promise<AccountRole | null> => {
+	const [ rows ] = await database.raw(`
+		SELECT IF(a.user = :user, 'owner', m.role) AS role FROM gp_accounts a
+		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user
+		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
+	`, { user: userId, account: accountId }) as [{ role: AccountRole }[]];
+
+	return rows[0]?.role ?? null;
 };
 
 // The orgs, of the ones asked about, where the user is an admin.

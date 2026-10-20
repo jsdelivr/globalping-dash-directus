@@ -203,6 +203,23 @@ export const randomIP = () => {
 	return Array.from({ length: 4 }, () => Math.floor(Math.random() * 256)).join('.');
 };
 
+export const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'dash_session_token';
+
+export const decodeJwt = (jwt: string) => {
+	const encoded = jwt.split('.')[1];
+
+	if (!encoded) {
+		return null;
+	}
+
+	try {
+		const json = Buffer.from(encoded, 'base64url').toString();
+		return JSON.parse(json);
+	} catch {
+		return null;
+	}
+};
+
 // A browser page signed in as the given account. The `page` fixture is always the test user, so anything about another actor - the Directus admin, an org admin - needs its own session.
 export const pageAs = async (browser: Browser, email: string, password: string) => {
 	const apiContext = await request.newContext({ storageState: undefined });

@@ -7,6 +7,7 @@ COPY package.json pnpm-*.yaml ./
 # Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-BUILD-BLOCK
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
+COPY src/extensions/endpoints/accounts/package.json src/extensions/endpoints/accounts/
 COPY src/extensions/endpoints/admin-sponsors/package.json src/extensions/endpoints/admin-sponsors/
 COPY src/extensions/endpoints/adoption-code/package.json src/extensions/endpoints/adoption-code/
 COPY src/extensions/endpoints/applications/package.json src/extensions/endpoints/applications/

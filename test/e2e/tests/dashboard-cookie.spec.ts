@@ -1,21 +1,5 @@
 import { test, expect } from '../fixtures.js';
-
-const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'dash_session_token';
-
-const decodeJwt = (jwt: string) => {
-	const encoded = jwt.split('.')[1];
-
-	if (!encoded) {
-		return null;
-	}
-
-	try {
-		const json = Buffer.from(encoded, 'base64url').toString();
-		return JSON.parse(json);
-	} catch {
-		return null;
-	}
-};
+import { COOKIE_NAME, decodeJwt } from '../utils.ts';
 
 test('Dashboard cookie format', async ({ page, user }) => {
 	await page.goto('/');
@@ -39,6 +23,8 @@ test('Dashboard cookie format', async ({ page, user }) => {
 
 	expect(typeof payload.user_account_id).toBe('string');
 	expect(payload.user_account_id).toBe(user.account_id);
+	expect(payload.active_account_id).toBe(user.account_id);
+	expect(payload.active_account_role).toBe('owner');
 
 	expect(typeof payload.role).toBe('string');
 	expect(payload.role.length).toBeGreaterThan(0);
