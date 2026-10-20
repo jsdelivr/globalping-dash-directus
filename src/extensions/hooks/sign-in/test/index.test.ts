@@ -36,15 +36,9 @@ describe('Sign-in hook', () => {
 	};
 	const context = {
 		services: {
-			ItemsService: sinon.stub().callsFake(() => {
-				return itemsService;
-			}),
-			UsersService: sinon.stub().callsFake(() => {
-				return usersService;
-			}),
-			NotificationsService: sinon.stub().callsFake(() => {
-				return notificationsService;
-			}),
+			ItemsService: sinon.stub(),
+			UsersService: sinon.stub(),
+			NotificationsService: sinon.stub(),
 		},
 		env: {
 			GITHUB_ACCESS_TOKEN: 'default-github-token',
@@ -66,7 +60,10 @@ describe('Sign-in hook', () => {
 	});
 
 	beforeEach(() => {
-		sinon.resetHistory();
+		sinon.reset();
+		context.services.ItemsService.returns(itemsService);
+		context.services.UsersService.returns(usersService);
+		context.services.NotificationsService.returns(notificationsService);
 		itemsService.readByQuery.resolves([]);
 		itemsService.createOne.resolves('created-id');
 		itemsService.deleteMany.resolves();
@@ -80,6 +77,10 @@ describe('Sign-in hook', () => {
 	const waitFor = async (condition: () => boolean) => {
 		for (let i = 0; i < 100 && !condition(); i++) {
 			await new Promise(resolve => setTimeout(resolve, 5));
+		}
+
+		if (!condition()) {
+			throw new Error('Timed out waiting for background sync.');
 		}
 	};
 
@@ -223,7 +224,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should not update the organizations list if it is the same', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
 
 			itemsService.readByQuery.onFirstCall().resolves([{ id: 'org-id', name: 'jsdelivr', github_id: '1' }]);
 			itemsService.readByQuery.onSecondCall().resolves([{ id: 'membership-id', role: 'member', org: { github_id: '1' } }]);
@@ -239,11 +240,12 @@ describe('Sign-in hook', () => {
 			hook(events, context);
 
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
-			await waitFor(() => nock.isDone());
+			// Prefix repair happens after org sync, giving this otherwise read-only path a completion signal.
+			await waitFor(() => usersService.updateOne.callCount === 1);
 
 			expect(nock.isDone()).to.equal(true);
 			expect(itemsService.createOne.callCount).to.equal(0);
-			expect(usersService.updateOne.callCount).to.equal(0);
+			expect(usersService.updateOne.args).to.deep.equal([ [ '123', { default_prefix: 'oldUsername' }, { emitEvents: false }] ]);
 		});
 
 		it('should deprecate an invalid default_prefix and notify the user', async () => {
