@@ -27,7 +27,9 @@ export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services,
 		throw new Error('CREDITS_PER_ADOPTED_PROBE_DAY was not provided');
 	}
 
-	if (adoptedProbes.length === 0) {
+	const eligibleProbes = adoptedProbes.filter(({ githubId }) => githubId);
+
+	if (eligibleProbes.length === 0) {
 		return [];
 	}
 
@@ -37,7 +39,7 @@ export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services,
 		schema: await getSchema(),
 	});
 
-	const result = await creditsAdditionsService.createMany(adoptedProbes.map(({ id, githubId, ip, name }) => ({
+	const result = await creditsAdditionsService.createMany(eligibleProbes.map(({ id, githubId, ip, name }) => ({
 		github_id: githubId,
 		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
 		reason: 'adopted_probe',
