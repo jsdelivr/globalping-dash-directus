@@ -34,6 +34,7 @@ describe('email-unsubscribe endpoint', () => {
 			error: sinon.stub(),
 		},
 		getSchema: async () => ({}),
+		database: { transaction: (run: (trx: object) => Promise<void>) => run({}) },
 		services: {
 			UsersService,
 			ItemsService,

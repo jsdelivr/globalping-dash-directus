@@ -54,25 +54,28 @@ export default defineEndpoint((router, context) => {
 	const unsubscribe = async (userId: string, type: NotificationTypeKey | null) => {
 		const { UsersService, ItemsService } = context.services;
 		const schema = await context.getSchema();
-		const usersService = new UsersService({ schema });
-		const membersService = new ItemsService('gp_org_members', { schema });
 
-		const user = await usersService.readOne(userId, { fields: [ 'id', 'notification_preferences' ] }) as User | null;
+		await context.database.transaction(async (trx) => {
+			const usersService = new UsersService({ schema, knex: trx });
+			const membersService = new ItemsService('gp_org_members', { schema, knex: trx });
 
-		if (!user) {
-			throw new UserNotFoundError();
-		}
+			const user = await usersService.readOne(userId, { fields: [ 'id', 'notification_preferences' ] }) as User | null;
 
-		await usersService.updateOne(userId, { notification_preferences: withEmailsDisabled(user.notification_preferences, type) });
+			if (!user) {
+				throw new UserNotFoundError();
+			}
 
-		const memberships = await membersService.readByQuery({
-			filter: { user: { _eq: userId } },
-			fields: [ 'id', 'notification_preferences' ],
-		}) as Membership[];
+			await usersService.updateOne(userId, { notification_preferences: withEmailsDisabled(user.notification_preferences, type) });
 
-		for (const membership of memberships) {
-			await membersService.updateOne(membership.id, { notification_preferences: withEmailsDisabled(membership.notification_preferences, type) });
-		}
+			const memberships = await membersService.readByQuery({
+				filter: { user: { _eq: userId } },
+				fields: [ 'id', 'notification_preferences' ],
+			}) as Membership[];
+
+			for (const membership of memberships) {
+				await membersService.updateOne(membership.id, { notification_preferences: withEmailsDisabled(membership.notification_preferences, type) });
+			}
+		});
 	};
 
 	router.post('/unsubscribe', asyncWrapper(async (req, res) => {
