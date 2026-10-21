@@ -136,6 +136,17 @@ describe('email-unsubscribe endpoint', () => {
 		expect(updated.outdated_software?.emailEnabled).to.equal(true);
 	});
 
+	it('should keep the parameter of the type when unsubscribing from it', async () => {
+		readOne.resolves({ id: 'user-1', notification_preferences: { low_credits: { enabled: true, emailEnabled: true, parameter: 20000 } } });
+		readByQuery.resolves([{ id: 'membership-1', notification_preferences: { low_credits: { enabled: true, emailEnabled: true, parameter: 30000 } } }]);
+
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'low_credits') });
+
+		expect(res.status).to.equal(200);
+		expect(updateOne.firstCall.args[1].notification_preferences.low_credits).to.deep.equal({ enabled: true, emailEnabled: false, parameter: 20000 });
+		expect(updateMembership.firstCall.args[1].notification_preferences.low_credits).to.deep.equal({ enabled: true, emailEnabled: false, parameter: 30000 });
+	});
+
 	it('should redirect GET /unsubscribe to dashboard with data param without mutating', async () => {
 		const data = getData('user-1');
 		const res = await request(app).get('/unsubscribe').query({ data });

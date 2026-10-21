@@ -2,7 +2,7 @@ import { createError } from '@directus/errors';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getLinkGenerator } from '../../../lib/src/link-generator.js';
-import { areAllDisabled, configurableNotifications, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { configurableNotifications, getDefaultNotificationPreferences, mapNotificationTypeKey, type NotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationPreference = {
 	enabled: boolean;
@@ -40,11 +40,7 @@ const withEmailsDisabled = (preferences: NotificationPreferences | null, type: N
 		return updated;
 	}
 
-	updated[type] = {
-		enabled: typeof current[type]?.enabled === 'boolean' ? current[type].enabled : !areAllDisabled(current),
-		emailEnabled: false,
-	};
-
+	updated[type]!.emailEnabled = false;
 	return updated;
 };
 
