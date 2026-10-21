@@ -48,8 +48,8 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
   at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts with the personal
   account; a default account is a later phase.
 - OAuth is the exception: gp-auth ignores the active account entirely and asks on the approval screen instead. Connecting an
-  app is a durable, hard-to-notice decision, so it is never made by ambient session state. The active account only preselects
-  the entry there.
+  app is a durable, hard-to-notice decision, so it is never made by ambient session state. The dashboard may preselect the
+  session's active account on that screen (phase 4), but only the account sent with the approval counts.
 - Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
 - Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the admin before saving.
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.

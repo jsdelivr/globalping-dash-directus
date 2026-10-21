@@ -17,77 +17,62 @@ type User = {
 	notification_preferences: NotificationPreferences | null;
 };
 
+type Membership = {
+	id: string;
+	notification_preferences: NotificationPreferences | null;
+};
+
 const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'data is required.', 400);
 const InvalidTokenError = createError('INVALID_TOKEN', 'Invalid token.', 400);
 const UserNotFoundError = createError('NOT_FOUND', 'User not found.', 404);
 
+// The preferences with the emails of one type, or of every type, switched off.
+const withEmailsDisabled = (preferences: NotificationPreferences | null, type: NotificationTypeKey | null): NotificationPreferences => {
+	const current = preferences ?? {};
+	const updated: NotificationPreferences = {
+		...getDefaultNotificationPreferences(current),
+		// Filtering here to remove old types that were removed from notificationTypes.
+		...Object.fromEntries(Object.entries(current).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
+	};
+
+	if (!type) {
+		Object.values(updated).forEach((preference) => { preference.emailEnabled = false; });
+		return updated;
+	}
+
+	updated[type] = {
+		enabled: typeof current[type]?.enabled === 'boolean' ? current[type].enabled : !areAllDisabled(current),
+		emailEnabled: false,
+	};
+
+	return updated;
+};
+
 export default defineEndpoint((router, context) => {
 	const linkGenerator = getLinkGenerator(context);
 
-	const unsubscribeAllEmails = async (userId: string) => {
-		const { UsersService } = context.services;
-		const usersService = new UsersService({
-			schema: await context.getSchema(),
-		});
-		const user = await usersService.readOne(userId, {
-			fields: [ 'id', 'notification_preferences' ],
-		}) as User | null;
+	const unsubscribe = async (userId: string, type: NotificationTypeKey | null) => {
+		const { UsersService, ItemsService } = context.services;
+		const schema = await context.getSchema();
+		const usersService = new UsersService({ schema });
+		const membersService = new ItemsService('gp_org_members', { schema });
+
+		const user = await usersService.readOne(userId, { fields: [ 'id', 'notification_preferences' ] }) as User | null;
 
 		if (!user) {
 			throw new UserNotFoundError();
 		}
 
-		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
-		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
-		const updatedPreferences = {
-			...defaultPreferences,
-			// Filtering here to remove old types that were removed from notificationTypes.
-			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
-		};
-		Object.values(updatedPreferences).forEach((preference) => { preference.emailEnabled = false; });
+		await usersService.updateOne(userId, { notification_preferences: withEmailsDisabled(user.notification_preferences, type) });
 
-		await usersService.updateOne(userId, {
-			notification_preferences: updatedPreferences,
-		});
-	};
-
-	const unsubscribeTypeEmails = async (userId: string, type: string) => {
-		const resolvedType = mapNotificationTypeKey(type);
-
-		if (!resolvedType) {
-			throw new InvalidTokenError();
-		}
-
-		const { UsersService } = context.services;
-		const usersService = new UsersService({
-			schema: await context.getSchema(),
-		});
-		const user = await usersService.readOne(userId, {
+		const memberships = await membersService.readByQuery({
+			filter: { user: { _eq: userId } },
 			fields: [ 'id', 'notification_preferences' ],
-		}) as User | null;
+		}) as Membership[];
 
-		if (!user) {
-			throw new UserNotFoundError();
+		for (const membership of memberships) {
+			await membersService.updateOne(membership.id, { notification_preferences: withEmailsDisabled(membership.notification_preferences, type) });
 		}
-
-		const userPreferences: NotificationPreferences = user.notification_preferences ?? {};
-		const allDisabled = areAllDisabled(userPreferences);
-		const defaultPreferences = getDefaultNotificationPreferences(userPreferences);
-
-		const current = userPreferences[resolvedType];
-		const updatedPreferences = {
-			...defaultPreferences,
-			// Filtering here to remove old types that were removed from notificationTypes.
-			...Object.fromEntries(Object.entries(userPreferences).filter(([ key ]) => Object.hasOwn(configurableNotifications, key))),
-			[resolvedType]: {
-				enabled: typeof current?.enabled === 'boolean' ? current.enabled : !allDisabled,
-				emailEnabled: false,
-			},
-		};
-
-		await usersService.updateOne(userId, {
-			notification_preferences: updatedPreferences,
-		});
 	};
 
 	router.post('/unsubscribe', asyncWrapper(async (req, res) => {
@@ -103,11 +88,13 @@ export default defineEndpoint((router, context) => {
 			throw new InvalidTokenError();
 		}
 
-		if (tokenPayload.type) {
-			await unsubscribeTypeEmails(tokenPayload.userId, tokenPayload.type);
-		} else {
-			await unsubscribeAllEmails(tokenPayload.userId);
+		const type = tokenPayload.type ? mapNotificationTypeKey(tokenPayload.type) : null;
+
+		if (tokenPayload.type && !type) {
+			throw new InvalidTokenError();
 		}
+
+		await unsubscribe(tokenPayload.userId, type);
 
 		res.status(200).send();
 	}, context));

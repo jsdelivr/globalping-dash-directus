@@ -51,7 +51,8 @@ Verify: unit + integration suites; on dev - adopt a probe into an org, see its t
 ## 2. gp-auth (`globalping-auth`)
 
 1. The account is picked on the approval screen, never taken from the browser state: gp-auth does not read
-   the session's active account at all. The screen sends the chosen account as a request parameter; with nothing sent the approval is
+   the session's active account at all, the dashboard may only use it to preselect the entry. The screen sends the chosen
+   account as a request parameter; with nothing sent the approval is
    personal, taken from the session's `user_account_id` claim (same `// PHASE5: remove` lookup fallback as gp-api). That keeps
    the old dashboard working against the new gp-auth, so it can be deployed first.
 1a. **The screen is skipped only when there is nothing to pick.** A remembered approval short-circuits it as before, but only
