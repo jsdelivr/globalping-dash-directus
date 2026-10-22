@@ -43,6 +43,17 @@ export async function up (knex) {
 		END;
 	`);
 
+	// PHASE5: remove.
+	await knex.raw(`
+		CREATE OR REPLACE TRIGGER gp_probes_fulfill_account_on_update BEFORE UPDATE ON gp_probes
+		FOR EACH ROW
+		BEGIN
+			IF NOT (NEW.userId <=> OLD.userId) AND NEW.account_id <=> OLD.account_id THEN
+				SET NEW.account_id = (SELECT id FROM gp_accounts WHERE user = NEW.userId LIMIT 1);
+			END IF;
+		END;
+	`);
+
 	// The credits triggers resolve an account, so an org can hold a balance too.
 	await knex.raw(`
 		CREATE OR REPLACE TRIGGER after_gp_credits_additions_insert
