@@ -100,7 +100,7 @@ whatever runs on those tokens.
 
 ## 7c. Organization banners
 
-7c.1 **Storage.** `gp_orgs.banner` is a nullable M2O to `directus_files` (`ON DELETE SET NULL`), readable by the members like the rest of the profile but not in the update permission: only the endpoint below writes it. The files live in the "Organization banners" folder, created by `20260826GP-add-org-banners` with a fixed id that `lib/src/constants.ts` repeats. The Public and the User policies may read `directus_files` in that folder only, and only the `id`, which is all `/assets/:id` needs, so a listing of the files names no org - both, because a signed-in user does not get the Public permissions and the dash's `<img>` requests carry the session cookie. Deleting an org deletes its banner file (`gp-orgs` hook: the ids are read in the delete filter, the files deleted in the action, after the access check).
+7c.1 **Storage.** `gp_orgs.banner` is a nullable M2O to `directus_files` (`ON DELETE SET NULL`), readable by the members like the rest of the profile but not in the update permission: only the endpoint below writes it. The files live in the "Organization banners" folder, created by `20260831GP-add-org-banners` with a fixed id that `lib/src/constants.ts` repeats. The Public and the User policies may read `directus_files` in that folder only, and only the `id`, which is all `/assets/:id` needs, so a listing of the files names no org - both, because a signed-in user does not get the Public permissions and the dash's `<img>` requests carry the session cookie. Deleting an org deletes its banner file (`gp-orgs` hook: the ids are read in the delete filter, the files deleted in the action, after the access check).
 
 7c.2 **Endpoint** (`organizations` extension):
 
