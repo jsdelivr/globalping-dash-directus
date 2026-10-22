@@ -17,7 +17,7 @@ describe('sponsor query normalization', () => {
 
 		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
-		expect(builder.orWhere.calledWithExactly('directus_users.github_username', 'like', '%66716858%')).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
 
@@ -34,7 +34,7 @@ describe('sponsor query normalization', () => {
 
 		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
-		expect(builder.orWhere.calledWithExactly('dashboard_users.github_username', 'like', '%66716858%')).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
 
@@ -48,8 +48,8 @@ describe('sponsor query normalization', () => {
 			date_created: '2026-07-15T10:00:00.000Z',
 			github_id: '123',
 			github_login: 'example',
-			dashboard_user_id: 'user-id',
-			dashboard_username: 'dashboard-example',
+			dashboard_account_id: 'user-id',
+			dashboard_account_name: 'dashboard-example',
 			reason: 'recurring_sponsorship',
 			meta: JSON.stringify({ amountInDollars: 150, monthsCovered: 6, bonus: 25, manual: true }),
 		})).to.deep.equal({
@@ -57,8 +57,8 @@ describe('sponsor query normalization', () => {
 			date: '2026-07-15T10:00:00.000Z',
 			githubId: '123',
 			githubLogin: 'example',
-			dashboardUserId: 'user-id',
-			dashboardUsername: 'dashboard-example',
+			dashboardAccountId: 'user-id',
+			dashboardAccountName: 'dashboard-example',
 			reason: 'recurring_sponsorship',
 			manual: true,
 			amountInDollars: 150,
@@ -73,8 +73,8 @@ describe('sponsor query normalization', () => {
 			date_created: new Date('2026-07-16T10:00:00.000Z'),
 			github_id: '456',
 			github_login: null,
-			dashboard_user_id: null,
-			dashboard_username: null,
+			dashboard_account_id: null,
+			dashboard_account_name: null,
 			reason: 'tier_changed',
 			meta: { amountInDollars: 25, monthsCovered: 3 },
 		})).to.deep.equal({
@@ -82,8 +82,8 @@ describe('sponsor query normalization', () => {
 			date: '2026-07-16T10:00:00.000Z',
 			githubId: '456',
 			githubLogin: null,
-			dashboardUserId: null,
-			dashboardUsername: null,
+			dashboardAccountId: null,
+			dashboardAccountName: null,
 			reason: 'tier_changed',
 			manual: false,
 			amountInDollars: 25,
@@ -111,8 +111,8 @@ describe('sponsor query normalization', () => {
 			date_created: '2026-08-14T08:30:00.000Z',
 			github_id: '123',
 			github_login: 'example',
-			dashboard_user_id: 'recipient-id',
-			dashboard_username: 'example',
+			dashboard_account_id: 'recipient-id',
+			dashboard_account_name: 'example',
 			added_by: 'Admin User',
 			amount: '25000',
 			reason: 'one_time_sponsorship',
@@ -122,8 +122,8 @@ describe('sponsor query normalization', () => {
 			date: '2026-08-14T08:30:00.000Z',
 			githubId: '123',
 			githubLogin: 'example',
-			dashboardUserId: 'recipient-id',
-			dashboardUsername: 'example',
+			dashboardAccountId: 'recipient-id',
+			dashboardAccountName: 'example',
 			addedBy: 'Admin User',
 			type: 'payment',
 			credits: 25_000,
@@ -136,8 +136,8 @@ describe('sponsor query normalization', () => {
 			date_created: new Date('2026-08-14T09:30:00.000Z'),
 			github_id: '456',
 			github_login: null,
-			dashboard_user_id: null,
-			dashboard_username: null,
+			dashboard_account_id: null,
+			dashboard_account_name: null,
 			added_by: null,
 			amount: 5000,
 			reason: 'other',
@@ -147,8 +147,8 @@ describe('sponsor query normalization', () => {
 			date: '2026-08-14T09:30:00.000Z',
 			githubId: '456',
 			githubLogin: null,
-			dashboardUserId: null,
-			dashboardUsername: null,
+			dashboardAccountId: null,
+			dashboardAccountName: null,
 			addedBy: null,
 			type: 'other',
 			credits: 5000,
@@ -161,8 +161,8 @@ describe('sponsor query normalization', () => {
 		expect(normalizeSponsorAccount({
 			github_id: '123',
 			github_login: 'example',
-			dashboard_user_id: 'user-id',
-			dashboard_username: 'dashboard-example',
+			dashboard_account_id: 'user-id',
+			dashboard_account_name: 'dashboard-example',
 			is_active: 0,
 			has_recurring: '1',
 			current_monthly_amount: null,
@@ -172,8 +172,8 @@ describe('sponsor query normalization', () => {
 		})).to.deep.equal({
 			githubId: '123',
 			githubLogin: 'example',
-			dashboardUserId: 'user-id',
-			dashboardUsername: 'dashboard-example',
+			dashboardAccountId: 'user-id',
+			dashboardAccountName: 'dashboard-example',
 			status: 'former',
 			currentMonthlyAmount: null,
 			periodSponsorshipValue: 125.5,
@@ -186,8 +186,8 @@ describe('sponsor query normalization', () => {
 		expect(normalizeSponsorAccount({
 			github_id: '456',
 			github_login: null,
-			dashboard_user_id: null,
-			dashboard_username: null,
+			dashboard_account_id: null,
+			dashboard_account_name: null,
 			is_active: 1,
 			has_recurring: 0,
 			current_monthly_amount: '15.00',
@@ -199,8 +199,8 @@ describe('sponsor query normalization', () => {
 		expect(normalizeSponsorAccount({
 			github_id: '789',
 			github_login: null,
-			dashboard_user_id: null,
-			dashboard_username: null,
+			dashboard_account_id: null,
+			dashboard_account_name: null,
 			is_active: 0,
 			has_recurring: 0,
 			current_monthly_amount: null,

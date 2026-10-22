@@ -93,6 +93,10 @@ describe('Sponsors cron handler', () => {
 		});
 	};
 
+	afterEach(() => {
+		nock.cleanAll();
+	});
+
 	after(() => {
 		nock.cleanAll();
 		clock.restore();

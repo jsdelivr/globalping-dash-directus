@@ -5,7 +5,7 @@ import markdownit from 'markdown-it';
 import { Resend } from 'resend';
 import sanitizeHtml from 'sanitize-html';
 import { type LinkGenerator, getLinkGenerator } from '../../../lib/src/link-generator.js';
-import { getNotificationType, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
+import { configurableNotifications, getNotificationType, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
 
 type NotificationRow = {
 	id: number;
@@ -172,11 +172,15 @@ export class EmailService {
 
 	private formatMessage (notification: NotificationRow) {
 		const renderedMessage = this.md.render(notification.message ?? '');
-		const typeTitle = getNotificationType(notification.type)!.description;
+		const type = mapNotificationTypeKey(notification.type)!;
+		const typeTitle = getNotificationType(type)!.description;
+		const typeLink = Object.hasOwn(configurableNotifications, type)
+			? ` | <a href="${this.linkGenerator.generateTypeUnsubscribeLink(notification.recipient, type)}">Disable "${typeTitle}" emails</a>`
+			: '';
 		const messageWithFooter = renderedMessage
 			+ '<p>—<br>'
-			+ `<a href="${this.linkGenerator.generateSettingsLink()}">Manage notifications</a> | `
-			+ `<a href="${this.linkGenerator.generateTypeUnsubscribeLink(notification.recipient, mapNotificationTypeKey(notification.type)!)}">Disable "${typeTitle}" emails</a>`
+			+ `<a href="${this.linkGenerator.generateSettingsLink()}">Manage notifications</a>`
+			+ typeLink
 			+ '</p>';
 		return sanitizeHtml(messageWithFooter);
 	}

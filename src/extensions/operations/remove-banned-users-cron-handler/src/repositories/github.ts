@@ -2,8 +2,8 @@ import type { OperationContext } from '@directus/extensions';
 import { graphql, GraphqlResponseError } from '@octokit/graphql';
 import axios, { isAxiosError } from 'axios';
 import Bluebird from 'bluebird';
+import { getGithubUrl } from '../../../../lib/src/service-urls.js';
 
-const GITHUB_API_URL = 'https://api.github.com';
 const BATCH_SIZE = 500;
 
 type User = { external_identifier: string; github_username: string | null };
@@ -51,7 +51,9 @@ export const getExistingGithubIds = async (users: User[], context: OperationCont
 	return existingIds;
 };
 
-const fetchUsersByLogin = async (logins: string[], { env }: OperationContext): Promise<GraphqlNode[]> => {
+const fetchUsersByLogin = async (logins: string[], context: OperationContext): Promise<GraphqlNode[]> => {
+	const { env } = context;
+
 	const variableDefinitions = logins.map((_login, index) => `$l${index}: String!`).join(', ');
 	const fields = logins.map((_login, index) => `u${index}: user(login: $l${index}) { databaseId }`).join(' ');
 	const query = `query (${variableDefinitions}) { ${fields} }`;
@@ -62,6 +64,7 @@ const fetchUsersByLogin = async (logins: string[], { env }: OperationContext): P
 	try {
 		data = await graphql<GraphqlData>(query, {
 			...variables,
+			baseUrl: getGithubUrl(context),
 			headers: { Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}` },
 			request: { signal: AbortSignal.timeout(30000) },
 		});
@@ -83,9 +86,11 @@ const fetchUsersByLogin = async (logins: string[], { env }: OperationContext): P
 	return logins.map((_login, index) => data[`u${index}`] ?? null);
 };
 
-const githubUserExistsById = async (githubId: string, { env }: OperationContext): Promise<boolean> => {
+const githubUserExistsById = async (githubId: string, context: OperationContext): Promise<boolean> => {
+	const { env } = context;
+
 	try {
-		await axios.get(`${GITHUB_API_URL}/user/${githubId}`, {
+		await axios.get(`${getGithubUrl(context)}/user/${githubId}`, {
 			timeout: 5000,
 			headers: { Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}` },
 		});
