@@ -107,6 +107,24 @@ describe('Low credits cron handler', () => {
 		expect(creditsUpdateOne.callCount).to.equal(0);
 	});
 
+	it('reads the legacy notified flag as the owner being notified', async () => {
+		seed([ candidate({ allNotifiedUsers: '1' }) ]);
+
+		const result = await checkLowCredits(ctx());
+
+		expect(result.notified).to.deep.equal([]);
+		expect(creditsUpdateOne.callCount).to.equal(0);
+	});
+
+	it('reads the legacy not-notified flag as an empty list', async () => {
+		seed([ candidate({ allNotifiedUsers: '0' }) ]);
+
+		const result = await checkLowCredits(ctx());
+
+		expect(result.notified).to.deep.equal([ 'user-1' ]);
+		expect(creditsUpdateOne.args[0]).to.deep.equal([ 1, { low_credits_notified: [ 'user-1' ] }]);
+	});
+
 	it('notifies each org admin at their own threshold', async () => {
 		seed([
 			candidate({ recipient: 'admin-1', amount: 4000, threshold: 5000 }),

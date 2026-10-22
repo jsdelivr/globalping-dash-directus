@@ -22,7 +22,17 @@ export const getCandidates = async ({ database }: OperationContext): Promise<Can
 		HAVING recipient IS NOT NULL AND (amount <= threshold OR JSON_LENGTH(allNotifiedUsers) > 0)
 	`, [ LOW_CREDITS_DEFAULT_THRESHOLD ]))[0] as (Omit<CandidateRow, 'allNotifiedUsers' | 'enabled'> & { allNotifiedUsers: string; enabled: number })[];
 
-	return rows.map(row => ({ ...row, allNotifiedUsers: JSON.parse(row.allNotifiedUsers) as string[], enabled: Boolean(row.enabled) }));
+	return rows.map(row => ({ ...row, allNotifiedUsers: parseNotifiedList(row.allNotifiedUsers, row.recipient), enabled: Boolean(row.enabled) }));
+};
+
+// PHASE5: remove, and convert the '0'/'1' rows still in the DB to '[]' in a migration. The previous version stored a flag of the
+// account owner instead of the list, and a '0' row is never rewritten while its balance is above the threshold.
+const parseNotifiedList = (value: string, recipient: string): string[] => {
+	const parsed = JSON.parse(value) as unknown;
+
+	if (Array.isArray(parsed)) { return parsed as string[]; }
+
+	return parsed === 1 ? [ recipient ] : [];
 };
 
 export const notifyRecipients = async (context: OperationContext, toNotify: CandidateRow[], trx: OperationContext['database']): Promise<void> => {
