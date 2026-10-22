@@ -87,7 +87,7 @@ describe('local-adoption endpoint', () => {
 		accountsQueryBuilder.where.returns(accountsQueryBuilder);
 
 		databaseStub = sandbox.stub().callsFake((table: string) => table === 'gp_accounts' ? accountsQueryBuilder : knexQueryBuilder);
-		databaseStub.raw = sandbox.stub().resolves([ [{ id: 'account-id' }] ]);
+		databaseStub.raw = sandbox.stub().resolves([ [{ role: 'admin' }] ]);
 		databaseStub.transaction = sandbox.stub().callsFake(async (callback: any) => callback(knexQueryBuilder));
 
 		updateOne = sandbox.stub();

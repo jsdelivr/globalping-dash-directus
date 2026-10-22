@@ -49,7 +49,7 @@ describe('/credits-timeline endpoint', () => {
 		firstStub.resolves({ count: 0 });
 		offsetStub.resolves([]);
 		// getRequestAccountId, then getAccountGithubId.
-		rawStub.onFirstCall().resolves([ [{ id: 'account-id' }] ]);
+		rawStub.onFirstCall().resolves([ [{ role: 'admin' }] ]);
 		rawStub.onSecondCall().resolves([ [{ github_id: 'github-id' }] ]);
 		rawStub.resolves([ [] ]);
 

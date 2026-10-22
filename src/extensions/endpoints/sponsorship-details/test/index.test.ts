@@ -74,7 +74,7 @@ describe('/sponsorship-details', () => {
 
 		rawStub.callsFake((sql: string) => {
 			if (sql.includes('gp_org_members')) {
-				return Promise.resolve([ [{ id: 'account-id' }] ]);
+				return Promise.resolve([ [{ role: 'admin' }] ]);
 			}
 
 			if (sql.includes('github_id')) {

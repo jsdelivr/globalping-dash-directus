@@ -94,14 +94,14 @@ describe('token hooks', () => {
 		};
 
 		beforeEach(() => {
-			raw.resolves([ [{ id: 'account-id' }] ]);
+			raw.resolves([ [{ role: 'admin' }] ]);
 		});
 
 		it('should pass when the account is available to the user', async () => {
 			await create({ name: 'name', value: 'value', account_id: 'account-id' });
 
 			expect(raw.callCount).to.equal(1);
-			expect(raw.args[0]?.[1]).to.deep.equal({ user: 'user-id', account: 'account-id', roles: [ 'admin', 'member' ] });
+			expect(raw.args[0]?.[1]).to.deep.equal({ user: 'user-id', account: 'account-id' });
 		});
 
 		it('should reject when the account is not available to the user', async () => {

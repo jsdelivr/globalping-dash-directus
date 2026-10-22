@@ -54,7 +54,7 @@ describe('/applications endpoint', () => {
 		sinon.resetHistory();
 		countStub.resolves([{ total: 0 }]);
 		offsetStub.resolves([]);
-		rawStub.resolves([ [{ id: 'account-id' }] ]);
+		rawStub.resolves([ [{ role: 'admin' }] ]);
 		delStub.resolves(1);
 		firstStub.resolves({ id: 'account-id' });
 

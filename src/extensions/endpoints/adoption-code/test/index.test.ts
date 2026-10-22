@@ -39,7 +39,7 @@ describe('adoption code endpoints', () => {
 	};
 	accountsSql.where.returns(accountsSql);
 	const databaseStub = Object.assign((table: string) => table === 'gp_accounts' ? accountsSql : sql, {
-		raw: sinon.stub().resolves([ [{ user: 'first-user-id' }] ]),
+		raw: sinon.stub().resolves([ [{ role: 'admin' }] ]),
 	});
 	const endpointContext = {
 		logger: {
