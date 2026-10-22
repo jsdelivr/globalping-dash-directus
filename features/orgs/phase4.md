@@ -104,7 +104,7 @@ admin}`, so a member can read their own membership row and nothing more - and th
   are the `org -> user` rows we inherited, and clearing it here is the only way one is ever removed.
 
 6.3 **Members.** Every member with their role, and the role selector. Demoting someone to viewer deletes their org tokens and app
-approvals - the database trigger does it (`20260813GP`) - so the selector warns before saving: it is irreversible and it breaks
+approvals - the database trigger does it (`20260818GP`) - so the selector warns before saving: it is irreversible and it breaks
 whatever runs on those tokens.
 
 ## 7. "Migrate to organization"
