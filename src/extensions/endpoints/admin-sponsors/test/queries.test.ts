@@ -4,9 +4,10 @@ import sinon from 'sinon';
 import { applyManualSearch, applySearch, fillChartPoints, normalizeManualAddition, normalizeSponsorAccount, normalizeSponsorshipEvent, utcMonthSql } from '../src/queries.js';
 
 describe('sponsor query normalization', () => {
-	it('matches mapped numeric GitHub IDs exactly while searching event usernames', () => {
+	it('matches redirected numeric GitHub IDs exactly while searching event usernames', () => {
 		const builder = {
 			where: sinon.stub().returnsThis(),
+			whereRaw: sinon.stub().returnsThis(),
 			orWhere: sinon.stub().returnsThis(),
 			orWhereRaw: sinon.stub().returnsThis(),
 		};
@@ -15,15 +16,16 @@ describe('sponsor query normalization', () => {
 
 		applySearch({ where } as unknown as Knex.QueryBuilder, '66716858');
 
-		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
+		expect(builder.whereRaw.calledOnceWithExactly('additions.github_id = COALESCE((SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?), ?)', [ '66716858', '66716858' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
 
-	it('matches mapped numeric GitHub IDs exactly while searching manual-addition usernames', () => {
+	it('matches redirected numeric GitHub IDs exactly while searching manual-addition usernames', () => {
 		const builder = {
 			where: sinon.stub().returnsThis(),
+			whereRaw: sinon.stub().returnsThis(),
 			orWhere: sinon.stub().returnsThis(),
 			orWhereRaw: sinon.stub().returnsThis(),
 		};
@@ -32,7 +34,7 @@ describe('sponsor query normalization', () => {
 
 		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '66716858', 'added-by-expression');
 
-		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
+		expect(builder.whereRaw.calledOnceWithExactly('additions.github_id = COALESCE((SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?), ?)', [ '66716858', '66716858' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
