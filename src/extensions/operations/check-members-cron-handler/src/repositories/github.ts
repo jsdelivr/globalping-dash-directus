@@ -176,7 +176,7 @@ const fetchMembersByLogin = async (logins: string[], token: string, context: Api
 			...variables,
 			baseUrl: getGithubUrl(context),
 			headers: { Authorization: `Bearer ${token}` },
-			request: { signal: AbortSignal.timeout(REQUEST_TIMEOUT) },
+			request: { signal: AbortSignal.timeout(30000) },
 		});
 	} catch (error) {
 		if (!(error instanceof GraphqlResponseError)) {
