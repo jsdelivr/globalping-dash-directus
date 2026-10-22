@@ -13,12 +13,12 @@ export const getOrgAdmins = async (orgId: string, { services, getSchema }: HookE
 	}) as OrgMember[];
 };
 
-export const getOrgMember = async (orgId: string, userId: string, { services, getSchema }: HookExtensionContext): Promise<OrgMember | undefined> => {
+export const getOrgAdmin = async (orgId: string, userId: string, { services, getSchema }: HookExtensionContext): Promise<OrgMember | undefined> => {
 	const { ItemsService } = services;
 	const membersService = new ItemsService('gp_org_members', { schema: await getSchema() });
 
 	const [ member ] = await membersService.readByQuery({
-		filter: { org: { _eq: orgId }, user: { _eq: userId }, role: { _in: [ 'admin', 'member' ] } },
+		filter: { org: { _eq: orgId }, user: { _eq: userId }, role: { _eq: 'admin' } },
 		fields: MEMBER_FIELDS,
 	}) as OrgMember[];
 

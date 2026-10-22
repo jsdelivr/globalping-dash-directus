@@ -3,7 +3,7 @@ import { defineHook } from '@directus/extensions-sdk';
 import Joi from 'joi';
 import { type NotificationTypeKey, joiNotificationTypeKey, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
 import { getEmailStatus, getShouldSend } from './actions/status.js';
-import { getOrgAdmins, getOrgMember } from './repositories/directus.js';
+import { getOrgAdmins, getOrgAdmin } from './repositories/directus.js';
 import type { NotificationPayload, User } from './types.js';
 
 const UserNotFoundError = createError('NOT_FOUND', 'User for notification not found.', 404);
@@ -48,7 +48,7 @@ export default defineHook(({ filter }, hookContext) => {
 
 			// The sender picked one member of the org itself.
 			if (account.org && value.recipient) {
-				return notifyOrgMember(account.org, value.recipient, payload, type);
+				return notifyOrgAdmin(account.org, value.recipient, payload, type);
 			}
 
 			// If account is personal and recipient is not the account owner, it's a mistake of the sender.
@@ -87,8 +87,8 @@ export default defineHook(({ filter }, hookContext) => {
 		return { ...payload, email_status: getEmailStatus(type, user) };
 	};
 
-	const notifyOrgMember = async (orgId: string, recipient: string, payload: NotificationPayload, type: NotificationTypeKey) => {
-		const member = await getOrgMember(orgId, recipient, hookContext);
+	const notifyOrgAdmin = async (orgId: string, recipient: string, payload: NotificationPayload, type: NotificationTypeKey) => {
+		const member = await getOrgAdmin(orgId, recipient, hookContext);
 
 		if (!member) {
 			throw new CancelNotificationError();
