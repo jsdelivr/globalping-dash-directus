@@ -6,15 +6,15 @@ Moving a user's own account into an org - the "migrate to organization" button. 
 
 ## 1. Who may migrate
 
-A transfer of any kind is a privilege escalation risk: whoever migrates into an org with no admin ends up its admin (2), so an ordinary GitHub member of a big org must not be able to walk in through it. The rule:
+A transfer of any kind is a privilege escalation risk: whoever migrates into an org with no org admin ends up its org admin (2), so an ordinary GitHub member of a big org must not be able to walk in through it. The rule:
 
-Admins may do everything, always. Viewers may do nothing, ever - that role exists only because an admin set it by hand, since GitHub yields admin or member. Members may transfer tokens and credits and point a credits redirect at the org at any time; they may transfer probes only while the org has no admin. The line is whether the operation hands them something they could not already do for the org: an org token they may create outright anyway, so transferring one adds nothing, while the adoption token that goes with the probes lets anything reporting it adopt into the org - and adopting into an org is otherwise admin-only.
+Org admins may do everything, always. Viewers may do nothing, ever - that role exists only because an org admin set it by hand, since GitHub yields admin or member. Members may transfer tokens and credits and point a credits redirect at the org at any time; they may transfer probes only while the org has no org admin. The line is whether the operation hands them something they could not already do for the org: an org token they may create outright anyway, so transferring one adds nothing, while the adoption token that goes with the probes lets anything reporting it adopt into the org - and adopting into an org is otherwise only for org admins.
 
-Any of those four operations makes the caller an admin while the org has no admin yet, so in practice the first member to touch an unclaimed org takes it over. That is intended. Two consequences are accepted with it: an org that has not approved our OAuth app has no visible roles at all, so its real owners arrive as plain members and the claim can go to any public member of it instead; and whoever claims an org can demote the admins who arrive later, until the sync promotes them back.
+Any of those four operations makes the caller an org admin while the org has no org admin yet, so in practice the first member to touch an unclaimed org takes it over. That is intended. Two consequences are accepted with it: an org that has not approved our OAuth app has no visible roles at all, so its real owners arrive as plain members and the claim can go to any public member of it instead; and whoever claims an org can demote the org admins who arrive later, until the sync promotes them back.
 
 ## 2. Membership
 
-The first member to move anything into an org that has no admin becomes its admin, regardless of their GitHub role; in an org that already has one, the membership stays as it is. Safe against the sync, which only ever promotes: a manually assigned admin is never demoted.
+The first member to move anything into an org that has no org admin becomes its org admin, regardless of their GitHub role; in an org that already has one, the membership stays as it is. Safe against the sync, which only ever promotes: a manually assigned org admin is never demoted.
 
 ## 3. Probes
 
@@ -26,8 +26,8 @@ A probe can not simply be moved: it keeps reporting the adoption token of its us
 
 - a user moves all of their probes at once, never a single one: the token is what moves, and it is per user;
 - the array holds one entry per member who migrated, so a second migration never overwrites the first;
-- any admin can edit the array - in practice, remove entries. The update hook validates the value: the shape of every entry, and that the new array is a subset of the old one, so an admin can never append or rewrite a token. It is a read-modify-write, and the losing side of two simultaneous edits simply repeats it;
-- reading it is admin-only, like `adoption_token`: the field stays out of the `gp_orgs` read permission, and the `gp-orgs` read hook adds it for the admins. A field in the permission can be named in a filter by every member who reads the row, so even with the output stripped it would hand every member the tokens of every other member, one character at a time;
+- any org admin can edit the array - in practice, remove entries. The update hook validates the value: the shape of every entry, and that the new array is a subset of the old one, so an org admin can never append or rewrite a token. It is a read-modify-write, and the losing side of two simultaneous edits simply repeats it;
+- reading it is only for org admins, like `adoption_token`: the field stays out of the `gp_orgs` read permission, and the `gp-orgs` read hook adds it for the org admins. A field in the permission can be named in a filter by every member who reads the row, so even with the output stripped it would hand every member the tokens of every other member, one character at a time;
 - the array is listed in the org settings with the username each token came from (phase 4). Without that list the tokens would be permanent and invisible: a member who migrated and then left could keep adopting probes into the org forever.
 
 Rejected alternative: keep the tokens as they are and instead cancel the re-adoption back to the user when the probe already belongs to one of their orgs. It needs the API to track whose token a probe reported, users to hold several tokens, and it still leaves no way to revoke the access.
@@ -52,6 +52,6 @@ The redirects move out of the code into a `gp_credits_redirects` table (`source_
 ## 7. What happens later
 
 Losing the membership revokes almost nothing by itself: the probes stay with the org, the adoption token stays in the array and
-the redirect stays in place, for an admin to undo when they want to. The exception is section 5 -
+the redirect stays in place, for an org admin to undo when they want to. The exception is section 5 -
 `gp_org_members_clean_up_tokens` (`20260818GP`) deletes that member's org tokens and approvals on the way out, so migrated tokens
 do not survive the departure. Nothing is ever migrated back to the user.

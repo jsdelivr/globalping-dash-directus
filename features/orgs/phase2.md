@@ -37,7 +37,7 @@ Process: one repo at a time, in the order below, each in its own `orgs` branch/w
    - `adoptionToken`: `COALESCE(org.adoption_token, user.adoption_token)`.
    - `getUpdatedProbes` sets `owner: { id: <account_id> }` (only `metrics.ts` reads it).
 4. **`adoption-token.ts`**: the token map covers org adoption tokens too - users' `adoption_token`, orgs' `adoption_token` and the entries of `gp_orgs.extra_adoption_tokens`. The map value becomes the account id, and `adopt-by-token` is called with it.
-5. **Notifications**: post `account` instead of `recipient`, and the dedup check (today `recipient` + `message` + today's date) becomes account-aware - for an org probe the stored recipients are its admins, so dedup by the account's notifications.
+5. **Notifications**: post `account` instead of `recipient`, and the dedup check (today `recipient` + `message` + today's date) becomes account-aware - for an org probe the stored recipients are its org admins, so dedup by the account's notifications.
 
 Verify: unit + integration suites; on dev - adopt a probe into an org, see its tags/location overrides applied, its global tag `u-<org name>` follow the org's `public_probes`, a measurement with an org token bill the org's credits.
 
