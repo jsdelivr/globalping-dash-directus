@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
 import { setTimeout } from 'node:timers/promises';
+import { crc32, deflateSync } from 'node:zlib';
 import { randomUUID } from 'crypto';
-import { type Browser, request } from '@playwright/test';
+import { type Browser, type Page, request } from '@playwright/test';
 import axios from 'axios';
 import { client } from './client.ts';
 import { Actors, Org, User } from './types.ts';
@@ -33,6 +34,9 @@ export const generateUser = async (suffix = '', roleName = 'User'): Promise<User
 
 	// The account row is created by a trigger when the user is inserted.
 	const account = await client('gp_accounts').where({ user: userId }).first('id') as { id: string };
+
+	// Sets the default account so the onboarding modal does not open.
+	await client('directus_users').where({ id: userId }).update({ default_account: account.id });
 	return { ...user, account_id: account.id };
 };
 
@@ -66,9 +70,39 @@ export const generateOrg = async (suffix = ''): Promise<Org> => {
 
 // Deleting the org cascades to the memberships, the account and everything bound to it; probes only lose the account.
 export const clearOrgData = async (org: Org) => {
+	// The banner file is in storage, so it is deleted through Directus, not only from the database.
+	const { banner } = await client('gp_orgs').where({ id: org.id }).first('banner') ?? {};
+	banner && await (await loginDirectusAdmin()).delete(`/files/${banner}`);
 	await client('gp_probes').where({ account_id: org.account_id }).delete();
 	await client('gp_orgs').where({ id: org.id }).delete();
 	await Promise.all([ clearUserData(org.admin), clearUserData(org.member), clearUserData(org.viewer) ]);
+};
+
+// A grayscale PNG of the given size.
+export const png = (width: number, height: number) => {
+	const chunk = (type: string, data: Buffer) => {
+		const body = Buffer.concat([ Buffer.from(type), data ]);
+		const length = Buffer.alloc(4);
+		const crc = Buffer.alloc(4);
+		length.writeUInt32BE(data.length);
+		crc.writeUInt32BE(crc32(body));
+		return Buffer.concat([ length, body, crc ]);
+	};
+
+	const header = Buffer.alloc(13);
+	header.writeUInt32BE(width, 0);
+	header.writeUInt32BE(height, 4);
+	header.writeUInt8(8, 8);
+
+	const row = Buffer.alloc(width + 1, 0x80);
+	row[0] = 0;
+
+	return Buffer.concat([
+		Buffer.from([ 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a ]),
+		chunk('IHDR', header),
+		chunk('IDAT', deflateSync(Buffer.concat(Array.from({ length: height }, () => row)))),
+		chunk('IEND', Buffer.alloc(0)),
+	]);
 };
 
 export const prepareMockProbeByIp = async (ip: string) => {
@@ -233,4 +267,13 @@ export const pageAs = async (browser: Browser, email: string, password: string) 
 	await apiContext.dispose();
 
 	return context.newPage();
+};
+
+export const activeAccountCookie = async (page: Page) => (await page.context().cookies()).find(cookie => cookie.name === 'gp_active_account');
+
+export const actAsOrg = async (browser: Browser, org: Org, user: User) => {
+	await client('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+	const page = await pageAs(browser, user.email, 'user');
+	await page.context().addCookies([{ name: 'gp_active_account', value: `${user.id}:${org.account_id}`, url: process.env.DASH_URL! }]);
+	return page;
 };

@@ -8,25 +8,38 @@ type FilterCallback = (payload: any, meta: any, context: any) => Promise<any> | 
 describe('org hooks', () => {
 	const callbacks = {
 		filter: {} as Record<string, FilterCallback>,
+		action: {} as Record<string, (meta: any) => Promise<void>>,
 	};
 	const events = {
 		filter: (name: string, cb: FilterCallback) => {
 			callbacks.filter[name] = cb;
 		},
+		action: (name: string, cb: (meta: any) => Promise<void>) => {
+			callbacks.action[name] = cb;
+		},
 	} as any;
 
-	hook(events, {} as HookExtensionContext);
+	const deleteMany = sinon.stub().resolves();
+	const FilesService = sinon.stub().returns({ deleteMany });
+
+	hook(events, { services: { FilesService }, getSchema: async () => ({}) } as unknown as HookExtensionContext);
 
 	const select = sinon.stub();
+	const first = sinon.stub();
+	const pluck = sinon.stub();
 	const queryBuilder = {
 		join: sinon.stub(),
 		whereIn: sinon.stub(),
 		where: sinon.stub(),
+		whereNotNull: sinon.stub(),
 		select,
+		first,
+		pluck,
 	};
 	queryBuilder.join.returns(queryBuilder);
 	queryBuilder.whereIn.returns(queryBuilder);
 	queryBuilder.where.returns(queryBuilder);
+	queryBuilder.whereNotNull.returns(queryBuilder);
 	const database = sinon.stub().returns(queryBuilder);
 	const accountability = { user: 'user-id', admin: false };
 
@@ -34,13 +47,30 @@ describe('org hooks', () => {
 		return callbacks.filter['gp_orgs.items.read']?.(payload, {}, context);
 	};
 
+	const update = (payload: any, keys: string[] = [ 'org-1' ]) => {
+		return callbacks.filter['gp_orgs.items.update']?.(payload, { keys }, { accountability, database });
+	};
+
+	const rejection = async (payload: any, keys?: string[]) => {
+		const error = await Promise.resolve(update(payload, keys)).catch(err => err);
+		expect((error as { status: number }).status).to.equal(400);
+		return (error as Error).message;
+	};
+
+	const ALICE = { github_username: 'alice', token: 'alice-token' };
+	const BOB = { github_username: 'bob', token: 'bob-token' };
+
+	const stored = (...entries: object[]) => first.resolves({ extra_adoption_tokens: JSON.stringify(entries) });
+
 	beforeEach(() => {
 		sinon.resetHistory();
 		select.reset();
+		first.reset();
+		pluck.reset();
 	});
 
 	it('should add the token to the orgs the user is an admin of, and not to others', async () => {
-		select.resolves([{ id: 'org-1', adoption_token: 'token-1' }]);
+		select.resolves([{ id: 'org-1', adoption_token: 'token-1', extra_adoption_tokens: '[{"github_username":"alice","token":"alice-token"}]' }]);
 
 		const payload = [
 			{ id: 'org-1', name: 'mine' },
@@ -49,7 +79,13 @@ describe('org hooks', () => {
 
 		await read(payload);
 
-		expect(payload[0]).to.deep.equal({ id: 'org-1', name: 'mine', adoption_token: 'token-1' });
+		expect(payload[0]).to.deep.equal({
+			id: 'org-1',
+			name: 'mine',
+			adoption_token: 'token-1',
+			extra_adoption_tokens: [{ github_username: 'alice', token: 'alice-token' }],
+		});
+
 		expect(payload[1]).to.deep.equal({ id: 'org-2', name: 'foreign' });
 	});
 
@@ -88,5 +124,103 @@ describe('org hooks', () => {
 
 		expect(payload[0]).to.deep.equal({ name: 'org' });
 		expect(database.callCount).to.equal(0);
+	});
+
+	it('should accept removing an extra adoption token', async () => {
+		stored(ALICE, BOB);
+
+		await update({ extra_adoption_tokens: [ BOB ] });
+	});
+
+	it('should accept removing every entry', async () => {
+		stored(ALICE, BOB);
+
+		await update({ extra_adoption_tokens: [] });
+	});
+
+	it('should accept an update that does not touch the tokens', async () => {
+		await update({ public_probes: true });
+
+		expect(database.callCount).to.equal(0);
+	});
+
+	it('should treat an org that does not exist as having no entries', async () => {
+		first.resolves(undefined);
+
+		await update({ extra_adoption_tokens: [] }, [ 'unknown-org' ]);
+		expect(await rejection({ extra_adoption_tokens: [ ALICE ] }, [ 'unknown-org' ])).to.equal('"extra_adoption_tokens" accepts removals only.');
+	});
+
+	it('should reject adding an entry that is not stored', async () => {
+		stored(ALICE);
+
+		expect(await rejection({ extra_adoption_tokens: [ ALICE, BOB ] })).to.equal('"extra_adoption_tokens" accepts removals only.');
+	});
+
+	it('should reject repeating a stored entry to grow the list', async () => {
+		stored(ALICE, BOB);
+
+		expect(await rejection({ extra_adoption_tokens: [ ALICE, ALICE ] })).to.equal('"extra_adoption_tokens" accepts removals only.');
+	});
+
+	it('should reject an update that spans more than one org', async () => {
+		const message = '"extra_adoption_tokens" can only be updated one org at a time.';
+
+		expect(await rejection({ extra_adoption_tokens: [] }, [ 'org-1', 'org-2' ])).to.equal(message);
+		expect(await rejection({ extra_adoption_tokens: [] }, [])).to.equal(message);
+		expect(database.callCount).to.equal(0);
+	});
+
+	it('should reject a value that is not a list of the expected shape', async () => {
+		for (const payload of [ 'alice-token', null, {}, [{ token: 'alice-token' }], [{ ...ALICE, note: 'extra' }], [ null ], [{ ...ALICE, token: 1 }] ]) {
+			expect(await rejection({ extra_adoption_tokens: payload }), JSON.stringify(payload)).to.equal('"extra_adoption_tokens" must be a list of { github_username, token }.');
+		}
+
+		expect(database.callCount).to.equal(0);
+	});
+
+	const deleteOrgs = async (keys: string[]) => {
+		const filtered = await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
+		await callbacks.action['gp_orgs.items.delete']?.({ keys: filtered });
+		return filtered;
+	};
+
+	it('should delete the banners of the deleted orgs after the orgs are deleted', async () => {
+		pluck.resolves([ 'banner-1', 'banner-2' ]);
+		const keys = [ 'org-1', 'org-2', 'org-3' ];
+
+		expect(await deleteOrgs(keys)).to.equal(keys);
+		expect(queryBuilder.whereIn.args[0]).to.deep.equal([ 'id', keys ]);
+		expect(queryBuilder.whereNotNull.args[0]).to.deep.equal([ 'banner' ]);
+		expect(deleteMany.args).to.deep.equal([ [ [ 'banner-1', 'banner-2' ] ] ]);
+	});
+
+	it('should delete nothing in the filter, which runs before the access check', async () => {
+		pluck.resolves([ 'banner-1' ]);
+		const keys = [ 'org-1' ];
+
+		await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
+		expect(deleteMany.callCount).to.equal(0);
+
+		await callbacks.action['gp_orgs.items.delete']?.({ keys });
+		expect(deleteMany.args).to.deep.equal([ [ [ 'banner-1' ] ] ]);
+	});
+
+	it('should not delete files when the deleted orgs have no banners', async () => {
+		pluck.resolves([]);
+
+		await deleteOrgs([ 'org-1' ]);
+
+		expect(deleteMany.callCount).to.equal(0);
+	});
+
+	it('should not delete files twice for a repeated action', async () => {
+		pluck.resolves([ 'banner-1' ]);
+		const keys = [ 'org-1' ];
+
+		await deleteOrgs(keys);
+		await callbacks.action['gp_orgs.items.delete']?.({ keys });
+
+		expect(deleteMany.callCount).to.equal(1);
 	});
 });

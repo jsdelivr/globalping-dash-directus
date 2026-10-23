@@ -159,7 +159,7 @@ describe('Sign-in hook', () => {
 		const loginMeta = { user: '123', provider: 'github' };
 
 		it('should sync orgs, memberships and the organizations list on login', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -185,7 +185,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should use the org created by a concurrent sync of another member', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.get(`/user/memberships/orgs?per_page=100&page=1`)
@@ -206,7 +206,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should keep going when a parallel sync of the same user created the membership first', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.get(`/user/memberships/orgs?per_page=100&page=1`)
@@ -226,7 +226,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should run the same sync on a token refresh, not only on login', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -247,7 +247,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should not update the organizations list if it is the same', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
 
 			itemsService.readByQuery.onFirstCall().resolves([{ id: 'org-id', name: 'jsdelivr', github_id: '1' }]);
 			itemsService.readByQuery.onSecondCall().resolves([{ id: 'membership-id', role: 'member', org: { github_id: '1' } }]);
@@ -273,6 +273,7 @@ describe('Sign-in hook', () => {
 
 		it('should deprecate an invalid default_prefix and notify the user', async () => {
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: '123',
 				external_identifier: '456',
 				github_username: 'newUsername',
@@ -309,7 +310,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should log the error if the user token is invalid', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -330,7 +331,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should log the error if there is not enough data to sync', async () => {
-			itemsService.readOne.resolves({ external_identifier: null });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], external_identifier: null });
 
 			hook(events, context);
 
@@ -341,7 +342,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should not sync for a non-github provider', async () => {
-			itemsService.readOne.resolves({ id: '123', user_type: 'member' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', user_type: 'member' });
 
 			hook(events, context);
 
@@ -354,25 +355,12 @@ describe('Sign-in hook', () => {
 	});
 
 	describe('auth.jwt', () => {
-		it('should not modify payload if user is not found', async () => {
-			const payload = { id: '123' };
-			const meta = { user: 'non-existent-user-id' };
-
-			itemsService.readOne.resolves(undefined);
-
-			hook(events, context);
-
-			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
-			expect(result).to.deep.equal(payload);
-			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'non-existent-user-id' ]);
-		});
-
 		it('should not modify payload if user has no GitHub username', async () => {
 			const payload = { id: '123' };
 			const meta = { user: 'user-id-without-github-username' };
 
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: 'user-id',
 				github_username: null,
 				github_organizations: [],
@@ -391,6 +379,7 @@ describe('Sign-in hook', () => {
 			const meta = { user: 'user-with-github-username' };
 
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: 'user-id',
 				github_username: 'testUser',
 				github_organizations: [],
@@ -413,6 +402,7 @@ describe('Sign-in hook', () => {
 			const meta = { user: 'user-with-user-type' };
 
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: 'user-id',
 				user_type: 'member',
 			});
@@ -497,16 +487,6 @@ describe('Sign-in hook', () => {
 
 			expect(firstStub.callCount).to.equal(0);
 			expect(updateStub.callCount).to.equal(0);
-		});
-
-		it('should emit no active account claims without user_account_id', async () => {
-			itemsService.readOne.resolves({ id: '123' });
-
-			hook(events, context);
-
-			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
-
-			expect(result).to.not.have.any.keys('active_account_id', 'active_account_role');
 		});
 	});
 });

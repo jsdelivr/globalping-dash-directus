@@ -1,6 +1,6 @@
 {
 	"name": "gp-org-members",
-	"description": "Per-field rules for org membership updates: role is changed only by an admin of that org, notification preferences only on own membership.",
+	"description": "Attaches the name of each member to a membership read, and applies the per-field rules for membership updates: role is changed only by an admin of that org, notification preferences only on own membership.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [

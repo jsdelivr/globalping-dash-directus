@@ -6,19 +6,16 @@ Note: the dev DB contains leftovers from an earlier schema experiment (`org_id`/
 
 ## Compatibility contract
 
-Phase 1 is deployed while every other service still runs its old version, and each of them switches to accounts on its own
-schedule. So both shapes have to work at the same time, in both directions:
+Phase 1 is deployed while every other service still runs its old version, and each of them switches to accounts on its own schedule. So both shapes have to work at the same time, in both directions:
 
 - a writer that still sends only `userId` / `user_id` / `user` must end up with `account_id` filled;
-- a writer that already sends only `account_id` must end up with the legacy column filled too, so the old readers keep seeing
-  the row - and must not be rejected by a NOT NULL column or an input schema that only knows the old parameter;
+- a writer that already sends only `account_id` must end up with the legacy column filled too, so the old readers keep seeing the row - and must not be rejected by a NOT NULL column or an input schema that only knows the old parameter;
 - a reader of either shape sees the same data.
 
 How the code is written for it:
 
 - account-first: the real logic resolves and stores `account_id`, and reads it back;
-- everything that exists only to keep the old shape alive - dual-writes, legacy input parameters, fulfillment triggers - is a
-  separate block marked `// PHASE5: remove`, never woven into the main path;
+- everything that exists only to keep the old shape alive - dual-writes, legacy input parameters, fulfillment triggers - is a separate block marked `// PHASE5: remove`, never woven into the main path;
 - phase 5 is then a grep for the marker and a delete, not a rewrite.
 
 ## Steps
@@ -29,19 +26,9 @@ How the code is written for it:
    - `account_id` (m2o gp_accounts, indexed) in gp_probes, gp_tokens, gp_apps_approvals, gp_credits, gp_credits_deductions
    - `gp_apps_approvals.user_created` added alongside `user`
    - reverse o2m aliases: `directus_users.account`, `directus_users.memberships`, `gp_orgs.account`, `gp_orgs.members`
-   - `gp_orgs.extra_adoption_tokens` (json, default `[]`): the personal adoption tokens members hand over with their probes,
-     `{ github_username, token }` each. Nothing in this phase writes it - the account migration does, one phase later
-     (`account-migration.md`) - but the column ships here because gp-api reads it in phase 2 and Directus is not deployed in
-     between
-   - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side
-     equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api
-     reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it
-     a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 for the 49
-     users whose `default_prefix` is an org name today
-   - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org
-     GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees
-     the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the
-     UI can write them, and nothing else in the product touches the field.
+   - `gp_orgs.extra_adoption_tokens` (json, default `[]`): the personal adoption tokens members hand over with their probes, `{ github_username, token }` each. Nothing in this phase writes it - the account migration does, one phase later (`account-migration.md`) - but the column ships here because gp-api reads it in phase 2 and Directus is not deployed in between
+   - `gp_orgs.public_probes` (boolean, default `false`): the org's own switch for the global `u-<org name>` tag, the org-side equivalent of `directus_users.public_probes`. Nothing in this phase writes it either - the toggle is phase 4 UI - but gp-api reads it in phase 2 (`COALESCE(org.public_probes, user.public_probes)`), so the column and its permission ship here. Without it a probe moved into an org has no global tag at all, and moving probes into the org is the only route left in phase 5 to a new tag under an org name - existing tags and the current `default_prefix` stay as they are
+   - `directus_users.selected_orgs` (json, default `[]`): the orgs the user picked to work with. The sync keeps creating every org GitHub reports, so this is what the dashboard switcher lists and what the stats count as used - a user with twenty orgs sees the one they care about. Ships here rather than with the phase 4 UI: the column and its permission have to exist before the UI can write them, and nothing else in the product touches the field.
    - apply + snapshot round-trip on dev
 
 2. **Knex migration: data + constraints**
@@ -51,17 +38,17 @@ How the code is written for it:
    - FK actions: accounts cascade from user/org; `gp_tokens.user_created` ON DELETE CASCADE
    - replace `gp_apps_approvals` `UNIQUE(user, app)` with `UNIQUE(user_created, app, account_id)`, so the same person can approve an app for themselves and for an org separately; the `user` foreign key needs a plain index of its own first
 
-3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260824GP` (readable by members, writable by admins). `20260825GP` opens `gp_accounts` for reading (own account, and the accounts of the orgs one is a member of) and adds the `account` and `memberships` aliases to the user read fields: without them the dashboard can not learn the account id it has to filter every list by, and phase 2 has no Directus deploy of its own to add it
+3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20260824GP` (readable by members, writable by org admins). `20260825GP` opens `gp_accounts` for reading (own account, and the accounts of the orgs one is a member of) and adds the `account` and `memberships` aliases to the user read fields: without them the dashboard can not learn the account id it has to filter every list by, and phase 2 has no Directus deploy of its own to add it
 
 4. **Seeds** - org data to verify every later step against:
-   - `john-org` and `turk-org`; existing john and turk are admins of their orgs
+   - `john-org` and `turk-org`; existing john and turk are org admins of their orgs
    - new users john2 (admin), john3 (member), john4 (member), john5 (viewer), john6 (viewer), names "John 2" etc.; same set for turk (turk2..turk6)
    - each new user gets a single item in probes, tokens, approvals (where the role allows it)
 
 5. **GitHub client**:
    - `getGithubOrganizations()` merges two sources, both incomplete alone: `/user/memberships/orgs` (roles + private memberships, but orgs restricting our OAuth app are silently missing) and `/user/{id}/orgs` (includes the restricted ones, public memberships only, no roles - added as `member`). Both go with the user's token, there is no fallback to ours. Any failure, including a missing token, throws an explicit error asking the user to sign in again.
    - Both lists are paginated (`per_page=100` + the `Link` header), because an org missing from them means the membership is removed - a truncated first page would delete the rest.
-6. **Sync lib** (`lib/src/sync-orgs.ts`): upsert gp_orgs (+account via trigger) and gp_org_members from memberships; members of an org that restricts our OAuth app are synced as `member` and nobody there can become admin until the org approves the app (org still usable for member actions: create tokens, approve apps; adopting probes stays unavailable there since it is admin-only); promote to admin, never demote; a membership missing from the list is removed: with a complete list that only happens when the user left or the org cut off our app, and a failed list throws before any of this; on leave: delete membership + that member's org tokens and approvals (database trigger); unconsumed sponsorship additions are claimed when the org is created (database trigger)
+6. **Sync lib** (`lib/src/sync-orgs.ts`): upsert gp_orgs (+account via trigger) and gp_org_members from memberships; members of an org that restricts our OAuth app are synced as `member` and nobody there can become an org admin until the org approves the app (org still usable for member actions: create tokens, approve apps; adopting probes stays unavailable there since it is only for org admins); promote to org admin, never demote; a membership missing from the list is removed: with a complete list that only happens when the user left or the org cut off our app, and a failed list throws before any of this; on leave: delete membership + that member's org tokens and approvals (database trigger); unconsumed sponsorship additions are claimed when the org is created (database trigger)
 
 6a. **Unmask the GitHub token for internal reads**: the `directus-users` hook masks `github_oauth_token` in `action('users.read')`, and Directus emits it for internal `ItemsService` reads too - so the sync was sending `Bearer ********`, getting a 401 and silently falling back to the public orgs list (verified on the dev instance; explains the stale prod data). Fixed with `readOne(id, {}, { emitEvents: false })` in the sign-in hook and the sync-github-data repository. Without it the new code would throw `GithubTokenRejectedError` for every user.
 
@@ -75,31 +62,27 @@ How the code is written for it:
 
 9. **adopted-probe hook**: tag validation keeps working off `userId` and `github_organizations` as today (phase 5 keeps reading the stored prefix and only narrows what a new tag may use); reset user fields on `account_id` -> null; dual-write `userId` on adoption paths
 
-10. **gp_org_members update hook**: `role` only by an admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
+10. **gp_org_members update hook**: `role` only by an org admin of that org; `notification_preferences` only on own row. Required, not a nicety: the permission covers both fields at once, so on its own it lets a member set `role` on their own row and promote themselves to org admin (confirmed on the dev instance), and lets an org admin edit someone else's notification preferences. Directus can't split an action's fields into separate rules within one policy, so the hook is the only place for it - cover both cases with tests
 
-10a. **gp-orgs read hook**: strip `adoption_token` unless the requester is an admin of that org. Until it lands every member reads the org's adoption token (confirmed on the dev instance) - permission fields can't differ per role, so the hook is the only place for it; pattern = `github_oauth_token` masking in directus-users hook
+10a. **gp-orgs read hook**: `adoption_token` stays out of the `gp_orgs` read permission and the hook adds it for the org admins of that org. Permission fields can't differ per role, and stripping the field from the output is not enough - a field in the permission can be named in `filter`/`sort` by every member who reads the row
 
 11. **Notifications**: senders address the owner, the hook resolves who actually gets notified.
 
-    11a. Senders pass a virtual `account` field instead of `recipient` (the row's `account_id`); the `notifications.create` filter resolves it: a user account becomes `recipient` and flows through the existing personal-preferences logic untouched; an org account fans out to the org ADMINS only (members and viewers never receive org notifications), one notification per admin, the original payload is cancelled. `account` never reaches the database - `recipient` stays a user FK. Payloads with `recipient` stay supported permanently: notifications addressed to a specific user (welcome, username change) use `recipient`, notifications about an owned item use `account`.
+    11a. Senders pass a virtual `account` field instead of `recipient` (the row's `account_id`); the `notifications.create` filter resolves it: a user account becomes `recipient` and flows through the existing personal-preferences logic untouched; an org account fans out to the org ADMINS only (members and viewers never receive org notifications), one notification per org admin, the original payload is cancelled. `account` never reaches the database - `recipient` stays a user FK. Payloads with `recipient` stay supported permanently: notifications addressed to a specific user (welcome, username change) use `recipient`, notifications about an owned item use `account`.
 
-    11b. Admin org preferences live on their `gp_org_members.notification_preferences`, independent of their personal config; the types, the shape (`enabled`/`emailEnabled`/parameter), the defaults, and the validation are exactly the same as the personal ones - reuse `notification-types.ts` and share the joi schema; validated in the gp-org-members update hook. `email_status` of a fanned-out notification is computed from that admin's org preferences.
+    11b. Org admin preferences live on their `gp_org_members.notification_preferences`, independent of their personal config; the types, the shape (`enabled`/`emailEnabled`/parameter), the defaults, and the validation are exactly the same as the personal ones - reuse `notification-types.ts` and share the joi schema; validated in the gp-org-members update hook. `email_status` of a fanned-out notification is computed from that org admin's org preferences.
 
     11c. Switch the senders to `account`: create-adopted-probe (adopted/unassigned), firmware check, expired adoptions. Credits senders are handled in step 14.
 
-12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
+12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `accountId` param naming an org accepted only from an org admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
 
-    Org adoption ships here but stays dormant: only the phase 4 dashboard sends `activeOrg`, and Directus is not deployed again in
-    between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in
-    phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before
-    phase 2, same class as an org token created via raw API.
+    Org adoption ships here but stays dormant: only the phase 4 dashboard sends an org `accountId`, and Directus is not deployed again in between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before phase 2, same class as an org token created via raw API.
 
 13. **Applications endpoint**: list and revoke scope by `account_id`. Also fixes a phase-2 hazard: today revoke deletes by `user` + `app`, which would take an org approval down together with the personal one once gp-auth starts creating them.
 
 13a. **Legacy `userId` shim in endpoints**: adoption-code (`send-code`, `verify-code`, `adopt-by-token`), applications and credits-timeline accept `accountId` as the primary parameter; `userId` stays as a `// PHASE5: remove` shim resolved into the personal account via `getUserAccountId`, exactly one of the two is required. Ships in phase 1 because Directus is not deployed again before the callers switch.
 
-14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits is addressed to the account,
-    so for an org it reaches its admins (11a)
+14. **Credits**: probe-credits cron resolves `github_id` from the probe's account owner; low-credits is addressed to the account, so for an org it reaches its org admins (11a)
 
 15. **e2e** for permissions and sync
 
@@ -114,9 +97,7 @@ How the code is written for it:
 4. restart Directus.
 5. deploy gp-api, gp-auth, gp-dash.
 
-After the deploy, `SELECT COUNT(*) FROM gp_probes WHERE userId IS NOT NULL AND account_id IS NULL` must be 0, and stay 0 - phase 2
-resolves a probe's owner through the account alone, so a probe with an owner but no account is invisible to it. Nothing writes such a
-row: the backfill fixed the old ones and `createAdoptedProbe` sets both. Editing `userId` by hand in the admin app would.
+After the deploy, `SELECT COUNT(*) FROM gp_probes WHERE userId IS NOT NULL AND account_id IS NULL` must be 0, and stay 0 - phase 2 resolves a probe's owner through the account alone, so a probe with an owner but no account is invisible to it. Nothing writes such a row: the backfill fixed the old ones and `createAdoptedProbe` sets both. Editing `userId` by hand in the Directus admin app would.
 
 A fresh database needs no special steps - `init.sh` order works as is. The snapshot creates the column nullable right away, so
 nothing has to alter it, and `20260816GP` only converts the type, which keeps every environment on the same column.

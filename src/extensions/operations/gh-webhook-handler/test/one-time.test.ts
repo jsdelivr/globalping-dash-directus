@@ -1,12 +1,12 @@
 import type { OperationContext } from '@directus/extensions';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import operationApi from '../src/api.js';
 import oneTimeSponsorshipCreated from './one-time-sonsorship-created.json' with { type: 'json' };
 
 describe('GitHub webhook one-time handler', () => {
-	const database = {} as OperationContext['database'];
+	const redirect = sinon.stub().resolves(undefined);
+	const database = (() => ({ where: () => ({ first: redirect }) })) as unknown as OperationContext['database'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -25,7 +25,7 @@ describe('GitHub webhook one-time handler', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 		readByQuery.resolves([]);
-		delete SOURCE_ID_TO_TARGET_ID[2];
+		redirect.resolves(undefined);
 	});
 
 	it('should handle valid one-time sponsorship', async () => {
@@ -50,6 +50,7 @@ describe('GitHub webhook one-time handler', () => {
 				amountInDollars: 5,
 				bonus: 0,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -95,6 +96,7 @@ describe('GitHub webhook one-time handler', () => {
 				amountInDollars: 5,
 				bonus: 20,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -102,7 +104,7 @@ describe('GitHub webhook one-time handler', () => {
 	});
 
 	it('should redirect credits to another GitHub id if specified', async () => {
-		SOURCE_ID_TO_TARGET_ID[2] = '3';
+		redirect.resolves({ target_github_id: '3' });
 
 		const data = {
 			$trigger: {
@@ -125,6 +127,7 @@ describe('GitHub webhook one-time handler', () => {
 				amountInDollars: 5,
 				bonus: 0,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 

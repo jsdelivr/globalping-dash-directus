@@ -24,7 +24,6 @@ type Membership = {
 
 const InvalidPayloadError = createError('INVALID_PAYLOAD_ERROR', 'data is required.', 400);
 const InvalidTokenError = createError('INVALID_TOKEN', 'Invalid token.', 400);
-const UserNotFoundError = createError('NOT_FOUND', 'User not found.', 404);
 
 // The preferences with the emails of one type, or of every type, switched off.
 const withEmailsDisabled = (preferences: NotificationPreferences | null, type: NotificationTypeKey | null): NotificationPreferences => {
@@ -55,11 +54,7 @@ export default defineEndpoint((router, context) => {
 			const usersService = new UsersService({ schema, knex: trx });
 			const membersService = new ItemsService('gp_org_members', { schema, knex: trx });
 
-			const user = await usersService.readOne(userId, { fields: [ 'id', 'notification_preferences' ] }) as User | null;
-
-			if (!user) {
-				throw new UserNotFoundError();
-			}
+			const user = await usersService.readOne(userId, { fields: [ 'id', 'notification_preferences' ] }) as User;
 
 			await usersService.updateOne(userId, { notification_preferences: withEmailsDisabled(user.notification_preferences, type) });
 

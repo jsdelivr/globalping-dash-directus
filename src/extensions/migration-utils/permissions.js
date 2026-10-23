@@ -1,9 +1,10 @@
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 const USER_POLICY_NAME = 'User';
+const PUBLIC_POLICY_NAME = '$t:public_label';
 
-export async function getUserPolicyId () {
-	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${USER_POLICY_NAME}`;
+async function getPolicyId (name) {
+	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${encodeURIComponent(name)}`;
 	const response = await fetch(URL, {
 		headers: {
 			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
@@ -16,6 +17,14 @@ export async function getUserPolicyId () {
 		return response.json();
 	});
 	return response.data[0].id;
+}
+
+export function getUserPolicyId () {
+	return getPolicyId(USER_POLICY_NAME);
+}
+
+export function getPublicPolicyId () {
+	return getPolicyId(PUBLIC_POLICY_NAME);
 }
 
 export async function getUserPermissions (collectionName) {
