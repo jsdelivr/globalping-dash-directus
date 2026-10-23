@@ -60,17 +60,6 @@ describe('notifications hooks', () => {
 			}
 		});
 
-		it('should throw if user not found', async () => {
-			readOne.resolves(null);
-
-			try {
-				await filter()({ type: 'probe_adopted', message: 'test', recipient: 'user-1', subject: 'test' });
-				expect.fail('should throw');
-			} catch (err: any) {
-				expect(err.message).to.equal('User for notification not found.');
-			}
-		});
-
 		it('should send configurable notification if notification_preferences is null', async () => {
 			readOne.resolves({ email: 'user@example.com', notification_preferences: null });
 

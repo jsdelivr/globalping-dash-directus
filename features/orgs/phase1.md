@@ -74,9 +74,9 @@ How the code is written for it:
 
     11c. Switch the senders to `account`: create-adopted-probe (adopted/unassigned), firmware check, expired adoptions. Credits senders are handled in step 14.
 
-12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `activeOrg` param accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
+12. **Adoption endpoints**: adoption-code + local-adoption resolve owner (org adoption token; `accountId` param naming an org accepted only from an admin of that org - members and viewers can't adopt into the org); `createAdoptedProbe` sets `account_id` on every write path - the org one when adopting into an org, the adopting user's otherwise - and dual-writes `userId`.
 
-    Org adoption ships here but stays dormant: only the phase 4 dashboard sends `activeOrg`, and Directus is not deployed again in between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before phase 2, same class as an org token created via raw API.
+    Org adoption ships here but stays dormant: only the phase 4 dashboard sends an org `accountId`, and Directus is not deployed again in between. That ordering also means an org probe never exists while gp-api still joins probes by `userId` - it moves to accounts in phase 2, one phase before the UI that can create such a probe. The gap is only reachable by calling the endpoint by hand before phase 2, same class as an org token created via raw API.
 
 13. **Applications endpoint**: list and revoke scope by `account_id`. Also fixes a phase-2 hazard: today revoke deletes by `user` + `app`, which would take an org approval down together with the personal one once gp-auth starts creating them.
 

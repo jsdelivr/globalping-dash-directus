@@ -6,7 +6,6 @@ import { getEmailStatus, getShouldSend } from './actions/status.js';
 import { getOrgAdmins, getOrgAdmin } from './repositories/directus.js';
 import type { NotificationPayload, User } from './types.js';
 
-const UserNotFoundError = createError('NOT_FOUND', 'User for notification not found.', 404);
 
 const AccountNotFoundError = createError('NOT_FOUND', 'Account for notification not found.', 404);
 
@@ -74,11 +73,7 @@ export default defineHook(({ filter }, hookContext) => {
 			schema: await getSchema(),
 		});
 
-		const user = await usersService.readOne(recipient, { fields: [ 'email', 'notification_preferences' ] }) as User | null;
-
-		if (!user) {
-			throw new UserNotFoundError();
-		}
+		const user = await usersService.readOne(recipient, { fields: [ 'email', 'notification_preferences' ] }) as User;
 
 		if (!getShouldSend(type, user)) {
 			throw new CancelNotificationError();

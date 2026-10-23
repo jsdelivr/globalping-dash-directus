@@ -2,7 +2,7 @@ Default Directus multi-tenancy approach with a new orgs table and an account ent
 
 ### Directus updates:
 
-  1. New `gp_orgs` table. Columns: `id, github_id, name, adoption_token, extra_adoption_tokens, public_probes, user_type`.
+  1. New `gp_orgs` table. Columns: `id, github_id, name, adoption_token, extra_adoption_tokens, public_probes, user_type, website, description, banner`.
   2. New `gp_org_members` junction table. Columns: `id, org, user, role: viewer | member | admin, notification_preferences`.
   3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB trigger on insert) and removed via FK cascade, so an account always exists.
   4. New column `account_id` in data tables:
@@ -27,8 +27,8 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 | gp_credits | read | filter => `MY_ACCOUNTS` |
 | gp_credits_deductions | read | filter => `MY_ACCOUNTS` |
 | gp_credits_additions | read | + `_or` branch: `{ "github_id": { "_in": "$CURRENT_USER.memberships.org.github_id" } }` |
-| gp_orgs (new) | read | `{ "members": { "user": { "_eq": "$CURRENT_USER" } } }`. `adoption_token` is visible only to org admins: stripped for other roles by a read hook (permission fields can't differ per branch). |
-| gp_orgs (new) | update | `{ "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } }`; fields: `adoption_token` (regenerate) |
+| gp_orgs (new) | read | `{ "members": { "user": { "_eq": "$CURRENT_USER" } } }`. `adoption_token` and `extra_adoption_tokens` are visible only to org admins: they stay out of the read permission and a read hook adds them for admins (permission fields can't differ per branch). |
+| gp_orgs (new) | update | `{ "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } }`; fields: `adoption_token` (regenerate), `public_probes`, `extra_adoption_tokens` (removals only), `website`, `description`. The banner goes through its own endpoint. |
 | gp_org_members (new) | read | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }` — member sees own row, admin sees all |
 | gp_org_members (new) | update | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }`; fields: `role, notification_preferences`. Per-field rules in a filter hook (like the gp_tokens create): `role` - only by an admin of that org, `notification_preferences` - only on own row. |
 
@@ -36,7 +36,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
-- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and on the server:
+- The user menu has an "Act as organization" submenu, which stores the active account on the server:
   `POST /accounts/active` writes the account id (not the org id) into `directus_sessions.active_account` after checking
   the membership. The `auth.jwt` filter copies it on every refresh into the next session row and emits it as the signed
   claims `active_account_id` / `active_account_role`, which gp-api trusts without a database lookup; `GET /accounts/active`
@@ -44,8 +44,9 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
   personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves
   on another.
 - Losing the membership is noticed on the next refresh (the filter falls back to the personal account), so a stale claim lives
-  at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts with the personal
-  account; a default account is a later phase.
+  at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts in the user's
+  `default_account` while it is still valid, else in the personal account. The claims also carry the tier of the active
+  account, so a measurement from the dashboard is stored like one made with that account's token.
 - OAuth is the exception: gp-auth ignores the active account entirely and asks on the approval screen instead. Connecting an
   app is a durable, hard-to-notice decision, so it is never made by ambient session state. The dashboard may preselect the
   session's active account on that screen (phase 4), but only the account sent with the approval counts.
@@ -57,7 +58,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Probes**
 - A probe has a single owner: `account_id` (personal or org account).
-- For adoption tokens, the owner is determined by the token (user's or org's adoption token). For adoption by IP or local server - by `activeOrg`.
+- For adoption tokens, the owner is determined by the token (user's or org's adoption token). For adoption by IP or local server - by the account the request names (`accountId`).
 - Only an admin can adopt a probe into the org: members don't see the org adoption token and can't adopt by IP or local server either.
 - Admin, member, and viewer can view all org probes.
 - Only admin can edit org probe metadata (city, name).
@@ -90,7 +91,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 ### Dash UI updates
 
-- New header menu item - "Act as organization", which opens a select org modal. The selected org is stored on the session (see "Users" above) and shown in the header instead of the username.
+- New header menu item - "Act as organization", which lists the user's selected orgs. The selected org is stored on the session (see "Users" above) and shown in the header instead of the username.
 - User doesn't have a "show all" option. So we don't have combined views.
 - If an org is selected:
     - "Probes page" shows org probes in read-only/read-write state (based on role).
@@ -99,4 +100,4 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
     - "Tokens page" shows the user's own tokens and approvals inside the org; nobody sees other members' tokens or approvals.
     - "Generate new token" creates a token inside the org (disabled for viewers).
     - "Adopt a probe" into the org is admin-only.
-    - If the user is admin - a new "Organization" menu entry and page: the org settings first (see, copy and regenerate the org adoption token), then all members, where the admin can set member roles.
+    - If the user is admin - a new "Organization" menu entry and page: the org settings first (the org adoption token, public probes, extra adoption tokens, credits redirects, the public profile and the admin's own notification settings for the org), then all members, where the admin can set member roles.

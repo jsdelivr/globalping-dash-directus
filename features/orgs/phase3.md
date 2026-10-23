@@ -17,7 +17,7 @@ Full design in `account-migration.md` - this file is the implementation order an
 - **The transfer is irreversible.** Nothing is ever migrated back, and losing the membership later revokes almost nothing (`account-migration.md` §7). The endpoints are therefore the only place that may move ownership, and they validate before they write.
 - **Each transfer is atomic on its own.** Probes, tokens and credits move through three separate endpoints, so a partially moved account - probes in the org, credits still personal - is a normal resting state, not a failure. What must never be partial is a single transfer: the probes one also hands over the adoption token, the tokens one also moves the approvals.
 - **A moved probe keeps its `userId`.** Only `account_id` changes. That is a deliberate exception to the phase 2 contract ("an org-owned row has `userId` NULL"): the readers already go through the account, and keeping the column means the old dashboard still shows the probe to the person who moved it until phase 5 drops the column.
-- **Directus is deployed in this phase; gp-api, gp-auth and gp-dash are not.** Whatever the endpoints write has to be readable by the phase 2 readers exactly as they are deployed.
+- **Directus ships first, in one deploy with phase 4; gp-api and the dash follow.** Whatever the endpoints write has to be readable by the phase 2 readers while they still run.
 - No UI. The buttons are phase 4; this phase is the endpoints they call. Nothing is converted on anybody's behalf - the accounts we redirect today keep being redirected, and whether to unwind that is theirs to decide.
 
 ## 1. The redirect table, its seed, and the reader that already exists
@@ -30,13 +30,13 @@ Two directions exist and they are not symmetric. Every redirect in place today r
 
 1.2 **Seed migration.** Every entry of `SOURCE_ID_TO_TARGET_ID` becomes a row, and that is the whole plan for the accounts we redirect today: their money keeps arriving exactly where it arrives now, and nothing is converted on their behalf. Unwinding is theirs to choose - the phase 4 buttons let the person move the credits to the org, and 3.1 lets the org clear the redirect itself. The map holds more entries than `plan.md` and `account-migration.md` describe; those files predate the later additions, and their stale count goes with this change.
 
-1.3 **`redirectGithubId` reads the table** instead of the constant, and the constant goes. No cache: it queries on every call. The map is a handful of rows on an indexed lookup, the call sites are a webhook and a daily cron rather than a request path, and any cache would be wrong for as long as its TTL - a donation arriving inside that window would be routed to the destination the user just changed away from. Directus can run several workers, so invalidating on write would only reach the one that served the write.
+1.3 **`redirectGithubId` reads the table** instead of the constant, and the constant goes. No cache: it queries on every call. The map is a handful of rows on an indexed lookup, the call sites are sponsorship events and admin actions rather than a hot path, and any cache would be wrong for as long as its TTL - a donation arriving inside that window would be routed to the destination the user just changed away from. Directus can run several workers, so invalidating on write would only reach the one that served the write.
 
 One hop, exactly as the constant behaved: look the id up, credit the target if a row exists, credit the id itself if not. A target that happens to be the source of another row is not followed - that is a routing decision somebody else made about their own money, not a continuation of this one.
 
 Note what does **not** go through it: the probe credits cron writes `gp_credits_additions` directly with the probe owner's github id, and that is correct - probe earnings belong to the owner, not to whoever the sponsorship is redirected to.
 
-1.4 **Nothing reads the collection directly.** No `directus_permissions` row is created for it, so the only reader is the `credits-redirect` GET of 3.1. A Directus filter cannot express the rule we want: the table holds github ids rather than a relation to `gp_orgs`, so it cannot reach `members.role`, and the dynamic variables carry no role of their own. The closest filter - source or target matching `$CURRENT_USER.external_identifier` or `$CURRENT_USER.memberships.org.github_id` - would hand every member and every viewer of a sponsoring org the raw github id of the individual its money goes to, which is a counterparty no row they can read today names. The endpoint sees the role and scopes by the active account, so it can be exact.
+1.4 **Nothing reads the collection directly.** No `directus_permissions` row is created for it, so the only reader is the `credits-redirect` GET of 3.1. A Directus filter cannot express the rule we want: the table holds github ids rather than a relation to `gp_orgs`, so it cannot reach `members.role`, and the dynamic variables carry no role of their own. The closest filter - source or target matching `$CURRENT_USER.external_identifier` or `$CURRENT_USER.memberships.org.github_id` - would hand every member and every viewer of a sponsoring org the raw github id of the individual its money goes to, which is a counterparty no row they can read today names. The endpoint sees the role and scopes by the account it is asked about, so it can be exact.
 
 1.5 **The activity matcher stops keying on where the money went.** `handle-sponsor-activities.ts` asks "have we already credited this activity" and answers by comparing an addition's `github_id` with `redirectGithubId(activity.sponsor.databaseId)`. Both sides of that comparison become mutable in this phase: a user can create and delete a redirect through 3.1, and 3.7 rewrites `github_id`. Either change makes an activity from the cron's 24-hour window look uncredited, and it is credited a second time. Reachable on purpose - set a redirect, donate, delete the redirect, collect the same donation again personally - and by accident, by transferring credits the day a donation arrives.
 
@@ -46,7 +46,7 @@ This also closes the same hole in master, where the only way to change the map w
 
 A migration stamps the field on every existing sponsorship addition so the matcher can require it and carry no fallback: an addition sitting on a redirect target came from that target's source, anything else came from the id it was paid to. A target that also sponsored on its own is the one case the rule gets wrong, and it is attributed to its source anyway - the row only matters if it falls inside the cron's 24-hour window at deploy time, and nothing else reads the field.
 
-1.6 **`gp_orgs.user_type`** (member | sponsor | special) ships with this schema change; what reads and writes it is step 4.
+1.6 **`gp_orgs.user_type`** (member | sponsor | special) ships with this schema change, readable by the org's members; what sets it and what it changes is step 4.
 
 ## 2. `extra_adoption_tokens` validation
 
@@ -63,13 +63,13 @@ It is a read-modify-write against the stored value, so two simultaneous removals
 3.1 **Shape.** One Directus extension, five endpoints:
 
 - `transfer probes`, `transfer tokens`, `transfer credits` - one per entity kind, each its own transaction. A user may hand over their probes and keep their credits; nothing forces the three to happen together or in any order. Each answers with what it moved - `{ probes }`, `{ tokens, approvals }` or `{ credits }` - and `becameAdmin` (3.3), and refuses with 400 when there is nothing to move, so an empty transfer neither reports success nor makes anybody an admin.
-- `credits-redirect` GET - the redirects where the active account's github id is the source or the target. It is the only reader of the table (1.4), and the org half of it is admin-only for the reason 1.4 gives: the counterparty of an org's redirect is a person no other row a member can read names. Each side comes back with its name - the user's `github_username` or the org's `name`, the bare id when neither table knows it - because the dash shows `john => acme-org` and can read no other user's row.
+- `credits-redirect` GET - the redirects where the account's github id is the source or the target. It is the only reader of the table (1.4), and the org half of it is admin-only for the reason 1.4 gives: the counterparty of an org's redirect is a person no other row a member can read names. Each side comes back with its name - the user's `github_username` or the org's `name`, the bare id when neither table knows it - because the dash shows `john => acme-org` and can read no other user's row.
 - `credits-redirect` POST - a person points their sponsorship at an org they belong to. Only that direction exists: an org receives a sponsorship, it never passes one on. It also ends every row that touches the caller, in either direction - sending their own money somewhere says they are nobody's stand-in any more. Pointing at an org that is itself redirected is allowed and needs no thought: the lookup is one hop (1.3).
 - `credits-redirect` DELETE - removes one named row, `{ source, target }`, and either of the two sides may do it: the one giving its sponsorship away, and the one that has been receiving it. Naming the row is what lets an org end a single member's donation rather than all of them, and it is what makes the inherited `org -> user` rows removable - by the org that funds them, and by the person they route through.
 
-The org is named by id; the caller is the session user, acting as the active account.
+A transfer names the org and always moves the caller's own personal data. The redirect endpoints act for the account named in the request, like every other endpoint (`accountId`), and check the caller's role there.
 
-3.2 **Who may do what.** One matrix for all four operations:
+3.2 **Who may do what.** One matrix for all of them:
 
 | operation | admin | member | viewer |
 |---|---|---|---|
@@ -87,11 +87,11 @@ The test is whether the operation hands the member something they could not alre
 
 Viewers are excluded everywhere, and no redirect lifts that. The role is only ever viewer because an admin set it by hand - GitHub yields admin or member - so it is an explicit decision and it wins.
 
-3.3 **Promotion.** Any of the four operations promotes the caller to admin, but **only while the org still has no admin in our DB**. Once it has one the operations stop granting anything, which is what closes the door behind the first claimant. Safe against the members cron, which only ever promotes - a manually assigned admin is never demoted.
+3.3 **Promotion.** Any transfer or a new redirect promotes the caller to admin, but **only while the org still has no admin in our DB**. Once it has one the operations stop granting anything, which is what closes the door behind the first claimant. Safe against the members cron, which only ever promotes - a manually assigned admin is never demoted.
 
 Two members transferring at the same moment both read "no admin" and both end up admins. Accepted: each of them was entitled to claim the org at the moment they asked, so the outcome is one the rules already allow, just reached twice.
 
-Known and accepted: an org that has not approved the `globalping` OAuth app is invisible to the memberships endpoint, so everybody including its owners arrives through the public list with no role and is stored as a member (`github-api-client.ts:66`). Such an org never gains an admin on its own, its claim window never closes, and the claim goes to whichever public member signs in first rather than to the owner. The remedy is on GitHub - approving the app lets the sync assign the real admins - but nothing in the product says so: the people who would need to hear it are the ones who never reach an admin-only screen.
+Known and accepted: an org that has not approved the `globalping` OAuth app is invisible to the memberships endpoint, so everybody including its owners arrives through the public list with no role and is stored as a member. Such an org never gains an admin on its own, its claim window never closes, and the claim goes to whichever public member signs in first rather than to the owner. The remedy is on GitHub - approving the app lets the sync assign the real admins - but nothing in the product says so: the people who would need to hear it are the ones who never reach an admin-only screen.
 
 3.4 **Probes.** `account_id` moves to the org's account; name, tags, custom location and settings stay. The only behavioural change is the global tag: a probe that was targetable as `u-<owner's default_prefix>` through the owner's `public_probes` is now covered by the org's own `public_probes`, under the org's name. The old tag is replaced outright - no `deprecated_prefix` entry and no grace period, unlike the rename GitHub forces on a user. The difference is consent: the phase 4 screen names both tags before the transfer runs, so the owner chooses it. Whoever targets the old tag from the outside does not see that screen, which is the cost we accept.
 
@@ -107,15 +107,15 @@ Moving `github_id` is what carries the sponsor bonus across: `getUserBonus` sums
 
 Redirects are left alone. Handing over the credits that have arrived and routing the ones that will are two decisions, and the `org -> user` row is the org's, not the caller's: clearing it reroutes the org's money, which is why it has its own endpoint and its own confirmation (3.1). An org that still redirects to someone who just gave it their credits is a state the org ends, not a side effect of their button.
 
-3.8 **Failure.** Each endpoint is one transaction, so a failed transfer leaves its own entity kind untouched and says nothing about the other two. The adoption token is the only part with an effect outside the database - the API's token map refreshes within a minute - and it is written inside the probes transaction like the rest, so a rollback leaves the old token in place and the probes where they were. The API's own caches lag a little either way: a transferred token bills the old account for up to two minutes (`auth.ts:14`) and a fresh admin is seen as a member for up to one (`accounts.ts:7`). Both are acceptable.
+3.8 **Failure.** Each endpoint is one transaction, so a failed transfer leaves its own entity kind untouched and says nothing about the other two. The adoption token is the only part with an effect outside the database - the API's token map refreshes within a minute - and it is written inside the probes transaction like the rest, so a rollback leaves the old token in place and the probes where they were. The API's own caches lag a little either way: a transferred token bills the old account for a couple of minutes, and a role change reaches a dashboard session on its next refresh. Both are acceptable.
 
 ## 4. The tier follows the account
 
 4.1 **The problem this phase creates.** Today the measurement tier comes from the requesting person: `auth.ts` joins `user_type` off `directus_users`, gp-api encodes it into the measurement id and the offloader stores the result in `measurement_<tier>`. It grants nothing - no limits, no credits - it only picks the table, which is why nobody has had to care. It becomes wrong here: once the credits and the redirect move to the org, the org is the sponsor while `user_type` still sits on its members, so a member who is not a sponsor writes org measurements into `measurement_member`, and a sponsor who left the org keeps writing them into `measurement_sponsor`.
 
-4.2 **Fix.** Take the tier from the account owner: `COALESCE(org.user_type, user.user_type)` - the same shape already used for `default_prefix` and `adoption_token`, over the column added in 1.6. Both ways in read it: the token path in `auth.ts`, and the dashboard's session path through `getAccountRole`, which resolves the active account and now carries its tier with it. Leaving the second one out would have fixed exactly the case 4.1 describes for API tokens and left the dashboard doing the old thing.
+4.2 **Fix.** Take the tier from the account owner: `COALESCE(org.user_type, user.user_type)` - the same shape already used for `default_prefix` and `adoption_token`, over the column added in 1.6. Both ways in read it: API tokens, and the dashboard session, whose signed claims carry the tier of the active account next to its id. Leaving the second one out would have fixed exactly the case 4.1 describes for API tokens and left the dashboard doing the old thing.
 
-This half is gp-api, so it belongs to phase 2 and deploys with it, before phase 3. The contract above is unchanged: phase 3 still deploys Directus alone. The API keeps its own copy of the dashboard schema for tests (`migrations/dashboard/create-tables.js.sql`), so the column is added there too.
+gp-api deploys right after Directus, since it reads the new column. The API keeps its own copy of the dashboard schema for tests (`migrations/dashboard/create-tables.js.sql`), so the column is added there too.
 
 A `special` account that acts for an org gets the org's tier, because the tier of a measurement is the tier of whoever pays for it. `special` still outranks everything on the account that holds it.
 
@@ -125,7 +125,7 @@ The cron reconciles the tier of every sponsor it already knows, not only of the 
 
 ## 5. The member names for the admins of an org
 
-The members list of phase 4 shows each member's name, and a user can read no `directus_users` row but their own - the only read rule is `id _eq $CURRENT_USER` (`20230425GP-create-user-role.js`) - so it would render bare uuids. It ships here so that phase 4 is a dash deploy only. The extra adoption tokens do not need it: each entry carries its own `github_username`.
+The members list of phase 4 shows each member's name, and a user can read no `directus_users` row but their own - the only read rule is `id _eq $CURRENT_USER` (`20230425GP-create-user-role.js`) - so it would render bare uuids. The extra adoption tokens do not need it: each entry carries its own `github_username`.
 
 5.1 **A read hook on `gp_org_members`**, not a permission: `gp_org_members.items.read` attaches `github_username` to every row of the payload, read by the membership `id`. Not even `user` is readable by permissions - it left the read fields in phase 2, because a relation named in `filter` or `sort` is checked against the field list only, never against the row rule of `directus_users` - and the list does not need it: a role is changed by the membership `id`. It is the shape `gp-orgs` already uses for `adoption_token`, and the scoping comes with it - the read permission has already chosen the rows, your own plus every row of an org you administer, so a name only ever rides along with a membership the caller may read anyway and the hook repeats no role check.
 
@@ -135,11 +135,9 @@ The members list of phase 4 shows each member's name, and a user can read no `di
 
 ## 5b. The default account and the org profile
 
-Both ship here so that the onboarding of phase 4 is a dash deploy only.
+5b.1 **`directus_users.default_account`**, a nullable M2O to `gp_accounts`: the account a new dashboard session starts in. `null` means the user has not picked one yet, which is what shows them the onboarding. The user reads and writes it on their own row, and the permission validation limits it to their own account or the account of an org they are a member of, any role, so no hook is needed. The foreign key is `ON DELETE SET NULL`: an org that is deleted sends its members back to the onboarding rather than to a dangling id. Leaving an org does not clear it; the dash falls back to the personal account while the org is not offered.
 
-5b.1 **`directus_users.default_account`**, a nullable M2O to `gp_accounts`: the account a new dashboard session starts in. `null` means the user has not picked one yet, which is what shows them the onboarding. The user reads and writes it on their own row, and the permission `validation` of that row limits it to their own account or the account of an org they are a member of, any role: `default_account _in [$CURRENT_USER.account.id, $CURRENT_USER.memberships.org.account.id]`. Directus resolves both paths per request and flattens the nested arrays, so no hook is needed. The foreign key is `ON DELETE SET NULL`: an org that is deleted sends its members back to the onboarding rather than to a dangling id. Leaving an org does not clear it; the dash falls back to the personal account while the org is not offered.
-
-5b.2 **`gp_orgs.website` and `gp_orgs.description`**, readable by every member like the other org fields and writable only by an admin of the org, through the same update rule as `public_probes`. The website must be an `https://` URL (a field validation, so it holds for every API writer), the description is a `varchar(200)` and longer values are refused by the database. Where they are shown publicly is a later step.
+5b.2 **`gp_orgs.website` and `gp_orgs.description`**, readable by every member like the other org fields and writable only by an admin of the org, through the same update rule as `public_probes`. The website must be an `https://` URL (a field validation, so it holds for every API writer), the description is a `varchar(200)` and longer values are refused by the database. They are shown publicly together with the banner (`phase4.md` 7c).
 
 ## 6. Tests
 
@@ -149,4 +147,4 @@ Both ship here so that the onboarding of phase 4 is a dash deploy only.
 
 ## Deploy
 
-Directus: `schema:apply` for `gp_credits_redirects`, `gp_orgs.user_type`, `directus_users.default_account` and the org profile fields, then the migrations (redirect seed, sponsor id backfill, the `gp_orgs` permission, the default account and org profile permissions), then restart. The member names (5) are extension code only, so they ship with that restart. gp-api is redeployed too, for the account tier of 4.2. The dash is not, so the endpoints have to be correct against the phase 2 readers as they already run in prod.
+One deploy with phase 4 (`phase4.md`, Deploy order). Directus: `schema:apply`, then the migrations, then restart. gp-api follows for the account tier (4.2), then the dash.

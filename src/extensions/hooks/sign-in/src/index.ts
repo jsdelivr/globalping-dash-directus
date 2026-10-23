@@ -80,43 +80,37 @@ export default defineHook(({ filter }, context) => {
 			schema: await getSchema(),
 		});
 
-		const user = await itemsService.readOne(userId) as User | undefined;
+		// readOne() throws for a missing user, and every user has an account (a database trigger creates it).
+		const user = await itemsService.readOne(userId) as User;
 
-		if (user?.user_type) {
+		if (user.user_type) {
 			payload.user_type = user.user_type;
 		}
 
-		if (user?.github_username) {
+		if (user.github_username) {
 			payload.github_username = user.github_username;
 		}
 
-		if (user?.account?.[0]) {
-			payload.user_account_id = user.account[0];
-		}
+		payload.user_account_id = user.account[0]!;
 
-		const activeAccount = await getActiveAccount(jwtMeta, payload, database);
-
-		if (activeAccount) {
-			payload.active_account_id = activeAccount.id;
-			payload.active_account_role = activeAccount.role;
-		}
+		const activeAccount = await getActiveAccount(jwtMeta, payload.user_account_id, payload.session, database);
+		payload.active_account_id = activeAccount.id;
+		payload.active_account_role = activeAccount.role;
 
 		return payload;
 	});
 });
 
-const getActiveAccount = async ({ user, type }: AuthJwtMeta, payload: AuthPayload, database: HookExtensionContext['database']) => {
-	if (type === 'refresh' && payload.session) {
+const getActiveAccount = async ({ user, type }: AuthJwtMeta, userAccountId: string, session: string | undefined, database: HookExtensionContext['database']) => {
+	if (type === 'refresh' && session) {
 		// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
 		// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
-		const carried = await carryOverActiveAccount(user!, payload.session, database);
+		const carried = await carryOverActiveAccount(user!, session, database);
 
 		if (carried) { return carried; }
 	}
 
-	if (payload.user_account_id) { return { id: payload.user_account_id, role: 'owner' as const }; }
-
-	return null;
+	return { id: userAccountId, role: 'owner' as const };
 };
 
 
@@ -149,9 +143,9 @@ const syncGithubData = async (userId: string, context: HookExtensionContext) => 
 	const user = await itemsService.readOne(userId, {}, {
 		// `emitEvents: false` keeps `github_oauth_token` from being masked by the directus-users users.read hook.
 		emitEvents: false,
-	}) as User | undefined;
+	}) as User;
 
-	if (!user || !user.external_identifier) {
+	if (!user.external_identifier) {
 		throw new Error('Not enough data to sync with GitHub');
 	}
 
