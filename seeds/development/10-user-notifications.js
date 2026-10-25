@@ -124,7 +124,7 @@ export const seed = async (knex) => {
 					item: probe.id,
 					collection: 'gp_probes',
 					type: 'outdated_firmware',
-					secondary_type: 'v2.0_v22.22.3',
+					secondary_type: 'v2.0_v22.23.4',
 					subject: probe.name ? `Your hardware probe ${probe.name} is running outdated firmware` : 'Your hardware probe is running outdated firmware',
 					message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated firmware and we couldn't update it automatically. Please follow [our guide](https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware) to update it manually.`,
 				};
@@ -137,7 +137,7 @@ export const seed = async (knex) => {
 				item: probe.id,
 				collection: 'gp_probes',
 				type: 'outdated_software',
-				secondary_type: 'v22.22.3',
+				secondary_type: 'v22.23.4',
 				subject: probe.name ? `The container running your probe ${probe.name} has outdated software` : 'Your probe container is running an outdated software version',
 				message: `Your probe [${probe.name}](/probes/${probe.id}) with IP address **${probe.ip}** is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
 			};
