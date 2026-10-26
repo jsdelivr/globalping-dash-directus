@@ -121,21 +121,25 @@ const getActiveAccount = async ({ user, type }: AuthJwtMeta, payload: AuthPayloa
 
 
 const carryOverActiveAccount = async (userId: string, sessionToken: string, database: HookExtensionContext['database']) => {
-	const previous = await database('directus_sessions')
-		.where({ next_token: sessionToken })
-		.first<{ active_account: string | null } | undefined>('active_account');
+	const [ activeAccountRows ] = await database.raw(`
+		SELECT COALESCE(curr.active_account, prev.active_account) AS active_account
+		FROM directus_sessions prev LEFT JOIN directus_sessions curr ON curr.token = prev.next_token
+		WHERE prev.next_token = :token
+	`, { token: sessionToken }) as [{ active_account: string | null }[]];
 
-	if (!previous?.active_account) { return null; }
+	const accountId = activeAccountRows[0]?.active_account;
 
-	const role = await getAccountRole(previous.active_account, userId, database);
+	if (!accountId) { return null; }
+
+	const role = await getAccountRole(accountId, userId, database);
 
 	if (!role) { return null; }
 
-	await database('directus_sessions')
-		.where({ token: sessionToken })
-		.update({ active_account: previous.active_account });
+	await database.raw(`
+		UPDATE directus_sessions SET active_account = COALESCE(active_account, :account) WHERE token = :token
+	`, { account: accountId, token: sessionToken });
 
-	return { id: previous.active_account, role };
+	return { id: accountId, role };
 };
 
 const syncGithubData = async (userId: string, context: HookExtensionContext) => {

@@ -44,9 +44,12 @@ export default defineEndpoint((router, context) => {
 			throw new ForbiddenAccountError();
 		}
 
-		await database('directus_sessions')
-			.where({ token: req.accountability.session })
-			.update({ active_account: accountId });
+		// Update both the previous and the current session, as a refresh may have rotated this one already.
+		await database.raw(`
+			UPDATE directus_sessions s JOIN directus_sessions d
+			ON d.token = :token AND s.token IN (d.token, d.next_token)
+			SET s.active_account = :account
+		`, { token: req.accountability.session, account: accountId });
 
 		res.send({ accountId });
 	}, context));

@@ -31,6 +31,8 @@ const claims = async (context: APIRequestContext) => {
 	return decodeJwt(cookie!.value);
 };
 
+const cookieOf = async (context: APIRequestContext) => (await context.storageState()).cookies.find(c => c.name === COOKIE_NAME)!.value;
+
 const activeAccount = async (context: APIRequestContext) => (await context.get('/accounts/active')).json();
 
 const setActiveAccount = (context: APIRequestContext, accountId: string) => context.post('/accounts/active', { data: { accountId } });
@@ -66,6 +68,36 @@ test('the personal account can be reselected', async ({ org }) => {
 	await refresh(session);
 	expect(await activeAccount(session)).toEqual({ accountId: org.member.account_id });
 	expect(await claims(session)).toMatchObject({ active_account_id: org.member.account_id, active_account_role: 'owner' });
+});
+
+test('a refresh retried with the old cookie keeps the newer choice of the session', async ({ org }) => {
+	const session = await sessionAs(org.member);
+	expect((await setActiveAccount(session, org.account_id)).status()).toBe(200);
+	const oldCookie = await cookieOf(session);
+	await refresh(session);
+	expect((await setActiveAccount(session, org.member.account_id)).status()).toBe(200);
+
+	// Inside the refresh grace period the old cookie is still valid, and its refresh returns the same new session again.
+	const stale = await request.newContext({ baseURL: DIRECTUS_URL });
+	expect((await stale.post('/auth/refresh', { headers: { cookie: `${COOKIE_NAME}=${oldCookie}` }, data: { mode: 'session' } })).ok()).toBe(true);
+
+	await refresh(session);
+	expect(await activeAccount(session)).toEqual({ accountId: org.member.account_id });
+	expect(await claims(session)).toMatchObject({ active_account_id: org.member.account_id, active_account_role: 'owner' });
+});
+
+test('a switch sent with the old cookie reaches the refreshed session', async ({ org }) => {
+	const session = await sessionAs(org.member);
+	const oldCookie = await cookieOf(session);
+	await refresh(session);
+
+	// A request still carrying the old cookie lands on the old session row, which the refresh already rotated into a new one.
+	const stale = await request.newContext({ baseURL: DIRECTUS_URL });
+	expect((await stale.post('/accounts/active', { headers: { cookie: `${COOKIE_NAME}=${oldCookie}` }, data: { accountId: org.account_id } })).status()).toBe(200);
+
+	await refresh(session);
+	expect(await activeAccount(session)).toEqual({ accountId: org.account_id });
+	expect(await claims(session)).toMatchObject({ active_account_id: org.account_id, active_account_role: 'member' });
 });
 
 test('losing the membership falls back to the personal account on the next refresh', async ({ org }) => {

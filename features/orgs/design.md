@@ -43,7 +43,8 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
   claims `active_account_id` / `active_account_role`, which gp-api trusts without a database lookup; `GET /accounts/active`
   returns the claim of the cookie, so the dashboard shows what the readers bill. The signed `user_account_id` claim stays the
   personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves
-  on another.
+  on another. A refresh rotates the session row, so a switch also updates the row a refresh already rotated into, and a refresh
+  retried with the old cookie keeps the newer choice.
 - Losing the membership is noticed on the next refresh (the filter falls back to the personal account), so a stale claim lives
   at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts with the personal
   account; a default account is a later phase.
