@@ -1,28 +1,9 @@
 import { getUserPermissions, editPermissions, getUserPolicyId, getPublicPolicyId, createPermissions } from '../migration-utils/permissions.js';
-
-const DIRECTUS_URL = process.env.DIRECTUS_URL;
-const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
+import { directusRequest } from '../migration-utils/directus-request.js';
 
 const BANNERS_FOLDER_ID = '5f0b6a52-3c1e-4b8e-9d6a-1c2f7e4a9b30'; // Same id is specified in lib/src/constants.ts.
 
 const BANNER_PRESET = { key: 'banner', fit: 'cover', width: 1224, height: 200, quality: 80, format: 'webp' };
-
-async function directusRequest (path, method = 'GET', body) {
-	const response = await fetch(`${DIRECTUS_URL}${path}`, {
-		method,
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
-		},
-		body: body ? JSON.stringify(body) : undefined,
-	});
-
-	if (!response.ok) {
-		throw new Error(`Fetch request failed. Status: ${response.status}. Response body: ${await response.text()}`);
-	}
-
-	return response.status === 204 ? null : (await response.json()).data;
-}
 
 const getOtherPresets = async () => {
 	const settings = await directusRequest('/settings?fields=storage_asset_presets');

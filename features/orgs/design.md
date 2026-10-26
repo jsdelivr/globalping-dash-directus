@@ -43,7 +43,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
   returns the claim of the cookie, so the dashboard shows what the readers bill. The signed `user_account_id` claim stays the
   personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves
   on another.
-- Losing the membership is noticed on the next refresh (the filter falls back to the personal account), so a stale claim lives
+- Losing the membership is noticed on the next refresh (the filter falls back to the `default_account` while it is still valid, else to the personal account), so a stale claim lives
   at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts in the user's
   `default_account` while it is still valid, else in the personal account. The claims also carry the tier of the active
   account, so a measurement from the dashboard is stored like one made with that account's token.
@@ -53,7 +53,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - Any org admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to org admin (if they are admins of the GitHub org), but never demotes back (because they might have been manually promoted previously).
 - Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the org admin before saving.
 - New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is only for org admins.
-- An org that hasn't approved our OAuth app is only visible through the public memberships list, which has no roles, so all of its members are synced as `member` and it has no org admins at all (it stays usable for member actions). To get org admins, the org has to approve the `globalping` app in its GitHub settings. The dash shows a hint about it when an org has no org admins.
+- An org that hasn't approved our OAuth app is only visible through the public memberships list, which has no roles, so all of its members are synced as `member` and it has no org admins at all (it stays usable for member actions). To get org admins, the org has to approve the `globalping` app in its GitHub settings.
 - Members who hide their membership in such an org are invisible to us entirely: they don't get the org, and an existing membership is removed on the next sync, so that everyone in the same position ends up the same (the sync never removes anything when GitHub is unreachable: a failed request aborts it). Making the membership public, or having the org approve the app, brings it back.
 
 **Probes**
