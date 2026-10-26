@@ -105,7 +105,7 @@ export const addProbe = async (fields: Record<string, unknown>) => {
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
 		status: 'ready',
 		version: '0.28.0',
-		nodeVersion: 'v22.22.3',
+		nodeVersion: 'v22.23.4',
 		city: 'Prague',
 		country: 'CZ',
 		countryName: 'Czech Republic',
