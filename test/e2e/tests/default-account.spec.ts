@@ -2,7 +2,7 @@ import type { Browser, Page } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import type { Org, User } from '../types.ts';
-import { activeAccountCookie, pageAs, png } from '../utils.ts';
+import { pageAs, png, sessionAccount } from '../utils.ts';
 
 // A user who hasn't picked a default account yet, signed in.
 const onboard = async (browser: Browser, user: User) => {
@@ -78,7 +78,7 @@ test('an org admin picks the org: it is selected, becomes the default and active
 	expect(row.default_account).toBe(org.account_id);
 	expect(JSON.parse(row.selected_orgs)).toEqual([ org.id ]);
 	expect(await orgRow(org)).toEqual({ public_probes: 1, website: 'https://example.com', description: 'We measure the internet.' });
-	expect((await activeAccountCookie(page))?.value).toBe(`${org.admin.id}:${org.account_id}`);
+	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
 });
 
 test('an org admin adds a banner during the onboarding, which is uploaded on "Apply"', async ({ browser, org }) => {
@@ -121,61 +121,48 @@ test('the org profile is offered only to admins and only while it is empty', asy
 	await expect(adminDialog.getByLabel('Website URL')).toHaveCount(0);
 });
 
-test('the active account cookie outlives the browser session, and a new session opens the default account or falls back to the personal one', async ({ browser, org }) => {
+test('a new session opens the default account, or the personal one while the default org is not offered', async ({ browser, org }) => {
 	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
 
 	const page = await pageAs(browser, org.member.email, 'user');
 	await page.goto('/');
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
 
-	const cookie = await activeAccountCookie(page);
-	expect(cookie?.value).toBe(`${org.member.id}:${org.account_id}`);
-	expect(cookie!.expires * 1000).toBeGreaterThan(Date.now() + 300 * 24 * 60 * 60 * 1000);
-
-	// A default org that is no longer offered falls back to the personal account.
 	await sql('directus_users').where({ id: org.member.id }).update({ selected_orgs: JSON.stringify([]) });
 	const nextPage = await pageAs(browser, org.member.email, 'user');
 	await nextPage.goto('/');
 	await expect(nextPage.getByLabel('Profile')).toContainText(org.member.github_username);
-	expect((await activeAccountCookie(nextPage))?.value).toBe(`${org.member.id}:${org.member.account_id}`);
+	await expect.poll(() => sessionAccount(nextPage)).toBe(org.member.account_id);
 	expect((await userRow(org.member)).default_account).toBe(org.account_id);
 });
 
-test('an active account cookie naming an org the user is not in falls back to the default account', async ({ browser, org, org2 }) => {
+test('a session acting as an org the user is not in falls back to the default account', async ({ browser, org, org2 }) => {
 	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
 
 	const page = await pageAs(browser, org.member.email, 'user');
-	await page.context().addCookies([{ name: 'gp_active_account', value: `${org.member.id}:${org2.account_id}`, url: process.env.DASH_URL! }]);
+	await sql('directus_sessions').where({ user: org.member.id }).update({ active_account: org2.account_id });
 	await page.goto('/');
 
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
-	expect((await activeAccountCookie(page))?.value).toBe(`${org.member.id}:${org.account_id}`);
+	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
 });
 
-test('signing in again resumes the account left active by the previous session, not the default one', async ({ browser, org }) => {
+test('a session keeps its own active account, while a new one starts in the default account', async ({ browser, org }) => {
 	await sql('directus_users').where({ id: org.member.id }).update({ default_account: org.account_id, selected_orgs: JSON.stringify([ org.id ]) });
-	const previousCookie = `${org.member.id}:${org.member.account_id}`;
 
 	const page = await pageAs(browser, org.member.email, 'user');
-	await page.context().clearCookies({ name: 'dash_session_token' });
-	await page.context().addCookies([{ name: 'gp_active_account', value: previousCookie, url: process.env.DASH_URL! }]);
-	await page.route(`${process.env.DIRECTUS_URL}/auth/login/github*`, route => route.abort());
-
-	await page.goto('/login');
-
-	await Promise.all([
-		page.waitForRequest(`${process.env.DIRECTUS_URL}/auth/login/github*`),
-		page.getByRole('button', { name: 'Sign in with GitHub' }).click(),
-	]);
-
-	expect((await activeAccountCookie(page))?.value).toBe(previousCookie);
-
-	const response = await page.request.post(`${process.env.DIRECTUS_URL}/auth/login`, { data: { email: org.member.email, password: 'user', mode: 'session' } });
-	expect(response.ok()).toBe(true);
+	await page.context().request.post(`${process.env.DIRECTUS_URL}/accounts/active`, { data: { accountId: org.member.account_id } });
 	await page.goto('/');
-
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
-	expect((await activeAccountCookie(page))?.value).toBe(previousCookie);
+
+	const nextPage = await pageAs(browser, org.member.email, 'user');
+	await nextPage.goto('/');
+	await expect(nextPage.getByLabel('Profile')).toContainText(org.name);
+
+	await page.reload();
+	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
+	await expect.poll(() => sessionAccount(page)).toBe(org.member.account_id);
 });
 
 test('the default account can be changed in the settings', async ({ browser, org }) => {

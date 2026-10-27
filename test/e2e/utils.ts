@@ -269,11 +269,14 @@ export const pageAs = async (browser: Browser, email: string, password: string) 
 	return context.newPage();
 };
 
-export const activeAccountCookie = async (page: Page) => (await page.context().cookies()).find(cookie => cookie.name === 'gp_active_account');
+export const sessionAccount = async (page: Page) => {
+	const response = await page.context().request.get(`${process.env.DIRECTUS_URL}/accounts/active`);
+	return (await response.json() as { accountId: string }).accountId;
+};
 
 export const actAsOrg = async (browser: Browser, org: Org, user: User) => {
 	await client('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 	const page = await pageAs(browser, user.email, 'user');
-	await page.context().addCookies([{ name: 'gp_active_account', value: `${user.id}:${org.account_id}`, url: process.env.DASH_URL! }]);
+	await page.context().request.post(`${process.env.DIRECTUS_URL}/accounts/active`, { data: { accountId: org.account_id } });
 	return page;
 };

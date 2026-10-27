@@ -470,7 +470,75 @@ describe('Sign-in hook', () => {
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
+			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'account-id' }]);
+			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
+		});
+
+		it('should fall back to the default account on refresh when the carried one is lost', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'default-account-id' });
+			firstStub.resolves({ active_account: 'org-account-id' });
+			rawStub.onFirstCall().resolves([ [] ]);
+			rawStub.onSecondCall().resolves([ [{ role: 'admin', userType: 'sponsor' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([{ user: '123', account: 'org-account-id' }, { user: '123', account: 'default-account-id' }]);
+			expect(whereStub.args[1]).to.deep.equal([{ token: 'new-session-token' }]);
+			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'default-account-id' }]);
+			expect(result).to.deep.include({ active_account_id: 'default-account-id', active_account_role: 'admin', user_type: 'sponsor' });
+		});
+
+		it('should start a new session in the default account and emit its tier', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'org-account-id' });
+			rawStub.resolves([ [{ role: 'admin', userType: 'sponsor' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
+
+			expect(rawStub.args[0]?.[1]).to.deep.equal({ user: '123', account: 'org-account-id' });
 			expect(updateStub.callCount).to.equal(0);
+			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'admin', user_type: 'sponsor' });
+		});
+
+		it('should start a new session in the personal account when the default one is not available', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'org-account-id' });
+			rawStub.resolves([ [] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
+
+			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner', user_type: 'member' });
+		});
+
+		it('should store the default account in the session on the first refresh', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], default_account: 'org-account-id' });
+			rawStub.resolves([ [{ role: 'viewer', userType: 'special' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(rawStub.callCount).to.equal(1);
+			expect(whereStub.args[1]).to.deep.equal([{ token: 'new-session-token' }]);
+			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'org-account-id' }]);
+			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'viewer', user_type: 'special' });
+		});
+
+		it('should keep the carried account over the default one', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], default_account: 'other-account-id' });
+			firstStub.resolves({ active_account: 'account-id' });
+			rawStub.resolves([ [{ role: 'owner' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(rawStub.callCount).to.equal(1);
+			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'account-id' }]);
 			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
 		});
 

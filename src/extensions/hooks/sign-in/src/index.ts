@@ -1,7 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
-import { type AccountRole, getAccountRole } from '../../../lib/src/accounts.js';
+import { type AccountRole, getAccountAccess } from '../../../lib/src/accounts.js';
 import { checkDefaultPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations, type GithubOrganization } from '../../../lib/src/github-api-client.js';
 import { syncOrganizations } from '../../../lib/src/sync-orgs.js';
@@ -17,6 +17,7 @@ type User = {
 	deprecated_prefix: string | null;
 	public_probes: boolean;
 	account: string[];
+	default_account: string | null;
 };
 
 type AuthPayload = {
@@ -80,12 +81,7 @@ export default defineHook(({ filter }, context) => {
 			schema: await getSchema(),
 		});
 
-		// readOne() throws for a missing user, and every user has an account (a database trigger creates it).
 		const user = await itemsService.readOne(userId) as User;
-
-		if (user.user_type) {
-			payload.user_type = user.user_type;
-		}
 
 		if (user.github_username) {
 			payload.github_username = user.github_username;
@@ -93,43 +89,47 @@ export default defineHook(({ filter }, context) => {
 
 		payload.user_account_id = user.account[0]!;
 
-		const activeAccount = await getActiveAccount(jwtMeta, payload.user_account_id, payload.session, database);
+		const activeAccount = await getActiveAccount(jwtMeta.type, user, payload.session, database);
 		payload.active_account_id = activeAccount.id;
 		payload.active_account_role = activeAccount.role;
+		payload.user_type = activeAccount.userType;
 
 		return payload;
 	});
 });
 
-const getActiveAccount = async ({ user, type }: AuthJwtMeta, userAccountId: string, session: string | undefined, database: HookExtensionContext['database']) => {
-	if (type === 'refresh' && session) {
-		// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
-		// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
-		const carried = await carryOverActiveAccount(user!, session, database);
-
-		if (carried) { return carried; }
+const getActiveAccount = async (type: AuthJwtMeta['type'], user: User, session: string | undefined, database: HookExtensionContext['database']) => {
+	// On login, Directus creates the session row only after `auth.jwt`, so there is no row to write to yet. The first refresh writes it.
+	if (type !== 'refresh' || !session) {
+		return pickAccount([ user.default_account ], user, database);
 	}
 
-	return { id: userAccountId, role: 'owner' as const };
-};
-
-
-const carryOverActiveAccount = async (userId: string, sessionToken: string, database: HookExtensionContext['database']) => {
+	// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
+	// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
 	const previous = await database('directus_sessions')
-		.where({ next_token: sessionToken })
+		.where({ next_token: session })
 		.first<{ active_account: string | null } | undefined>('active_account');
 
-	if (!previous?.active_account) { return null; }
-
-	const role = await getAccountRole(previous.active_account, userId, database);
-
-	if (!role) { return null; }
+	const activeAccount = await pickAccount([ previous?.active_account, user.default_account ], user, database);
 
 	await database('directus_sessions')
-		.where({ token: sessionToken })
-		.update({ active_account: previous.active_account });
+		.where({ token: session })
+		.update({ active_account: activeAccount.id });
 
-	return { id: previous.active_account, role };
+	return activeAccount;
+};
+
+// The first account the user can access, else the personal one.
+const pickAccount = async (accountIds: (string | null | undefined)[], user: User, database: HookExtensionContext['database']) => {
+	for (const accountId of _.compact(accountIds)) {
+		const access = await getAccountAccess(accountId, user.id, database);
+
+		if (access) {
+			return { id: accountId, ...access };
+		}
+	}
+
+	return { id: user.account[0]!, role: 'owner' as const, userType: user.user_type };
 };
 
 const syncGithubData = async (userId: string, context: HookExtensionContext) => {

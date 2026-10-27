@@ -23,15 +23,20 @@ export const getUserAccountId = async (userId: string, database: ApiExtensionCon
 	return account.id;
 };
 
-// The user's role on the account: `owner` of their own account, their org membership role otherwise.
-export const getAccountRole = async (accountId: string, userId: string, database: ApiExtensionContext['database']): Promise<AccountRole | null> => {
+export const getAccountAccess = async (accountId: string, userId: string, database: ApiExtensionContext['database']): Promise<{ role: AccountRole; userType: string } | null> => {
 	const [ rows ] = await database.raw(`
-		SELECT IF(a.user = :user, 'owner', m.role) AS role FROM gp_accounts a
+		SELECT IF(a.user = :user, 'owner', m.role) AS role, COALESCE(o.user_type, u.user_type) AS userType FROM gp_accounts a
 		LEFT JOIN gp_org_members m ON m.org = a.org AND m.user = :user
+		LEFT JOIN gp_orgs o ON o.id = a.org
+		LEFT JOIN directus_users u ON u.id = a.user
 		WHERE a.id = :account AND (a.user = :user OR m.id IS NOT NULL)
-	`, { user: userId, account: accountId }) as [{ role: AccountRole }[]];
+	`, { user: userId, account: accountId }) as [{ role: AccountRole; userType: string }[]];
 
-	return rows[0]?.role ?? null;
+	return rows[0] ?? null;
+};
+
+export const getAccountRole = async (accountId: string, userId: string, database: ApiExtensionContext['database']): Promise<AccountRole | null> => {
+	return (await getAccountAccess(accountId, userId, database))?.role ?? null;
 };
 
 // The account is available to its own user, and to the members of its org whose role is one of `roles`.
