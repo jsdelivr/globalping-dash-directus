@@ -106,15 +106,13 @@ const getActiveAccount = async (type: AuthJwtMeta['type'], user: User, session: 
 
 	// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
 	// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
-	// The new row may already have an account, from a switch or from an earlier try of the same refresh. That one is newer,
-	// so we try it first and never overwrite it. If the user lost it, the token gets the fallback, and the next refresh fixes the row.
-	const [ previousRows ] = await database.raw(`
+	const [ activeAccountRows ] = await database.raw(`
 		SELECT COALESCE(curr.active_account, prev.active_account) AS active_account
 		FROM directus_sessions prev LEFT JOIN directus_sessions curr ON curr.token = prev.next_token
 		WHERE prev.next_token = :token
 	`, { token: session }) as [{ active_account: string | null }[]];
 
-	const activeAccount = await pickAccount([ previousRows[0]?.active_account, user.default_account ], user, database);
+	const activeAccount = await pickAccount([ activeAccountRows[0]?.active_account, user.default_account ], user, database);
 
 	await database.raw(`
 		UPDATE directus_sessions SET active_account = COALESCE(active_account, :account) WHERE token = :token
