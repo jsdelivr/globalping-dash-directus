@@ -87,6 +87,11 @@ export default defineHook(({ filter }, context) => {
 			payload.github_username = user.github_username;
 		}
 
+		// No `account` before the schema is applied, e.g. the admin login in scripts/init.sh.
+		if (!user.account) {
+			return payload;
+		}
+
 		payload.user_account_id = user.account[0]!;
 
 		const activeAccount = await getActiveAccount(jwtMeta.type, user, payload.session, database);

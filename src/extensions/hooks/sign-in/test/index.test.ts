@@ -426,6 +426,15 @@ describe('Sign-in hook', () => {
 				active_account_role: 'owner',
 			});
 		});
+
+		it('should not add account claims if user has no account field', async () => {
+			itemsService.readOne.resolves({ id: 'admin-id' });
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ id: '123' }, { user: 'admin-id' });
+			expect(result).to.deep.equal({ id: '123' });
+		});
 	});
 
 	describe('auth.jwt active account', () => {
