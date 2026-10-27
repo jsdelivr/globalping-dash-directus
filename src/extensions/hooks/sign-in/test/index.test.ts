@@ -34,20 +34,11 @@ describe('Sign-in hook', () => {
 	const notificationsService = {
 		createOne: sinon.stub(),
 	};
-	const firstStub = sinon.stub();
-	const updateStub = sinon.stub();
 	const rawStub = sinon.stub();
-	const whereStub = sinon.stub();
 	const database = new Proxy(() => database, {
 		get: (_target, property) => {
-			if (property === 'first') {
-				return firstStub;
-			} else if (property === 'update') {
-				return updateStub;
-			} else if (property === 'raw') {
+			if (property === 'raw') {
 				return rawStub;
-			} else if (property === 'where') {
-				return whereStub;
 			} else if (property === 'transaction') {
 				return async (callback: (trx: unknown) => unknown) => callback({});
 			}
@@ -86,9 +77,6 @@ describe('Sign-in hook', () => {
 		itemsService.readByQuery.resolves([]);
 		itemsService.createOne.resolves('created-id');
 		itemsService.deleteMany.resolves();
-		whereStub.returns(database);
-		firstStub.resolves({ active_account: null });
-		updateStub.resolves(1);
 		rawStub.resolves([ [] ]);
 	});
 
@@ -448,45 +436,49 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should copy the stored account to the new session and emit its claims on refresh', async () => {
-			firstStub.resolves({ active_account: 'org-account-id' });
-			rawStub.resolves([ [{ role: 'member' }] ]);
+			rawStub.onFirstCall().resolves([ [{ active_account: 'org-account-id' }] ]);
+			rawStub.onSecondCall().resolves([ [{ role: 'member' }] ]);
 
 			hook(events, context);
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
-			expect(whereStub.args[0]).to.deep.equal([{ next_token: 'new-session-token' }]);
-			expect(rawStub.args[0]?.[1]).to.deep.equal({ user: '123', account: 'org-account-id' });
-			expect(whereStub.args[1]).to.deep.equal([{ token: 'new-session-token' }]);
-			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'org-account-id' }]);
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([
+				{ token: 'new-session-token' },
+				{ user: '123', account: 'org-account-id' },
+				{ account: 'org-account-id', token: 'new-session-token' },
+			]);
+
 			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'member' });
 		});
 
 		it('should fall back to the personal account on refresh when the membership is lost', async () => {
-			firstStub.resolves({ active_account: 'org-account-id' });
-			rawStub.resolves([ [] ]);
+			rawStub.onFirstCall().resolves([ [{ active_account: 'org-account-id' }] ]);
 
 			hook(events, context);
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
-			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'account-id' }]);
+			expect(rawStub.lastCall.args[1]).to.deep.equal({ account: 'account-id', token: 'new-session-token' });
 			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
 		});
 
 		it('should fall back to the default account on refresh when the carried one is lost', async () => {
 			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'default-account-id' });
-			firstStub.resolves({ active_account: 'org-account-id' });
-			rawStub.onFirstCall().resolves([ [] ]);
-			rawStub.onSecondCall().resolves([ [{ role: 'admin', userType: 'sponsor' }] ]);
+			rawStub.onFirstCall().resolves([ [{ active_account: 'org-account-id' }] ]);
+			rawStub.onThirdCall().resolves([ [{ role: 'admin', userType: 'sponsor' }] ]);
 
 			hook(events, context);
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
-			expect(rawStub.args.map(args => args[1])).to.deep.equal([{ user: '123', account: 'org-account-id' }, { user: '123', account: 'default-account-id' }]);
-			expect(whereStub.args[1]).to.deep.equal([{ token: 'new-session-token' }]);
-			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'default-account-id' }]);
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([
+				{ token: 'new-session-token' },
+				{ user: '123', account: 'org-account-id' },
+				{ user: '123', account: 'default-account-id' },
+				{ account: 'default-account-id', token: 'new-session-token' },
+			]);
+
 			expect(result).to.deep.include({ active_account_id: 'default-account-id', active_account_role: 'admin', user_type: 'sponsor' });
 		});
 
@@ -498,8 +490,7 @@ describe('Sign-in hook', () => {
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
 
-			expect(rawStub.args[0]?.[1]).to.deep.equal({ user: '123', account: 'org-account-id' });
-			expect(updateStub.callCount).to.equal(0);
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([{ user: '123', account: 'org-account-id' }]);
 			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'admin', user_type: 'sponsor' });
 		});
 
@@ -516,34 +507,37 @@ describe('Sign-in hook', () => {
 
 		it('should store the default account in the session on the first refresh', async () => {
 			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], default_account: 'org-account-id' });
-			rawStub.resolves([ [{ role: 'viewer', userType: 'special' }] ]);
+			rawStub.onSecondCall().resolves([ [{ role: 'viewer', userType: 'special' }] ]);
 
 			hook(events, context);
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
-			expect(rawStub.callCount).to.equal(1);
-			expect(whereStub.args[1]).to.deep.equal([{ token: 'new-session-token' }]);
-			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'org-account-id' }]);
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([
+				{ token: 'new-session-token' },
+				{ user: '123', account: 'org-account-id' },
+				{ account: 'org-account-id', token: 'new-session-token' },
+			]);
+
 			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'viewer', user_type: 'special' });
 		});
 
 		it('should keep the carried account over the default one', async () => {
 			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], default_account: 'other-account-id' });
-			firstStub.resolves({ active_account: 'account-id' });
-			rawStub.resolves([ [{ role: 'owner' }] ]);
+			rawStub.onFirstCall().resolves([ [{ active_account: 'account-id' }] ]);
+			rawStub.onSecondCall().resolves([ [{ role: 'owner' }] ]);
 
 			hook(events, context);
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
-			expect(rawStub.callCount).to.equal(1);
-			expect(updateStub.args[0]).to.deep.equal([{ active_account: 'account-id' }]);
+			expect(rawStub.callCount).to.equal(3);
+			expect(rawStub.lastCall.args[1]).to.deep.equal({ account: 'account-id', token: 'new-session-token' });
 			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
 		});
 
 		it('should not read the old session on login or on a refresh without a session claim (JSON mode) and emit the personal claims', async () => {
-			firstStub.resolves({ active_account: 'org-account-id' });
+			rawStub.resolves([ [{ active_account: 'org-account-id' }] ]);
 
 			hook(events, context);
 
@@ -553,8 +547,7 @@ describe('Sign-in hook', () => {
 				expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
 			}
 
-			expect(firstStub.callCount).to.equal(0);
-			expect(updateStub.callCount).to.equal(0);
+			expect(rawStub.callCount).to.equal(0);
 		});
 	});
 });

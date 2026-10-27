@@ -53,5 +53,5 @@ The redirects move out of the code into a `gp_credits_redirects` table (`source_
 
 Losing the membership revokes almost nothing by itself: the probes stay with the org, the adoption token stays in the array and
 the redirect stays in place, for an org admin to undo when they want to. The exception is section 5 -
-`gp_org_members_clean_up_tokens` (`20260818GP`) deletes that member's org tokens and approvals on the way out, so migrated tokens
+`gp_org_members_clean_up_tokens` (`20261028GP`) deletes that member's org tokens and approvals on the way out, so migrated tokens
 do not survive the departure. Nothing is ever migrated back to the user.

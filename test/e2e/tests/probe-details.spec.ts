@@ -22,7 +22,7 @@ const probeDefaults = {
 	tags: JSON.stringify([]),
 	status: 'ready',
 	version: '0.28.0',
-	nodeVersion: 'v22.22.3',
+	nodeVersion: 'v22.23.4',
 	allowedCountries: JSON.stringify([ 'CZ' ]),
 	customLocation: null as string | null,
 	originalLocation: null as string | null,

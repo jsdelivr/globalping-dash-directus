@@ -11,7 +11,7 @@ const PROBE: Omit<ProbeToAdopt, 'ip'> = {
 	userId: null,
 	account_id: null,
 	version: '0.28.0',
-	nodeVersion: 'v22.22.3',
+	nodeVersion: 'v22.23.4',
 	hardwareDevice: null,
 	hardwareDeviceFirmware: null,
 	tags: [],

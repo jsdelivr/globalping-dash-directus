@@ -70,7 +70,7 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 - The org's credits redirects in both directions - an inherited `acme-org => john` and a member's `john => acme-org` - each cleared after a confirmation. The person on the other side can clear theirs in the migrate section (7.3), and pointing their own sponsorship somewhere ends it too.
 
 6.3 **Members.** Every member with their role, and the role selector. Demoting someone to viewer deletes their org tokens and app
-approvals - the database trigger does it (`20260818GP`) - so the selector warns before saving: it is irreversible and it breaks
+approvals - the database trigger does it (`20261028GP`) - so the selector warns before saving: it is irreversible and it breaks
 whatever runs on those tokens.
 
 ## 7. "Migrate to organization"

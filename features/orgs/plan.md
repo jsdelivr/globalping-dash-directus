@@ -13,7 +13,7 @@ Both shapes have to work at the same time and in both directions: a caller still
 - Knex migration: replace `gp_apps_approvals` `UNIQUE(user, app)` with `UNIQUE(user_created, app, account_id)`. Ships here, not in phase 2: Directus is not deployed again in that phase, so the old key would still be in place when gp-auth starts creating per-account approvals.
 - Permissions migration: the per-table rules from `design.md`, plus `gp_orgs.public_probes` (readable by members, writable by org admins).
 - GitHub sync: fetch org memberships + roles with the user's token only, new sync lib (upsert gp_orgs + gp_accounts + gp_org_members, promote to org admin but never demote, on leave: delete membership + that member's org tokens and approvals), wire into sign-in hook, sign-up hook, sync-github-data endpoint.
-- Hooks: gp-tokens create (payload `account_id` = own account or org where role is admin/member), adopted-probe (tag validation unchanged - prefixes still come from `github_username` + `github_organizations`, narrowed only in phase 5; reset fields on `account_id` -> null), gp_org_members update (per-field: `role` by org admin, `notification_preferences` on own row), notifications (org events fan out to members per their prefs, most org notifications off by default).
+- Hooks: gp-tokens create (payload `account_id` = own account or org where role is admin/member), adopted-probe (tag validation unchanged - prefixes still come from `github_username` + `github_organizations`, narrowed only in phase 5; reset fields on `account_id` -> null), gp_org_members update (per-field: `role` by org admin, `notification_preferences` on own row), notifications (org events fan out to the org admins, each per their own org preferences, same defaults as the personal ones).
 - Endpoints: adoption-code + local-adoption resolve the owner (org adoption token; an org `accountId` accepted only from an org admin of that org), applications endpoint gains `accountId` scoping (approvals are bound to a specific account). Every endpoint taking `userId` (adoption-code, applications, credits-timeline) accepts `accountId` as the primary parameter, with `userId` kept as a `// PHASE5: remove` shim.
 - gp-orgs read hook: `adoption_token` stays out of the read permission and the hook adds it for org admins only.
 - Credits: probe credits cron resolves `github_id` from the probe's account owner, org balance initialized from unconsumed additions when an org is first created, low-credits notifies org admins. `SOURCE_ID_TO_TARGET_ID` redirect stays.
@@ -89,16 +89,16 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
 - Accepted: a prefix outlives its owner's claim to it - if someone else takes the freed username, both accounts emit
   tags with that prefix. Already true today; generating the prefix from the owner would have been the only thing that ever healed it.
 - `format: 'v1'` is untouched - some probes keep the `u-prefix-value` separator until their owner saves the tags. Optional cleanup: the
-  `searchIndex` trigger (`20260820GP:29`) indexes them as `u-prefix:value`, so dashboard search and the API disagree on those.
+  `searchIndex` trigger (`20261030GP:29`) indexes them as `u-prefix:value`, so dashboard search and the API disagree on those.
 
 Added while implementing phase 1 (remove or update in phase 5):
 
-- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20260819GP`) - fulfill `account_id` for the rows gp-auth writes. Dead once phase 2 ships: gp-auth sets the account itself.
-- Triggers `gp_probes_fulfill_account`, `gp_probes_fulfill_account_on_update` (`20260819GP`) - fulfill `account_id` for a probe whose owner is written through `userId` alone. Dead once `userId` is gone.
+- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20261029GP`) - fulfill `account_id` for the rows gp-auth writes. Dead once phase 2 ships: gp-auth sets the account itself.
+- Triggers `gp_probes_fulfill_account`, `gp_probes_fulfill_account_on_update` (`20261029GP`) - fulfill `account_id` for a probe whose owner is written through `userId` alone. Dead once `userId` is gone.
 - `gp_apps_approvals_fulfill_account` also fills the NOT NULL `user` column that gp-auth stopped writing in phase 2, so it goes together with that column - see phase 5.
-- Credits triggers (`20260819GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
+- Credits triggers (`20261029GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
 - `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.
-- `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20260819GP` only to free the `user` foreign key from the unique key being replaced.
+- `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20261029GP` only to free the `user` foreign key from the unique key being replaced.
 - `gp_probes` update permission validation keeps the `userId _null` clause next to `account_id _null`; `userId` stays in the allowed update fields (dash sends it until phase 2).
 - `getRequestAccountId` loses its legacy `userId` branch: with `accountId` the only input it stops resolving anything, so it becomes `validateAccountId(accountId, accountability, context, roles)` returning nothing, and the callers read `accountId` straight from the request.
 - The phase 1 org e2e drives Directus over REST because there is no org UI yet - move whatever the phase 4 dashboard covers to UI tests, and keep REST only for what the UI can't reach.
