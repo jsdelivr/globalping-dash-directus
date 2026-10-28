@@ -99,6 +99,9 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 	const { ItemsService } = services;
 
 	await database.transaction(async (trx) => {
+		// Lock the user row before any read, so other updates of the user wait for this transaction.
+		await trx('directus_users').where({ id: userId }).forUpdate().first('id');
+
 		const creditsAdditionsService = new ItemsService('gp_credits_additions', {
 			schema: await getSchema(),
 			knex: trx,
