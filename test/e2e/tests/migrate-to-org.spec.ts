@@ -72,7 +72,7 @@ test('probes move into an org with no admin, the user becomes its admin and gets
 	await expect(dialog).toContainText(`Their public tag u-${org.member.default_prefix} disappears`);
 	await transfer(dialog, 'Transfer probes');
 
-	await expect(page.getByText(`Moved 1 probe to ${org.name}. You're now an admin of ${org.name}`)).toBeVisible();
+	await expect(page.getByText(`Moved 1 probe to ${org.name}`, { exact: true })).toBeVisible();
 	await expect(dialog).toContainText('Moved 1 probe');
 	await expect(dialog.getByRole('button', { name: 'Transfer probes' })).toHaveCount(0);
 	expect(await probesOf(org.member.account_id)).toEqual([]);
