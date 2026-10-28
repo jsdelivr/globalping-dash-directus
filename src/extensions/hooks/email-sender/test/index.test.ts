@@ -145,6 +145,20 @@ describe('EmailService', () => {
 		}
 	});
 
+	it('should not link the type unsubscribe for a type the user can not configure', () => {
+		const context = createContext();
+		const service = new EmailService(context as any);
+
+		const html = (service as any).formatMessage({
+			message: 'Some message',
+			recipient: 'u1',
+			type: 'default_tag_change',
+		});
+		expect(html).to.include('Manage notifications');
+		expect(html).to.not.include('Disable');
+		expect(html).to.not.include('/emails/unsubscribe');
+	});
+
 	it('should map batch errors to sent/failed ids', async () => {
 		const context = createContext();
 		const service = new EmailService(context as any);

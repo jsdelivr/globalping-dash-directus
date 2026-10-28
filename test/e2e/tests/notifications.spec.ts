@@ -1,6 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import axios from 'axios';
 import { client } from '../client.ts';
+import { clearUserData, generateUser } from '../utils.ts';
+import type { Org } from '../types.ts';
+import { LinkGenerator } from '../../../src/extensions/lib/src/link-generator.ts';
 
 const sendNotification = async (type: string, recipient: string) => {
 	await axios.post(`${process.env.DIRECTUS_URL}/notifications`, {
@@ -15,9 +19,41 @@ const sendNotification = async (type: string, recipient: string) => {
 	});
 };
 
+// What gp-api and the crons send for anything an account owns: the recipients are resolved by Directus.
+const sendAccountNotification = async (type: string, account: string, message: string) => {
+	await axios.post(`${process.env.DIRECTUS_URL}/notifications`, {
+		type,
+		account,
+		subject: type,
+		message,
+	}, {
+		headers: {
+			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,
+		},
+	});
+};
+
+const recipientsOf = async (message: string) => {
+	const rows = await client('directus_notifications').where({ message }).select('recipient') as { recipient: string }[];
+	return rows.map(row => row.recipient).sort();
+};
+
 const notificationEmailStatus = async (recipient: string, type: string) => {
 	const row = await client('directus_notifications').where({ recipient, type }).orderBy('id', 'desc').select('email_status').first();
 	return row?.email_status ?? null;
+};
+
+// The same signed link an email carries in its footer / List-Unsubscribe header.
+const unsubscribe = async (userId: string, type?: string) => {
+	const links = new LinkGenerator({ env: { DASH_URL: process.env.DASH_URL!, PUBLIC_URL: process.env.DIRECTUS_URL!, SECRET: process.env.SECRET! } });
+	const link = type ? links.generateTypeUnsubscribeLink(userId, type) : links.generateListUnsubscribeLink(userId);
+	const data = new URL(link).searchParams.get('data');
+	await axios.post(`${process.env.DIRECTUS_URL}/email-unsubscribe/unsubscribe`, null, { params: { data } });
+};
+
+const membershipPreferences = async (org: Org, userId: string) => {
+	const row = await client('gp_org_members').where({ org: org.id, user: userId }).first('notification_preferences');
+	return JSON.parse(row.notification_preferences) as Record<string, { enabled: boolean; emailEnabled?: boolean }>;
 };
 
 test('Notifications are sent when preferences are null', async ({ page, user }) => {
@@ -110,4 +146,71 @@ test('Toggles of notification types', async ({ page, user }) => {
 	await expect(page.getByText('outdated_firmware').first()).toBeVisible();
 	expect(await notificationEmailStatus(user.id, 'probe_unassigned')).toBe('not-required');
 	expect(await notificationEmailStatus(user.id, 'outdated_firmware')).toBe('disabled-by-user');
+});
+
+test('an account notification reaches every admin of the org and nobody else', async ({ org }) => {
+	const secondAdmin = await generateUser('SecondAdmin');
+	await client('gp_org_members').insert({ id: randomUUID(), org: org.id, user: secondAdmin.id, role: 'admin' });
+
+	const message = `org notification ${randomUUID()}`;
+	await sendAccountNotification('probe_adopted', org.account_id, message);
+
+	// The member and the viewer are not notified about what the org owns.
+	expect(await recipientsOf(message)).toEqual([ org.admin.id, secondAdmin.id ].sort());
+
+	// The membership goes with the user.
+	await clearUserData(secondAdmin);
+});
+
+test('an admin who disabled the type in the org does not get the notification', async ({ org }) => {
+	const secondAdmin = await generateUser('MutedAdmin');
+
+	await client('gp_org_members').insert({ id: randomUUID(), org: org.id, user: secondAdmin.id, role: 'admin' });
+
+	// Org preferences live on the membership, independent of the personal ones.
+	await client('gp_org_members')
+		.where({ org: org.id, user: secondAdmin.id })
+		.update({ notification_preferences: JSON.stringify({ probe_adopted: { enabled: false } }) });
+
+	const message = `muted admin ${randomUUID()}`;
+	await sendAccountNotification('probe_adopted', org.account_id, message);
+
+	expect(await recipientsOf(message)).toEqual([ org.admin.id ]);
+
+	await clearUserData(secondAdmin);
+});
+
+test('unsubscribing from all emails mutes the org emails of the user too', async ({ org }) => {
+	await client('gp_org_members')
+		.where({ org: org.id, user: org.admin.id })
+		.update({ notification_preferences: JSON.stringify({ outdated_software: { enabled: true, emailEnabled: true } }) });
+
+	await unsubscribe(org.admin.id);
+
+	const preferences = await membershipPreferences(org, org.admin.id);
+	expect(Object.values(preferences).every(preference => preference.emailEnabled === false)).toBeTruthy();
+	expect(preferences.outdated_software?.enabled).toBe(true);
+
+	const message = `muted org email ${randomUUID()}`;
+	await sendAccountNotification('outdated_firmware', org.account_id, message);
+
+	// The admin still gets the in-app notification, only the email is off.
+	expect(await recipientsOf(message)).toEqual([ org.admin.id ]);
+	expect(await notificationEmailStatus(org.admin.id, 'outdated_firmware')).toBe('disabled-by-user');
+});
+
+test('unsubscribing from one type keeps the other org emails', async ({ org }) => {
+	await unsubscribe(org.admin.id, 'outdated_software');
+
+	const preferences = await membershipPreferences(org, org.admin.id);
+	expect(preferences.outdated_software?.emailEnabled).toBe(false);
+	expect(preferences.offline_probe?.emailEnabled).toBe(true);
+});
+
+test('a personal account notification reaches only its owner', async ({ user, org }) => {
+	const message = `personal notification ${randomUUID()}`;
+	await sendAccountNotification('probe_adopted', user.account_id, message);
+
+	expect(await recipientsOf(message)).toEqual([ user.id ]);
+	expect(await recipientsOf(message)).not.toContain(org.admin.id);
 });

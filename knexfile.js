@@ -9,7 +9,7 @@ export default {
 			host: process.env.DB_HOST || 'localhost',
 			user: process.env.DB_USER || 'directus',
 			password: process.env.DB_PASSWORD || 'password',
-			database: process.env.DB_DATABSE || 'dashboard-globalping',
+			database: process.env.DB_DATABASE || 'dashboard-globalping',
 			port: process.env.DB_PORT || 13306,
 		},
 		pool: {
@@ -28,7 +28,7 @@ export default {
 			host: process.env.DB_HOST || '127.0.0.1',
 			user: process.env.DB_USER || 'directus',
 			password: process.env.DB_PASSWORD || 'password',
-			database: process.env.DB_DATABSE || 'dashboard-globalping',
+			database: process.env.DB_DATABASE || 'dashboard-globalping',
 			port: process.env.DB_PORT || 13306,
 		},
 		pool: {

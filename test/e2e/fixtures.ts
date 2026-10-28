@@ -1,27 +1,37 @@
 import { test as baseTest, request, type Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
-import { client as sql } from './client.ts';
-import { clearUserData, generateUser } from './utils.ts';
-import { User } from './types.ts';
+import { clearOrgData, clearUserData, generateOrg, generateUser, loginDirectusAdmin, loginUser } from './utils.ts';
+import { Actors, Org, User } from './types.ts';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{ user: User; user2: User; admin: User; adminPage: Page }>({
+export const test = baseTest.extend<{ user: User; user2: User; org: Org; org2: Org; actors: Actors; admin: User; adminPage: Page }>({
 	user: async ({}, use) => {
 		const user = await generateUser();
-		use(user);
+		await use(user);
+		await clearUserData(user);
 	},
 	user2: async ({}, use) => {
 		const user2 = await generateUser('2');
-		use(user2);
+		await use(user2);
+		await clearUserData(user2);
+	},
+	org: async ({}, use) => {
+		const org = await generateOrg();
+		await use(org);
+		await clearOrgData(org);
+	},
+	org2: async ({}, use) => {
+		const org2 = await generateOrg('2');
+		await use(org2);
+		await clearOrgData(org2);
 	},
 	admin: async ({}, use) => {
 		const admin = await generateUser('Admin', 'Administrator');
-		use(admin);
+		await use(admin);
+		await clearUserData(admin);
 	},
 	adminPage: async ({ browser, admin, baseURL }, use) => {
-		await sql('directus_users').insert(admin);
-
 		const context = await browser.newContext({ baseURL });
 		const loginResponse = await context.request.post(`${process.env.DIRECTUS_URL}/auth/login`, {
 			data: {
@@ -42,12 +52,20 @@ export const test = baseTest.extend<{ user: User; user2: User; admin: User; admi
 		const page = await context.newPage();
 		await use(page);
 		await context.close();
-		await clearUserData(admin);
 	},
-	storageState: async ({ user, user2 }, use) => {
-		await sql('directus_users').insert(user);
-		await sql('directus_users').insert(user2);
+	actors: async ({ org, org2, user }, use) => {
+		const [ admin, member, viewer, outsider, otherOrgAdmin, directusAdmin ] = await Promise.all([
+			loginUser(org.admin),
+			loginUser(org.member),
+			loginUser(org.viewer),
+			loginUser(user),
+			loginUser(org2.admin),
+			loginDirectusAdmin(),
+		]);
 
+		await use({ admin, member, viewer, outsider, otherOrgAdmin, directusAdmin });
+	},
+	storageState: async ({ user }, use) => {
 		// Make sure we authenticate in a clean environment by unsetting storage state.
 		const context = await request.newContext({ storageState: undefined });
 		// Log in the user.
@@ -70,9 +88,6 @@ export const test = baseTest.extend<{ user: User; user2: User; admin: User; admi
 		// Run the test with the auth file.
 		await use(fileName);
 
-		// Clear the data after the test.
-		await clearUserData(user);
-		await clearUserData(user2);
 		await fs.unlink(fileName);
 	},
 });

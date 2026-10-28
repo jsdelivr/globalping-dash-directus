@@ -12,6 +12,7 @@ describe('/admin-sponsors endpoint', () => {
 		where: sinon.stub(),
 		whereIn: sinon.stub(),
 		whereRaw: sinon.stub(),
+		leftJoin: sinon.stub(),
 		orderByRaw: sinon.stub(),
 		offset: sinon.stub(),
 		limit: sinon.stub(),
@@ -159,7 +160,8 @@ describe('/admin-sponsors endpoint', () => {
 
 		expect(response.status).to.equal(200);
 		expect(stubs.whereRaw.calledWith('((current_sponsors.github_id IS NOT NULL OR legacy_sponsors.github_id IS NOT NULL) OR (NOT (current_sponsors.github_id IS NOT NULL OR legacy_sponsors.github_id IS NOT NULL) AND history.has_recurring = 1))')).to.equal(true);
-		expect(stubs.whereRaw.calledWith('directus_users.id IS NOT NULL')).to.equal(true);
+		expect(stubs.whereRaw.calledWith('COALESCE(directus_users.id, gp_orgs.id) IS NOT NULL')).to.equal(true);
+		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.github_id')).to.equal(true);
 		expect(stubs.orderByRaw.firstCall.args[0]).to.include('CASE').and.to.match(/ desc$/);
 		expect(stubs.offset.calledWith(10)).to.equal(true);
 		expect(stubs.limit.calledWith(20)).to.equal(true);

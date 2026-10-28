@@ -1,4 +1,5 @@
 import { defineHook } from '@directus/extensions-sdk';
+import { validateAccount } from './actions/validate-account.js';
 import { validateQuery } from './actions/validate-items-query.js';
 import { validateToken } from './actions/validate-token.js';
 
@@ -12,6 +13,8 @@ export type Token = {
 	date_updated?: string;
 	user_created: string;
 	user_updated?: string;
+	// PHASE5: make it required.
+	account_id?: string | null;
 };
 
 type Revision = {
@@ -20,14 +23,16 @@ type Revision = {
 };
 
 export default defineHook(({ action, filter }) => {
-	filter('gp_tokens.items.create', (payload) => {
+	filter('gp_tokens.items.create', async (payload, _meta, context) => {
 		const token = payload as Token;
 		validateToken(token);
+		await validateAccount(token, context);
 	});
 
-	filter('gp_tokens.items.update', (payload) => {
+	filter('gp_tokens.items.update', async (payload, _meta, context) => {
 		const token = payload as Partial<Token>;
 		validateToken(token);
+		await validateAccount(token, context);
 	});
 
 	filter('gp_tokens.items.query', (query) => {

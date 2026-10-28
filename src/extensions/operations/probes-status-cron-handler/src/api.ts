@@ -7,8 +7,9 @@ import { checkOnlineStatus } from './actions/check-online-status.js';
 export default defineOperationApi({
 	id: 'probes-status-cron-handler',
 	handler: async (_operationData, context: OperationContext) => {
-		const timeOffset = _.random(0, 5 * 60 * 1000);
-		await setTimeout(timeOffset);
+		if (context.env.ENABLE_E2E_MOCKS !== true) {
+			await setTimeout(_.random(0, 5 * 60 * 1000));
+		}
 
 		const onlineIds = await checkOnlineStatus(context);
 

@@ -21,6 +21,9 @@ describe('email-unsubscribe endpoint', () => {
 		updateOne,
 	};
 	const UsersService = sinon.stub().callsFake(() => usersService);
+	const readByQuery = sinon.stub();
+	const updateMembership = sinon.stub().resolves(undefined);
+	const ItemsService = sinon.stub().callsFake(() => ({ readByQuery, updateOne: updateMembership }));
 	const context = {
 		env: {
 			DASH_URL: 'https://dash.globalping.io',
@@ -31,8 +34,10 @@ describe('email-unsubscribe endpoint', () => {
 			error: sinon.stub(),
 		},
 		getSchema: async () => ({}),
+		database: { transaction: (run: (trx: object) => Promise<void>) => run({}) },
 		services: {
 			UsersService,
+			ItemsService,
 		},
 	};
 
@@ -68,6 +73,7 @@ describe('email-unsubscribe endpoint', () => {
 
 	beforeEach(() => {
 		sinon.resetHistory();
+		readByQuery.resolves([]);
 
 		readOne.resolves({
 			id: 'user-1',
@@ -92,6 +98,53 @@ describe('email-unsubscribe endpoint', () => {
 
 		expect(updated.probe_adopted?.enabled).to.equal(true);
 		expect(updated.outdated_software?.enabled).to.equal(false);
+	});
+
+	it('should unsubscribe both personal and org notifications', async () => {
+		readByQuery.resolves([
+			{ id: 'membership-1', notification_preferences: { probe_adopted: { enabled: true, emailEnabled: true } } },
+			{ id: 'membership-2', notification_preferences: null },
+		]);
+
+		const res = await request(app).post('/unsubscribe').query({ data: getData('user-1') });
+
+		expect(res.status).to.equal(200);
+		const personal = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
+		expect(updateOne.firstCall.args[0]).to.equal('user-1');
+		expect(Object.values(personal).every(preference => preference.emailEnabled === false)).to.equal(true);
+
+		expect(updateMembership.args.map(([ id ]) => id)).to.deep.equal([ 'membership-1', 'membership-2' ]);
+
+		for (const [ , { notification_preferences: updated }] of updateMembership.args as [string, { notification_preferences: NotificationPreferences }][]) {
+			expect(Object.values(updated).every(preference => preference.emailEnabled === false)).to.equal(true);
+			expect(updated.probe_adopted?.enabled).to.equal(true);
+		}
+	});
+
+	it('should unsubscribe one type on the org memberships as well', async () => {
+		readByQuery.resolves([{ id: 'membership-1', notification_preferences: null }]);
+
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'probe_adopted') });
+
+		expect(res.status).to.equal(200);
+		const personal = updateOne.firstCall.args[1].notification_preferences as NotificationPreferences;
+		expect(personal.probe_adopted?.emailEnabled).to.equal(false);
+		expect(personal.outdated_software?.emailEnabled).to.equal(true);
+
+		const updated = updateMembership.firstCall.args[1].notification_preferences as NotificationPreferences;
+		expect(updated.probe_adopted).to.deep.equal({ enabled: true, emailEnabled: false });
+		expect(updated.outdated_software?.emailEnabled).to.equal(true);
+	});
+
+	it('should keep the parameter of the type when unsubscribing from it', async () => {
+		readOne.resolves({ id: 'user-1', notification_preferences: { low_credits: { enabled: true, emailEnabled: true, parameter: 20000 } } });
+		readByQuery.resolves([{ id: 'membership-1', notification_preferences: { low_credits: { enabled: true, emailEnabled: true, parameter: 30000 } } }]);
+
+		const res = await request(app).post('/unsubscribe').query({ data: getTypeData('user-1', 'low_credits') });
+
+		expect(res.status).to.equal(200);
+		expect(updateOne.firstCall.args[1].notification_preferences.low_credits).to.deep.equal({ enabled: true, emailEnabled: false, parameter: 20000 });
+		expect(updateMembership.firstCall.args[1].notification_preferences.low_credits).to.deep.equal({ enabled: true, emailEnabled: false, parameter: 30000 });
 	});
 
 	it('should redirect GET /unsubscribe to dashboard with data param without mutating', async () => {

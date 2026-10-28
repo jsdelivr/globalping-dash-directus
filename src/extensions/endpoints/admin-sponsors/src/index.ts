@@ -1,13 +1,13 @@
 import type { EndpointExtensionContext } from '@directus/extensions';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
-import { isAxiosError } from 'axios';
+import axios, { isAxiosError } from 'axios';
 import type { Request, RequestHandler } from 'express';
 import Joi from 'joi';
 import { redirectGithubId } from '../../../lib/src/add-credits.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { getGithubApiClient } from '../../../lib/src/github-api-client.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
+import { getGithubUrl } from '../../../lib/src/service-urls.js';
 import { resolveSponsorsPeriod } from './period.js';
 import { getManualAdditions, getSponsorAccounts, getSponsorsSummary, getSponsorshipEvents } from './queries.js';
 import type { AccountsQuery, EventsQuery, ManualAdditionsQuery, SponsorsPeriod } from './types.js';
@@ -102,13 +102,10 @@ type ManualAdditionInput = {
 };
 
 const resolveGithubLogin = async (githubId: string, context: EndpointExtensionContext) => {
-	const client = getGithubApiClient(null, context);
-
-	if (!context.env.GITHUB_ACCESS_TOKEN) {
-		delete client.defaults.headers.Authorization;
-	}
-
-	const response = await client.get<{ login: string }>(`https://api.github.com/user/${encodeURIComponent(githubId)}`);
+	const response = await axios.get<{ login: string }>(`${getGithubUrl(context)}/user/${encodeURIComponent(githubId)}`, {
+		timeout: 5000,
+		headers: context.env.GITHUB_ACCESS_TOKEN ? { Authorization: `Bearer ${context.env.GITHUB_ACCESS_TOKEN}` } : {},
+	});
 
 	return response.data.login;
 };
