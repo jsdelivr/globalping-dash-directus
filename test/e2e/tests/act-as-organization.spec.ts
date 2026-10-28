@@ -80,6 +80,22 @@ test('acting as an org switches every list and the header to it, and back', asyn
 	await expect.poll(() => sessionAccount(page)).toBe(org.member.account_id);
 });
 
+test('switching the account in one tab tells the other tabs to reload', async ({ browser, org }) => {
+	await selectOrgs(org.member, [ org.id ]);
+
+	const pageA = await pageAs(browser, org.member.email, 'user');
+	const pageB = await pageA.context().newPage();
+	await pageA.goto('/');
+	await pageB.goto('/');
+	await expect(pageB.getByLabel('Profile')).toContainText(org.member.github_username);
+
+	await switchTo(pageA, org.name);
+
+	await expect(pageB.getByText('Account switched in another tab')).toBeVisible();
+	await expect(pageA.getByLabel('Profile')).toContainText(org.name);
+	await expect(pageA.getByText('Account switched in another tab')).toHaveCount(0);
+});
+
 test('the mobile menu switches the account too', async ({ browser, org }) => {
 	await selectOrgs(org.member, [ org.id ]);
 

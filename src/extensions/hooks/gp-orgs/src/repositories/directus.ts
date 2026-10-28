@@ -1,7 +1,6 @@
 import type { EventContext } from '@directus/types';
 import type { ExtraAdoptionToken } from '../types.js';
 
-// The tokens are not available by permissions, so they are read directly for the orgs where the user is an admin.
 export const getAdoptionTokens = async (orgIds: string[], { accountability, database }: EventContext) => {
 	const rows = await database('gp_orgs')
 		.join('gp_org_members', 'gp_org_members.org', 'gp_orgs.id')

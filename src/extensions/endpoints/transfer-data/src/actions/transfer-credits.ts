@@ -17,7 +17,7 @@ export const transferCredits = async ({ userAccountId, orgAccountId, userGithubI
 	// A deduction in `gp_credits.amount` is recorded in `gp_credits_deductions` which is wrong, so the row is removed rather than set to zero.
 	await trx('gp_credits').where({ account_id: userAccountId }).delete();
 
-	// Deduction are moved to the org account, deductions in the same day are summed.
+	// Deduction are moved to the org account. Deductions on the same day are summed.
 	await trx.raw(`
 		INSERT INTO gp_credits_deductions (account_id, date, amount)
 		SELECT :org, d.date, d.amount FROM (SELECT date, amount FROM gp_credits_deductions WHERE account_id = :user) d

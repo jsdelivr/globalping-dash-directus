@@ -6,14 +6,13 @@ import Joi from 'joi';
 import { filterOrgIdsByBeingAdmin } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
-import { readBody, removeBanner, uploadBanner } from './actions/banner.js';
+import { NotFoundError, readBody, removeBanner, uploadBanner } from './actions/banner.js';
 import { getPublicOrg, getPublicOrgs } from './actions/public-orgs.js';
 
 type Request = ExpressRequest & {
 	accountability: NonNullable<EventContext['accountability']>;
 };
 
-const NotFoundError = createError('NOT_FOUND', 'Organization not found.', 404);
 const NotAdminError = createError('FORBIDDEN', 'Only the admins of the organization can change its banner.', 403);
 
 const bannerSchema = Joi.object<Request>({

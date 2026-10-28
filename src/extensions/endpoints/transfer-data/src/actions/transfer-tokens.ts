@@ -5,7 +5,10 @@ import type { Transfer } from '../types.js';
 const NoTokensError = createError('INVALID_PAYLOAD_ERROR', 'You have no tokens or app approvals to transfer.', 400);
 
 export const transferTokens = async ({ userId, userAccountId, orgAccountId }: Transfer, trx: Knex.Transaction) => {
-	const tokens = await trx('gp_tokens').where({ account_id: userAccountId }).update({ account_id: orgAccountId });
+	// Counted the way the dashboard lists them: API tokens, and apps by the app tokens they have.
+	const { apps } = await trx('gp_tokens').where({ account_id: userAccountId }).countDistinct({ apps: 'app_id' }).first() as { apps: number };
+	const tokens = await trx('gp_tokens').where({ account_id: userAccountId }).whereNull('app_id').update({ account_id: orgAccountId });
+	await trx('gp_tokens').where({ account_id: userAccountId }).update({ account_id: orgAccountId });
 
 	// 1. Drop the personal approvals for apps this person has already approved for the org: they would collide on UNIQUE (user_created, app, account_id).
 	await trx.raw(`
@@ -19,9 +22,9 @@ export const transferTokens = async ({ userId, userAccountId, orgAccountId }: Tr
 		.where({ user_created: userId, account_id: userAccountId })
 		.update({ account_id: orgAccountId });
 
-	if (!tokens && !moved) {
+	if (!tokens && !apps && !moved) {
 		throw new NoTokensError();
 	}
 
-	return { tokens, approvals: moved };
+	return { tokens, apps: Number(apps) };
 };

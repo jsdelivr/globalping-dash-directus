@@ -3,9 +3,7 @@ import type { Browser, Locator, Page } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import type { Org, User } from '../types.ts';
-import { actAsOrg, addApplication, addProbe, pageAs } from '../utils.ts';
-
-const demoteTheAdmin = (org: Org) => sql('gp_org_members').where({ org: org.id, user: org.admin.id }).update({ role: 'member' });
+import { actAsOrg, addApplication, addProbe, demoteTheAdmin, pageAs } from '../utils.ts';
 
 // Opens the settings of the personal account, with the org offered in the account menu.
 const settingsWithOrg = async (browser: Browser, org: Org, user: User) => {
@@ -129,8 +127,8 @@ test('tokens and their app approvals move to the org', async ({ browser, org }) 
 	const dialog = await openMigration(page, org);
 	await transfer(dialog, 'Transfer tokens');
 
-	await expect(page.getByText(`Moved 1 token and 1 app approval to ${org.name}`)).toBeVisible();
-	await expect(dialog).toContainText('Moved 1 token and 1 app approval');
+	await expect(page.getByText(`Moved 0 tokens and 1 app to ${org.name}`)).toBeVisible();
+	await expect(dialog).toContainText('Moved 0 tokens and 1 app');
 	expect([ await tokensOf(org.member.account_id), await approvalsOf(org.member.account_id) ]).toEqual([ 0, 0 ]);
 	expect([ await tokensOf(org.account_id), await approvalsOf(org.account_id) ]).toEqual([ 1, 1 ]);
 });

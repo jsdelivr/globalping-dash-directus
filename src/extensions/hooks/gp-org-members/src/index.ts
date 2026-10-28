@@ -14,7 +14,7 @@ export default defineHook(({ filter }) => {
 
 		if (!accountability?.user) { return payload; }
 
-		// The github_username of a membership is not readable by permissions, so usernames for the memberships the caller may see are added here.
+		// The github_username of a member is not readable through permissions, so it is added here for the memberships the caller may see.
 		await addUsernames(members, context);
 
 		return payload;

@@ -13,7 +13,7 @@ export default defineHook(({ filter, action }, hookContext) => {
 			return payload;
 		}
 
-		// Adoption tokens are not available by permissions (so members and viewers cannot see them but still have read access), so they are added in hook and only for admins.
+		// Adoption tokens are not readable through permissions (members and viewers can read the org, but not its tokens), so this hook adds them for org admins only.
 		await addAdoptionTokens(orgs, context);
 
 		return payload;

@@ -1,22 +1,11 @@
-const DIRECTUS_URL = process.env.DIRECTUS_URL;
-const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
+import { directusRequest } from './directus-request.js';
+
 const USER_POLICY_NAME = 'User';
 const PUBLIC_POLICY_NAME = '$t:public_label';
 
 async function getPolicyId (name) {
-	const URL = `${DIRECTUS_URL}/policies?filter[name][_eq]=${encodeURIComponent(name)}`;
-	const response = await fetch(URL, {
-		headers: {
-			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
-		},
-	}).then((response) => {
-		if (!response.ok) {
-			throw new Error(`Fetch request failed. Status: ${response.status}`);
-		}
-
-		return response.json();
-	});
-	return response.data[0].id;
+	const policies = await directusRequest(`/policies?filter[name][_eq]=${encodeURIComponent(name)}`);
+	return policies[0].id;
 }
 
 export function getUserPolicyId () {
@@ -29,20 +18,7 @@ export function getPublicPolicyId () {
 
 export async function getUserPermissions (collectionName) {
 	const policyId = await getUserPolicyId();
-	const URL = `${DIRECTUS_URL}/permissions?filter[collection][_eq]=${collectionName}&filter[policy][_eq]=${policyId}`;
-	const response = await fetch(URL, {
-		headers: {
-			Authorization: `Bearer ${ADMIN_ACCESS_TOKEN}`,
-		},
-	}).then((response) => {
-		if (!response.ok) {
-			throw new Error(`Fetch request failed. Status: ${response.status}`);
-		}
-
-		return response.json();
-	});
-
-	const permissions = response.data;
+	const permissions = await directusRequest(`/permissions?filter[collection][_eq]=${collectionName}&filter[policy][_eq]=${policyId}`);
 	const readPermissions = permissions.find(({ action }) => action === 'read');
 	const createPermissions = permissions.find(({ action }) => action === 'create');
 	const updatePermissions = permissions.find(({ action }) => action === 'update');
@@ -51,23 +27,8 @@ export async function getUserPermissions (collectionName) {
 	return { readPermissions, createPermissions, updatePermissions, deletePermissions };
 }
 
-export async function createPermissions (permissions) {
-	const URL = `${DIRECTUS_URL}/permissions`;
-	const response = await fetch(URL, {
-		method: 'POST',
-		body: JSON.stringify(permissions),
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
-		},
-	}).then((response) => {
-		if (!response.ok) {
-			throw new Error(`Fetch request failed. Status: ${response.status}`);
-		}
-
-		return response.json();
-	});
-	return response.data;
+export function createPermissions (permissions) {
+	return directusRequest('/permissions', 'POST', permissions);
 }
 
 export async function editPermissions (permissionsObj, fieldsToAdd = [], fieldsToRemove = []) {
@@ -80,25 +41,10 @@ export async function editPermissions (permissionsObj, fieldsToAdd = [], fieldsT
 		throw new Error(`Permissions ID is missing. This may happen when there are multiple rows for the same permission type.`);
 	}
 
-	const URL = `${DIRECTUS_URL}/permissions/${permissionsObj.id}`;
 	const filteredFields = permissionsObj.fields.filter(field => !fieldsToRemove.includes(field));
 
-	const response = await fetch(URL, {
-		method: 'PATCH',
-		body: JSON.stringify({
-			...permissionsObj,
-			fields: [ ...new Set([ ...filteredFields, ...fieldsToAdd ]) ],
-		}),
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
-		},
-	}).then((response) => {
-		if (!response.ok) {
-			throw new Error(`Fetch request failed. Status: ${response.status}`);
-		}
-
-		return response.json();
+	return directusRequest(`/permissions/${permissionsObj.id}`, 'PATCH', {
+		...permissionsObj,
+		fields: [ ...new Set([ ...filteredFields, ...fieldsToAdd ]) ],
 	});
-	return response.data;
 }

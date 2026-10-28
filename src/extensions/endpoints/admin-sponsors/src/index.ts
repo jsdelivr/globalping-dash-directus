@@ -159,7 +159,7 @@ export default defineEndpoint((router, context) => {
 		let githubLogin: string;
 
 		try {
-			githubLogin = await resolveGithubLogin(githubId, context);
+			githubLogin = await resolveGithubLogin(isPayment ? input.githubId : githubId, context);
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 
@@ -178,7 +178,7 @@ export default defineEndpoint((router, context) => {
 			amount: input.credits,
 			reason: isPayment ? 'one_time_sponsorship' : 'other',
 			meta: JSON.stringify(isPayment
-				? { amountInDollars: input.amountInDollars, githubLogin, manual: true }
+				? { amountInDollars: input.amountInDollars, githubLogin, manual: true, sponsorGithubId: input.githubId }
 				: { comment: input.comment, githubLogin, manual: true }),
 			date_created: new Date(),
 			user_updated: accountability!.user,

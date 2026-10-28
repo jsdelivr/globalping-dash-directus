@@ -33,9 +33,9 @@ export const authorize = async (orgId: string, userId: string, operation: Operat
 		trx('gp_org_members').where({ org: orgId, role: 'admin' }).first<{ id: string } | undefined>('id'),
 	]);
 
-	// Probes transfer is avalable for admins and for members if there are no admins.
-	// Tokens transfer is avaliable for admins and members.
-	// Credits transfer is avaliable for admins and members.
+	// Probes transfer is available for admins and for members if there are no admins.
+	// Tokens transfer is available for admins and members.
+	// Credits transfer is available for admins and members.
 	if (admin && membership.role !== 'admin' && operation === 'probes') {
 		throw new OrgHasAdminError();
 	}

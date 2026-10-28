@@ -68,6 +68,8 @@ export const generateOrg = async (suffix = ''): Promise<Org> => {
 	return { ...org, account_id: account.id as string, admin, member, viewer };
 };
 
+export const demoteTheAdmin = (org: Org) => client('gp_org_members').where({ org: org.id, user: org.admin.id }).update({ role: 'member' });
+
 // Deleting the org cascades to the memberships, the account and everything bound to it; probes only lose the account.
 export const clearOrgData = async (org: Org) => {
 	// The banner file is in storage, so it is deleted through Directus, not only from the database.

@@ -159,9 +159,9 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(200);
-		expect(stubs.whereRaw.calledWith('((current_sponsors.github_id IS NOT NULL OR legacy_sponsors.github_id IS NOT NULL) OR (NOT (current_sponsors.github_id IS NOT NULL OR legacy_sponsors.github_id IS NOT NULL) AND history.has_recurring = 1))')).to.equal(true);
+		expect(stubs.whereRaw.calledWith('(sponsors.github_id IS NOT NULL OR (sponsors.github_id IS NULL AND history.has_recurring = 1))')).to.equal(true);
 		expect(stubs.whereRaw.calledWith('COALESCE(directus_users.id, gp_orgs.id) IS NOT NULL')).to.equal(true);
-		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.github_id')).to.equal(true);
+		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.receiver_github_id')).to.equal(true);
 		expect(stubs.orderByRaw.firstCall.args[0]).to.include('CASE').and.to.match(/ desc$/);
 		expect(stubs.offset.calledWith(10)).to.equal(true);
 		expect(stubs.limit.calledWith(20)).to.equal(true);
@@ -211,11 +211,32 @@ describe('/admin-sponsors endpoint', () => {
 			github_id: '6191378',
 			amount: 10_000,
 			reason: 'one_time_sponsorship',
-			meta: JSON.stringify({ amountInDollars: 5, githubLogin: 'jsDelivr', manual: true }),
+			meta: JSON.stringify({ amountInDollars: 5, githubLogin: 'jsDelivr', manual: true, sponsorGithubId: '6191378' }),
 			user_updated: 'admin-id',
 		});
 
 		expect(stubs.insert.firstCall.args[0].date_created).to.be.instanceOf(Date);
+	});
+
+	it('creates a manual addition for the redirect target of the entered account', async () => {
+		stubs.first.resolves({ target_github_id: '1834071' });
+		nock.cleanAll();
+		nock('https://api.github.com').get('/user/6191378').reply(200, { login: 'jsDelivr' });
+
+		const response = await request(app).post('/manual-additions').send({
+			type: 'payment',
+			githubId: '6191378',
+			credits: 10_000,
+			amountInDollars: 5,
+		});
+
+		expect(response.status).to.equal(201);
+		expect(nock.isDone()).to.equal(true);
+
+		expect(stubs.insert.firstCall.args[0]).to.deep.include({
+			github_id: '1834071',
+			meta: JSON.stringify({ amountInDollars: 5, githubLogin: 'jsDelivr', manual: true, sponsorGithubId: '6191378' }),
+		});
 	});
 
 	it('creates other credits with the user-visible comment', async () => {

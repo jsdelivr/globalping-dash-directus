@@ -16,7 +16,7 @@ const FORMATS = [
 	{ format: 'webp', matches: (image: Buffer) => image.toString('latin1', 0, 4) === 'RIFF' && image.toString('latin1', 8, 12) === 'WEBP' },
 ];
 
-const NotFoundError = createError('NOT_FOUND', 'Organization not found.', 404);
+export const NotFoundError = createError('NOT_FOUND', 'Organization not found.', 404);
 const TooLargeFileError = createError('CONTENT_TOO_LARGE', 'The banner must be 5 MB or smaller.', 413);
 const InvalidFormatError = createError('INVALID_PAYLOAD_ERROR', 'The banner must be a PNG, JPEG or WebP image.', 400);
 const TooSmallError = createError('INVALID_PAYLOAD_ERROR', `The banner must be at least ${MIN_WIDTH}×${MIN_HEIGHT} px.`, 400);
@@ -70,7 +70,7 @@ const setBanner = (orgId: string, bannerId: string | null, { database }: Endpoin
 	return org.banner;
 });
 
-// Directus leaves the size empty if the header is unreadable or the image is too big, and resizes no side above the max.
+// Directus leaves the size empty when it cannot read the image, and it cannot transform an image with a side above the max.
 const checkSize = async (bannerId: string, { database, env }: EndpointExtensionContext) => {
 	const { width, height } = await database('directus_files').where({ id: bannerId }).first<{ width: number | null; height: number | null }>('width', 'height');
 	const maxSide = Number(env.ASSETS_TRANSFORM_IMAGE_MAX_DIMENSION);

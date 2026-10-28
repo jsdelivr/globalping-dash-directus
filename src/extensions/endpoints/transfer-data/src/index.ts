@@ -83,13 +83,14 @@ export default defineEndpoint((router, context) => {
 			throw new OrgRedirectError();
 		}
 
-		await database.transaction(async (trx) => {
-			const { orgGithubId } = await authorize(body.orgId, req.accountability.user!, 'redirect', trx);
+		const becameAdmin = await database.transaction(async (trx) => {
+			const authorized = await authorize(body.orgId, req.accountability.user!, 'redirect', trx);
 
-			await setRedirect(githubId!, orgGithubId, trx);
+			await setRedirect(githubId!, authorized.orgGithubId, trx);
+			return authorized.becameAdmin;
 		});
 
-		res.send('Credits redirect updated.');
+		res.send({ becameAdmin });
 	}, context));
 
 	router.delete('/credits-redirect', validate(deleteRedirectSchema), asyncWrapper(async (_req, res) => {

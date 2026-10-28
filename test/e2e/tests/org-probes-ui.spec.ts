@@ -64,16 +64,16 @@ test('start commands embed the adoption token of the account the probe is adopte
 	await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
 	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-personal-probe' });
 
-	for (const [ page, probeName, token, message ] of [
-		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', org.adoption_token, 'includes your secret adoption token' ],
-		[ await pageAs(browser, org.admin.email, 'user'), 'e2e-personal-probe', await personalAdoptionToken(org.admin), 'includes your secret adoption token' ],
+	for (const [ page, probeName, token ] of [
+		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', org.adoption_token ],
+		[ await pageAs(browser, org.admin.email, 'user'), 'e2e-personal-probe', await personalAdoptionToken(org.admin) ],
 	] as const) {
 		await page.goto('/probes');
 		await expect(page.getByText(probeName).first()).toBeVisible();
 		await page.getByRole('button', { name: 'Start a probe' }).first().click();
 
 		const dialog = page.getByRole('dialog');
-		await expect(dialog).toContainText(message);
+		await expect(dialog).toContainText('includes your secret adoption token');
 		await expect(dialog).toContainText(`GP_ADOPTION_TOKEN=${token}`);
 
 		await page.context().close();

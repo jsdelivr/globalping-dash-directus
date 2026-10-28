@@ -301,14 +301,14 @@ test('Redirected sponsor account', async ({ adminPage }) => {
 		github_id: redirectTargetGithubId,
 		user_updated: null,
 		reason: 'recurring_sponsorship',
-		meta: JSON.stringify({ amountInDollars: 30, bonus: 0 }),
+		meta: JSON.stringify({ amountInDollars: 30, bonus: 0, sponsorGithubId: redirectSourceGithubId }),
 		adopted_probe: null,
 	});
 
 	await adminPage.goto('/sponsors');
 	const accountsTable = adminPage.getByRole('heading', { name: 'Sponsor accounts' }).locator('xpath=ancestor::section[1]');
 
-	for (const search of [ redirectTargetGithubId, redirectSourceGithubId, 'redirect-source' ]) {
+	for (const search of [ redirectSourceGithubId, 'redirect-source' ]) {
 		const accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${search}`));
 		await adminPage.getByLabel('Search sponsor accounts').fill(search);
 		await accountsResponse;

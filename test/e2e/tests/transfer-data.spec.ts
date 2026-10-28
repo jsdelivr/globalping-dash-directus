@@ -3,9 +3,7 @@ import type { AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { Org, User } from '../types.ts';
-import { addApplication, addProbe, loginUser } from '../utils.ts';
-
-const emptyTheOrg = (org: Org) => sql('gp_org_members').where({ org: org.id, user: org.admin.id }).update({ role: 'member' });
+import { addApplication, addProbe, demoteTheAdmin, loginUser } from '../utils.ts';
 
 const roleOf = async (org: Org, user: User) => {
 	const membership = await sql('gp_org_members').where({ org: org.id, user: user.id }).first('role');
@@ -20,7 +18,7 @@ const creditsOf = async (accountId: string) => {
 const transfer = (api: AxiosInstance, what: string, orgId: string) => api.post(`/transfer-data/${what}`, { orgId });
 
 test('a member of an org with no admin can move probes, tokens and credits, and becomes an admin', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	const probeId = await addProbe({ userId: org.member.id, account_id: org.member.account_id });
 	await addApplication({ accountId: org.member.account_id, userId: org.member.id });
@@ -32,7 +30,7 @@ test('a member of an org with no admin can move probes, tokens and credits, and 
 
 	const tokens = await transfer(actors.member, 'tokens', org.id);
 	expect(tokens.status).toBe(200);
-	expect(tokens.data).toEqual({ tokens: 1, approvals: 1, becameAdmin: false });
+	expect(tokens.data).toEqual({ tokens: 0, apps: 1, becameAdmin: false });
 
 	const probes = await transfer(actors.member, 'probes', org.id);
 	expect(probes.status).toBe(200);
@@ -45,7 +43,7 @@ test('a member of an org with no admin can move probes, tokens and credits, and 
 	const probe = await sql('gp_probes').where({ id: probeId }).first('account_id', 'userId');
 	expect(probe.account_id).toBe(org.account_id);
 
-	// The probe keeps its user: the phase 2 readers resolve the owner through the account.
+	// The probe keeps userId; readers find the owner through account_id.
 	expect(probe.userId).toBe(org.member.id);
 
 	expect(await sql('gp_tokens').where({ account_id: org.member.account_id }).select('id')).toHaveLength(0);
@@ -61,7 +59,7 @@ test('a member of an org with no admin can move probes, tokens and credits, and 
 });
 
 test('the user credits are added to the org credits, and the user credits row is deleted', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	// An addition credits the balance through a trigger, so it goes in first and the amounts are set on top of what it left.
 	await sql('gp_credits_additions').insert({ github_id: org.member.external_identifier, amount: 100, reason: 'one_time_sponsorship', meta: JSON.stringify({ amountInDollars: 1 }), date_created: new Date() });
@@ -92,7 +90,7 @@ test('the user credits are added to the org credits, and the user credits row is
 });
 
 test('when the same app is approved in both accounts, the org approval is kept and the user approval is deleted', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	const app = await addApplication({ accountId: org.member.account_id, userId: org.member.id });
 	await addApplication({ accountId: org.account_id, userId: org.member.id, appId: app });
@@ -136,7 +134,7 @@ test('a member can not move probes when the org already has an admin, but can mo
 });
 
 test('a transfer with nothing to move is rejected and does not make the user an admin', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	for (const [ what, message ] of [
 		[ 'probes', 'You have no probes to transfer.' ],
@@ -177,7 +175,7 @@ test('a user can create a redirect to an org, and both the user and the org can 
 
 	expect(await redirects(actors.member, org.member.account_id)).toEqual([]);
 
-	expect((await actors.member.post('/transfer-data/credits-redirect', { accountId: org.member.account_id, orgId: org.id })).status).toBe(200);
+	expect((await actors.member.post('/transfer-data/credits-redirect', { accountId: org.member.account_id, orgId: org.id })).data).toEqual({ becameAdmin: false });
 
 	// Each side comes back named: the dash shows "john => acme-org" and can read no other user's row.
 	expect(await redirects(actors.member, org.member.account_id)).toEqual([{
@@ -237,7 +235,7 @@ test('a user can delete a redirect from an org to them, and creating their own r
 });
 
 test('moving credits does not delete any redirect', async ({ org, org2, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 	await sql('gp_credits').insert({ account_id: org.member.account_id, amount: 500 });
 
 	await sql('gp_credits_redirects').insert([
@@ -256,7 +254,7 @@ test('moving credits does not delete any redirect', async ({ org, org2, actors }
 });
 
 test('a viewer does not become an admin of an org with no admin', async ({ org }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	const viewer = await loginUser(org.viewer);
 	const refused = await transfer(viewer, 'credits', org.id);
@@ -266,7 +264,7 @@ test('a viewer does not become an admin of an org with no admin', async ({ org }
 });
 
 test('a user with no probes keeps their adoption token, even after several probe transfers', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	for (const attempt of [ 1, 2, 3 ]) {
 		expect((await transfer(actors.member, 'probes', org.id)).status, `attempt ${attempt}`).toBe(400);
@@ -281,7 +279,7 @@ test('a user with no probes keeps their adoption token, even after several probe
 });
 
 test('two members can move probes to the same org, and both adoption tokens stay in the list', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 	await addProbe({ userId: org.member.id, account_id: org.member.account_id });
 	await addProbe({ userId: org.admin.id, account_id: org.admin.account_id });
 
@@ -295,7 +293,7 @@ test('two members can move probes to the same org, and both adoption tokens stay
 	const tokens = JSON.parse(orgRow.extra_adoption_tokens);
 	expect(tokens).toHaveLength(2);
 
-	// The list is what phase 4 removes entries from, so every entry it receives has to pass the update hook.
+	// An org admin can remove entries later, so every entry must pass the update hook.
 	const kept = await actors.member.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [ tokens[0] ] });
 	expect(kept.status).toBe(200);
 });
@@ -316,7 +314,7 @@ test('two admins moving probes at the same time never overwrite each other\'s ad
 });
 
 test('when a transfer fails, nothing is moved and the user does not become an admin', async ({ org, actors }) => {
-	await emptyTheOrg(org);
+	await demoteTheAdmin(org);
 
 	const probeId = await addProbe({ userId: org.member.id, account_id: org.member.account_id });
 	// This fails the transaction after the probes have already moved.
