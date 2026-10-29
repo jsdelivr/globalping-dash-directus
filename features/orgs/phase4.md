@@ -54,7 +54,7 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 
 5.2 **The OAuth approval screen gains the account picker** and posts `accountId` on every approval, the personal account included. The picker offers the personal account and the `selected_orgs` where the role is admin or member: gp-auth refuses an approval for an org where the user is a viewer, so a viewer's orgs are left out rather than offered and refused. The picker is a select that starts on the active account when it is offered, then on the default account when that is offered, and on the personal account otherwise. Until this ships the field stays optional in gp-auth: the deployed screen posts only `approved`, and a missing `accountId` has to keep meaning the personal account.
 
-5.3 **The CLI, the chat bots and the MCP server** (`globalping-cli`, `globalping-chat-bots`, `globalping-mcp-server`) read `organization` from `/oauth/token/introspect` and say which account a token acts for. Without it "Logged in as john" hides the fact that the credits come from an org.
+5.3 **The CLI and the chat bots** (`globalping-cli`, `globalping-chat-bots`) read `organization` from `/oauth/token/introspect` and name the account a token acts for, since its credits may come from an org. The MCP server keeps a plain "Logged in."
 
 5.4 **globalping.io** (`globalping.io` repo) shows the signed-in account in its header, today the `github_username` from `/users/me`. It reads the active account of the same session (1.2) and shows `Org (username)` while an org is active, since that is the account its measurements are billed to; the name comes from the memberships `/users/me` returns. The site never changes the active account. A viewer's org is shown like any other: it is the active account, and the measurement gp-api refuses for it says why.
 
@@ -117,7 +117,7 @@ The original stays reachable as `/assets/<bannerId>` with whatever metadata it c
 
 ## 8. Remaining
 
-8.1 **The text around the start commands names the account** the probe will be adopted into: the personal one in the personal account ("under my account"), the org's for an org admin ("Adopt the probe under the <org> organization", "includes the secret adoption token of the <org> organization").
+8.1 **Texts name the active account**: "your" where it reads right for an org too (settings, the user's own role), the org's name otherwise ("under <org> account", "<org> probes").
 
 8.2 **The org admin's own notification settings for the org**, kept on their membership (`notification_preferences`): the same types and defaults as the personal ones, and each org admin sets their own. UI only: the dash reads and writes the org admin's own `gp_org_members.notification_preferences`, in the same block as the personal settings. The backend already exists.
 
