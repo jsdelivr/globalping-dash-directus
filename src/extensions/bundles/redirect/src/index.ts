@@ -1,6 +1,8 @@
 import { defineEndpoint } from '@directus/extensions-sdk';
 import Handlebars from 'handlebars';
 
+const loopbackHostnames = [ 'localhost', '127.0.0.1', '[::1]' ];
+
 const template = Handlebars.compile(`
 	<!DOCTYPE html>
 	<html>
@@ -21,8 +23,20 @@ export default defineEndpoint((router, context) => {
 
 	router.get('/', (req, res) => {
 		const dashHome = context.env.DASH_URL;
+		const dashUrl = new URL(dashHome);
 		const requestRedirect = new URL(typeof req.query.url === 'string' ? req.query.url : '', dashHome);
-		const isRequestRedirectValid = requestRedirect.hostname === 'globalping.io' || requestRedirect.hostname.endsWith('.globalping.io');
+		const isLoopbackRedirect = loopbackHostnames.includes(dashUrl.hostname)
+			&& loopbackHostnames.includes(requestRedirect.hostname)
+			&& requestRedirect.protocol === dashUrl.protocol
+			&& requestRedirect.port === dashUrl.port;
+
+		if (isLoopbackRedirect) {
+			requestRedirect.hostname = dashUrl.hostname;
+		}
+
+		const isRequestRedirectValid = requestRedirect.origin === dashUrl.origin
+			|| requestRedirect.hostname === 'globalping.io'
+			|| requestRedirect.hostname.endsWith('.globalping.io');
 		const redirect = isRequestRedirectValid ? requestRedirect.toString() : dashHome;
 
 		res.send(template({ redirect }));
