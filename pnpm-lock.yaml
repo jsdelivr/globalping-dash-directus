@@ -831,6 +831,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      vue:
+        specifier: ^3.5.18
+        version: 3.5.41(typescript@5.8.3)
 
   src/extensions/endpoints/sponsorship-details:
     dependencies:
