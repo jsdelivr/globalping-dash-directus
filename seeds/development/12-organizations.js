@@ -28,6 +28,18 @@ const ORGS = [
 			{ github_username: 'turk6', first_name: 'Turk', last_name: '6', role: 'viewer', external_identifier: '3000000006', ip: '192.0.2.36' },
 		],
 	},
+	{
+		name: 'shared-org',
+		github_id: '9000000003',
+		adoption_token: 'sharedorgadoptiontoken0000000001',
+		members: [
+			{ github_username: 'john', role: 'admin' },
+			{ github_username: 'turk', role: 'admin' },
+			{ github_username: 'john2', role: 'member' },
+			{ github_username: 'turk3', role: 'member' },
+			{ github_username: 'john5', role: 'viewer' },
+		],
+	},
 ];
 
 /**
@@ -139,7 +151,7 @@ export const seed = async (knex) => {
 		await seedOrgCredits(knex, { name, orgAccountId: orgAccount.id, githubId });
 	}
 
-	console.log('Mock organizations created: john-org, turk-org with admin/member/viewer users');
+	console.log('Mock organizations created: john-org, turk-org and shared-org with admin/member/viewer users');
 };
 
 // Sponsorship and probe credits of the org itself, so the org credits page has a history to show.

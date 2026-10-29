@@ -30,6 +30,7 @@ type SponsorshipEventRow = {
 	github_login: string | null;
 	dashboard_account_id: string | null;
 	dashboard_account_name: string | null;
+	dashboard_account_is_org: string | number;
 	reason: SponsorshipReason;
 	meta: string | AdditionMeta;
 };
@@ -41,6 +42,7 @@ export type ManualAdditionRow = {
 	github_login: string | null;
 	dashboard_account_id: string | null;
 	dashboard_account_name: string | null;
+	dashboard_account_is_org: string | number;
 	added_by: string | null;
 	amount: string | number;
 	reason: 'one_time_sponsorship' | 'other';
@@ -59,6 +61,7 @@ export type SponsorAccountRow = {
 	github_login: string | null;
 	dashboard_account_id: string | null;
 	dashboard_account_name: string | null;
+	dashboard_account_is_org: string | number;
 	is_active: string | number;
 	has_recurring: string | number;
 	current_monthly_amount: string | number | null;
@@ -83,6 +86,7 @@ const sponsorGithubIdSql = (alias = 'additions') => `COALESCE(JSON_VALUE(${alias
 
 const dashboardAccountIdSql = 'COALESCE(directus_users.id, gp_orgs.id)';
 const dashboardAccountNameSql = 'COALESCE(directus_users.github_username, gp_orgs.name)';
+const dashboardAccountIsOrgSql = 'directus_users.id IS NULL AND gp_orgs.id IS NOT NULL';
 
 // The dashboard account belongs to the receiver, so its name is the sponsor's name only when they are the same account.
 const ownAccountNameSql = (sponsorIdSql = sponsorGithubIdSql(), receiverIdSql = 'additions.github_id') => `CASE WHEN ${sponsorIdSql} = ${receiverIdSql} THEN ${dashboardAccountNameSql} END`;
@@ -160,6 +164,7 @@ export const normalizeSponsorshipEvent = (row: SponsorshipEventRow): Sponsorship
 		githubLogin: row.github_login,
 		dashboardAccountId: row.dashboard_account_id,
 		dashboardAccountName: row.dashboard_account_name,
+		dashboardAccountIsOrg: toNumber(row.dashboard_account_is_org) === 1,
 		reason: row.reason,
 		manual: meta.manual === true,
 		amountInDollars,
@@ -178,6 +183,7 @@ export const normalizeManualAddition = (row: ManualAdditionRow): ManualAddition 
 		githubLogin: row.github_login,
 		dashboardAccountId: row.dashboard_account_id,
 		dashboardAccountName: row.dashboard_account_name,
+		dashboardAccountIsOrg: toNumber(row.dashboard_account_is_org) === 1,
 		addedBy: row.added_by,
 		type: row.reason === 'one_time_sponsorship' ? 'payment' : 'other',
 		credits: toNumber(row.amount),
@@ -206,6 +212,7 @@ export const normalizeSponsorAccount = (row: SponsorAccountRow): SponsorAccount 
 	githubLogin: row.github_login,
 	dashboardAccountId: row.dashboard_account_id,
 	dashboardAccountName: row.dashboard_account_name,
+	dashboardAccountIsOrg: toNumber(row.dashboard_account_is_org) === 1,
 	status: toNumber(row.is_active) ? 'active' : toNumber(row.has_recurring) ? 'former' : 'one-time',
 	currentMonthlyAmount: row.current_monthly_amount === null ? null : toNumber(row.current_monthly_amount),
 	periodSponsorshipValue: toNumber(row.period_sponsorship_value),
@@ -332,6 +339,7 @@ export const getManualAdditions = async (database: Knex, query: ManualAdditionsQ
 			database.raw(`COALESCE(sponsors.github_login, ${ownAccountNameSql()}, ${additionGithubLoginSql()}) AS github_login`),
 			database.raw(`${dashboardAccountIdSql} AS dashboard_account_id`),
 			database.raw(`${dashboardAccountNameSql} AS dashboard_account_name`),
+			database.raw(`${dashboardAccountIsOrgSql} AS dashboard_account_is_org`),
 			database.raw(`${addedBySql} AS added_by`),
 			'additions.amount',
 			'additions.reason',
@@ -376,6 +384,7 @@ export const getSponsorshipEvents = async (database: Knex, range: SponsorsPeriod
 			database.raw(`COALESCE(sponsors.github_login, ${ownAccountNameSql()}, ${additionGithubLoginSql()}) AS github_login`),
 			database.raw(`${dashboardAccountIdSql} AS dashboard_account_id`),
 			database.raw(`${dashboardAccountNameSql} AS dashboard_account_name`),
+			database.raw(`${dashboardAccountIsOrgSql} AS dashboard_account_is_org`),
 			'additions.reason',
 			'additions.meta',
 		).orderByRaw(`${sortExpressions[query.sort]} ${query.direction}`).orderBy('additions.id', 'desc')
@@ -450,6 +459,7 @@ export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRa
 			database.raw(`COALESCE(sponsors.github_login, ${accountNameSql}, additions.github_login) AS github_login`),
 			database.raw(`${dashboardAccountIdSql} AS dashboard_account_id`),
 			database.raw(`${dashboardAccountNameSql} AS dashboard_account_name`),
+			database.raw(`${dashboardAccountIsOrgSql} AS dashboard_account_is_org`),
 			database.raw('IF(sponsors.github_id IS NOT NULL, 1, 0) AS is_active'),
 			database.raw('COALESCE(history.has_recurring, 0) AS has_recurring'),
 			database.raw('sponsors.monthly_amount AS current_monthly_amount'),
