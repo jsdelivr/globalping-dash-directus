@@ -64,16 +64,16 @@ test('start commands embed the adoption token of the account the probe is adopte
 	await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
 	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-personal-probe' });
 
-	for (const [ page, probeName, token ] of [
-		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', org.adoption_token ],
-		[ await pageAs(browser, org.admin.email, 'user'), 'e2e-personal-probe', await personalAdoptionToken(org.admin) ],
+	for (const [ page, probeName, owner, token ] of [
+		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', org.name, org.adoption_token ],
+		[ await pageAs(browser, org.admin.email, 'user'), 'e2e-personal-probe', 'your', await personalAdoptionToken(org.admin) ],
 	] as const) {
 		await page.goto('/probes');
 		await expect(page.getByText(probeName).first()).toBeVisible();
 		await page.getByRole('button', { name: 'Start a probe' }).first().click();
 
 		const dialog = page.getByRole('dialog');
-		await expect(dialog).toContainText('includes your secret adoption token');
+		await expect(dialog).toContainText(`includes ${owner} secret adoption token`);
 		await expect(dialog).toContainText(`GP_ADOPTION_TOKEN=${token}`);
 
 		await page.context().close();
@@ -88,7 +88,7 @@ test('an org admin updating an outdated org probe gets the org adoption token', 
 	await page.getByRole('link', { name: 'our guide' }).click();
 
 	const dialog = page.getByRole('dialog');
-	await expect(dialog).toContainText('includes your secret adoption token');
+	await expect(dialog).toContainText(`includes ${org.name} secret adoption token`);
 	await expect(dialog).toContainText(`GP_ADOPTION_TOKEN=${org.adoption_token}`);
 });
 
@@ -146,7 +146,7 @@ test('making the probes public writes the org setting, and only an org admin can
 		await page.goto(`/probes/${probeId}`);
 		await page.getByRole('button', { name: 'Target this location in a measurement' }).click();
 
-		const tagButton = page.getByRole('button', { name: 'Tag all my probes and proceed' });
+		const tagButton = page.getByRole('button', { name: 'Tag all probes and proceed' });
 		await expectEditable(tagButton, editable);
 
 		if (editable) {

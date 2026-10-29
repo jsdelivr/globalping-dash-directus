@@ -6,8 +6,17 @@ const ORGS = [
 		name: 'john-org',
 		github_id: '9000000001',
 		adoption_token: 'johnorgadoptiontoken000000000001',
+		extra_adoption_tokens: [
+			{ github_username: 'john-old1', token: 'johnold1adoptiontoken00000000001' },
+			{ github_username: 'john-old2', token: 'johnold2adoptiontoken00000000001' },
+		],
+		website: 'https://john-org.example.com',
+		description: 'John\'s organization runs probes in Europe and the US.',
+		public_probes: 1,
+		user_type: 'sponsor',
+		sponsors: [{ github_id: '1234567890', github_login: 'john' }],
 		members: [
-			{ github_username: 'john', role: 'admin' },
+			{ github_username: 'john', role: 'admin', notification_preferences: { probe_adopted: { enabled: false }, low_credits: { enabled: true, emailEnabled: true } } },
 			{ github_username: 'john2', first_name: 'John', last_name: '2', role: 'admin', external_identifier: '2000000002', ip: '192.0.2.22' },
 			{ github_username: 'john3', first_name: 'John', last_name: '3', role: 'member', external_identifier: '2000000003', ip: '192.0.2.23' },
 			{ github_username: 'john4', first_name: 'John', last_name: '4', role: 'member', external_identifier: '2000000004', ip: '192.0.2.24' },
@@ -19,6 +28,8 @@ const ORGS = [
 		name: 'turk-org',
 		github_id: '9000000002',
 		adoption_token: 'turkorgadoptiontoken000000000001',
+		// acme-sponsor sends its credits to turk-org through a redirect.
+		sponsors: [{ github_id: '1234567892', github_login: 'turk' }, { github_id: '9200000001', github_login: 'acme-sponsor', redirected: true }],
 		members: [
 			{ github_username: 'turk', role: 'admin' },
 			{ github_username: 'turk2', first_name: 'Turk', last_name: '2', role: 'admin', external_identifier: '3000000002', ip: '192.0.2.32' },
@@ -32,9 +43,10 @@ const ORGS = [
 		name: 'shared-org',
 		github_id: '9000000003',
 		adoption_token: 'sharedorgadoptiontoken0000000001',
+		sponsors: [{ github_id: '1234567890', github_login: 'john' }],
 		members: [
 			{ github_username: 'john', role: 'admin' },
-			{ github_username: 'turk', role: 'admin' },
+			{ github_username: 'turk', role: 'admin', default_account: true },
 			{ github_username: 'john2', role: 'member' },
 			{ github_username: 'turk3', role: 'member' },
 			{ github_username: 'john5', role: 'viewer' },
@@ -52,9 +64,10 @@ export const seed = async (knex) => {
 	const authCodeApp = await knex('gp_apps').where({ name: 'Auth Code App' }).first('id');
 	const discordApp = await knex('gp_apps').where({ name: 'Discord App' }).first('id');
 
-	for (const { name, github_id: githubId, adoption_token, members } of ORGS) {
+	for (const { members, sponsors = [], extra_adoption_tokens: extraAdoptionTokens, ...org } of ORGS) {
+		const { name, github_id: githubId } = org;
 		const orgId = randomUUID();
-		await knex('gp_orgs').insert({ id: orgId, name, github_id: githubId, adoption_token });
+		await knex('gp_orgs').insert({ id: orgId, ...org, extra_adoption_tokens: extraAdoptionTokens && JSON.stringify(extraAdoptionTokens) });
 		const orgAccount = await knex('gp_accounts').where({ org: orgId }).first('id');
 
 		for (const member of members) {
@@ -70,6 +83,7 @@ export const seed = async (knex) => {
 					first_name: member.first_name,
 					last_name: member.last_name,
 					email: `${username}@example.com`,
+					password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
 					role: userRole.id,
 					provider: 'default',
 					external_identifier: member.external_identifier,
@@ -87,7 +101,17 @@ export const seed = async (knex) => {
 				({ id: userId } = await knex('directus_users').where({ github_username: username }).first('id'));
 			}
 
-			await knex('gp_org_members').insert({ id: randomUUID(), org: orgId, user: userId, role });
+			await knex('gp_org_members').insert({
+				id: randomUUID(),
+				org: orgId,
+				user: userId,
+				role,
+				notification_preferences: member.notification_preferences && JSON.stringify(member.notification_preferences),
+			});
+
+			if (member.default_account) {
+				await knex('directus_users').where({ id: userId }).update({ default_account: orgAccount.id });
+			}
 
 			// Existing users (john, turk) keep the items from earlier seeds.
 			if (!member.external_identifier) {
@@ -99,11 +123,11 @@ export const seed = async (knex) => {
 			// Everyone gets personal items; admins and members also get org ones (viewers can't own org items).
 			// Org approvals use another app since approvals are unique per (user, app) for now.
 			const itemSets = [
-				{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), probeUserId: userId, accountId: personalAccount.id, app: authCodeApp },
-				...role !== 'viewer' ? [{ suffix: '-org', ip: member.ip, probeUserId: null, accountId: orgAccount.id, app: discordApp }] : [],
+				{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), probeUserId: userId, accountId: personalAccount.id, app: authCodeApp, systemTags: [] },
+				...role !== 'viewer' ? [{ suffix: '-org', ip: member.ip, probeUserId: null, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
 			];
 
-			for (const { suffix, ip, probeUserId, accountId, app } of itemSets) {
+			for (const { suffix, ip, probeUserId, accountId, app, systemTags } of itemSets) {
 				await knex('gp_probes').insert({
 					id: randomUUID(),
 					uuid: randomUUID(),
@@ -124,6 +148,7 @@ export const seed = async (knex) => {
 					nodeVersion: 'v22.16.0',
 					lastSyncDate: new Date(),
 					tags: '[]',
+					systemTags: JSON.stringify(systemTags),
 					userId: probeUserId,
 					account_id: accountId,
 				});
@@ -149,6 +174,7 @@ export const seed = async (knex) => {
 		}
 
 		await seedOrgCredits(knex, { name, orgAccountId: orgAccount.id, githubId });
+		await seedOrgSponsors(knex, { githubId, sponsors });
 	}
 
 	console.log('Mock organizations created: john-org, turk-org and shared-org with admin/member/viewer users');
@@ -193,4 +219,35 @@ const seedOrgCredits = async (knex, { name, orgAccountId, githubId }) => {
 	}
 
 	console.log(`Mock credits created for ${name}`);
+};
+
+// Sponsorships paid by other GitHub accounts into the org, so the sponsors page shows sponsors that are not the receiver.
+const seedOrgSponsors = async (knex, { githubId, sponsors }) => {
+	for (const { github_id: sponsorGithubId, github_login: githubLogin, redirected } of sponsors) {
+		if (redirected) {
+			await knex('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: sponsorGithubId, target_github_id: githubId }).onConflict('source_github_id').merge();
+			await knex('sponsors').insert({ github_id: sponsorGithubId, github_login: githubLogin, monthly_amount: 25, last_earning_date: relativeDayUtc(-5) });
+		}
+
+		const meta = { sponsorGithubId, githubLogin };
+
+		await knex('gp_credits_additions').insert([
+			{
+				amount: 40000,
+				reason: 'one_time_sponsorship',
+				meta: JSON.stringify({ ...meta, amountInDollars: 20 }),
+				consumed: 1,
+				date_created: relativeDayUtc(-20),
+				github_id: githubId,
+			},
+			...Array.from(Array(3).keys()).map(i => ({
+				amount: 50000,
+				reason: 'recurring_sponsorship',
+				meta: JSON.stringify({ ...meta, amountInDollars: 25 }),
+				consumed: 1,
+				date_created: relativeDayUtc(-5 - i * 30),
+				github_id: githubId,
+			})),
+		]);
+	}
 };

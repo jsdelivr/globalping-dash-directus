@@ -5,6 +5,7 @@ const unlinkedGithubId = `9${Math.floor(Math.random() * 100000000)}`;
 const redirectSourceGithubId = '66716858';
 const redirectTargetGithubId = '6209808';
 const sponsorshipReasons = [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ];
+const sponsorGithubIdSql = `COALESCE(JSON_VALUE(meta, '$.sponsorGithubId'), github_id)`;
 const sponsorshipValueSql = `COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.amountInDollars')) AS DECIMAL(18,2)), 0)
 	* CASE WHEN reason = 'recurring_sponsorship'
 		THEN COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.monthsCovered')) AS UNSIGNED), 1)
@@ -40,13 +41,13 @@ test.beforeEach(async ({ user, user2, org }) => {
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', previousFrom).where('date_created', '<', previousTo)
 			.sum({ value: sql.raw(sponsorshipValueSql) }).first(),
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', pastYear).where('date_created', '<', now)
-			.countDistinct({ sponsors: 'github_id' }).sum({
+			.countDistinct({ sponsors: sql.raw(sponsorGithubIdSql) }).sum({
 				value: sql.raw(sponsorshipValueSql),
 				recurring: sql.raw(`CASE WHEN reason IN ('recurring_sponsorship', 'tier_changed') THEN ${sponsorshipValueSql} ELSE 0 END`),
 				oneTime: sql.raw(`CASE WHEN reason = 'one_time_sponsorship' THEN ${sponsorshipValueSql} ELSE 0 END`),
 			}).first(),
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', new Date('2024-01-01T00:00:00.000Z')).where('date_created', '<', new Date('2025-01-01T00:00:00.000Z'))
-			.countDistinct({ sponsors: 'github_id' }).sum({ value: sql.raw(sponsorshipValueSql) }).first(),
+			.countDistinct({ sponsors: sql.raw(sponsorGithubIdSql) }).sum({ value: sql.raw(sponsorshipValueSql) }).first(),
 	]);
 
 	baseline = {
