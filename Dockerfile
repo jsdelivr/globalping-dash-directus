@@ -6,6 +6,7 @@ COPY package.json pnpm-*.yaml ./
 
 # Update via `pnpm run docker:ls:update`
 # START: EXTENSIONS-BUILD-BLOCK
+COPY src/extensions/bundles/redirect/package.json src/extensions/bundles/redirect/
 COPY src/extensions/bytes-value/package.json src/extensions/bytes-value/
 COPY src/extensions/endpoints/accounts/package.json src/extensions/endpoints/accounts/
 COPY src/extensions/endpoints/admin-sponsors/package.json src/extensions/endpoints/admin-sponsors/
@@ -17,7 +18,6 @@ COPY src/extensions/endpoints/e2e-mocks/package.json src/extensions/endpoints/e2
 COPY src/extensions/endpoints/email-unsubscribe/package.json src/extensions/endpoints/email-unsubscribe/
 COPY src/extensions/endpoints/local-adoption/package.json src/extensions/endpoints/local-adoption/
 COPY src/extensions/endpoints/metadata/package.json src/extensions/endpoints/metadata/
-COPY src/extensions/endpoints/redirect/package.json src/extensions/endpoints/redirect/
 COPY src/extensions/endpoints/sponsorship-details/package.json src/extensions/endpoints/sponsorship-details/
 COPY src/extensions/endpoints/sync-github-data/package.json src/extensions/endpoints/sync-github-data/
 COPY src/extensions/hooks/adopted-probe/package.json src/extensions/hooks/adopted-probe/
