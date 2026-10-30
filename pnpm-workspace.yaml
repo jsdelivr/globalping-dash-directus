@@ -1,4 +1,5 @@
 packages:
+  - src/extensions/bundles/*
   - src/extensions/endpoints/*
   - src/extensions/hooks/*
   - src/extensions/interfaces/*
