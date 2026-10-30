@@ -147,7 +147,7 @@ describe('Sign-in hook', () => {
 		const loginMeta = { user: '123', provider: 'github' };
 
 		it('should sync orgs, memberships and the organizations list on login', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -173,7 +173,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should use the org created by a concurrent sync of another member', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.get(`/user/memberships/orgs?per_page=100&page=1`)
@@ -194,7 +194,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should keep going when a parallel sync of the same user created the membership first', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.get(`/user/memberships/orgs?per_page=100&page=1`)
@@ -214,7 +214,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should run the same sync on a token refresh, not only on login', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -235,7 +235,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should not update the organizations list if it is the same', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
 
 			itemsService.readByQuery.onFirstCall().resolves([{ id: 'org-id', name: 'jsdelivr', github_id: '1' }]);
 			itemsService.readByQuery.onSecondCall().resolves([{ id: 'membership-id', role: 'member', org: { github_id: '1' } }]);
@@ -261,6 +261,7 @@ describe('Sign-in hook', () => {
 
 		it('should deprecate an invalid default_prefix and notify the user', async () => {
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: '123',
 				external_identifier: '456',
 				github_username: 'newUsername',
@@ -297,7 +298,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should log the error if the user token is invalid', async () => {
-			itemsService.readOne.resolves({ id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -318,7 +319,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should log the error if there is not enough data to sync', async () => {
-			itemsService.readOne.resolves({ external_identifier: null });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], external_identifier: null });
 
 			hook(events, context);
 
@@ -329,7 +330,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should not sync for a non-github provider', async () => {
-			itemsService.readOne.resolves({ id: '123', user_type: 'member' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', user_type: 'member' });
 
 			hook(events, context);
 
@@ -342,25 +343,12 @@ describe('Sign-in hook', () => {
 	});
 
 	describe('auth.jwt', () => {
-		it('should not modify payload if user is not found', async () => {
-			const payload = { id: '123' };
-			const meta = { user: 'non-existent-user-id' };
-
-			itemsService.readOne.resolves(undefined);
-
-			hook(events, context);
-
-			const result = await callbacks.filter['auth.jwt']?.(payload, meta);
-			expect(result).to.deep.equal(payload);
-			expect(itemsService.readOne.callCount).to.equal(1);
-			expect(itemsService.readOne.args[0]).to.deep.equal([ 'non-existent-user-id' ]);
-		});
-
 		it('should not modify payload if user has no GitHub username', async () => {
 			const payload = { id: '123' };
 			const meta = { user: 'user-id-without-github-username' };
 
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: 'user-id',
 				github_username: null,
 				github_organizations: [],
@@ -379,6 +367,7 @@ describe('Sign-in hook', () => {
 			const meta = { user: 'user-with-github-username' };
 
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: 'user-id',
 				github_username: 'testUser',
 				github_organizations: [],
@@ -401,6 +390,7 @@ describe('Sign-in hook', () => {
 			const meta = { user: 'user-with-user-type' };
 
 			itemsService.readOne.resolves({
+				account: [ 'account-id' ],
 				id: 'user-id',
 				user_type: 'member',
 			});
@@ -436,6 +426,15 @@ describe('Sign-in hook', () => {
 				active_account_role: 'owner',
 			});
 		});
+
+		it('should not add account claims if user has no account field', async () => {
+			itemsService.readOne.resolves({ id: 'admin-id' });
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ id: '123' }, { user: 'admin-id' });
+			expect(result).to.deep.equal({ id: '123' });
+		});
 	});
 
 	describe('auth.jwt active account', () => {
@@ -453,23 +452,101 @@ describe('Sign-in hook', () => {
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
-			expect(rawStub.thirdCall.args[1]).to.deep.equal({ account: 'org-account-id', token: 'new-session-token' });
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([
+				{ token: 'new-session-token' },
+				{ user: '123', account: 'org-account-id' },
+				{ account: 'org-account-id', token: 'new-session-token' },
+			]);
+
 			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'member' });
 		});
 
 		it('should fall back to the personal account on refresh when the membership is lost', async () => {
 			rawStub.onFirstCall().resolves([ [{ active_account: 'org-account-id' }] ]);
-			rawStub.onSecondCall().resolves([ [] ]);
 
 			hook(events, context);
 
 			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
 
+			expect(rawStub.lastCall.args[1]).to.deep.equal({ account: 'account-id', token: 'new-session-token' });
 			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
 		});
 
-		it('should ignore the old session account on login and on a refresh without a session claim (JSON mode)', async () => {
-			rawStub.resolves([ [{ active_account: 'org-account-id', role: 'member' }] ]);
+		it('should fall back to the default account on refresh when the carried one is lost', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'default-account-id' });
+			rawStub.onFirstCall().resolves([ [{ active_account: 'org-account-id' }] ]);
+			rawStub.onThirdCall().resolves([ [{ role: 'admin', userType: 'sponsor' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([
+				{ token: 'new-session-token' },
+				{ user: '123', account: 'org-account-id' },
+				{ user: '123', account: 'default-account-id' },
+				{ account: 'default-account-id', token: 'new-session-token' },
+			]);
+
+			expect(result).to.deep.include({ active_account_id: 'default-account-id', active_account_role: 'admin', user_type: 'sponsor' });
+		});
+
+		it('should start a new session in the default account and emit its tier', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'org-account-id' });
+			rawStub.resolves([ [{ role: 'admin', userType: 'sponsor' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
+
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([{ user: '123', account: 'org-account-id' }]);
+			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'admin', user_type: 'sponsor' });
+		});
+
+		it('should start a new session in the personal account when the default one is not available', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], user_type: 'member', default_account: 'org-account-id' });
+			rawStub.resolves([ [] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
+
+			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner', user_type: 'member' });
+		});
+
+		it('should store the default account in the session on the first refresh', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], default_account: 'org-account-id' });
+			rawStub.onSecondCall().resolves([ [{ role: 'viewer', userType: 'special' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(rawStub.args.map(args => args[1])).to.deep.equal([
+				{ token: 'new-session-token' },
+				{ user: '123', account: 'org-account-id' },
+				{ account: 'org-account-id', token: 'new-session-token' },
+			]);
+
+			expect(result).to.deep.include({ active_account_id: 'org-account-id', active_account_role: 'viewer', user_type: 'special' });
+		});
+
+		it('should keep the carried account over the default one', async () => {
+			itemsService.readOne.resolves({ id: '123', account: [ 'account-id' ], default_account: 'other-account-id' });
+			rawStub.onFirstCall().resolves([ [{ active_account: 'account-id' }] ]);
+			rawStub.onSecondCall().resolves([ [{ role: 'owner' }] ]);
+
+			hook(events, context);
+
+			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'refresh' });
+
+			expect(rawStub.callCount).to.equal(3);
+			expect(rawStub.lastCall.args[1]).to.deep.equal({ account: 'account-id', token: 'new-session-token' });
+			expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
+		});
+
+		it('should not read the old session on login or on a refresh without a session claim (JSON mode) and emit the personal claims', async () => {
+			rawStub.resolves([ [{ active_account: 'org-account-id' }] ]);
 
 			hook(events, context);
 
@@ -478,16 +555,8 @@ describe('Sign-in hook', () => {
 
 				expect(result).to.deep.include({ active_account_id: 'account-id', active_account_role: 'owner' });
 			}
-		});
 
-		it('should emit no active account claims without user_account_id', async () => {
-			itemsService.readOne.resolves({ id: '123' });
-
-			hook(events, context);
-
-			const result = await callbacks.filter['auth.jwt']?.({ ...payload }, { user: '123', type: 'login' });
-
-			expect(result).to.not.have.any.keys('active_account_id', 'active_account_role');
+			expect(rawStub.callCount).to.equal(0);
 		});
 	});
 });

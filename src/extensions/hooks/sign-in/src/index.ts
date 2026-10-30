@@ -1,7 +1,7 @@
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
-import { type AccountRole, getAccountRole } from '../../../lib/src/accounts.js';
+import { type AccountRole, getAccountAccess } from '../../../lib/src/accounts.js';
 import { checkDefaultPrefix } from '../../../lib/src/deprecate-prefix.js';
 import { getGithubOrganizations, type GithubOrganization } from '../../../lib/src/github-api-client.js';
 import { syncOrganizations } from '../../../lib/src/sync-orgs.js';
@@ -17,6 +17,7 @@ type User = {
 	deprecated_prefix: string | null;
 	public_probes: boolean;
 	account: string[];
+	default_account: string | null;
 };
 
 type AuthPayload = {
@@ -80,66 +81,62 @@ export default defineHook(({ filter }, context) => {
 			schema: await getSchema(),
 		});
 
-		const user = await itemsService.readOne(userId) as User | undefined;
+		const user = await itemsService.readOne(userId) as User;
 
-		if (user?.user_type) {
-			payload.user_type = user.user_type;
-		}
-
-		if (user?.github_username) {
+		if (user.github_username) {
 			payload.github_username = user.github_username;
 		}
 
-		if (user?.account?.[0]) {
-			payload.user_account_id = user.account[0];
+		// No `account` before the schema is applied, e.g. the admin login in scripts/init.sh.
+		if (!user.account) {
+			return payload;
 		}
 
-		const activeAccount = await getActiveAccount(jwtMeta, payload, database);
+		payload.user_account_id = user.account[0]!;
 
-		if (activeAccount) {
-			payload.active_account_id = activeAccount.id;
-			payload.active_account_role = activeAccount.role;
-		}
+		const activeAccount = await getActiveAccount(jwtMeta.type, user, payload.session, database);
+		payload.active_account_id = activeAccount.id;
+		payload.active_account_role = activeAccount.role;
+		payload.user_type = activeAccount.userType;
 
 		return payload;
 	});
 });
 
-const getActiveAccount = async ({ user, type }: AuthJwtMeta, payload: AuthPayload, database: HookExtensionContext['database']) => {
-	if (type === 'refresh' && payload.session) {
-		// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
-		// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
-		const carried = await carryOverActiveAccount(user!, payload.session, database);
-
-		if (carried) { return carried; }
+const getActiveAccount = async (type: AuthJwtMeta['type'], user: User, session: string | undefined, database: HookExtensionContext['database']) => {
+	// On login, Directus creates the session row only after `auth.jwt`, so there is no row to write to yet. The first refresh writes it.
+	if (type !== 'refresh' || !session) {
+		return pickAccount([ user.default_account ], user, database);
 	}
 
-	if (payload.user_account_id) { return { id: payload.user_account_id, role: 'owner' as const }; }
-
-	return null;
-};
-
-
-const carryOverActiveAccount = async (userId: string, sessionToken: string, database: HookExtensionContext['database']) => {
+	// On refresh Directus inserts the new `directus_sessions` row and links the old one to it through `next_token` before
+	// `auth.jwt` runs; the old row expires after SESSION_REFRESH_GRACE_PERIOD, so we are copying its `active_account` to the new one.
 	const [ activeAccountRows ] = await database.raw(`
 		SELECT COALESCE(curr.active_account, prev.active_account) AS active_account
 		FROM directus_sessions prev LEFT JOIN directus_sessions curr ON curr.token = prev.next_token
 		WHERE prev.next_token = :token
-	`, { token: sessionToken }) as [{ active_account: string | null }[]];
+	`, { token: session }) as [{ active_account: string | null }[]];
 
-	const accountId = activeAccountRows[0]?.active_account;
-
-	if (!accountId) { return null; }
-
-	const role = await getAccountRole(accountId, userId, database);
-
-	if (!role) { return null; }
+	const activeAccount = await pickAccount([ activeAccountRows[0]?.active_account, user.default_account ], user, database);
 
 	await database.raw(`
 		UPDATE directus_sessions SET active_account = COALESCE(active_account, :account) WHERE token = :token
-	`, { account: accountId, token: sessionToken });
+	`, { account: activeAccount.id, token: session });
 
-	return { id: accountId, role };
+	return activeAccount;
+};
+
+// The first account the user can access, else the personal one.
+const pickAccount = async (accountIds: (string | null | undefined)[], user: User, database: HookExtensionContext['database']) => {
+	for (const accountId of _.compact(accountIds)) {
+		const access = await getAccountAccess(accountId, user.id, database);
+
+		if (access) {
+			return { id: accountId, ...access };
+		}
+	}
+
+	return { id: user.account[0]!, role: 'owner' as const, userType: user.user_type };
 };
 
 const syncGithubData = async (userId: string, context: HookExtensionContext) => {
@@ -153,9 +150,9 @@ const syncGithubData = async (userId: string, context: HookExtensionContext) => 
 	const user = await itemsService.readOne(userId, {}, {
 		// `emitEvents: false` keeps `github_oauth_token` from being masked by the directus-users users.read hook.
 		emitEvents: false,
-	}) as User | undefined;
+	}) as User;
 
-	if (!user || !user.external_identifier) {
+	if (!user.external_identifier) {
 		throw new Error('Not enough data to sync with GitHub');
 	}
 

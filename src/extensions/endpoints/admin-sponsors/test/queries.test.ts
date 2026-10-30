@@ -1,12 +1,13 @@
 import { expect } from 'chai';
-import type { Knex } from 'knex';
+import knex, { type Knex } from 'knex';
 import sinon from 'sinon';
-import { applyManualSearch, applySearch, fillChartPoints, normalizeManualAddition, normalizeSponsorAccount, normalizeSponsorshipEvent, utcMonthSql } from '../src/queries.js';
+import { applyManualSearch, applySearch, fillChartPoints, getSponsorAccounts, getSponsorshipEvents, normalizeManualAddition, normalizeSponsorAccount, normalizeSponsorshipEvent, utcMonthSql } from '../src/queries.js';
 
 describe('sponsor query normalization', () => {
-	it('matches mapped numeric GitHub IDs exactly while searching event usernames', () => {
+	it('matches the sponsor GitHub ID exactly while searching event usernames', () => {
 		const builder = {
 			where: sinon.stub().returnsThis(),
+			whereRaw: sinon.stub().returnsThis(),
 			orWhere: sinon.stub().returnsThis(),
 			orWhereRaw: sinon.stub().returnsThis(),
 		};
@@ -15,15 +16,16 @@ describe('sponsor query normalization', () => {
 
 		applySearch({ where } as unknown as Knex.QueryBuilder, '66716858');
 
-		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
+		expect(builder.whereRaw.calledOnceWithExactly(`COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id) = ?`, [ '66716858' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('sponsors.github_login LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
 
-	it('matches mapped numeric GitHub IDs exactly while searching manual-addition usernames', () => {
+	it('matches the sponsor GitHub ID exactly while searching manual-addition usernames', () => {
 		const builder = {
 			where: sinon.stub().returnsThis(),
+			whereRaw: sinon.stub().returnsThis(),
 			orWhere: sinon.stub().returnsThis(),
 			orWhereRaw: sinon.stub().returnsThis(),
 		};
@@ -32,8 +34,8 @@ describe('sponsor query normalization', () => {
 
 		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '66716858', 'added-by-expression');
 
-		expect(builder.where.calledOnceWithExactly('additions.github_id', '6209808')).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly('COALESCE(current_sponsors.github_login, legacy_sponsors.github_login) LIKE ?', [ '%66716858%' ])).to.equal(true);
+		expect(builder.whereRaw.calledOnceWithExactly(`COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id) = ?`, [ '66716858' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('sponsors.github_login LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
 		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
 	});
@@ -50,6 +52,7 @@ describe('sponsor query normalization', () => {
 			github_login: 'example',
 			dashboard_account_id: 'user-id',
 			dashboard_account_name: 'dashboard-example',
+			dashboard_account_is_org: 0,
 			reason: 'recurring_sponsorship',
 			meta: JSON.stringify({ amountInDollars: 150, monthsCovered: 6, bonus: 25, manual: true }),
 		})).to.deep.equal({
@@ -59,6 +62,7 @@ describe('sponsor query normalization', () => {
 			githubLogin: 'example',
 			dashboardAccountId: 'user-id',
 			dashboardAccountName: 'dashboard-example',
+			dashboardAccountIsOrg: false,
 			reason: 'recurring_sponsorship',
 			manual: true,
 			amountInDollars: 150,
@@ -75,6 +79,7 @@ describe('sponsor query normalization', () => {
 			github_login: null,
 			dashboard_account_id: null,
 			dashboard_account_name: null,
+			dashboard_account_is_org: 0,
 			reason: 'tier_changed',
 			meta: { amountInDollars: 25, monthsCovered: 3 },
 		})).to.deep.equal({
@@ -84,6 +89,7 @@ describe('sponsor query normalization', () => {
 			githubLogin: null,
 			dashboardAccountId: null,
 			dashboardAccountName: null,
+			dashboardAccountIsOrg: false,
 			reason: 'tier_changed',
 			manual: false,
 			amountInDollars: 25,
@@ -113,6 +119,7 @@ describe('sponsor query normalization', () => {
 			github_login: 'example',
 			dashboard_account_id: 'recipient-id',
 			dashboard_account_name: 'example',
+			dashboard_account_is_org: 1,
 			added_by: 'Admin User',
 			amount: '25000',
 			reason: 'one_time_sponsorship',
@@ -124,6 +131,7 @@ describe('sponsor query normalization', () => {
 			githubLogin: 'example',
 			dashboardAccountId: 'recipient-id',
 			dashboardAccountName: 'example',
+			dashboardAccountIsOrg: true,
 			addedBy: 'Admin User',
 			type: 'payment',
 			credits: 25_000,
@@ -138,6 +146,7 @@ describe('sponsor query normalization', () => {
 			github_login: null,
 			dashboard_account_id: null,
 			dashboard_account_name: null,
+			dashboard_account_is_org: 0,
 			added_by: null,
 			amount: 5000,
 			reason: 'other',
@@ -149,6 +158,7 @@ describe('sponsor query normalization', () => {
 			githubLogin: null,
 			dashboardAccountId: null,
 			dashboardAccountName: null,
+			dashboardAccountIsOrg: false,
 			addedBy: null,
 			type: 'other',
 			credits: 5000,
@@ -163,6 +173,7 @@ describe('sponsor query normalization', () => {
 			github_login: 'example',
 			dashboard_account_id: 'user-id',
 			dashboard_account_name: 'dashboard-example',
+			dashboard_account_is_org: 0,
 			is_active: 0,
 			has_recurring: '1',
 			current_monthly_amount: null,
@@ -174,6 +185,7 @@ describe('sponsor query normalization', () => {
 			githubLogin: 'example',
 			dashboardAccountId: 'user-id',
 			dashboardAccountName: 'dashboard-example',
+			dashboardAccountIsOrg: false,
 			status: 'former',
 			currentMonthlyAmount: null,
 			periodSponsorshipValue: 125.5,
@@ -188,6 +200,7 @@ describe('sponsor query normalization', () => {
 			github_login: null,
 			dashboard_account_id: null,
 			dashboard_account_name: null,
+			dashboard_account_is_org: 0,
 			is_active: 1,
 			has_recurring: 0,
 			current_monthly_amount: '15.00',
@@ -201,6 +214,7 @@ describe('sponsor query normalization', () => {
 			github_login: null,
 			dashboard_account_id: null,
 			dashboard_account_name: null,
+			dashboard_account_is_org: 0,
 			is_active: 0,
 			has_recurring: 0,
 			current_monthly_amount: null,
@@ -208,5 +222,56 @@ describe('sponsor query normalization', () => {
 			period_events: 1,
 			latest_event: '2026-08-03T12:00:00.000Z',
 		}).status).to.equal('one-time');
+	});
+
+	describe('redirected sponsorship', () => {
+		const sponsorIdSql = `COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id)`;
+		const range = { from: new Date('2026-01-01T00:00:00.000Z'), to: new Date('2027-01-01T00:00:00.000Z'), monthKeys: [] };
+		const database = knex({ client: 'mysql' });
+		let sql: string[];
+
+		beforeEach(() => {
+			sql = [];
+			sinon.stub(database.client, 'acquireConnection').resolves({});
+			sinon.stub(database.client, 'releaseConnection').resolves();
+
+			sinon.stub(database.client, '_query').callsFake(async (...args: unknown[]) => {
+				const query = args[1] as { sql: string };
+				sql.push(query.sql);
+				return { ...query, response: [ [] ] };
+			});
+		});
+
+		afterEach(() => {
+			sinon.restore();
+		});
+
+		after(() => database.destroy());
+
+		it('shows events under the sponsor and the account of the receiver', async () => {
+			await getSponsorshipEvents(database, range, { period: '2026', offset: 0, limit: 10, search: '66716858', sort: 'date', direction: 'desc' });
+
+			const rowsSql = sql.find(query => query.includes(' AS github_id'))!;
+			expect(rowsSql).to.include(`${sponsorIdSql} AS github_id`);
+			expect(rowsSql).to.include(`LEFT JOIN sponsors ON sponsors.github_id = ${sponsorIdSql}`);
+			expect(rowsSql).to.include(`COALESCE(sponsors.github_login, CASE WHEN ${sponsorIdSql} = additions.github_id THEN COALESCE(directus_users.github_username, gp_orgs.name) END, `);
+			expect(rowsSql).to.include('`directus_users`.`external_identifier` = `additions`.`github_id`');
+			expect(rowsSql).to.include(`${sponsorIdSql} = ?`);
+		});
+
+		it('groups accounts by the sponsor and links them by the receiver', async () => {
+			await getSponsorAccounts(database, range, { period: '2026', offset: 0, limit: 10, search: '66716858', statuses: [ 'active' ], linked: true, sort: 'currentMonthly', direction: 'desc' });
+
+			const rowsSql = sql.find(query => query.includes('is_active'))!;
+			expect(rowsSql).to.include(`${sponsorIdSql} AS github_id`);
+			expect(rowsSql).to.include(`group by ${sponsorIdSql}`);
+			expect(rowsSql).to.include('LEFT JOIN sponsors ON sponsors.github_id = additions.github_id');
+			expect(rowsSql).to.include('IF(sponsors.github_id IS NOT NULL, 1, 0) AS is_active');
+			expect(rowsSql).to.include('sponsors.monthly_amount AS current_monthly_amount');
+			expect(rowsSql).to.include('CASE WHEN additions.github_id = additions.receiver_github_id THEN COALESCE(directus_users.github_username, gp_orgs.name) END');
+			expect(rowsSql).to.include('additions.github_id = ?');
+			expect(rowsSql).to.include('`directus_users`.`external_identifier` = `additions`.`receiver_github_id`');
+			expect(rowsSql).to.include('COALESCE(directus_users.id, gp_orgs.id) IS NOT NULL');
+		});
 	});
 });

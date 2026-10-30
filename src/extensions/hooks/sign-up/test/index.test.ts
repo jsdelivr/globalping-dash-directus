@@ -38,6 +38,8 @@ describe('Sign-up hook', () => {
 	const notificationsService = {
 		createOne: sinon.stub(),
 	};
+	const query = { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'account-1' }) };
+	const trx = sinon.stub().returns(query);
 	const context = {
 		services: {
 			ItemsService: sinon.stub().callsFake((collection) => {
@@ -63,11 +65,7 @@ describe('Sign-up hook', () => {
 			GITHUB_ACCESS_TOKEN: 'default-github-token',
 		},
 		database: {
-			transaction: async (f: any) => {
-				const accountsQuery = { where: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'account-1' }) };
-				const trx = sinon.stub().returns(accountsQuery);
-				return f(trx);
-			},
+			transaction: async (f: any) => f(trx),
 		},
 		getSchema: () => Promise.resolve({}),
 		logger: {
@@ -184,6 +182,27 @@ describe('Sign-up hook', () => {
 		]);
 
 		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1', account_id: 'account-1' }]);
+	});
+
+	it('action should lock the user before it reads credits additions', async () => {
+		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, []);
+		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
+
+		hook(events, context);
+
+		await callbacks.action['users.create']?.({
+			key: '1-1-1-1',
+			payload: {
+				provider: 'github',
+				external_identifier: '1834071',
+				github_organizations: null,
+				github_oauth_token: 'user-github-token',
+			},
+		});
+
+		expect(trx.args[0]).to.deep.equal([ 'directus_users' ]);
+		expect(query.where.args[0]).to.deep.equal([{ id: '1-1-1-1' }]);
+		expect(query.forUpdate.calledBefore(creditsAdditionsService.readByQuery)).to.equal(true);
 	});
 
 	it('action should fulfill user type', async () => {

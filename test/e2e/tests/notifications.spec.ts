@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import axios from 'axios';
 import { client } from '../client.ts';
-import { clearUserData, generateUser } from '../utils.ts';
+import { actAsOrg, clearUserData, generateUser, pageAs } from '../utils.ts';
 import type { Org } from '../types.ts';
 import { LinkGenerator } from '../../../src/extensions/lib/src/link-generator.ts';
 
@@ -151,6 +151,7 @@ test('Toggles of notification types', async ({ page, user }) => {
 test('an account notification reaches every admin of the org and nobody else', async ({ org }) => {
 	const secondAdmin = await generateUser('SecondAdmin');
 	await client('gp_org_members').insert({ id: randomUUID(), org: org.id, user: secondAdmin.id, role: 'admin' });
+	await client('directus_users').where({ id: secondAdmin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 
 	const message = `org notification ${randomUUID()}`;
 	await sendAccountNotification('probe_adopted', org.account_id, message);
@@ -162,10 +163,23 @@ test('an account notification reaches every admin of the org and nobody else', a
 	await clearUserData(secondAdmin);
 });
 
+test('an admin who has not selected the org does not get its notifications', async ({ org }) => {
+	const secondAdmin = await generateUser('UnselectedAdmin');
+	await client('gp_org_members').insert({ id: randomUUID(), org: org.id, user: secondAdmin.id, role: 'admin' });
+
+	const message = `unselected admin ${randomUUID()}`;
+	await sendAccountNotification('probe_adopted', org.account_id, message);
+
+	expect(await recipientsOf(message)).toEqual([ org.admin.id ]);
+
+	await clearUserData(secondAdmin);
+});
+
 test('an admin who disabled the type in the org does not get the notification', async ({ org }) => {
 	const secondAdmin = await generateUser('MutedAdmin');
 
 	await client('gp_org_members').insert({ id: randomUUID(), org: org.id, user: secondAdmin.id, role: 'admin' });
+	await client('directus_users').where({ id: secondAdmin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 
 	// Org preferences live on the membership, independent of the personal ones.
 	await client('gp_org_members')
@@ -213,4 +227,34 @@ test('a personal account notification reaches only its owner', async ({ user, or
 
 	expect(await recipientsOf(message)).toEqual([ user.id ]);
 	expect(await recipientsOf(message)).not.toContain(org.admin.id);
+});
+
+test('an org admin sets their own notification settings for the org, apart from the personal ones', async ({ browser, org }) => {
+	await client('directus_users').where({ id: org.admin.id }).update({ notification_preferences: null });
+	const page = await actAsOrg(browser, org, org.admin);
+	await page.goto('/settings');
+
+	// In the org it is acting as, the org settings are the ones shown first.
+	await expect(page.getByLabel('Notifications account')).toContainText(org.name);
+	await page.getByText('New probe adopted').locator('..').getByRole('switch').first().click();
+	await page.getByRole('button', { name: 'Apply settings' }).click();
+
+	await expect.poll(async () => (await membershipPreferences(org, org.admin.id))?.probe_adopted?.enabled).toBe(false);
+	const personal = await client('directus_users').where({ id: org.admin.id }).first('notification_preferences');
+	expect(JSON.parse(personal.notification_preferences).probe_adopted.enabled).toBe(true);
+
+	await page.reload();
+	await expect(page.getByText('New probe adopted').locator('..').getByRole('switch').first()).not.toBeChecked();
+
+	await page.getByLabel('Notifications account').click();
+	await page.locator('[data-pc-section=option]').filter({ hasText: '(personal)' }).click();
+	await expect(page.getByText('New probe adopted').locator('..').getByRole('switch').first()).toBeChecked();
+});
+
+test('a member of an org has only the personal notification settings', async ({ browser, org }) => {
+	const page = await pageAs(browser, org.member.email, 'user');
+	await page.goto('/settings');
+
+	await expect(page.getByText('New probe adopted')).toBeVisible();
+	await expect(page.getByLabel('Notifications account')).toHaveCount(0);
 });

@@ -2,10 +2,9 @@ Default Directus multi-tenancy approach with a new orgs table and an account ent
 
 ### Directus updates:
 
-  1. New `gp_orgs` table. Columns: `id, github_id, name, adoption_token`.
+  1. New `gp_orgs` table. Columns: `id, github_id, name, adoption_token, extra_adoption_tokens, public_probes, user_type, website, description, banner`.
   2. New `gp_org_members` junction table. Columns: `id, org, user, role: viewer | member | admin, notification_preferences`.
-  3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB
-trigger on insert) and removed via FK cascade, so an account always exists.
+  3. New `gp_accounts` table. Columns: `id`, `user` (o2o to directus_users), `org` (o2o to gp_orgs). Exactly one of `user`/`org` is set. A row is auto-created for every user and org (backfill migration + DB trigger on insert) and removed via FK cascade, so an account always exists.
   4. New column `account_id` in data tables:
   - gp_probes (`userId` => `account_id`)
   - gp_tokens (+`account_id`, `user_created` stays to track creator)
@@ -14,7 +13,7 @@ trigger on insert) and removed via FK cascade, so an account always exists.
   - gp_credits_deductions (`user_id` => `account_id`)
   5. User policy permissions per table. Reusable filters:
   - `MY_ACCOUNTS` (personal or any of my orgs): `{ "_or": [ { "account_id": { "_in": "$CURRENT_USER.account.id" } }, { "account_id": { "_in": "$CURRENT_USER.memberships.org.account.id" } } ] }` — `_in` with a `$CURRENT_USER` path is a two-step search (1: get my account ids, 2: indexed filter by them), so it's efficient. `account` is a reverse o2m alias on directus_users/gp_orgs.
-  - `MINE_OR_ADMIN` (personal, or admin of the owning org): `{ "_or": [ { "account_id": { "user": { "_eq": "$CURRENT_USER" } } }, { "account_id": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } } ] }`
+  - `MINE_OR_ADMIN` (personal, or org admin of the owning org): `{ "_or": [ { "account_id": { "user": { "_eq": "$CURRENT_USER" } } }, { "account_id": { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } } ] }`
 
 New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq $CURRENT_USER` stay as they are):
 
@@ -28,16 +27,16 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 | gp_credits | read | filter => `MY_ACCOUNTS` |
 | gp_credits_deductions | read | filter => `MY_ACCOUNTS` |
 | gp_credits_additions | read | + `_or` branch: `{ "github_id": { "_in": "$CURRENT_USER.memberships.org.github_id" } }` |
-| gp_orgs (new) | read | `{ "members": { "user": { "_eq": "$CURRENT_USER" } } }`. `adoption_token` is visible only to org admins: stripped for other roles by a read hook (permission fields can't differ per branch). |
-| gp_orgs (new) | update | `{ "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } }`; fields: `adoption_token` (regenerate) |
-| gp_org_members (new) | read | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }` — member sees own row, admin sees all |
-| gp_org_members (new) | update | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }`; fields: `role, notification_preferences`. Per-field rules in a filter hook (like the gp_tokens create): `role` - only by an admin of that org, `notification_preferences` - only on own row. |
+| gp_orgs (new) | read | `{ "members": { "user": { "_eq": "$CURRENT_USER" } } }`. `adoption_token` and `extra_adoption_tokens` are visible only to org admins: they stay out of the read permission and a read hook adds them for org admins (permission fields can't differ per branch). |
+| gp_orgs (new) | update | `{ "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } }`; fields: `adoption_token` (regenerate), `public_probes`, `extra_adoption_tokens` (removals only), `website`, `description`. The banner goes through its own endpoint. |
+| gp_org_members (new) | read | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }` — member sees own row, org admin sees all |
+| gp_org_members (new) | update | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }`; fields: `role, notification_preferences`. Per-field rules in a filter hook (like the gp_tokens create): `role` - only by an org admin of that org, `notification_preferences` - only on own row. |
 
 ### Business logic updates:
 
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
-- Header sub-menu has an "Act as organization" button+modal, which stores `activeOrg` in the FE store and on the server:
+- The user menu has an "Act as organization" submenu, which stores the active account on the server:
   `POST /accounts/active` writes the account id (not the org id) into `directus_sessions.active_account` after checking
   the membership. The `auth.jwt` filter copies it on every refresh into the next session row and emits it as the signed
   claims `active_account_id` / `active_account_role`, which gp-api trusts without a database lookup; `GET /accounts/active`
@@ -45,54 +44,55 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
   personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves
   on another. A refresh rotates the session row, so a switch also updates the row a refresh already rotated into, and a refresh
   retried with the old cookie keeps the newer choice.
-- Losing the membership is noticed on the next refresh (the filter falls back to the personal account), so a stale claim lives
-  at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts with the personal
-  account; a default account is a later phase.
+- Losing the membership is noticed on the next refresh (the filter falls back to the `default_account` while it is still valid, else to the personal account), so a stale claim lives
+  at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts in the user's
+  `default_account` while it is still valid, else in the personal account. The claims also carry the tier of the active
+  account, so a measurement from the dashboard is stored like one made with that account's token.
 - OAuth is the exception: gp-auth ignores the active account entirely and asks on the approval screen instead. Connecting an
   app is a durable, hard-to-notice decision, so it is never made by ambient session state. The dashboard may preselect the
   session's active account on that screen (phase 4), but only the account sent with the approval counts.
-- Any admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to admin (if they are admins on GitHub), but never demotes back (because they might have been manually promoted previously).
-- Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the admin before saving.
-- New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is admin-only.
-- An org that hasn't approved our OAuth app is only visible through the public memberships list, which has no roles, so all of its members are synced as `member` and it has no admins at all (it stays usable for member actions). To get admins, the org has to approve the `globalping` app in its GitHub settings. The dash shows a hint about it when an org has no admins.
+- Any org admin can set the viewer/member/admin role for any other viewer/member/admin. Automatic GitHub sync only promotes a viewer/member to org admin (if they are admins of the GitHub org), but never demotes back (because they might have been manually promoted previously).
+- Demoting a member to viewer deletes their org tokens and app approvals - the same database trigger that fires when a membership is removed, because gp-api reads the account off the token row and never re-checks the role. The dashboard warns the org admin before saving.
+- New 'viewer' role is read-only: a viewer sees org data but can't create tokens/approvals or spend org credits. Adopting probes into the org is only for org admins.
+- An org that hasn't approved our OAuth app is only visible through the public memberships list, which has no roles, so all of its members are synced as `member` and it has no org admins at all (it stays usable for member actions). To get org admins, the org has to approve the `globalping` app in its GitHub settings.
 - Members who hide their membership in such an org are invisible to us entirely: they don't get the org, and an existing membership is removed on the next sync, so that everyone in the same position ends up the same (the sync never removes anything when GitHub is unreachable: a failed request aborts it). Making the membership public, or having the org approve the app, brings it back.
 
 **Probes**
 - A probe has a single owner: `account_id` (personal or org account).
-- For adoption tokens, the owner is determined by the token (user's or org's adoption token). For adoption by IP or local server - by `activeOrg`.
-- Only an admin can adopt a probe into the org: members don't see the org adoption token and can't adopt by IP or local server either.
-- Admin, member, and viewer can view all org probes.
-- Only admin can edit org probe metadata (city, name).
-- Only admin can unassign the probe from the org. But nothing prevents it from being assigned back, e.g. if adopted by an org token, it will be assigned again automatically.
+- For adoption tokens, the owner is determined by the token (user's or org's adoption token). For adoption by IP or local server - by the account the request names (`accountId`).
+- Only an org admin can adopt a probe into the org: members don't see the org adoption token and can't adopt by IP or local server either.
+- Org admin, member, and viewer can view all org probes.
+- Only an org admin can edit org probe metadata (city, name).
+- Only an org admin can unassign the probe from the org. But nothing prevents it from being assigned back, e.g. if adopted by an org token, it will be assigned again automatically.
 - If another user (not from org A) adopts a probe which belongs to org A, the probe is reassigned to the new owner.
 - The `default_prefix` setting keeps its stored value and its automatic rename when it goes stale; what goes in phase 5 is the manual choice - the settings selector and the field's write permission, so it can not be set through the API either. An org account's global tag is the org name, switched on by `gp_orgs.public_probes`.
 - The prefix select for probe tags is removed (phase 5): existing tags keep the prefix stored in the row, new and edited ones always get the owner's name (org name or `github_username`).
 
 **Tokens**
-- Admin or member can create an org token to consume org credits; viewer can't.
+- Org admin or member can create an org token to consume org credits; viewer can't.
 - Credits are consumed from the token's `account_id` (personal or org account).
 - `account_id` defines who pays for the token; `user_created` defines the creator: each user sees/manages only their own tokens.
 - Tokens are deleted when their user is deleted or leaves the org (org tokens die with the membership).
 
 **Apps approvals**
-- Admin or member can create an app approval + token to consume org credits; viewer can't.
+- Org admin or member can create an app approval + token to consume org credits; viewer can't.
 - An approval is bound to a specific account: consent, the "already approved" check, listing, and revoke are all per account (the same app is approved separately for the personal account and for each org).
 - If the user who created an app approval leaves the org - remove the approval and its tokens (same lifecycle as plain tokens).
-- Listing and revoke are scoped to the creator as well, except for a Directus admin: impersonation swaps the account but not the session, so the admin lists the whole account and names the creator (`userCreated`) to revoke exactly the row they see.
+- Listing and revoke are scoped to the creator as well, except for a Directus admin: impersonation swaps the account but not the session, so the Directus admin lists the whole account and names the creator (`userCreated`) to revoke exactly the row they see.
 
 **Credits**
 - Probe credits are assigned based on the probe's `account_id`.
-- The `org -> user` credits redirect is no longer needed; credits are assigned directly to the org.
-- The `user -> org` credits redirect might be needed; it can be a new setting on the user page. Out of scope.
+- The `org -> user` credits redirect is no longer created; credits are assigned directly to the org. The existing ones keep working until either side clears them.
+- A user can point their own sponsorship at an org they belong to (`user -> org` redirect), from the migrate section of the settings.
 
 **Notifications**
-- Org notifications go to the org admins only; members and viewers never receive them.
-- Notification settings are per org and per user: each admin has their own notification config for each of their orgs, independent of their personal config.
+- Org notifications go to the org admins who selected the org only; members and viewers never receive them.
+- Notification settings are per org and per user: each org admin has their own notification config for each of their orgs, independent of their personal config.
 - The types, the preferences shape, the defaults, and the validation are exactly the same as for the personal notifications.
 
 ### Dash UI updates
 
-- New header menu item - "Act as organization", which opens a select org modal. The selected org is stored on the session (see "Users" above) and shown in the header instead of the username.
+- New header menu item - "Act as organization", which lists the user's selected orgs. The selected org is stored on the session (see "Users" above) and shown in the header instead of the username.
 - User doesn't have a "show all" option. So we don't have combined views.
 - If an org is selected:
     - "Probes page" shows org probes in read-only/read-write state (based on role).
@@ -100,6 +100,5 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
     - "Credits page" shows org credits stats (same for any role).
     - "Tokens page" shows the user's own tokens and approvals inside the org; nobody sees other members' tokens or approvals.
     - "Generate new token" creates a token inside the org (disabled for viewers).
-    - "Adopt a probe" into the org is admin-only.
-    - New "Organization" setting in "Settings". Only an admin can see, copy, and regenerate the org adoption token.
-    - If the user is admin - a new "Organization" menu button and page, where the admin sees org info and all members, and can set member roles.
+    - "Adopt a probe" into the org is only for org admins.
+    - If the user is an org admin - a new "Organization" menu entry and page: the org settings first (the org adoption token, public probes, extra adoption tokens, credits redirects, the public profile and the org admin's own notification settings for the org), then all members, where the org admin can set member roles.

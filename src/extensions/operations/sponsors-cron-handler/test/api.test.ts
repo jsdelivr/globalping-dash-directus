@@ -7,11 +7,10 @@ import operationApi from '../src/api.js';
 
 describe('Sponsors cron handler', () => {
 	const data = {};
-	const database = {
-		transaction: async (f: any) => {
-			return f({});
-		},
-	} as OperationContext['database'];
+	const redirect = sinon.stub().resolves(undefined);
+	const database = Object.assign(() => ({ where: () => ({ first: redirect }) }), {
+		transaction: (f: (trx: object) => unknown) => Promise.resolve(f({})),
+	}) as unknown as OperationContext['database'];
 	const accountability = {} as OperationContext['accountability'];
 	const logger = console.log as unknown as OperationContext['logger'];
 	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
@@ -39,6 +38,9 @@ describe('Sponsors cron handler', () => {
 		createOne: sinon.stub().resolves(1),
 		readByQuery: sinon.stub().resolves([]),
 	};
+	const orgsService = {
+		updateByQuery: sinon.stub().resolves([]),
+	};
 	const usersService = {
 		updateByQuery: sinon.stub(),
 	};
@@ -49,6 +51,8 @@ describe('Sponsors cron handler', () => {
 					return sponsorsService;
 				case 'gp_credits_additions':
 					return creditsAdditionsService;
+				case 'gp_orgs':
+					return orgsService;
 				default:
 					throw new Error('Collection name wasn\'t provided');
 			}
@@ -157,6 +161,7 @@ describe('Sponsors cron handler', () => {
 				monthsCovered: 1,
 				tierId: 'T_test_tier',
 				bonus: 5,
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -244,6 +249,11 @@ describe('Sponsors cron handler', () => {
 			{
 				filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } },
 			},
+			{ user_type: 'member' },
+		]);
+
+		expect(orgsService.updateByQuery.args[0]).to.deep.equal([
+			{ filter: { github_id: { _eq: '2' }, user_type: { _neq: 'special' } } },
 			{ user_type: 'member' },
 		]);
 
@@ -404,10 +414,12 @@ describe('Sponsors cron handler', () => {
 				monthsCovered: 1,
 				tierId: 'T_test_tier',
 				bonus: 0,
+				sponsorGithubId: '2',
 			},
 		}]);
 
-		expect(usersService.updateByQuery.callCount).to.equal(0);
+		// The tier of a sponsor already on record is reconciled on every run, not only when they first appear.
+		expect(usersService.updateByQuery.callCount).to.equal(1);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 1 month(s).' ]);
 	});
@@ -468,6 +480,11 @@ describe('Sponsors cron handler', () => {
 			{ user_type: 'sponsor' },
 		]);
 
+		expect(orgsService.updateByQuery.args[0]).to.deep.equal([
+			{ filter: { github_id: { _eq: '2' }, user_type: { _neq: 'special' } } },
+			{ user_type: 'sponsor' },
+		]);
+
 
 		expect(creditsAdditionsService.createOne.callCount).to.equal(1);
 
@@ -475,7 +492,7 @@ describe('Sponsors cron handler', () => {
 			amount: 100000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 1, tierId: 'T_test_tier', bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 1, tierId: 'T_test_tier', bonus: 0, sponsorGithubId: '2' },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 1 month(s).' ]);
@@ -571,12 +588,14 @@ describe('Sponsors cron handler', () => {
 		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
 
 
-		expect(usersService.updateByQuery.callCount).to.equal(1);
-
+		// The one already on record has its tier reconciled, the new one gets it set.
 		expect(usersService.updateByQuery.args[0]).to.deep.equal([
-			{
-				filter: { external_identifier: { _eq: '3' }, user_type: { _neq: 'special' } },
-			},
+			{ filter: { external_identifier: { _eq: '2' }, user_type: { _neq: 'special' } } },
+			{ user_type: 'sponsor' },
+		]);
+
+		expect(usersService.updateByQuery.args[1]).to.deep.equal([
+			{ filter: { external_identifier: { _eq: '3' }, user_type: { _neq: 'special' } } },
 			{ user_type: 'sponsor' },
 		]);
 
@@ -627,7 +646,7 @@ describe('Sponsors cron handler', () => {
 			amount: 200000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 2, tierId: 'T_test_tier', bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 2, tierId: 'T_test_tier', bonus: 0, sponsorGithubId: '2' },
 		}]);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 2 month(s).' ]);
@@ -669,7 +688,7 @@ describe('Sponsors cron handler', () => {
 			github_id: '3',
 			reason: 'recurring_sponsorship',
 			amount: 300000,
-			meta: { amountInDollars: 10, monthsCovered: 3, tierId: 'T_test_tier', bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 3, tierId: 'T_test_tier', bonus: 0, sponsorGithubId: '3' },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);
