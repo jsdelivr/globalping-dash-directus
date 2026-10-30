@@ -4,7 +4,7 @@ import { sendNotification } from '../../../../lib/src/send-notification.js';
 import type { NotifiedListUpdate, CandidateRow } from '../types.js';
 
 // The threshold and the switch come from the recipient's own preferences: the personal ones for a user account, the per-org ones
-// for an org member. An org balance produces a row per admin.
+// for an org member. An org balance produces a row per admin who selected the org.
 export const getCandidates = async ({ database }: OperationContext): Promise<CandidateRow[]> => {
 	const rows = (await database.raw(`
 		SELECT
@@ -19,6 +19,7 @@ export const getCandidates = async ({ database }: OperationContext): Promise<Can
 		JOIN gp_accounts a ON a.id = c.account_id
 		LEFT JOIN directus_users u ON u.id = a.user
 		LEFT JOIN gp_org_members m ON m.org = a.org AND m.role = 'admin'
+			AND JSON_CONTAINS((SELECT selected_orgs FROM directus_users WHERE id = m.user), JSON_QUOTE(m.org))
 		HAVING recipient IS NOT NULL AND (amount <= threshold OR JSON_LENGTH(allNotifiedUsers) > 0)
 	`, [ LOW_CREDITS_DEFAULT_THRESHOLD ]))[0] as (Omit<CandidateRow, 'allNotifiedUsers' | 'enabled'> & { allNotifiedUsers: string; enabled: number })[];
 

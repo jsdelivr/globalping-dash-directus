@@ -28,7 +28,7 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 
 1.4 **gp-auth ignores the active account.** The account for an approval is picked on the consent screen (5.2), never inherited from browser state. Keep the two concepts separate in the store or the consent screen will silently approve for whatever the header last switched to.
 
-1.5 **Settings and notifications stay personal.** `/settings` is always the user's own, whatever account is active. The notifications list is the user's own too, and holds the org notifications of the orgs they administer next to the personal ones: the org fans them out to its org admins (phase 1) with the same text as a personal one and without naming the org, so the list cannot tell them apart yet.
+1.5 **Settings and notifications stay personal.** `/settings` is always the user's own, whatever account is active. The notifications list is the user's own too, and holds the org notifications of the selected orgs they administer next to the personal ones: the org fans them out to its org admins who selected it (phase 1) with the same text as a personal one and without naming the org, so the list cannot tell them apart yet.
 
 ## 2. The "Act as organization" menu
 
@@ -119,7 +119,7 @@ The original stays reachable as `/assets/<bannerId>` with whatever metadata it c
 
 8.1 **Texts name the active account**: "your" where it reads right for an org too (settings, the user's own role), the org's name otherwise ("under <org> account", "<org> probes").
 
-8.2 **The org admin's own notification settings for the org**, kept on their membership (`notification_preferences`): the same types and defaults as the personal ones, and each org admin sets their own. UI only: the dash reads and writes the org admin's own `gp_org_members.notification_preferences`, in the same block as the personal settings. The backend already exists.
+8.2 **The org admin's own notification settings for the org**, kept on their membership (`notification_preferences`): the same types and defaults as the personal ones, and each org admin sets their own for each selected org. The dash reads and writes the org admin's own `gp_org_members.notification_preferences`, in the same block as the personal settings, with an account select.
 
 8.3 **The personal default tag prefix is softly retired.** The settings page hides "Default tag prefix" while `default_prefix` equals the `github_username`, along with the copy that offers switching to an org name ("To use your organization name instead, change your default tag prefix above"): a user who never moved off the username is not invited to start using an org name now, since org-named probes belong in the org (6.2). A user whose `default_prefix` is an org name still sees the selector, with two options - the current value and the `github_username` - so they can move back to the username; once they do, the selector disappears for good. The backend keeps accepting `github_organizations` until phase 5, which narrows `validateDefaultPrefix` to the same two values.
 

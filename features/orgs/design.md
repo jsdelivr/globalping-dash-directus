@@ -86,7 +86,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - A user can point their own sponsorship at an org they belong to (`user -> org` redirect), from the migrate section of the settings.
 
 **Notifications**
-- Org notifications go to the org admins only; members and viewers never receive them.
+- Org notifications go to the org admins who selected the org only; members and viewers never receive them.
 - Notification settings are per org and per user: each org admin has their own notification config for each of their orgs, independent of their personal config.
 - The types, the preferences shape, the defaults, and the validation are exactly the same as for the personal notifications.
 

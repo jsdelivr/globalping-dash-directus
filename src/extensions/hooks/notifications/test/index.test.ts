@@ -323,7 +323,7 @@ describe('notifications hooks', () => {
 			first.resolves({ user: null, org: 'org-1' });
 
 			readByQuery.resolves([
-				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: { low_credits: { enabled: true, parameter: 8000 } } },
+				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: { low_credits: { enabled: true, parameter: 8000 } } },
 			]);
 
 			const result = await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
@@ -345,7 +345,22 @@ describe('notifications hooks', () => {
 			first.resolves({ user: null, org: 'org-1' });
 
 			readByQuery.resolves([
-				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: { low_credits: { enabled: false } } },
+				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: { low_credits: { enabled: false } } },
+			]);
+
+			try {
+				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+		});
+
+		it('should cancel when the picked recipient has not selected the org', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+
+			readByQuery.resolves([
+				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [] }, notification_preferences: null },
 			]);
 
 			try {
@@ -383,8 +398,8 @@ describe('notifications hooks', () => {
 			first.resolves({ user: null, org: 'org-1' });
 
 			readByQuery.resolves([
-				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: null },
-				{ user: { id: 'admin-2', email: 'a2@example.com' }, notification_preferences: { probe_adopted: { enabled: false } } },
+				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: null },
+				{ user: { id: 'admin-2', email: 'a2@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: { probe_adopted: { enabled: false } } },
 			]);
 
 			try {
@@ -411,12 +426,30 @@ describe('notifications hooks', () => {
 			expect(createMany.args[0]?.[1]).to.deep.equal({ emitEvents: false });
 		});
 
+		it('should skip the admins who have not selected the org', async () => {
+			first.resolves({ user: null, org: 'org-1' });
+
+			readByQuery.resolves([
+				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [ 'org-2' ] }, notification_preferences: null },
+				{ user: { id: 'admin-2', email: 'a2@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: null },
+			]);
+
+			try {
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+				expect.fail('should throw');
+			} catch (err: any) {
+				expect(err.message).to.equal('Notification cancelled by user preferences.');
+			}
+
+			expect(createMany.args[0]?.[0].map((notification: { recipient: string }) => notification.recipient)).to.deep.equal([ 'admin-2' ]);
+		});
+
 		it('should compute the email status from the admin org preferences', async () => {
 			first.resolves({ user: null, org: 'org-1' });
 
 			readByQuery.resolves([
-				{ user: { id: 'admin-1', email: 'a1@example.com' }, notification_preferences: { offline_probe: { enabled: true, emailEnabled: false } } },
-				{ user: { id: 'admin-2', email: null }, notification_preferences: null },
+				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: { offline_probe: { enabled: true, emailEnabled: false } } },
+				{ user: { id: 'admin-2', email: null, selected_orgs: [ 'org-1' ] }, notification_preferences: null },
 			]);
 
 			try {

@@ -22,6 +22,7 @@ export type OrgMember = {
 	user: {
 		id: string;
 		email: string | null;
+		selected_orgs: string[];
 	};
 	notification_preferences: User['notification_preferences'];
 };

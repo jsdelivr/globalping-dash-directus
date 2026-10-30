@@ -62,6 +62,9 @@ export const generateOrg = async (suffix = ''): Promise<Org> => {
 		{ id: randomUUID(), org: org.id, user: viewer.id, role: 'viewer' },
 	]);
 
+	// The admin gets the org notifications only with the org selected.
+	await client('directus_users').where({ id: admin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+
 	// The account row is created by a trigger when the org is inserted.
 	const account = await client('gp_accounts').where({ org: org.id }).first('id');
 
