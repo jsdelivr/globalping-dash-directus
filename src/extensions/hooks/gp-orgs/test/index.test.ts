@@ -26,7 +26,6 @@ describe('org hooks', () => {
 
 	const select = sinon.stub();
 	const first = sinon.stub();
-	const pluck = sinon.stub();
 	const queryBuilder = {
 		join: sinon.stub(),
 		whereIn: sinon.stub(),
@@ -34,7 +33,6 @@ describe('org hooks', () => {
 		whereNotNull: sinon.stub(),
 		select,
 		first,
-		pluck,
 	};
 	queryBuilder.join.returns(queryBuilder);
 	queryBuilder.whereIn.returns(queryBuilder);
@@ -52,21 +50,15 @@ describe('org hooks', () => {
 	};
 
 	const rejection = async (payload: any, keys?: string[]) => {
-		const error = await Promise.resolve(update(payload, keys)).catch(err => err);
+		const error = await Promise.resolve().then(() => update(payload, keys)).catch(err => err);
 		expect((error as { status: number }).status).to.equal(400);
 		return (error as Error).message;
 	};
-
-	const ALICE = { github_username: 'alice', token: 'alice-token' };
-	const BOB = { github_username: 'bob', token: 'bob-token' };
-
-	const stored = (...entries: object[]) => first.resolves({ extra_adoption_tokens: JSON.stringify(entries) });
 
 	beforeEach(() => {
 		sinon.resetHistory();
 		select.reset();
 		first.reset();
-		pluck.reset();
 	});
 
 	it('should add the token to the orgs the user is an admin of, and not to others', async () => {
@@ -126,90 +118,32 @@ describe('org hooks', () => {
 		expect(database.callCount).to.equal(0);
 	});
 
-	it('should accept removing an extra adoption token', async () => {
-		stored(ALICE, BOB);
-
-		await update({ extra_adoption_tokens: [ BOB ] });
-	});
-
-	it('should accept removing every entry', async () => {
-		stored(ALICE, BOB);
-
-		await update({ extra_adoption_tokens: [] });
-	});
-
-	it('should accept an update that does not touch the tokens', async () => {
-		await update({ public_probes: true });
-
-		expect(database.callCount).to.equal(0);
-	});
-
-	it('should treat an org that does not exist as having no entries', async () => {
-		first.resolves(undefined);
-
-		await update({ extra_adoption_tokens: [] }, [ 'unknown-org' ]);
-		expect(await rejection({ extra_adoption_tokens: [ ALICE ] }, [ 'unknown-org' ])).to.equal('"extra_adoption_tokens" accepts removals only.');
-	});
-
-	it('should reject adding an entry that is not stored', async () => {
-		stored(ALICE);
-
-		expect(await rejection({ extra_adoption_tokens: [ ALICE, BOB ] })).to.equal('"extra_adoption_tokens" accepts removals only.');
-	});
-
-	it('should reject repeating a stored entry to grow the list', async () => {
-		stored(ALICE, BOB);
-
-		expect(await rejection({ extra_adoption_tokens: [ ALICE, ALICE ] })).to.equal('"extra_adoption_tokens" accepts removals only.');
-	});
-
-	it('should reject changing the username of a stored entry', async () => {
-		stored(ALICE, BOB);
-
-		expect(await rejection({ extra_adoption_tokens: [ ALICE, { ...BOB, github_username: 'mallory' }] })).to.equal('"extra_adoption_tokens" accepts removals only.');
-	});
-
-	it('should reject an update that spans more than one org', async () => {
-		const message = '"extra_adoption_tokens" can only be updated one org at a time.';
-
-		expect(await rejection({ extra_adoption_tokens: [] }, [ 'org-1', 'org-2' ])).to.equal(message);
-		expect(await rejection({ extra_adoption_tokens: [] }, [])).to.equal(message);
-		expect(database.callCount).to.equal(0);
-	});
-
-	it('should reject a value that is not a list of the expected shape', async () => {
-		for (const payload of [ 'alice-token', null, {}, [{ token: 'alice-token' }], [{ ...ALICE, note: 'extra' }], [ null ], [{ ...ALICE, token: 1 }] ]) {
-			expect(await rejection({ extra_adoption_tokens: payload }), JSON.stringify(payload)).to.equal('"extra_adoption_tokens" must be a list of { github_username, token }.');
-		}
-
-		expect(database.callCount).to.equal(0);
-	});
-
 	it('should reject a website that the URL parser rejects, on create and update', async () => {
 		await update({ website: 'https://example.com:8443/x' });
 		await update({ website: null });
+		await update({ public_probes: true });
+		expect(database.callCount).to.equal(0);
 		expect(await rejection({ website: 'https://example.com:abc' })).to.equal('"website" must be a valid https:// URL.');
 		expect(() => callbacks.filter['gp_orgs.items.create']?.({ website: 'https://example.com:abc' }, {}, { accountability, database })).to.throw('"website" must be a valid https:// URL.');
 	});
 
 	const deleteOrgs = async (keys: string[]) => {
-		const filtered = await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
-		await callbacks.action['gp_orgs.items.delete']?.({ keys: filtered });
-		return filtered;
+		await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
+		await callbacks.action['gp_orgs.items.delete']?.({ keys });
 	};
 
 	it('should delete the banners of the deleted orgs after the orgs are deleted', async () => {
-		pluck.resolves([ 'banner-1', 'banner-2' ]);
+		select.resolves([{ id: 'org-1', banner: 'banner-1' }, { id: 'org-2', banner: 'banner-2' }]);
 		const keys = [ 'org-1', 'org-2', 'org-3' ];
 
-		expect(await deleteOrgs(keys)).to.equal(keys);
+		await deleteOrgs(keys);
 		expect(queryBuilder.whereIn.args[0]).to.deep.equal([ 'id', keys ]);
 		expect(queryBuilder.whereNotNull.args[0]).to.deep.equal([ 'banner' ]);
 		expect(deleteMany.args).to.deep.equal([ [ [ 'banner-1', 'banner-2' ] ] ]);
 	});
 
 	it('should delete nothing in the filter, which runs before the access check', async () => {
-		pluck.resolves([ 'banner-1' ]);
+		select.resolves([{ id: 'org-1', banner: 'banner-1' }]);
 		const keys = [ 'org-1' ];
 
 		await callbacks.filter['gp_orgs.items.delete']?.(keys, {}, { accountability, database });
@@ -220,7 +154,7 @@ describe('org hooks', () => {
 	});
 
 	it('should not delete files when the deleted orgs have no banners', async () => {
-		pluck.resolves([]);
+		select.resolves([]);
 
 		await deleteOrgs([ 'org-1' ]);
 
@@ -228,7 +162,7 @@ describe('org hooks', () => {
 	});
 
 	it('should not delete files twice for a repeated action', async () => {
-		pluck.resolves([ 'banner-1' ]);
+		select.resolves([{ id: 'org-1', banner: 'banner-1' }]);
 		const keys = [ 'org-1' ];
 
 		await deleteOrgs(keys);

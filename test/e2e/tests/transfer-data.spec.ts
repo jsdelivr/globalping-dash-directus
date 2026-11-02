@@ -304,9 +304,8 @@ test('two members can move probes to the same org, and both adoption tokens stay
 	const tokens = JSON.parse(orgRow.extra_adoption_tokens);
 	expect(tokens).toHaveLength(2);
 
-	// An org admin can remove entries later, so every entry must pass the update hook.
-	const kept = await actors.member.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [ tokens[0] ] });
-	expect(kept.status).toBe(200);
+	const removed = await actors.member.delete('/transfer-data/adoption-token', { data: { accountId: org.account_id, token: tokens[1].token } });
+	expect(removed.status).toBe(200);
 });
 
 test('two admins moving probes at the same time never overwrite each other\'s adoption token', async ({ org, actors }) => {

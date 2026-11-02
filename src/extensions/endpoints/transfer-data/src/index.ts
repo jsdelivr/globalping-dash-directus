@@ -8,6 +8,7 @@ import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { authorize } from './actions/authorize.js';
 import { getRedirects, setRedirect } from './actions/credits-redirect.js';
+import { removeAdoptionToken } from './actions/remove-adoption-token.js';
 import { transferCredits } from './actions/transfer-credits.js';
 import { transferProbes } from './actions/transfer-probes.js';
 import { transferTokens } from './actions/transfer-tokens.js';
@@ -42,6 +43,11 @@ const deleteRedirectSchema = Joi.object<Request>({
 const setRedirectSchema = Joi.object<Request>({
 	accountability,
 	body: Joi.object({ accountId: Joi.string().required(), orgId: Joi.string().required() }).required(),
+}).unknown(true);
+
+const removeTokenSchema = Joi.object<Request>({
+	accountability,
+	body: Joi.object({ accountId: Joi.string().required(), token: Joi.string().required() }).required(),
 }).unknown(true);
 
 export default defineEndpoint((router, context) => {
@@ -106,5 +112,15 @@ export default defineEndpoint((router, context) => {
 		await database('gp_credits_redirects').where({ source_github_id: body.source, target_github_id: body.target }).delete();
 
 		res.send('Credits redirect removed.');
+	}, context));
+
+	router.delete('/adoption-token', validate(removeTokenSchema), asyncWrapper(async (_req, res) => {
+		const req = _req as Request;
+		const body = req.body as { accountId: string; token: string };
+		const accountId = await getRequestAccountId(body, req.accountability, context);
+
+		await database.transaction(trx => removeAdoptionToken(accountId, body.token, trx));
+
+		res.send('Adoption token removed.');
 	}, context));
 });
