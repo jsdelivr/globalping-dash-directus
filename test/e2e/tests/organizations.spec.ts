@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import type { AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
@@ -246,10 +245,9 @@ test('the users of an org stay unreadable to each other', async ({ org, actors }
 	expect(aggregated.data.data[0].github_username).toBe(org.admin.github_username);
 });
 
-test('the extra adoption tokens are visible to admins only and can only be removed', async ({ org, actors }) => {
+test('the extra adoption tokens are visible to admins only and are removed one by one through the endpoint', async ({ org, actors }) => {
 	const alice = { github_username: 'e2e-alice', token: 'e2e-alice-token' };
 	const bob = { github_username: 'e2e-bob', token: 'e2e-bob-token' };
-	const mallory = { github_username: 'e2e-mallory', token: 'e2e-mallory-token' };
 
 	await sql('gp_orgs').where({ id: org.id }).update({ extra_adoption_tokens: JSON.stringify([ alice, bob ]) });
 
@@ -258,38 +256,31 @@ test('the extra adoption tokens are visible to admins only and can only be remov
 		return JSON.parse(row.extra_adoption_tokens);
 	};
 
+	const remove = (api: AxiosInstance, accountId: string, token: string) => api.delete('/transfer-data/adoption-token', { data: { accountId, token } });
+
 	expect((await actors.admin.get(`/items/gp_orgs/${org.id}`)).data.data.extra_adoption_tokens).toEqual([ alice, bob ]);
 
 	for (const api of [ actors.member, actors.viewer ]) {
 		expect((await api.get(`/items/gp_orgs/${org.id}`)).data.data.extra_adoption_tokens).toBeUndefined();
 	}
 
+	// The field is not writable through the items API, the endpoint is the only way.
+	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [ bob ] })).status).toBe(403);
+
+	// The endpoint answers 400 for an account the caller does not run, like the other transfer-data routes.
 	for (const api of [ actors.member, actors.viewer, actors.outsider, actors.otherOrgAdmin ]) {
-		expect((await api.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [] })).status).toBe(403);
+		expect((await remove(api, org.account_id, bob.token)).status).toBe(400);
 	}
 
-	const rejected = async (api: AxiosInstance, value: unknown) => {
-		const response = await api.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: value });
-		expect(response.status).toBe(400);
-		return response.data.errors[0].message;
-	};
-
-	expect(await rejected(actors.admin, [ alice, bob, mallory ])).toBe('"extra_adoption_tokens" accepts removals only.');
-	expect(await rejected(actors.admin, [ alice, alice ])).toBe('"extra_adoption_tokens" accepts removals only.');
-	expect(await rejected(actors.admin, [ alice.token ])).toBe('"extra_adoption_tokens" must be a list of { github_username, token }.');
-
-	// A Directus admin is bound by the same rule.
-	expect(await rejected(actors.directusAdmin, [ alice, bob, mallory ])).toBe('"extra_adoption_tokens" accepts removals only.');
+	expect((await remove(actors.admin, org.account_id, 'e2e-unknown-token')).status).toBe(400);
+	expect((await remove(actors.admin, org.admin.account_id, bob.token)).status).toBe(400);
 	expect(await stored()).toEqual([ alice, bob ]);
 
-	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [ bob ] })).status).toBe(200);
-	expect(await stored()).toEqual([ bob ]);
+	expect((await remove(actors.admin, org.account_id, bob.token)).status).toBe(200);
+	expect(await stored()).toEqual([ alice ]);
 
-	expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { extra_adoption_tokens: [] })).status).toBe(200);
+	expect((await remove(actors.directusAdmin, org.account_id, alice.token)).status).toBe(200);
 	expect(await stored()).toEqual([]);
-
-	expect((await actors.admin.patch(`/items/gp_orgs/${randomUUID()}`, { extra_adoption_tokens: [ alice ] })).status).toBe(400);
-	expect((await actors.admin.patch(`/items/gp_orgs/${randomUUID()}`, { extra_adoption_tokens: [] })).status).toBe(403);
 });
 
 test('the selected orgs can only be set on your own row, and non-member orgs are dropped', async ({ org, org2, actors }) => {
