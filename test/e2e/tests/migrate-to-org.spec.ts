@@ -14,13 +14,15 @@ const settingsWithOrg = async (browser: Browser, org: Org, user: User) => {
 };
 
 const openMigration = async (page: Page, org: Org) => {
-	await page.getByRole('button', { name: 'Migrate to organization' }).click();
+	await page.getByRole('button', { name: 'Transfer to an organization' }).click();
 	const dialog = page.getByRole('dialog');
 	const combobox = dialog.getByRole('combobox');
 
 	await expect(combobox).toContainText('Select an organization');
+	await expect(dialog.getByRole('alert')).toHaveCount(0);
 	await combobox.click();
 	await page.getByRole('option').filter({ hasText: org.name }).click();
+	await expect(dialog.getByRole('alert')).toBeVisible();
 	return dialog;
 };
 
@@ -44,9 +46,9 @@ test.afterEach(async ({ org }) => {
 	await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).orWhere({ target_github_id: org.github_id }).delete();
 });
 
-test('migration is offered only with a selected org where the user is an admin or a member, and explained otherwise', async ({ browser, org }) => {
-	const noOrgs = 'You have no organizations to migrate to.';
-	const migrate = (page: Page) => page.getByRole('button', { name: 'Migrate to organization' });
+test('migration lists admin and member organizations independently of the account menu', async ({ browser, org }) => {
+	const noOrgs = 'You must be an admin or a member of an organization to transfer resources.';
+	const migrate = (page: Page) => page.getByRole('button', { name: 'Transfer to an organization' });
 
 	const viewerPage = await settingsWithOrg(browser, org, org.viewer);
 	await expect(migrate(viewerPage)).toBeDisabled();
@@ -58,8 +60,10 @@ test('migration is offered only with a selected org where the user is an admin o
 
 	await sql('directus_users').where({ id: org.member.id }).update({ selected_orgs: JSON.stringify([]) });
 	await memberPage.reload();
-	await expect(migrate(memberPage)).toBeDisabled();
-	await expect(memberPage.getByText(noOrgs)).toBeVisible();
+	await expect(migrate(memberPage)).toBeEnabled();
+	await expect(memberPage.getByText(noOrgs)).toHaveCount(0);
+	await openMigration(memberPage, org);
+	expect(JSON.parse((await sql('directus_users').where({ id: org.member.id }).first('selected_orgs')).selected_orgs)).toEqual([]);
 });
 
 test('probes move into an org with no admin, the user becomes its admin and gets a new adoption token', async ({ browser, org }) => {
@@ -69,11 +73,11 @@ test('probes move into an org with no admin, the user becomes its admin and gets
 
 	const page = await settingsWithOrg(browser, org, org.member);
 	const dialog = await openMigration(page, org);
-	await expect(dialog).toContainText(`Their public tag u-${org.member.default_prefix} disappears`);
+	await expect(dialog).toContainText(`Their public tag u-${org.member.default_prefix} is removed`);
 	await transfer(dialog, 'Transfer probes');
 
-	await expect(page.getByText(`Moved 1 probe to ${org.name}`, { exact: true })).toBeVisible();
-	await expect(dialog).toContainText('Moved 1 probe');
+	await expect(page.getByText(`Transferred 1 probe to ${org.name}`, { exact: true })).toBeVisible();
+	await expect(dialog).toContainText('Transferred 1 probe');
 	await expect(dialog.getByRole('button', { name: 'Transfer probes' })).toHaveCount(0);
 	expect(await probesOf(org.member.account_id)).toEqual([]);
 	expect(await probesOf(org.account_id)).toEqual([ probeId ]);
@@ -94,7 +98,7 @@ test('a member moving probes into an org with an admin is told inside the dialog
 	await expect(dialog).toContainText(`Their public tag changes from u-${org.member.default_prefix} to u-${org.name}.`);
 	await transfer(dialog, 'Transfer probes');
 
-	await expect(dialog).toContainText(`Only admins can move probes into ${org.name} once it has an admin, so ask one to make you an admin.`);
+	await expect(dialog).toContainText(`Only organization admins can transfer probes to ${org.name}. Ask an existing admin to change your role.`);
 	expect(await probesOf(org.member.account_id)).toEqual([ probeId ]);
 	expect(await probesOf(org.account_id)).toEqual([]);
 });
@@ -106,7 +110,7 @@ test('an admin moving probes into their own org keeps their role and is not told
 	const dialog = await openMigration(page, org);
 	await transfer(dialog, 'Transfer probes');
 
-	await expect(page.getByText(`Moved 1 probe to ${org.name}`, { exact: true })).toBeVisible();
+	await expect(page.getByText(`Transferred 1 probe to ${org.name}`, { exact: true })).toBeVisible();
 	await expect(page.getByText('You\'re now an admin')).toHaveCount(0);
 	expect(await probesOf(org.admin.account_id)).toEqual([]);
 	expect(await probesOf(org.account_id)).toEqual([ probeId ]);
@@ -127,8 +131,8 @@ test('tokens and their app approvals move to the org', async ({ browser, org }) 
 	const dialog = await openMigration(page, org);
 	await transfer(dialog, 'Transfer tokens');
 
-	await expect(page.getByText(`Moved 0 tokens and 1 app to ${org.name}`)).toBeVisible();
-	await expect(dialog).toContainText('Moved 0 tokens and 1 app');
+	await expect(page.getByText(`Transferred 0 tokens and 1 app to ${org.name}`)).toBeVisible();
+	await expect(dialog).toContainText('Transferred 0 tokens and 1 app');
 	expect([ await tokensOf(org.member.account_id), await approvalsOf(org.member.account_id) ]).toEqual([ 0, 0 ]);
 	expect([ await tokensOf(org.account_id), await approvalsOf(org.account_id) ]).toEqual([ 1, 1 ]);
 });
@@ -139,10 +143,10 @@ test('credits move to the org, and a redirect from that org to the user stays', 
 
 	const page = await settingsWithOrg(browser, org, org.member);
 	const dialog = await openMigration(page, org);
-	await expect(dialog).toContainText(`${org.name}'s sponsorship credits will still be added to your personal account.`);
+	await expect(dialog).toContainText(`Sponsorship credits for ${org.name} will continue going to your personal account.`);
 	await transfer(dialog, 'Transfer credits');
 
-	await expect(page.getByText(`Moved 1,500 credits to ${org.name}`)).toBeVisible();
+	await expect(page.getByText(`Transferred 1,500 credits to ${org.name}`)).toBeVisible();
 	await expect(redirectsOf(dialog)).toHaveText(new RegExp(`${org.name}.*${org.member.github_username}`));
 	expect(await creditsOf(org.member.account_id)).toBeUndefined();
 	expect(await creditsOf(org.account_id)).toBe(1500);
@@ -160,14 +164,14 @@ test('a redirect set while acting as the org replaces an inherited one, and both
 
 	// Redirecting removes the existing redirects, so it asks first when there are any.
 	await dialog.getByRole('button', { name: 'Redirect credits' }).click();
-	await expect(dialog).toContainText(`This removes ${org.name} → ${org.member.github_username}.`);
+	await expect(dialog).toContainText(`This will remove ${org.name} → ${org.member.github_username}.`);
 	await dialog.getByRole('button', { name: 'Redirect credits' }).last().click();
 	await expect(redirects).toHaveText(new RegExp(`${org.member.github_username}.*${org.name}`));
 	await expect(dialog.getByRole('button', { name: 'Redirect credits' })).toHaveCount(0);
-	await expect(dialog).toContainText('Redirected');
+	await expect(dialog).toContainText('Sponsorship credits redirected');
 
-	await redirects.getByRole('button', { name: 'Clear' }).click();
-	await redirects.getByRole('button', { name: 'Clear' }).click();
+	await redirects.getByRole('button', { name: 'Remove' }).click();
+	await redirects.getByRole('button', { name: 'Remove' }).click();
 	await expect(redirects).toHaveCount(0);
 
 	await sql('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: org.github_id, target_github_id: org.member.external_identifier });
@@ -175,8 +179,8 @@ test('a redirect set while acting as the org replaces an inherited one, and both
 	await openMigration(page, org);
 	await expect(redirects).toHaveText(new RegExp(`${org.name}.*${org.member.github_username}`));
 
-	await redirects.getByRole('button', { name: 'Clear' }).click();
-	await redirects.getByRole('button', { name: 'Clear' }).click();
+	await redirects.getByRole('button', { name: 'Remove' }).click();
+	await redirects.getByRole('button', { name: 'Remove' }).click();
 	await expect(redirects).toHaveCount(0);
 	expect(await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).select('id')).toHaveLength(0);
 });
