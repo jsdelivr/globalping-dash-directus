@@ -6,6 +6,20 @@ import { actAsOrg, pageAs, png } from '../utils.ts';
 const orgRow = (orgId: string) => sql('gp_orgs').where({ id: orgId }).first('adoption_token', 'public_probes', 'extra_adoption_tokens');
 const roleOf = async (orgId: string, userId: string) => (await sql('gp_org_members').where({ org: orgId, user: userId }).first('role')).role as string;
 
+test('the Organization screen explains what each role can do', async ({ browser, org }) => {
+	const page = await actAsOrg(browser, org, org.admin);
+	await page.goto('/organization');
+
+	const trigger = page.getByRole('columnheader', { name: 'Role' }).getByLabel('Organization roles');
+	await trigger.hover();
+	const tooltip = page.getByRole('tooltip');
+	await expect(tooltip).toContainText('Manages the organization\'s settings, adoption token, members and their roles.');
+	await expect(tooltip).toContainText('Can\'t adopt or edit probes.');
+	await expect(tooltip).toContainText('Can\'t create tokens or run measurements on globalping.io as the organization.');
+	await page.getByRole('columnheader', { name: 'Member', exact: true }).hover();
+	await expect(tooltip).toBeHidden();
+});
+
 test.afterEach(async ({ org }) => {
 	await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).delete();
 });

@@ -128,16 +128,6 @@ test('a personal probe offers the GitHub username as the only prefix for new tag
 	await expect(popover.getByRole('combobox')).toHaveCount(1);
 });
 
-test('the role badge explains what each role can do', async ({ browser, org }) => {
-	const page = await actAsOrg(browser, org, org.viewer);
-	await page.goto('/');
-
-	await page.getByText('Viewer', { exact: true }).hover();
-	await expect(page.getByText('(your role)')).toBeVisible();
-	await expect(page.getByText(/Read-only: sees the organization's probes and credits/)).toBeVisible();
-	await expect(page.getByText(/Manages the organization/)).toBeVisible();
-});
-
 test('making the probes public writes the org setting, and only an org admin can do it', async ({ browser, org }) => {
 	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
 
