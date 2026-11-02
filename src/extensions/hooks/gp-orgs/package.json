@@ -44,6 +44,7 @@
 	},
 	"dependencies": {
 		"@directus/errors": "^2.3.1",
+		"@isaacs/ttlcache": "^1.4.1",
 		"joi": "^18.0.1"
 	}
 }

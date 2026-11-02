@@ -30,7 +30,6 @@ export default defineHook(({ filter, action }, hookContext) => {
 	// The filter runs before the access check to store file ids for action to delete.
 	filter('gp_orgs.items.delete', async (payload, _meta, context) => {
 		await collectBanners(payload as string[], context);
-		return payload;
 	});
 
 	action('gp_orgs.items.delete', async ({ keys }) => {
