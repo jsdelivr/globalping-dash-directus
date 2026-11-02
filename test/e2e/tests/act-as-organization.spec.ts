@@ -14,7 +14,35 @@ const selectedOrgsOf = async (user: User) => {
 
 const openAccounts = async (page: Page) => {
 	await page.getByLabel('Profile').click();
-	await page.getByRole('menuitem', { name: 'Act as organization' }).click();
+	await page.getByRole('menubar').press('Home');
+	const settings = page.getByRole('menuitem', { name: 'Settings', exact: true });
+	await expect(settings).toHaveAttribute('data-p-focused', 'true');
+	await expect(settings.locator('[data-pc-section=itemcontent]')).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+	const menu = page.locator('[data-pc-name=tieredmenu]');
+	expect(await menu.evaluate(el => document.documentElement.clientWidth - el.getBoundingClientRect().right)).toBeCloseTo(24, 0);
+	const collapsedWidth = await menu.evaluate(el => el.clientWidth);
+	const switcher = page.getByRole('menuitem', { name: 'Switch account', exact: true });
+	await switcher.hover();
+
+	const submenu = page.getByRole('menu', { name: 'Switch account', exact: true });
+	await expect(submenu).toBeVisible();
+	await settings.hover();
+	await expect(submenu).toBeHidden();
+	await switcher.hover();
+	await expect(submenu).toBeVisible();
+	const radius = await menu.evaluate(el => getComputedStyle(el).borderRadius);
+	await expect(submenu).toHaveCSS('border-radius', radius);
+	const mainRowHeight = await settings.locator('[data-pc-section=itemcontent]').evaluate(el => el.getBoundingClientRect().height);
+
+	for (const row of await submenu.getByRole('menuitem').all()) {
+		const height = await row.locator('[data-pc-section=itemcontent]').evaluate(el => el.getBoundingClientRect().height);
+		expect(height).toBeCloseTo(mainRowHeight, 0);
+	}
+
+	await expect(menu).toHaveJSProperty('clientWidth', collapsedWidth);
+	const itemLeft = await switcher.evaluate(el => Math.round(el.getBoundingClientRect().left));
+	await expect.poll(() => submenu.evaluate(el => Math.round(el.getBoundingClientRect().right))).toBeLessThanOrEqual(itemLeft);
+	expect(await submenu.evaluate(el => el.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
 };
 
 const openAddOrganization = async (page: Page) => {
@@ -61,6 +89,7 @@ test('acting as an org switches every list and the header to it, and back', asyn
 
 	await switchTo(page, org.name);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	await expect(page.locator('header').getByText('Account tier: Member')).toBeVisible();
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
 	await expect(page.getByText('e2e-probe-of-the-member')).toHaveCount(0);
 
@@ -74,6 +103,7 @@ test('acting as an org switches every list and the header to it, and back', asyn
 
 	await switchTo(page, org.member.github_username);
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
+	await expect(page.locator('header').getByText('Account tier: Sponsor')).toBeVisible();
 	await expect(page.getByTestId('total-credits')).toHaveText('0');
 	await page.goto('/probes');
 	await expect(page.getByText('e2e-probe-of-the-member').first()).toBeVisible();
@@ -104,9 +134,48 @@ test('the mobile menu switches the account too', async ({ browser, org }) => {
 	await page.goto('/');
 
 	await page.getByLabel('Menu').click();
+	await expect(page.locator('[data-pc-name=drawer]')).toContainText('Switch account');
+	await expect(page.locator('[data-pc-name=drawer]')).toContainText('Account tier: Sponsor');
 	await Promise.all([ page.waitForEvent('load'), page.locator('[data-pc-name="drawer"]').getByRole('button', { name: org.name }).click() ]);
 
 	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
+	await page.getByLabel('Menu').click();
+	await expect(page.locator('[data-pc-name=drawer]')).toContainText('Account tier: Member');
+	await expect(page.locator('[data-pc-name=drawer]').getByRole('button', { name: `${org.name} Member` })).toBeVisible();
+});
+
+test('the account submenu keeps keyboard and touch activation', async ({ browser, org }) => {
+	await selectOrgs(org.member, [ org.id ]);
+	const page = await pageAs(browser, org.member.email, 'user');
+	await page.goto('/');
+	await page.getByLabel('Profile').click();
+	const menubar = page.getByRole('menubar');
+	await menubar.press('Home');
+	await menubar.press('ArrowDown');
+	await menubar.press('ArrowRight');
+	await expect(page.getByRole('menuitem', { name: org.member.github_username, exact: true })).toHaveAttribute('data-p-focused', 'true');
+	await menubar.press('ArrowDown');
+	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toHaveAttribute('data-p-focused', 'true');
+	await Promise.all([ page.waitForEvent('load'), menubar.press('Enter') ]);
+	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
+
+	const context = await browser.newContext({ hasTouch: true, viewport: { width: 1280, height: 900 }, storageState: await page.context().storageState() });
+
+	try {
+		const touchPage = await context.newPage();
+		await touchPage.goto('/');
+		await touchPage.getByLabel('Profile').tap();
+		const switcher = touchPage.getByRole('menuitem', { name: 'Switch account', exact: true });
+		const submenu = touchPage.getByRole('menu', { name: 'Switch account', exact: true });
+		await switcher.hover();
+		await expect(submenu).toBeHidden();
+		await switcher.tap();
+		await expect(submenu).toBeVisible();
+		await Promise.all([ touchPage.waitForEvent('load'), touchPage.getByRole('menuitem', { name: org.member.github_username, exact: true }).tap() ]);
+		await expect.poll(() => sessionAccount(touchPage)).toBe(org.member.account_id);
+	} finally {
+		await context.close();
+	}
 });
 
 test('a user in no org is told so in "Add organization"', async ({ browser, user }) => {
@@ -126,10 +195,10 @@ test('a viewer acts as the org and sees its probes', async ({ browser, org }) =>
 	await switchTo(page, org.name);
 
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
-	await expect(page.getByText('Organization role: Viewer')).toBeVisible();
 	await openAccounts(page);
-	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toContainText('Organization viewer');
+	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toContainText('Viewer');
 	await page.keyboard.press('Escape');
+	await expect(page.locator('header').getByText('Account tier: Member')).toBeVisible();
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
 });
 
@@ -204,6 +273,10 @@ test('signing out drops the active account, and signing in again starts in the d
 });
 
 test('an admin impersonating a user acts as that user\'s orgs, without touching their own session', async ({ browser, org }) => {
+	org.name = `organization-with-long-name-${org.id.slice(0, 8)}`;
+	org.member.github_username = `member-with-a-long-name-${org.member.id.slice(0, 8)}`;
+	await sql('gp_orgs').where({ id: org.id }).update({ name: org.name });
+	await sql('directus_users').where({ id: org.member.id }).update({ github_username: org.member.github_username });
 	await selectOrgs(org.member, [ org.id ]);
 	await addProbe({ account_id: org.account_id, name: 'e2e-probe-of-the-org' });
 
@@ -223,11 +296,18 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 
 	await switchTo(page, org.name);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
-	await expect(page.getByText('Organization role: Member')).toBeVisible();
 	await openAccounts(page);
-	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toContainText('Organization member');
+	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toContainText('Member');
 	await page.keyboard.press('Escape');
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
+
+	for (const width of [ 1280, 1024 ]) {
+		await page.setViewportSize({ width, height: 900 });
+		expect(await page.locator('header').evaluate(el => el.getBoundingClientRect().right <= document.documentElement.clientWidth && el.scrollWidth <= el.clientWidth)).toBe(true);
+		await openAccounts(page);
+		await page.keyboard.press('Escape');
+	}
+
 	expect(await page.evaluate(() => sessionStorage.getItem('impersonationActiveAccount'))).toBe(`${org.member.id}:${org.account_id}`);
 	expect(await sessionAccount(page)).toBe(adminAccount);
 });
@@ -249,7 +329,7 @@ test('admin mode offers no account to act as, and leaving it brings the active o
 
 		await page.getByLabel('Profile').click();
 		await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
-		await expect(page.getByRole('menuitem', { name: 'Act as organization' })).toHaveCount(0);
+		await expect(page.getByRole('menuitem', { name: 'Switch account' })).toHaveCount(0);
 		await page.keyboard.press('Escape');
 
 		await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
