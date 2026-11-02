@@ -236,6 +236,7 @@ test('an org admin sets their own notification settings for the org, apart from 
 
 	// In the org it is acting as, the org settings are the ones shown first.
 	await expect(page.getByLabel('Notifications account')).toContainText(org.name);
+	await expect(page.getByLabel('Notifications account')).toContainText('Organization admin');
 	await page.getByText('New probe adopted').locator('..').getByRole('switch').first().click();
 	await page.getByRole('button', { name: 'Apply settings' }).click();
 
@@ -247,7 +248,9 @@ test('an org admin sets their own notification settings for the org, apart from 
 	await expect(page.getByText('New probe adopted').locator('..').getByRole('switch').first()).not.toBeChecked();
 
 	await page.getByLabel('Notifications account').click();
-	await page.locator('[data-pc-section=option]').filter({ hasText: '(personal)' }).click();
+	await page.locator('[data-pc-section=option]').filter({ hasText: 'Personal' }).click();
+	await expect(page.getByLabel('Notifications account')).toContainText(org.admin.github_username);
+	await expect(page.getByLabel('Notifications account')).toContainText('Personal');
 	await expect(page.getByText('New probe adopted').locator('..').getByRole('switch').first()).toBeChecked();
 });
 

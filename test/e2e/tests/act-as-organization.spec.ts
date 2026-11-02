@@ -127,6 +127,9 @@ test('a viewer acts as the org and sees its probes', async ({ browser, org }) =>
 
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
 	await expect(page.getByText('Organization role: Viewer')).toBeVisible();
+	await openAccounts(page);
+	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toContainText('Organization viewer');
+	await page.keyboard.press('Escape');
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
 });
 
@@ -221,6 +224,9 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 	await switchTo(page, org.name);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
 	await expect(page.getByText('Organization role: Member')).toBeVisible();
+	await openAccounts(page);
+	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toContainText('Organization member');
+	await page.keyboard.press('Escape');
 	await expect(page.getByText('e2e-probe-of-the-org').first()).toBeVisible();
 	expect(await page.evaluate(() => sessionStorage.getItem('impersonationActiveAccount'))).toBe(`${org.member.id}:${org.account_id}`);
 	expect(await sessionAccount(page)).toBe(adminAccount);
