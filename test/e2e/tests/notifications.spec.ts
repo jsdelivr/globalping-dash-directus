@@ -236,7 +236,7 @@ test('an org admin sets their own notification settings for the org, apart from 
 
 	// In the org it is acting as, the org settings are the ones shown first.
 	await expect(page.getByLabel('Notifications account')).toContainText(org.name);
-	await expect(page.getByLabel('Notifications account')).toContainText('Organization admin');
+	await expect(page.getByLabel('Notifications account')).toContainText('Admin');
 	await page.getByText('New probe adopted').locator('..').getByRole('switch').first().click();
 	await page.getByRole('button', { name: 'Apply settings' }).click();
 
