@@ -7,6 +7,13 @@ import type { ExtraAdoptionToken } from '../types.js';
 const InvalidEntriesError = createError('INVALID_PAYLOAD_ERROR', '"extra_adoption_tokens" must be a list of { github_username, token }.', 400);
 const MultipleOrgsError = createError('INVALID_PAYLOAD_ERROR', '"extra_adoption_tokens" can only be updated one org at a time.', 400);
 const AddedEntriesError = createError('INVALID_PAYLOAD_ERROR', '"extra_adoption_tokens" accepts removals only.', 400);
+const InvalidWebsiteError = createError('INVALID_PAYLOAD_ERROR', '"website" must be a valid https:// URL.', 400);
+
+export const validateWebsite = (website: unknown) => {
+	if (typeof website === 'string' && !URL.canParse(website)) {
+		throw new InvalidWebsiteError();
+	}
+};
 
 const entriesSchema = Joi.array<ExtraAdoptionToken[]>().items(Joi.object({
 	github_username: Joi.string().required(),
@@ -26,11 +33,12 @@ export const validateExtraAdoptionTokens = async (value: unknown, orgIds: string
 		throw error;
 	}
 
-	const stored = new Set((await getExtraAdoptionTokens(orgId, context)).map(entry => entry.token));
-	const next = new Set(entries.map(entry => entry.token));
+	const getKey = (entry: ExtraAdoptionToken) => JSON.stringify([ entry.github_username, entry.token ]);
+	const stored = new Set((await getExtraAdoptionTokens(orgId, context)).map(getKey));
+	const next = new Set(entries.map(getKey));
 
 	const duplicated = next.size !== entries.length;
-	const added = [ ...next ].some(token => !stored.has(token));
+	const added = [ ...next ].some(key => !stored.has(key));
 
 	if (duplicated || added) {
 		throw new AddedEntriesError();

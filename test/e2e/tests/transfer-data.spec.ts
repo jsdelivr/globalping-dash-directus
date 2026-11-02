@@ -108,6 +108,17 @@ test('when the same app is approved in both accounts, the org approval is kept a
 	expect(JSON.parse(approvals[0].scopes)).toEqual([ 'profile' ]);
 });
 
+test('moving only user approvals that the org already has deletes them instead of failing', async ({ org, actors }) => {
+	await demoteTheAdmin(org);
+
+	const app = await addApplication({ accountId: org.member.account_id, userId: org.member.id });
+	await addApplication({ accountId: org.account_id, userId: org.member.id, appId: app });
+	await sql('gp_tokens').where({ account_id: org.member.account_id }).delete();
+
+	expect((await transfer(actors.member, 'tokens', org.id)).data).toMatchObject({ tokens: 0, apps: 1 });
+	expect(await sql('gp_apps_approvals').where({ user_created: org.member.id }).pluck('account_id')).toEqual([ org.account_id ]);
+});
+
 test('a member can not move probes when the org already has an admin, but can move tokens and credits', async ({ org, actors }) => {
 	await addProbe({ userId: org.member.id, account_id: org.member.account_id });
 	await addApplication({ accountId: org.member.account_id, userId: org.member.id });

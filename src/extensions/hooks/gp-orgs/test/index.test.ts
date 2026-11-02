@@ -163,6 +163,12 @@ describe('org hooks', () => {
 		expect(await rejection({ extra_adoption_tokens: [ ALICE, ALICE ] })).to.equal('"extra_adoption_tokens" accepts removals only.');
 	});
 
+	it('should reject changing the username of a stored entry', async () => {
+		stored(ALICE, BOB);
+
+		expect(await rejection({ extra_adoption_tokens: [ ALICE, { ...BOB, github_username: 'mallory' }] })).to.equal('"extra_adoption_tokens" accepts removals only.');
+	});
+
 	it('should reject an update that spans more than one org', async () => {
 		const message = '"extra_adoption_tokens" can only be updated one org at a time.';
 
@@ -177,6 +183,13 @@ describe('org hooks', () => {
 		}
 
 		expect(database.callCount).to.equal(0);
+	});
+
+	it('should reject a website that the URL parser rejects, on create and update', async () => {
+		await update({ website: 'https://example.com:8443/x' });
+		await update({ website: null });
+		expect(await rejection({ website: 'https://example.com:abc' })).to.equal('"website" must be a valid https:// URL.');
+		expect(() => callbacks.filter['gp_orgs.items.create']?.({ website: 'https://example.com:abc' }, {}, { accountability, database })).to.throw('"website" must be a valid https:// URL.');
 	});
 
 	const deleteOrgs = async (keys: string[]) => {

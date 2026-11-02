@@ -5,8 +5,13 @@ import type { Transfer } from '../types.js';
 const NoTokensError = createError('INVALID_PAYLOAD_ERROR', 'You have no tokens or app approvals to transfer.', 400);
 
 export const transferTokens = async ({ userId, userAccountId, orgAccountId }: Transfer, trx: Knex.Transaction) => {
-	// Counted the way the dashboard lists them: API tokens, and apps by the app tokens they have.
-	const { apps } = await trx('gp_tokens').where({ account_id: userAccountId }).countDistinct({ apps: 'app_id' }).first() as { apps: number };
+	const [ [{ apps }] ] = (await trx.raw(`
+		SELECT COUNT(DISTINCT app) AS apps FROM (
+			SELECT app_id AS app FROM gp_tokens WHERE account_id = :account AND app_id IS NOT NULL
+			UNION SELECT app FROM gp_apps_approvals WHERE user_created = :user AND account_id = :account
+		) AS apps
+	`, { user: userId, account: userAccountId })) as [[{ apps: number }]];
+
 	const tokens = await trx('gp_tokens').where({ account_id: userAccountId }).whereNull('app_id').update({ account_id: orgAccountId });
 	await trx('gp_tokens').where({ account_id: userAccountId }).update({ account_id: orgAccountId });
 
@@ -18,13 +23,13 @@ export const transferTokens = async ({ userId, userAccountId, orgAccountId }: Tr
 	`, { user: userId, userAccount: userAccountId, org: orgAccountId });
 
 	// 2. Move other approvals to the org.
-	const moved = await trx('gp_apps_approvals')
+	await trx('gp_apps_approvals')
 		.where({ user_created: userId, account_id: userAccountId })
 		.update({ account_id: orgAccountId });
 
-	if (!tokens && !apps && !moved) {
+	if (!tokens && !apps) {
 		throw new NoTokensError();
 	}
 
-	return { tokens, apps: Number(apps) };
+	return { tokens, apps };
 };

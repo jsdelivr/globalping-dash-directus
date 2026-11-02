@@ -1,7 +1,7 @@
 import { defineHook } from '@directus/extensions-sdk';
 import { addAdoptionTokens } from './actions/add-adoption-tokens.js';
 import { collectBanners, deleteBanners } from './actions/delete-banners.js';
-import { validateExtraAdoptionTokens } from './actions/validate.js';
+import { validateExtraAdoptionTokens, validateWebsite } from './actions/validate.js';
 import type { Org } from './types.js';
 
 export default defineHook(({ filter, action }, hookContext) => {
@@ -19,8 +19,13 @@ export default defineHook(({ filter, action }, hookContext) => {
 		return payload;
 	});
 
+	filter('gp_orgs.items.create', (payload) => {
+		validateWebsite((payload as Record<string, unknown>).website);
+	});
+
 	filter('gp_orgs.items.update', async (payload, meta, context) => {
 		const fields = payload as Record<string, unknown>;
+		validateWebsite(fields.website);
 		'extra_adoption_tokens' in fields && await validateExtraAdoptionTokens(fields.extra_adoption_tokens, meta.keys as string[], context);
 	});
 

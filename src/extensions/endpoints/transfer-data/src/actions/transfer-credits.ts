@@ -5,7 +5,7 @@ import type { Transfer } from '../types.js';
 const NoCreditsError = createError('INVALID_PAYLOAD_ERROR', 'You have no credits to transfer.', 400);
 
 export const transferCredits = async ({ userAccountId, orgAccountId, userGithubId, orgGithubId }: Transfer, trx: Knex.Transaction) => {
-	const credits = await trx('gp_credits').where({ account_id: userAccountId }).first<{ amount: number } | undefined>('amount');
+	const credits = await trx('gp_credits').where({ account_id: userAccountId }).forUpdate().first<{ amount: number } | undefined>('amount');
 
 	if (credits?.amount) {
 		await trx.raw(`

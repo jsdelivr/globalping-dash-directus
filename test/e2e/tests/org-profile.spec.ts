@@ -33,7 +33,7 @@ test('the website must be an https URL and the description at most 200 character
 
 	await actors.admin.patch(`/items/gp_orgs/${org.id}`, { website: null });
 
-	for (const website of [ 'http://example.com', 'https://localhost', 'https://exa mple.com', 'example.com', 'https://google.com@evil.com', '' ]) {
+	for (const website of [ 'http://example.com', 'https://localhost', 'https://exa mple.com', 'example.com', 'https://google.com@evil.com', 'https://example.com:abc', '' ]) {
 		expect((await actors.admin.patch(`/items/gp_orgs/${org.id}`, { website })).status, website).toBe(400);
 	}
 
