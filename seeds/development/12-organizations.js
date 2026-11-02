@@ -46,7 +46,7 @@ const ORGS = [
 		sponsors: [{ github_id: '1234567890', github_login: 'john' }],
 		members: [
 			{ github_username: 'john', role: 'admin' },
-			{ github_username: 'turk', role: 'admin', default_account: true },
+			{ github_username: 'turk', role: 'admin' },
 			{ github_username: 'john2', role: 'member' },
 			{ github_username: 'turk3', role: 'member' },
 			{ github_username: 'john5', role: 'viewer' },
@@ -108,10 +108,6 @@ export const seed = async (knex) => {
 				role,
 				notification_preferences: member.notification_preferences && JSON.stringify(member.notification_preferences),
 			});
-
-			if (member.default_account) {
-				await knex('directus_users').where({ id: userId }).update({ default_account: orgAccount.id });
-			}
 
 			// Existing users (john, turk) keep the items from earlier seeds.
 			if (!member.external_identifier) {
