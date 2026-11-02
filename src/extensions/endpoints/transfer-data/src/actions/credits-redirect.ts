@@ -3,6 +3,10 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import type { Knex } from 'knex';
 
 const getNames = async (githubIds: string[], database: Knex) => {
+	if (!githubIds.length) {
+		return new Map<string, string | null>();
+	}
+
 	const [ users, orgs ] = await Promise.all([
 		database('directus_users').whereIn('external_identifier', githubIds).select<{ external_identifier: string; github_username: string | null }[]>('external_identifier', 'github_username'),
 		database('gp_orgs').whereIn('github_id', githubIds).select<{ github_id: string; name: string }[]>('github_id', 'name'),
