@@ -133,7 +133,7 @@ test('an org admin edits the org website and description', async ({ browser, org
 
 	await page.getByLabel('Website URL').fill('https://john-org');
 	await page.getByLabel('Website URL').blur();
-	await expect(page.getByText('Enter a full URL, e.g. https://example.com')).toBeVisible();
+	await expect(page.getByText('Enter a full URL, e.g., https://example.com')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Apply settings' })).toBeDisabled();
 
 	await page.getByLabel('Website URL').fill('https://example.org/about');

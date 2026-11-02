@@ -65,7 +65,7 @@ test('an org admin picks the org: it is selected, becomes the default and active
 	await dialog.locator('#onboarding-org-public-probes').check();
 	await dialog.getByLabel('Website URL').fill('example.com');
 	await dialog.getByLabel('Website URL').blur();
-	await expect(dialog).toContainText('Enter a full URL, e.g. https://example.com');
+	await expect(dialog).toContainText('Enter a full URL, e.g., https://example.com');
 	await expect(dialog.getByRole('button', { name: 'Apply' })).toBeDisabled();
 	await dialog.getByLabel('Website URL').fill('https://example.com');
 	await dialog.getByLabel('Description').fill('We measure the internet.');
@@ -85,6 +85,7 @@ test('an org admin adds a banner during the onboarding, which is uploaded on "Ap
 	const page = await onboard(browser, org.admin);
 	await dialogOf(page);
 	const dialog = await pickOrg(page, org);
+	await dialog.locator('#onboarding-org-public-probes').check();
 	const pick = (width: number, height: number) => dialog.getByLabel('Banner file').setInputFiles({ name: 'banner.png', mimeType: 'image/png', buffer: png(width, height) });
 
 	await pick(1224, 100);
