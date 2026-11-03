@@ -92,6 +92,21 @@ test('an org admin updating an outdated org probe gets the org adoption token', 
 	await expect(dialog).toContainText(`GP_ADOPTION_TOKEN=${org.adoption_token}`);
 });
 
+test('the update guide opened from a notification embeds the token of the notified account, not of the active one', async ({ browser, org }) => {
+	for (const [ page, accountId, owner, token ] of [
+		[ await actAsOrg(browser, org, org.admin), org.admin.account_id, 'your', await personalAdoptionToken(org.admin) ],
+		[ await pageAs(browser, org.admin.email, 'user'), org.account_id, org.name, org.adoption_token ],
+	] as const) {
+		await page.goto(`/probes?view=update-a-probe&account=${accountId}`);
+
+		const dialog = page.getByRole('dialog');
+		await expect(dialog).toContainText(`includes ${owner} secret adoption token`);
+		await expect(dialog).toContainText(`GP_ADOPTION_TOKEN=${token}`);
+
+		await page.context().close();
+	}
+});
+
 test('an org probe offers the org name as the only prefix for new tags, and keeps the prefix of a saved one', async ({ browser, org }) => {
 	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe', tags: JSON.stringify([{ prefix: org.admin.github_username, value: 'legacy-tag' }]) });
 

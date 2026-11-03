@@ -103,7 +103,7 @@ describe('Adopted probes status cron handler', () => {
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
 			subject: 'The container running your probe edge-paris has outdated software',
-			message: 'Your probe [edge-paris](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			message: 'Your probe [edge-paris](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe&account=account-id) to update it manually.',
 		});
 	});
 
@@ -129,7 +129,7 @@ describe('Adopted probes status cron handler', () => {
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
 			subject: 'The container running your probe ][not the probe](https://another.link)[probe has outdated software',
-			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe&account=account-id) to update it manually.',
 		});
 	});
 

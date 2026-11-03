@@ -88,7 +88,7 @@ const notifySingleSoftwareProbe = async (probe: ProbeInfo, accountId: string, co
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: probe.name ? `The container running your probe ${probe.name} has outdated software` : 'Your probe container is running an outdated software version',
-		message: `Your ${getProbeLink(probe)} is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.`,
+		message: `Your ${getProbeLink(probe)} is running an outdated software version and we couldn't update it automatically. Please follow [our guide](/probes?view=update-a-probe&account=${accountId}) to update it manually.`,
 	}, context);
 
 	return probe.id;
@@ -121,7 +121,7 @@ const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], accountId: stri
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
 		secondary_type: env.TARGET_NODE_VERSION,
 		subject: 'Your probe containers are running an outdated software version',
-		message: `Some of your probes are running an outdated software version and we couldn't update them automatically. Please follow [our guide](/probes?view=update-a-probe) to update them manually:\n${lines.join('\n')}`,
+		message: `Some of your probes are running an outdated software version and we couldn't update them automatically. Please follow [our guide](/probes?view=update-a-probe&account=${accountId}) to update them manually:\n${lines.join('\n')}`,
 	}, context);
 
 	return probes.map(({ id }) => id);
