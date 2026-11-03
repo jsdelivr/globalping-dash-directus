@@ -234,24 +234,30 @@ test('an org admin sets their own notification settings for the org, apart from 
 	const page = await actAsOrg(browser, org, org.admin);
 	await page.goto('/settings');
 
-	// In the org it is acting as, the org settings are the ones shown first.
-	await expect(page.getByLabel('Notifications account')).toContainText(org.name);
-	await expect(page.getByLabel('Notifications account')).toContainText('Admin');
-	await page.getByText('New probe adopted').locator('..').getByRole('switch').first().click();
-	await page.getByRole('button', { name: 'Apply settings' }).click();
+	// Acting as the org, the settings page shows the org settings, and the notifications are set from the personal ones.
+	await expect(page.getByRole('heading', { name: 'Organization settings', level: 1 })).toBeVisible();
+	await expect(page.getByLabel('Notifications account')).toHaveCount(0);
+
+	const personalPage = await pageAs(browser, org.admin.email, 'user');
+	await personalPage.goto('/settings');
+	await expect(personalPage.getByLabel('Notifications account')).toContainText(org.admin.github_username);
+	await expect(personalPage.getByLabel('Notifications account')).toContainText('Personal');
+	await personalPage.getByLabel('Notifications account').click();
+	await personalPage.locator('[data-pc-section=option]').filter({ hasText: org.name }).click();
+	await expect(personalPage.getByLabel('Notifications account')).toContainText('Admin');
+	await personalPage.getByText('New probe adopted').locator('..').getByRole('switch').first().click();
+	await personalPage.getByRole('button', { name: 'Apply settings' }).click();
 
 	await expect.poll(async () => (await membershipPreferences(org, org.admin.id))?.probe_adopted?.enabled).toBe(false);
 	const personal = await client('directus_users').where({ id: org.admin.id }).first('notification_preferences');
 	expect(JSON.parse(personal.notification_preferences).probe_adopted.enabled).toBe(true);
 
-	await page.reload();
-	await expect(page.getByText('New probe adopted').locator('..').getByRole('switch').first()).not.toBeChecked();
+	await personalPage.reload();
+	await expect(personalPage.getByText('New probe adopted').locator('..').getByRole('switch').first()).toBeChecked();
 
-	await page.getByLabel('Notifications account').click();
-	await page.locator('[data-pc-section=option]').filter({ hasText: 'Personal' }).click();
-	await expect(page.getByLabel('Notifications account')).toContainText(org.admin.github_username);
-	await expect(page.getByLabel('Notifications account')).toContainText('Personal');
-	await expect(page.getByText('New probe adopted').locator('..').getByRole('switch').first()).toBeChecked();
+	await personalPage.getByLabel('Notifications account').click();
+	await personalPage.locator('[data-pc-section=option]').filter({ hasText: org.name }).click();
+	await expect(personalPage.getByText('New probe adopted').locator('..').getByRole('switch').first()).not.toBeChecked();
 });
 
 test('a member of an org has only the personal notification settings', async ({ browser, org }) => {
