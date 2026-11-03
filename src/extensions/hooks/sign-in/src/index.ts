@@ -1,3 +1,4 @@
+import { setTimeout } from 'node:timers/promises';
 import type { HookExtensionContext } from '@directus/extensions';
 import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
@@ -72,10 +73,8 @@ export default defineHook(({ filter }, context) => {
 			return payload;
 		}
 
-		// This can't be done in action('auth.login') because it is never emitted if user opens dashboard every day and never logs out.
-		if (provider === 'github') {
-			syncGithubData(userId, context).catch(error => context.logger.error(error));
-		}
+		// syncGithubData can't be done in action('auth.login') because it is never emitted if user opens dashboard every day and never logs out.
+		const sync = provider === 'github' ? syncGithubData(userId, context).catch(error => context.logger.error(error)) : null;
 
 		const itemsService = new ItemsService('directus_users', {
 			schema: await getSchema(),
@@ -90,6 +89,11 @@ export default defineHook(({ filter }, context) => {
 		// No `account` before the schema is applied, e.g. the admin login in scripts/init.sh.
 		if (!user.account) {
 			return payload;
+		}
+
+		// The onboarding offers the orgs of the user, so until a default account is picked the sign-in waits for the sync.
+		if (sync && !user.default_account) {
+			await Promise.race([ sync, setTimeout(3000) ]);
 		}
 
 		payload.user_account_id = user.account[0]!;
