@@ -12,6 +12,7 @@ const SOURCE_ID_TO_TARGET_ID = {
 	46052696: '628622',
 	36424661: '59905',
 	177108879: '209476416',
+	352555837: '1834071',
 };
 
 export async function up (knex) {
