@@ -8,13 +8,13 @@ const ViewerError = createError('FORBIDDEN', 'Viewers can not transfer anything 
 const OrgHasAdminError = createError('FORBIDDEN', 'Probes can only be moved into an organization that has no admin yet.', 403);
 
 export const authorize = async (orgId: string, userId: string, operation: Operation, trx: Knex.Transaction): Promise<Transfer> => {
-	const org = await trx('gp_orgs').where({ id: orgId }).first<{ github_id: string } | undefined>('github_id');
+	const org = await trx('gp_orgs').where({ id: orgId }).forUpdate().first<{ github_id: string } | undefined>('github_id');
 
 	if (!org) {
 		throw new OrgNotFoundError();
 	}
 
-	const membership = await trx('gp_org_members').where({ org: orgId, user: userId }).first<{ role: string } | undefined>('role');
+	const membership = await trx('gp_org_members').where({ org: orgId, user: userId }).forUpdate().first<{ role: string } | undefined>('role');
 
 	if (!membership) {
 		throw new NotAMemberError();

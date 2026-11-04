@@ -17,7 +17,7 @@ type Request = ExpressRequest & {
 	accountability: NonNullable<EventContext['accountability']>;
 };
 
-const OrgRedirectError = createError('INVALID_PAYLOAD_ERROR', 'An organization can not redirect credits, only user can.', 400);
+const OrgRedirectError = createError('INVALID_PAYLOAD_ERROR', 'An organization can not redirect credits, only a user can.', 400);
 const ForeignRedirectError = createError('FORBIDDEN', 'A redirect can only be removed by one of its two sides.', 403);
 
 const accountability = Joi.object({

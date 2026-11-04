@@ -14,8 +14,7 @@ const settingsWithOrg = async (browser: Browser, org: Org, user: User) => {
 };
 
 const openMigration = async (page: Page, org: Org) => {
-	await page.getByRole('button', { name: 'Transfer to an organization' }).click();
-	const dialog = page.getByRole('dialog');
+	const dialog = page.locator('.rounded-xl').filter({ has: page.getByRole('heading', { name: 'Transfer to an organization' }) });
 	const combobox = dialog.getByRole('combobox');
 
 	await expect(combobox).toContainText('Select an organization');
@@ -26,13 +25,12 @@ const openMigration = async (page: Page, org: Org) => {
 	return dialog;
 };
 
-// The three transfers ask for an inline confirmation in their row before they run.
+// The three transfers ask for a confirmation in a dialog before they run.
 const transfer = async (dialog: Locator, button: string) => {
 	await dialog.getByRole('button', { name: button }).click();
-	await expect(dialog).toContainText('This can\'t be undone.');
-
-	// The row keeps its own button, disabled, next to the confirming one.
-	await dialog.getByRole('button', { name: button }).last().click();
+	const confirmation = dialog.page().getByRole('dialog');
+	await expect(confirmation).toContainText('This can\'t be undone.');
+	await confirmation.getByRole('button', { name: button }).click();
 };
 
 const probesOf = async (accountId: string) => (await sql('gp_probes').where({ account_id: accountId }).select('id')).map(({ id }) => id as string);
@@ -48,7 +46,7 @@ test.afterEach(async ({ org }) => {
 
 test('migration lists admin and member organizations independently of the account menu', async ({ browser, org }) => {
 	const noOrgs = 'You must be an admin or a member of an organization to transfer resources.';
-	const migrate = (page: Page) => page.getByRole('button', { name: 'Transfer to an organization' });
+	const migrate = (page: Page) => page.locator('#migrate-org');
 
 	const viewerPage = await settingsWithOrg(browser, org, org.viewer);
 	await expect(migrate(viewerPage)).toBeDisabled();
@@ -82,7 +80,6 @@ test('probes move into an org with no admin, the user becomes its admin and gets
 	expect(await probesOf(org.member.account_id)).toEqual([]);
 	expect(await probesOf(org.account_id)).toEqual([ probeId ]);
 
-	await page.keyboard.press('Escape');
 	const newToken = (await sql('directus_users').where({ id: org.member.id }).first('adoption_token')).adoption_token;
 	await expect(page.locator('#adoption-token')).toHaveValue(newToken);
 });
@@ -164,14 +161,14 @@ test('a redirect set while acting as the org replaces an inherited one, and both
 
 	// Redirecting removes the existing redirects, so it asks first when there are any.
 	await dialog.getByRole('button', { name: 'Redirect credits' }).click();
-	await expect(dialog).toContainText(`This will remove ${org.name} → ${org.member.github_username}.`);
-	await dialog.getByRole('button', { name: 'Redirect credits' }).last().click();
+	await expect(page.getByRole('dialog')).toContainText(`This will remove ${org.name} → ${org.member.github_username}.`);
+	await page.getByRole('dialog').getByRole('button', { name: 'Redirect credits' }).click();
 	await expect(redirects).toHaveText(new RegExp(`${org.member.github_username}.*${org.name}`));
 	await expect(dialog.getByRole('button', { name: 'Redirect credits' })).toHaveCount(0);
 	await expect(dialog).toContainText('Sponsorship credits redirected');
 
 	await redirects.getByRole('button', { name: 'Remove' }).click();
-	await redirects.getByRole('button', { name: 'Remove' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click();
 	await expect(redirects).toHaveCount(0);
 
 	await sql('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: org.github_id, target_github_id: org.member.external_identifier });
@@ -180,7 +177,7 @@ test('a redirect set while acting as the org replaces an inherited one, and both
 	await expect(redirects).toHaveText(new RegExp(`${org.name}.*${org.member.github_username}`));
 
 	await redirects.getByRole('button', { name: 'Remove' }).click();
-	await redirects.getByRole('button', { name: 'Remove' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click();
 	await expect(redirects).toHaveCount(0);
 	expect(await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).select('id')).toHaveLength(0);
 });

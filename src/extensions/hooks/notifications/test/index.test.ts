@@ -289,7 +289,7 @@ describe('notifications hooks', () => {
 			createMany.resolves([ 'notification-id' ]);
 		});
 
-		it('should reject a payload with neither recipient nor account', async () => {
+		it('should reject a payload with neither recipient nor account_id', async () => {
 			try {
 				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test' }, {}, eventContext);
 				expect.fail('should throw');
@@ -302,7 +302,7 @@ describe('notifications hooks', () => {
 			first.resolves(undefined);
 
 			try {
-				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'ghost' }, {}, eventContext);
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account_id: 'ghost' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Account for notification not found.');
@@ -312,10 +312,10 @@ describe('notifications hooks', () => {
 		it('should resolve a user account into the recipient', async () => {
 			first.resolves({ user: 'user-1', org: null });
 
-			const result = await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+			const result = await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account_id: 'account-1' }, {}, eventContext);
 
 			expect(result.recipient).to.equal('user-1');
-			expect(result.account).to.equal(undefined);
+			expect(result.account_id).to.equal('account-1');
 			expect(result.email_status).to.equal('not-required');
 		});
 
@@ -326,7 +326,7 @@ describe('notifications hooks', () => {
 				{ user: { id: 'admin-1', email: 'a1@example.com', selected_orgs: [ 'org-1' ] }, notification_preferences: { low_credits: { enabled: true, parameter: 8000 } } },
 			]);
 
-			const result = await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+			const result = await filter()({ type: 'low_credits', message: 'test', subject: 'test', account_id: 'account-1', recipient: 'admin-1' }, {}, eventContext);
 
 			// The personal preferences of that user are not read at all.
 			expect(readOne.callCount).to.equal(0);
@@ -337,6 +337,7 @@ describe('notifications hooks', () => {
 				message: 'test',
 				subject: 'test',
 				recipient: 'admin-1',
+				account_id: 'account-1',
 				email_status: 'pending',
 			});
 		});
@@ -349,7 +350,7 @@ describe('notifications hooks', () => {
 			]);
 
 			try {
-				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account_id: 'account-1', recipient: 'admin-1' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
@@ -364,7 +365,7 @@ describe('notifications hooks', () => {
 			]);
 
 			try {
-				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account_id: 'account-1', recipient: 'admin-1' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
@@ -376,7 +377,7 @@ describe('notifications hooks', () => {
 			readByQuery.resolves([]);
 
 			try {
-				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account: 'account-1', recipient: 'admin-1' }, {}, eventContext);
+				await filter()({ type: 'low_credits', message: 'test', subject: 'test', account_id: 'account-1', recipient: 'admin-1' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
@@ -387,7 +388,7 @@ describe('notifications hooks', () => {
 			first.resolves({ user: 'user-1', org: null });
 
 			try {
-				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1', recipient: 'user-2' }, {}, eventContext);
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account_id: 'account-1', recipient: 'user-2' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('The recipient does not belong to the account.');
@@ -403,7 +404,7 @@ describe('notifications hooks', () => {
 			]);
 
 			try {
-				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1', collection: 'gp_probes', item: 'probe-1', secondary_type: 'v20.13.0' }, {}, eventContext);
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account_id: 'account-1', collection: 'gp_probes', item: 'probe-1', secondary_type: 'v20.13.0' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
@@ -420,6 +421,7 @@ describe('notifications hooks', () => {
 				collection: 'gp_probes',
 				item: 'probe-1',
 				secondary_type: 'v20.13.0',
+				account_id: 'account-1',
 				email_status: 'not-required',
 			}]);
 
@@ -435,7 +437,7 @@ describe('notifications hooks', () => {
 			]);
 
 			try {
-				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+				await filter()({ type: 'probe_adopted', message: 'test', subject: 'test', account_id: 'account-1' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');
@@ -453,7 +455,7 @@ describe('notifications hooks', () => {
 			]);
 
 			try {
-				await filter()({ type: 'offline_probe', message: 'test', subject: 'test', account: 'account-1' }, {}, eventContext);
+				await filter()({ type: 'offline_probe', message: 'test', subject: 'test', account_id: 'account-1' }, {}, eventContext);
 				expect.fail('should throw');
 			} catch (err: any) {
 				expect(err.message).to.equal('Notification cancelled by user preferences.');

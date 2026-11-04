@@ -8,7 +8,7 @@ const roleOf = async (orgId: string, userId: string) => (await sql('gp_org_membe
 
 test('the Organization screen explains what each role can do', async ({ browser, org }) => {
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	const trigger = page.getByRole('columnheader', { name: 'Role' }).getByLabel('Organization roles');
 	await trigger.hover();
@@ -27,7 +27,7 @@ test.afterEach(async ({ org }) => {
 test('Settings shows the organization settings to an org admin, and the personal ones to anyone else', async ({ browser, org }) => {
 	for (const [ user, isAdmin ] of [ [ org.admin, true ], [ org.member, false ], [ org.viewer, false ] ] as const) {
 		const page = await actAsOrg(browser, org, user);
-		await page.goto('/settings');
+		await page.goto('/settings?tab=organization');
 
 		await expect(page.getByRole('heading', { name: /settings$/i, level: 1 })).toBeVisible();
 		await expect(page.getByRole('heading', { name: 'General' })).toHaveCount(isAdmin ? 1 : 0);
@@ -41,9 +41,30 @@ test('Settings shows the organization settings to an org admin, and the personal
 	await expect(page.getByRole('heading', { name: 'General' })).toHaveCount(0);
 });
 
-test('an org admin regenerates the adoption token and makes the probes public with "Apply settings"', async ({ browser, org }) => {
+test('an org admin switches between the personal and organization settings, and unsaved changes are confirmed first', async ({ browser, org }) => {
 	const page = await actAsOrg(browser, org, org.admin);
 	await page.goto('/settings');
+	const unsavedChanges = page.getByRole('dialog', { name: 'Unsaved changes' });
+
+	await expect(page.getByRole('tab', { name: 'Personal' })).toHaveAttribute('aria-selected', 'true');
+	await page.getByRole('tab', { name: 'Organization' }).click();
+	await expect(page).toHaveURL(/\/settings\?tab=organization$/);
+
+	await page.getByLabel('Website URL').fill('https://example.org');
+	await page.getByRole('tab', { name: 'Personal' }).click();
+	await unsavedChanges.getByRole('button', { name: 'Cancel' }).click();
+	await expect(page.getByRole('tab', { name: 'Organization' })).toHaveAttribute('aria-selected', 'true');
+	await expect(page.getByLabel('Website URL')).toHaveValue('https://example.org');
+
+	await page.getByRole('tab', { name: 'Personal' }).click();
+	await unsavedChanges.getByRole('button', { name: 'Leave' }).click();
+	await expect(page).toHaveURL(/\/settings$/);
+	await expect(page.getByRole('heading', { name: 'Account details' })).toBeVisible();
+});
+
+test('an org admin regenerates the adoption token and makes the probes public with "Apply settings"', async ({ browser, org }) => {
+	const page = await actAsOrg(browser, org, org.admin);
+	await page.goto('/settings?tab=organization');
 
 	const tokenInput = page.locator('#org-adoption-token');
 	await expect(tokenInput).toHaveValue(org.adoption_token);
@@ -73,7 +94,7 @@ test('an org admin removes an extra adoption token after confirming', async ({ b
 	});
 
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	await expect(page.getByText('e2e-old-member')).toBeVisible();
 	await expect(page.getByText('e2eold••••0000')).toBeVisible();
@@ -90,7 +111,7 @@ test('an org admin sees the credits redirect of the org and clears it after conf
 	await sql('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: org.github_id, target_github_id: org.member.external_identifier });
 
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	const redirect = page.getByRole('listitem').filter({ hasText: org.member.github_username });
 	await expect(redirect).toContainText(org.name);
@@ -102,19 +123,21 @@ test('an org admin sees the credits redirect of the org and clears it after conf
 	expect(await sql('gp_credits_redirects').where({ source_github_id: org.github_id })).toHaveLength(0);
 });
 
-test('an org admin changes roles: promotion applies at once, demotion from admin or to viewer only after a warning', async ({ browser, org }) => {
+test('an org admin changes roles after confirming, with a warning on demotion from admin or to viewer', async ({ browser, org }) => {
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	await expect(page.getByRole('row').filter({ hasText: '(you)' })).toContainText(org.admin.github_username);
 	await expect(page.getByLabel(`Role of ${org.admin.github_username}`)).toHaveCount(0);
 
 	await page.getByLabel(`Role of ${org.viewer.github_username}`).click();
 	await page.getByRole('option', { name: 'Member' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Change to member' }).click();
 	await expect.poll(() => roleOf(org.id, org.viewer.id)).toBe('member');
 
 	await page.getByLabel(`Role of ${org.viewer.github_username}`).click();
 	await page.getByRole('option', { name: 'Admin' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Change to admin' }).click();
 	await expect.poll(() => roleOf(org.id, org.viewer.id)).toBe('admin');
 
 	await page.getByLabel(`Role of ${org.viewer.github_username}`).click();
@@ -139,7 +162,7 @@ test('an org admin changes roles: promotion applies at once, demotion from admin
 
 test('an org admin edits the org website and description', async ({ browser, org }) => {
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	await page.getByLabel('Website URL').fill('https://john-org');
 	await page.getByLabel('Website URL').blur();
@@ -157,7 +180,7 @@ test('an org admin edits the org website and description', async ({ browser, org
 test('an org admin stages a banner and it is uploaded, replaced and removed with "Apply settings"', async ({ browser, org }) => {
 	const bannerOf = async () => (await sql('gp_orgs').where({ id: org.id }).first('banner')).banner as string | null;
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	const preview = page.getByRole('img', { name: 'Banner preview' });
 	const apply = page.getByRole('button', { name: 'Apply settings' });

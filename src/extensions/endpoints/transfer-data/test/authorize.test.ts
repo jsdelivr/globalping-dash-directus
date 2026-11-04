@@ -14,7 +14,7 @@ describe('authorize', () => {
 
 	const trx = ((table: string) => {
 		const filters: Record<string, unknown>[] = [];
-		const builder: Record<string, unknown> = { update };
+		const builder: Record<string, unknown> = { update, forUpdate: () => builder };
 
 		[ 'where', 'join', 'whereIn' ].forEach((method) => {
 			builder[method] = (filter: Record<string, unknown>) => {

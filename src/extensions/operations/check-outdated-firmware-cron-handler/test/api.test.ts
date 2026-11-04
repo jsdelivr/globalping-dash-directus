@@ -71,7 +71,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
 		expect(createOne.args[0]?.[0]).to.deep.equal({
-			account: 'account-id',
+			account_id: 'account-id',
 			item: 'probe-id',
 			collection: 'gp_probes',
 			type: 'outdated_firmware',
@@ -97,13 +97,13 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
 		expect(createOne.args[0]?.[0]).to.deep.equal({
-			account: 'account-id',
+			account_id: 'account-id',
 			item: 'probe-id',
 			collection: 'gp_probes',
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
 			subject: 'The container running your probe edge-paris has outdated software',
-			message: 'Your probe [edge-paris](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			message: 'Your probe [edge-paris](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe&account=account-id) to update it manually.',
 		});
 	});
 
@@ -123,13 +123,13 @@ describe('Adopted probes status cron handler', () => {
 		expect(result).to.deep.equal([ 'probe-id' ]);
 
 		expect(createOne.args[0]?.[0]).to.deep.equal({
-			account: 'account-id',
+			account_id: 'account-id',
 			item: 'probe-id',
 			collection: 'gp_probes',
 			type: 'outdated_software',
 			secondary_type: 'v20.13.0',
 			subject: 'The container running your probe ][not the probe](https://another.link)[probe has outdated software',
-			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe) to update it manually.',
+			message: 'Your probe [\\]\\[not the probe\\](https://another.link)\\[probe](/probes/probe-id) with IP address **1.1.1.1** is running an outdated software version and we couldn\'t update it automatically. Please follow [our guide](/probes?view=update-a-probe&account=account-id) to update it manually.',
 		});
 	});
 
@@ -195,7 +195,7 @@ describe('Adopted probes status cron handler', () => {
 		expect(createOne.callCount).to.equal(1);
 
 		expect(createOne.args[0]?.[0]).to.deep.include({
-			account: 'account-id',
+			account_id: 'account-id',
 			collection: 'gp_probes',
 			metadata: [ 'probe-id-2', 'probe-id-3' ],
 			type: 'outdated_software',
@@ -238,14 +238,14 @@ describe('Adopted probes status cron handler', () => {
 		expect(createOne.callCount).to.equal(2);
 
 		expect(createOne.args[0]?.[0]).to.deep.include({
-			account: 'account-id',
+			account_id: 'account-id',
 			item: 'probe-sw',
 			type: 'outdated_software',
 			subject: 'Your probe container is running an outdated software version',
 		});
 
 		expect(createOne.args[1]?.[0]).to.deep.include({
-			account: 'account-id',
+			account_id: 'account-id',
 			collection: 'gp_probes',
 			metadata: [ 'probe-hw-1', 'probe-hw-2' ],
 			type: 'outdated_firmware',
