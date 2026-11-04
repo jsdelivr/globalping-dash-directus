@@ -56,6 +56,7 @@ export type SponsorshipEvent = {
 	githubLogin: string | null;
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
+	dashboardAccountIsOrg: boolean;
 	reason: SponsorshipReason;
 	manual: boolean;
 	amountInDollars: number;
@@ -70,6 +71,7 @@ export type ManualAddition = {
 	githubLogin: string | null;
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
+	dashboardAccountIsOrg: boolean;
 	addedBy: string | null;
 	type: ManualAdditionType;
 	credits: number;
@@ -82,6 +84,7 @@ export type SponsorAccount = {
 	githubLogin: string | null;
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
+	dashboardAccountIsOrg: boolean;
 	status: SponsorStatus;
 	currentMonthlyAmount: number | null;
 	periodSponsorshipValue: number;

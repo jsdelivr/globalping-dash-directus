@@ -422,7 +422,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-01 adopted',
 				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
@@ -565,7 +565,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-01 adopted',
 				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
@@ -671,13 +671,13 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(2);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-01 adopted',
 				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
-				account: 'another-account-id',
+				account_id: 'another-account-id',
 				subject: 'Probe another-user-probe-01 unassigned',
 				message: 'Your probe **another-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user because it reported an adoption token that belongs to another user.',
 			});
@@ -849,7 +849,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-01 adopted',
 				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
@@ -952,7 +952,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-02 adopted',
 				message: 'A new probe [probe-fr-paris-02](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
@@ -991,14 +991,14 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(2);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.equal({
-				account: 'account-id',
+				account_id: 'account-id',
 				type: 'probe_adopted',
 				subject: 'New probe probe-fr-paris-02 adopted',
 				message: 'A new probe [probe-fr-paris-02](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				item: 'generatedId',
 				collection: 'gp_probes',
 				type: 'outdated_firmware',
@@ -1094,7 +1094,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-01 adopted',
 				message: 'A new probe [probe-fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
@@ -1173,13 +1173,13 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(2);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account: 'account-id',
+				account_id: 'account-id',
 				subject: 'New probe probe-fr-paris-01 adopted',
 				message: 'A new probe [probe-fr-paris-01](/probes/existing-probe-id) with IP address **1.1.1.1** has been assigned to your account.',
 			});
 
 			expect(notificationCreateOne.args[1]?.[0]).to.deep.include({
-				account: 'another-account-id',
+				account_id: 'another-account-id',
 				subject: 'Probe other-user-probe-01 unassigned',
 				message: 'Your probe **other-user-probe-01** with IP address **1.1.1.1** has been reassigned to another user because it reported an adoption token that belongs to another user.',
 			});

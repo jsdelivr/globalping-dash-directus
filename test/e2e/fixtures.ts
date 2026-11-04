@@ -5,7 +5,11 @@ import { clearOrgData, clearUserData, generateOrg, generateUser, loginDirectusAd
 import { Actors, Org, User } from './types.ts';
 
 export * from '@playwright/test';
-export const test = baseTest.extend<{ user: User; user2: User; org: Org; org2: Org; actors: Actors; admin: User; adminPage: Page }>({
+export const test = baseTest.extend<{ browserContextsCleanup: void; user: User; user2: User; org: Org; org2: Org; actors: Actors; admin: User; adminPage: Page }>({
+	browserContextsCleanup: [ async ({ browser }, use) => {
+		await use();
+		await Promise.all(browser.contexts().map(context => context.close()));
+	}, { auto: true }],
 	user: async ({}, use) => {
 		const user = await generateUser();
 		await use(user);
