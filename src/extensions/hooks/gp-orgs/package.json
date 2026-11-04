@@ -1,6 +1,6 @@
 {
 	"name": "gp-orgs",
-	"description": "Exposes the org adoption tokens to the admins of that org, accepts only removals from extra_adoption_tokens, and deletes the banners of deleted orgs.",
+	"description": "Exposes the org adoption tokens to the admins of that org, validates the org data, and deletes the banners of deleted orgs.",
 	"icon": "extension",
 	"version": "1.0.0",
 	"keywords": [
@@ -44,7 +44,6 @@
 	},
 	"dependencies": {
 		"@directus/errors": "^2.3.1",
-		"@isaacs/ttlcache": "^1.4.1",
-		"joi": "^18.0.1"
+		"@isaacs/ttlcache": "^1.4.1"
 	}
 }
