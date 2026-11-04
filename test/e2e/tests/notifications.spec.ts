@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import axios from 'axios';
 import { client } from '../client.ts';
-import { actAsOrg, clearUserData, generateUser, pageAs } from '../utils.ts';
+import { actAsOrg, clearUserData, generateUser, loginUser, pageAs } from '../utils.ts';
 import type { Org } from '../types.ts';
 import { LinkGenerator } from '../../../src/extensions/lib/src/link-generator.ts';
 
@@ -20,10 +20,10 @@ const sendNotification = async (type: string, recipient: string) => {
 };
 
 // What gp-api and the crons send for anything an account owns: the recipients are resolved by Directus.
-const sendAccountNotification = async (type: string, account: string, message: string) => {
+const sendAccountNotification = async (type: string, accountId: string, message: string) => {
 	await axios.post(`${process.env.DIRECTUS_URL}/notifications`, {
 		type,
-		account,
+		account_id: accountId,
 		subject: type,
 		message,
 	}, {
@@ -146,6 +146,49 @@ test('Toggles of notification types', async ({ page, user }) => {
 	await expect(page.getByText('outdated_firmware').first()).toBeVisible();
 	expect(await notificationEmailStatus(user.id, 'probe_unassigned')).toBe('not-required');
 	expect(await notificationEmailStatus(user.id, 'outdated_firmware')).toBe('disabled-by-user');
+});
+
+test('the notifications list shows the active account and what is not tied to any account', async ({ browser, org }) => {
+	const orgMessage = `org ${randomUUID()}`;
+	const personalMessage = `personal ${randomUUID()}`;
+	const userMessage = `user ${randomUUID()}`;
+
+	await sendAccountNotification('probe_adopted', org.account_id, orgMessage);
+	await sendAccountNotification('probe_adopted', org.admin.account_id, personalMessage);
+	await axios.post(`${process.env.DIRECTUS_URL}/notifications`, { type: 'welcome', recipient: org.admin.id, subject: 'welcome', message: userMessage }, { headers: { Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}` } });
+
+	const orgPage = await actAsOrg(browser, org, org.admin);
+	await orgPage.goto('/notifications');
+	await expect(orgPage.getByText(orgMessage)).toBeVisible();
+	await expect(orgPage.getByText(userMessage)).toBeVisible();
+	await expect(orgPage.getByText(personalMessage)).toHaveCount(0);
+	await orgPage.context().close();
+
+	const personalPage = await pageAs(browser, org.admin.email, 'user');
+	await personalPage.goto('/notifications');
+	await expect(personalPage.getByText(personalMessage)).toBeVisible();
+	await expect(personalPage.getByText(userMessage)).toBeVisible();
+	await expect(personalPage.getByText(orgMessage)).toHaveCount(0);
+});
+
+test('a user can not send a notification to the admins of an org', async ({ org, user }) => {
+	const message = `forged ${randomUUID()}`;
+	const session = await loginUser(user);
+
+	const response = await session.post('/notifications', { type: 'offline_probe', account_id: org.account_id, subject: 'forged', message });
+
+	expect(response.status).toBe(403);
+	expect(await recipientsOf(message)).toEqual([]);
+});
+
+test('deleting an org deletes its notifications', async ({ org }) => {
+	const message = `deleted org ${randomUUID()}`;
+	await sendAccountNotification('probe_adopted', org.account_id, message);
+	expect(await recipientsOf(message)).toEqual([ org.admin.id ]);
+
+	await client('gp_orgs').where({ id: org.id }).delete();
+
+	expect(await recipientsOf(message)).toEqual([]);
 });
 
 test('an account notification reaches every admin of the org and nobody else', async ({ org }) => {

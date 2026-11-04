@@ -28,7 +28,7 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 
 1.4 **gp-auth ignores the active account.** The account for an approval is picked on the consent screen (5.2), never inherited from browser state. Keep the two concepts separate in the store or the consent screen will silently approve for whatever the header last switched to.
 
-1.5 **Settings and notifications stay personal.** `/settings` is always the user's own, whatever account is active. The notifications list is the user's own too, and holds the org notifications of the selected orgs they administer next to the personal ones: the org fans them out to its org admins who selected it (phase 1) with the same text as a personal one and without naming the org, so the list cannot tell them apart yet.
+1.5 **Settings and notifications follow the active account.** `/settings` shows the org settings to an org admin of the active org (6), and the user's own settings in every other case, also to a member or a viewer of the active org. The notifications list follows the active account: it holds the notifications of that account (`account_id`), and the ones not tied to any account (empty `account_id`: welcome, default tag change) in every account.
 
 ## 2. The "Act as organization" menu
 

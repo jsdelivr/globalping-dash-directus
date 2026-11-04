@@ -1,5 +1,6 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
+import type { EventContext } from '@directus/types';
 import Joi from 'joi';
 import { type NotificationTypeKey, joiNotificationTypeKey, mapNotificationTypeKey } from '../../../lib/src/notification-types.js';
 import { getEmailStatus, getShouldSend } from './actions/status.js';
@@ -17,11 +18,11 @@ const notificationPayloadSchema = Joi.object({
 	type: joiNotificationTypeKey.required(),
 	subject: Joi.string().required(),
 	message: Joi.string().required(),
-	// A notification is addressed to a specific user directly (recipient), or to the owner of an item (account).
+	// A notification is addressed to a specific user directly (recipient), or to the owner of an item (account_id).
 	// Both together mean the sender picked one member of that account itself - send only to that member.
 	recipient: Joi.string(),
-	account: Joi.string(),
-}).or('recipient', 'account').unknown(true);
+	account_id: Joi.string(),
+}).or('recipient', 'account_id').unknown(true);
 
 export default defineHook(({ filter }, hookContext) => {
 	const { services, getSchema } = hookContext;
@@ -36,14 +37,12 @@ export default defineHook(({ filter }, hookContext) => {
 
 		const type = mapNotificationTypeKey(value.type)!;
 
-		if (value.account) {
-			const account = await context.database('gp_accounts').where({ id: value.account }).first('user', 'org');
+		if (value.account_id) {
+			const account = await context.database('gp_accounts').where({ id: value.account_id }).first('user', 'org');
 
 			if (!account) {
 				throw new AccountNotFoundError();
 			}
-
-			delete payload.account;
 
 			// The sender picked one member of the org itself.
 			if (account.org && value.recipient) {
@@ -57,7 +56,7 @@ export default defineHook(({ filter }, hookContext) => {
 
 			// The notification goes to every admin of the org.
 			if (account.org) {
-				await notifyOrgAdmins(account.org, payload, type);
+				await notifyOrgAdmins(account.org, payload, type, context.accountability);
 				throw new CancelNotificationError();
 			}
 
@@ -99,8 +98,8 @@ export default defineHook(({ filter }, hookContext) => {
 	};
 
 	// Org notifications go to the org admins only, each per their own org notification preferences.
-	const notifyOrgAdmins = async (orgId: string, payload: NotificationPayload, type: NotificationTypeKey) => {
-		const notificationsService = new NotificationsService({ schema: await getSchema() });
+	const notifyOrgAdmins = async (orgId: string, payload: NotificationPayload, type: NotificationTypeKey, accountability: EventContext['accountability']) => {
+		const notificationsService = new NotificationsService({ schema: await getSchema(), accountability });
 		const admins = await getOrgAdmins(orgId, hookContext);
 
 		const notifications = admins

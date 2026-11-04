@@ -82,7 +82,7 @@ const notifySingleSoftwareProbe = async (probe: ProbeInfo, accountId: string, co
 	const { env } = context;
 
 	await sendNotification({
-		account: accountId,
+		account_id: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
@@ -98,7 +98,7 @@ const notifySingleHardwareProbe = async (probe: ProbeInfo, accountId: string, co
 	const { env } = context;
 
 	await sendNotification({
-		account: accountId,
+		account_id: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,
@@ -115,7 +115,7 @@ const notifyMultipleSoftwareProbes = async (probes: ProbeInfo[], accountId: stri
 	const lines = probes.map(probe => `- ${getProbeLink(probe)}`);
 
 	await sendNotification({
-		account: accountId,
+		account_id: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_SOFTWARE_NOTIFICATION_TYPE,
@@ -132,7 +132,7 @@ const notifyMultipleHardwareProbes = async (probes: ProbeInfo[], accountId: stri
 	const lines = probes.map(probe => `- ${getProbeLink(probe)}`);
 
 	await sendNotification({
-		account: accountId,
+		account_id: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(({ id }) => id),
 		type: OUTDATED_FIRMWARE_NOTIFICATION_TYPE,

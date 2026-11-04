@@ -6,6 +6,7 @@ import relativeDayUtc from 'relative-day-utc';
  */
 export const seed = async (knex) => {
 	const user = await knex('directus_users').where({ github_username: 'john' }).select('id').first();
+	const account = await knex('gp_accounts').where({ user: user.id }).first('id');
 
 	const [ readyProbes, offlineProbes, outdatedProbes ] = await Promise.all([
 		knex('gp_probes').where({ userId: user.id, status: 'ready' }).select('id', 'name', 'ip').limit(7),
@@ -47,6 +48,7 @@ export const seed = async (knex) => {
 		...unassignedProbes.map((probe, index) => (
 			{
 				recipient: user.id,
+				account_id: account.id,
 				timestamp: relativeDayUtc(-index),
 				status: index % 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
@@ -58,6 +60,7 @@ export const seed = async (knex) => {
 		...deletedProbes.map((probe, index) => (
 			{
 				recipient: user.id,
+				account_id: account.id,
 				timestamp: relativeDayUtc(-index),
 				status: index === 2 ? 'archived' : 'inbox',
 				type: 'probe_unassigned',
@@ -70,6 +73,7 @@ export const seed = async (knex) => {
 		...readyProbes.map((probe, index) => (
 			{
 				recipient: user.id,
+				account_id: account.id,
 				timestamp: relativeDayUtc(0),
 				status: index === 3 ? 'archived' : 'inbox',
 				type: 'probe_adopted',
@@ -80,6 +84,7 @@ export const seed = async (knex) => {
 		// probe location changed messages
 		...readyProbes.slice(0, 1).map(probe => ({
 			recipient: user.id,
+			account_id: account.id,
 			timestamp: relativeDayUtc(0),
 			status: 'inbox',
 			type: 'probe_location_changed',
@@ -90,6 +95,7 @@ export const seed = async (knex) => {
 		})),
 		...readyProbes.slice(1, 2).map(probe => ({
 			recipient: user.id,
+			account_id: account.id,
 			timestamp: relativeDayUtc(0),
 			status: 'inbox',
 			type: 'probe_location_changed_back',
@@ -106,6 +112,7 @@ export const seed = async (knex) => {
 
 			return {
 				recipient: user.id,
+				account_id: account.id,
 				subject: probe.name ? `Your probe ${probe.name} went offline` : 'Your probe went offline',
 				timestamp: new Date(probe.lastSyncDate),
 				type: 'offline_probe',
@@ -119,6 +126,7 @@ export const seed = async (knex) => {
 			if (probe.hardwareDevice) {
 				return {
 					recipient: user.id,
+					account_id: account.id,
 					timestamp: relativeDayUtc(0),
 					status: index >= startArchiveIndex ? 'archived' : 'inbox',
 					item: probe.id,
@@ -132,6 +140,7 @@ export const seed = async (knex) => {
 
 			return {
 				recipient: user.id,
+				account_id: account.id,
 				timestamp: relativeDayUtc(0),
 				status: index >= startArchiveIndex ? 'archived' : 'inbox',
 				item: probe.id,

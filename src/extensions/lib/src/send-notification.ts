@@ -12,13 +12,13 @@ type NotificationContent = {
 };
 
 // A notification can be sent to:
-// - the user (recipient)
-// - the owner of personal account or admins of org account (account)
-// - the specific member of an org (account + recipient)
+// - user (recipient)
+// - owner of a personal account or admins of an org account (account_id)
+// - specific member of an org (account_id + recipient)
 type Notification =
 	| NotificationContent & { recipient: string }
-	| NotificationContent & { account: string }
-	| NotificationContent & { account: string; recipient: string };
+	| NotificationContent & { account_id: string }
+	| NotificationContent & { account_id: string; recipient: string };
 
 // The notifications hook cancels a create by throwing; for the sender that is a success, not an error.
 const isCancelled = (error: unknown) => (error as { code?: string }).code === 'CANCELLED';

@@ -590,6 +590,48 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
+  - collection: directus_notifications
+    field: account_id
+    type: uuid
+    meta:
+      collection: directus_notifications
+      conditions: null
+      display: null
+      display_options: null
+      field: account_id
+      group: null
+      hidden: false
+      interface: select-dropdown-m2o
+      note: null
+      options:
+        enableCreate: false
+      readonly: false
+      required: false
+      searchable: true
+      sort: 6
+      special:
+        - m2o
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: account_id
+      table: directus_notifications
+      data_type: char
+      default_value: null
+      max_length: 36
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: gp_accounts
+      foreign_key_column: id
   - collection: directus_sessions
     field: active_account
     type: uuid
@@ -8148,6 +8190,27 @@ systemFields:
     schema:
       is_indexed: true
 relations:
+  - collection: directus_notifications
+    field: account_id
+    related_collection: gp_accounts
+    meta:
+      junction_field: null
+      many_collection: directus_notifications
+      many_field: account_id
+      one_allowed_collections: null
+      one_collection: gp_accounts
+      one_collection_field: null
+      one_deselect_action: nullify
+      one_field: null
+      sort_field: null
+    schema:
+      table: directus_notifications
+      column: account_id
+      foreign_key_table: gp_accounts
+      foreign_key_column: id
+      constraint_name: directus_notifications_account_id_foreign
+      on_update: RESTRICT
+      on_delete: CASCADE
   - collection: directus_sessions
     field: active_account
     related_collection: gp_accounts

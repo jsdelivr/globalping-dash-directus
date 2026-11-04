@@ -39,7 +39,7 @@ const parseNotifiedList = (value: string, recipient: string): string[] => {
 export const notifyRecipients = async (context: OperationContext, toNotify: CandidateRow[], trx: OperationContext['database']): Promise<void> => {
 	for (const row of toNotify) {
 		await sendNotification({
-			account: row.account_id,
+			account_id: row.account_id,
 			recipient: row.recipient,
 			type: 'low_credits',
 			subject: 'Your Globalping credits are running low',
