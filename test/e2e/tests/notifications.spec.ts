@@ -232,10 +232,10 @@ test('a personal account notification reaches only its owner', async ({ user, or
 test('an org admin sets their own notification settings for the org, apart from the personal ones', async ({ browser, org }) => {
 	await client('directus_users').where({ id: org.admin.id }).update({ notification_preferences: null });
 	const page = await actAsOrg(browser, org, org.admin);
-	await page.goto('/settings');
+	await page.goto('/settings?tab=organization');
 
 	// Acting as the org, the settings page shows the org settings, and the notifications are set from the personal ones.
-	await expect(page.getByRole('heading', { name: 'Organization settings', level: 1 })).toBeVisible();
+	await expect(page.getByRole('tab', { name: 'Organization' })).toHaveAttribute('aria-selected', 'true');
 	await expect(page.getByLabel('Notifications account')).toHaveCount(0);
 
 	const personalPage = await pageAs(browser, org.admin.email, 'user');
