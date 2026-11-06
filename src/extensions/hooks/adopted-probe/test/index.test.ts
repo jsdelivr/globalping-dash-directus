@@ -60,10 +60,9 @@ describe('adopted-probe hook', () => {
 
 		users.readOne.resolves({
 			github_username: 'jimaek',
-			github_organizations: [ 'jsdelivr' ],
 		});
 
-		context.database.raw.resolves([ [{ org_name: null, github_username: 'jimaek', github_organizations: JSON.stringify([ 'jsdelivr' ]) }] ]);
+		context.database.raw.resolves([ [{ prefix: 'jimaek' }] ]);
 	});
 
 	afterEach(() => {
@@ -76,7 +75,6 @@ describe('adopted-probe hook', () => {
 
 	it('should update city, lat and long of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
-			userId: '1',
 			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
@@ -173,7 +171,6 @@ describe('adopted-probe hook', () => {
 
 	it('should additionally update state for the US cities', async () => {
 		adoptedProbes.readMany.resolves([{
-			userId: '1',
 			account_id: 'account-1',
 			city: 'Detroit',
 			state: 'MI',
@@ -270,7 +267,6 @@ describe('adopted-probe hook', () => {
 
 	it('should reset city, lat and long of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
-			userId: '1',
 			account_id: 'account-1',
 			city: 'Marseille',
 			country: 'FR',
@@ -342,7 +338,6 @@ describe('adopted-probe hook', () => {
 	it('should set default name if falsy name is provided', async () => {
 		adoptedProbes.readMany.resolves([{
 			id: 'id-1',
-			userId: 'user-id-value',
 			account_id: 'account-1',
 			country: 'FR',
 			city: 'Paris',
@@ -372,7 +367,6 @@ describe('adopted-probe hook', () => {
 	it('should increment name index if there are other probes with the same values', async () => {
 		adoptedProbes.readOne.resolves({
 			id: 'id-1',
-			userId: 'user-id-value',
 			account_id: 'account-1',
 			country: 'FR',
 			city: 'Paris',
@@ -392,7 +386,6 @@ describe('adopted-probe hook', () => {
 	it('should increment name index based on the existing names if there are other probes with the default names', async () => {
 		adoptedProbes.readOne.resolves({
 			id: 'id-1',
-			userId: 'user-id-value',
 			account_id: 'account-1',
 			country: 'FR',
 			city: 'Paris',
@@ -411,7 +404,6 @@ describe('adopted-probe hook', () => {
 
 	it('should update non-city meta fields of the adopted probe', async () => {
 		adoptedProbes.readMany.resolves([{
-			userId: '1',
 			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
@@ -423,7 +415,7 @@ describe('adopted-probe hook', () => {
 		}]);
 
 		hook(events, context);
-		const payload = { name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jsdelivr', value: 'mytag2' }] };
+		const payload = { name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jimaek', value: 'mytag2' }] };
 		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 		expect(adoptedProbes.readMany.callCount).to.equal(1);
@@ -433,7 +425,7 @@ describe('adopted-probe hook', () => {
 			name: 'My Probe',
 			tags: [
 				{ prefix: 'jimaek', value: 'mytag' },
-				{ prefix: 'jsdelivr', value: 'mytag2' },
+				{ prefix: 'jimaek', value: 'mytag2' },
 			],
 		});
 
@@ -443,7 +435,7 @@ describe('adopted-probe hook', () => {
 
 		expect(adoptedProbes.updateMany.args[0]).to.deep.equal([
 			[ '1' ],
-			{ name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jsdelivr', value: 'mytag2' }] },
+			{ name: 'My Probe', tags: [{ prefix: 'jimaek', value: 'mytag' }, { prefix: 'jimaek', value: 'mytag2' }] },
 			{ emitEvents: false },
 		]);
 
@@ -451,7 +443,7 @@ describe('adopted-probe hook', () => {
 			name: 'My Probe',
 			tags: [
 				{ prefix: 'jimaek', value: 'mytag' },
-				{ prefix: 'jsdelivr', value: 'mytag2' },
+				{ prefix: 'jimaek', value: 'mytag2' },
 			],
 		});
 	});
@@ -468,7 +460,6 @@ describe('adopted-probe hook', () => {
 
 	it('should send valid error if country is not defined', async () => {
 		adoptedProbes.readMany.resolves([{
-			userId: '1',
 			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
@@ -489,7 +480,6 @@ describe('adopted-probe hook', () => {
 
 	it('should send valid error if provided city is not valid', async () => {
 		adoptedProbes.readMany.resolves([{
-			userId: '1',
 			account_id: 'account-1',
 			city: 'Paris',
 			state: null,
@@ -516,10 +506,9 @@ describe('adopted-probe hook', () => {
 	});
 
 	describe('user reset', () => {
-		it('should should reset user data in case of userId: null', async () => {
+		it('should reset user data in case of account_id: null', async () => {
 			adoptedProbes.readMany.resolves([{
 				id: 'probe-id',
-				userId: 'user-id',
 				account_id: 'account-1',
 				city: 'Paris',
 				state: null,
@@ -533,7 +522,7 @@ describe('adopted-probe hook', () => {
 			}]);
 
 			hook(events, context);
-			const payload = { userId: null };
+			const payload = { account_id: null };
 			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 			await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
@@ -546,7 +535,6 @@ describe('adopted-probe hook', () => {
 						originalLocation: null,
 						customLocation: null,
 						name: null,
-						userId: null,
 						account_id: null,
 						tags: [],
 						systemTags: [ 'eyeball-network' ],
@@ -556,13 +544,12 @@ describe('adopted-probe hook', () => {
 				{ emitEvents: false },
 			]);
 
-			expect(payload).to.deep.equal({ userId: null });
+			expect(payload).to.deep.equal({ account_id: null });
 		});
 
-		it('should reset user data in case of userId: null and custom location', async () => {
+		it('should reset user data in case of account_id: null and custom location', async () => {
 			adoptedProbes.readMany.resolves([{
 				id: 'probe-id',
-				userId: 'user-id',
 				account_id: 'account-1',
 				city: 'Paris',
 				state: null,
@@ -588,7 +575,7 @@ describe('adopted-probe hook', () => {
 			}]);
 
 			hook(events, context);
-			const payload = { userId: null };
+			const payload = { account_id: null };
 			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 			await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
@@ -611,7 +598,6 @@ describe('adopted-probe hook', () => {
 						originalLocation: null,
 						customLocation: null,
 						name: null,
-						userId: null,
 						account_id: null,
 						tags: [],
 						systemTags: [],
@@ -621,14 +607,13 @@ describe('adopted-probe hook', () => {
 				{ emitEvents: false },
 			]);
 
-			expect(payload).to.deep.equal({ userId: null });
+			expect(payload).to.deep.equal({ account_id: null });
 		});
 	});
 
 	describe('tags validation', () => {
 		before(() => {
 			adoptedProbes.readMany.resolves([{
-				userId: '1',
 				account_id: 'account-1',
 				city: 'Paris',
 				state: null,
@@ -641,18 +626,17 @@ describe('adopted-probe hook', () => {
 		});
 
 		it('should accept the org name as a prefix for an org probe', async () => {
-			context.database.raw.resolves([ [{ org_name: 'jsdelivr', github_username: null, github_organizations: null }] ]);
+			context.database.raw.resolves([ [{ prefix: 'jsdelivr' }] ]);
 
 			hook(events, context);
 			const payload = { tags: [{ prefix: 'jsdelivr', value: 'berlin' }] };
 			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 
 			expect(payload).to.deep.equal({ tags: [{ prefix: 'jsdelivr', value: 'berlin' }] });
-			expect(users.readOne.callCount).to.equal(0);
 		});
 
 		it('should reject the editor own username as a prefix for an org probe', async () => {
-			context.database.raw.resolves([ [{ org_name: 'jsdelivr', github_username: null, github_organizations: null }] ]);
+			context.database.raw.resolves([ [{ prefix: 'jsdelivr' }] ]);
 
 			hook(events, context);
 			const payload = { tags: [{ prefix: 'jimaek', value: 'berlin' }] };
@@ -661,19 +645,55 @@ describe('adopted-probe hook', () => {
 			expect(err.message).to.equal('"[0].prefix" must be [jsdelivr]');
 		});
 
+		it('should accept the owner username as a prefix for a personal probe', async () => {
+			hook(events, context);
+			const payload = { tags: [{ prefix: 'jimaek', value: 'berlin' }] };
+			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+
+			expect(payload).to.deep.equal({ tags: [{ prefix: 'jimaek', value: 'berlin' }] });
+		});
+
+		it('should reject an org name as a new tag prefix for a personal probe', async () => {
+			hook(events, context);
+			const payload = { tags: [{ prefix: 'jsdelivr', value: 'berlin' }] };
+			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
+
+			expect(err.message).to.equal('"[0].prefix" must be [jimaek]');
+		});
+
+		it('should allow saving of a stored tag with an org name prefix for a personal probe', async () => {
+			hook(events, context);
+
+			adoptedProbes.readMany.resolves([{
+				account_id: 'account-1',
+				tags: [{ prefix: 'jsdelivr', value: 'berlin' }],
+				city: 'Paris',
+				state: null,
+				latitude: '48.85',
+				longitude: '2.35',
+				country: 'FR',
+				allowedCountries: [ 'FR' ],
+				customLocation: null,
+			}]);
+
+			const payload = { tags: [{ prefix: 'jsdelivr', value: 'berlin' }] };
+			await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
+
+			expect(payload).to.deep.equal({ tags: [{ prefix: 'jsdelivr', value: 'berlin' }] });
+		});
+
 		it('should send valid error if prefix is wrong', async () => {
 			hook(events, context);
 			const payload = { tags: [{ prefix: 'wrong_organization', value: 'a' }] };
 			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
-			expect(err.message).to.equal('"[0].prefix" must be one of [jimaek, jsdelivr]');
+			expect(err.message).to.equal('"[0].prefix" must be [jimaek]');
 		});
 
 		it('should allow saving of prev values with outdated prefix', async () => {
 			hook(events, context);
 
 			adoptedProbes.readMany.resolves([{
-				userId: '1',
 				account_id: 'account-1',
 				tags: [{ prefix: 'oldprefix', value: 'a' }],
 				city: 'Paris',
@@ -697,7 +717,6 @@ describe('adopted-probe hook', () => {
 			hook(events, context);
 
 			adoptedProbes.readMany.resolves([{
-				userId: '1',
 				account_id: 'account-1',
 				tags: [{ prefix: 'oldprefix', value: 'a' }],
 				city: 'Paris',
@@ -713,7 +732,7 @@ describe('adopted-probe hook', () => {
 
 			const err = await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context).catch(err => err);
 
-			expect(err.message).to.equal('"[0].prefix" must be one of [jimaek, jsdelivr]');
+			expect(err.message).to.equal('"[0].prefix" must be [jimaek]');
 		});
 
 		it('should send valid error if there are too many tags', async () => {

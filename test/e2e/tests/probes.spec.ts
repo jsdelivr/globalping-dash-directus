@@ -39,7 +39,6 @@ const addUserProbes = async (user: User) => {
 		state: null,
 		status: 'offline',
 		tags: '[]',
-		userId: user.id,
 		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
@@ -69,7 +68,6 @@ const addUserProbes = async (user: User) => {
 		status: 'ready',
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
-		userId: user.id,
 		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
@@ -105,7 +103,6 @@ const defaultProbe = {
 	onlineTimesToday: 50,
 	state: null,
 	status: 'ready',
-	userId: null,
 	version: '0.28.0',
 	nodeVersion: 'v22.23.4',
 	hardwareDevice: null,
@@ -119,7 +116,7 @@ const addProbeWithoutUser = async (probeFields: Partial<typeof defaultProbe> = {
 };
 
 const addProbeWithUser = async (user2: User) => {
-	const owner = { userId: user2.id, account_id: user2.account_id };
+	const owner = { account_id: user2.account_id };
 	await sql('gp_probes').insert({ ...defaultProbe, ...owner });
 
 	return { ...defaultProbe, ...owner };
@@ -132,7 +129,6 @@ const addOfflineProbeWithSameAsn = async (user: User) => {
 		ip: '1.1.1.1',
 		uuid: 'outdatedUuid',
 		status: 'offline',
-		userId: user.id,
 		account_id: user.account_id,
 	});
 };
@@ -172,7 +168,7 @@ test('Software probe adoption by asn/city', async ({ page, user }) => {
 
 	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
 		probe: _.omit(defaultProbe, 'id'),
-		user: { id: user.id },
+		account: { id: user.account_id },
 	}, {
 		headers: {
 			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,
@@ -253,7 +249,7 @@ test('Adoption of a probe adopted by another user', async ({ page, user, user2 }
 
 	await axios.put(`${process.env.DIRECTUS_URL}/adoption-code/adopt-by-token`, {
 		probe: _.omit(probe, 'id'),
-		user: { id: user.id },
+		account: { id: user.account_id },
 	}, {
 		headers: {
 			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,
@@ -262,7 +258,7 @@ test('Adoption of a probe adopted by another user', async ({ page, user, user2 }
 
 	await page.getByRole('button', { name: 'Finish' }).click();
 	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
-	await expect(sql('gp_probes').where({ userId: user2.id }).select()).resolves.toMatchObject([]);
+	await expect(sql('gp_probes').where({ account_id: user2.account_id }).select()).resolves.toMatchObject([]);
 });
 
 test('Adoption of a probe with different data in SQL and API', async ({ page, user }) => {
@@ -280,7 +276,7 @@ test('Adoption of a probe with different data in SQL and API', async ({ page, us
 			longitude: -1.27,
 			nodeVersion: 'v22.23.4',
 		},
-		user: { id: user.id },
+		account: { id: user.account_id },
 	}, {
 		headers: {
 			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,
@@ -310,7 +306,7 @@ test('Adoption of a probe with old node version', async ({ page, user }) => {
 			longitude: -1.27,
 			nodeVersion: 'v16.0.0',
 		},
-		user: { id: user.id },
+		account: { id: user.account_id },
 	}, {
 		headers: {
 			Authorization: `Bearer ${process.env.GP_SYSTEM_KEY}`,

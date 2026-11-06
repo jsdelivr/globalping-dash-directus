@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '../../fixtures.ts';
 import { client as sql } from '../../client.ts';
-import { addProbe, randomToken } from '../../utils.ts';
+import { addProbe } from '../../utils.ts';
 
 const orgIds: string[] = [];
 const githubIds: string[] = [];
@@ -25,21 +25,6 @@ const addOrg = async (githubId = randomGithubId()) => {
 	orgIds.push(id);
 	const account = await sql('gp_accounts').where({ org: id }).first('id');
 	return { id, accountId: account.id as string };
-};
-
-const addApp = async (userId: string) => {
-	const id = randomUUID();
-
-	await sql('gp_apps').insert({
-		id,
-		user_created: userId,
-		name: 'e2e-app',
-		secrets: JSON.stringify([]),
-		grants: JSON.stringify([ 'authorization_code' ]),
-		redirect_urls: JSON.stringify([ 'http://localhost:13010' ]),
-	});
-
-	return id;
 };
 
 const addSponsorship = async (githubId: string, amount: number) => {
@@ -84,39 +69,6 @@ test('A new org claims the sponsorship credits that were waiting for its GitHub 
 	expect(Number(credits.amount)).toBe(1500);
 });
 
-// PHASE5: remove together with the fulfilling triggers.
-test('A token written with the legacy user column alone lands on the personal account', async ({ user }) => {
-	const [ id ] = await sql('gp_tokens').insert({
-		name: 'e2e-legacy-token',
-		value: randomToken(),
-		origins: JSON.stringify([]),
-		user_created: user.id,
-	});
-
-	const token = await sql('gp_tokens').where({ id }).first('account_id');
-	expect(token.account_id).toBe(user.account_id);
-});
-
-// PHASE5: remove together with the fulfilling triggers.
-test('An app approval is completed from whichever user column it was written with', async ({ user }) => {
-	const app = await addApp(user.id);
-	const otherApp = await addApp(user.id);
-
-	const byUser = randomUUID();
-	await sql('gp_apps_approvals').insert({ id: byUser, user: user.id, app, scopes: JSON.stringify([ 'measurements' ]) });
-
-	const fromUser = await sql('gp_apps_approvals').where({ id: byUser }).first('user_created', 'account_id');
-	expect(fromUser.user_created).toBe(user.id);
-	expect(fromUser.account_id).toBe(user.account_id);
-
-	const byUserCreated = randomUUID();
-	await sql('gp_apps_approvals').insert({ id: byUserCreated, user_created: user.id, app: otherApp, scopes: JSON.stringify([ 'measurements' ]) });
-
-	const fromUserCreated = await sql('gp_apps_approvals').where({ id: byUserCreated }).first('user', 'account_id');
-	expect(fromUserCreated.user).toBe(user.id);
-	expect(fromUserCreated.account_id).toBe(user.account_id);
-});
-
 test('A credits addition lands on the account of its GitHub id', async ({ user, org }) => {
 	await addSponsorship(user.external_identifier, 300);
 	githubIds.push(user.external_identifier);
@@ -140,20 +92,19 @@ test('A credits addition for a GitHub id nobody owns waits unconsumed', async ()
 });
 
 test('A decrease of the balance is written as a deduction of the same account, once a day', async ({ user }) => {
-	await sql('gp_credits').insert({ account_id: user.account_id, user_id: user.id, amount: 1000 });
+	await sql('gp_credits').insert({ account_id: user.account_id, amount: 1000 });
 
 	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: 700 });
 	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: 500 });
 
 	// The two decreases of the same day accumulate in a single row.
-	const deductions = await sql('gp_credits_deductions').where({ account_id: user.account_id }).select('amount', 'user_id');
+	const deductions = await sql('gp_credits_deductions').where({ account_id: user.account_id }).select('amount');
 	expect(deductions).toHaveLength(1);
 	expect(Number(deductions[0].amount)).toBe(500);
-	expect(deductions[0].user_id).toBe(user.id);
 });
 
 test('The search index of a probe carries the name of its owner', async ({ user, org }) => {
-	const personalProbe = await addProbe({ account_id: user.account_id, userId: user.id });
+	const personalProbe = await addProbe({ account_id: user.account_id });
 	const orgProbe = await addProbe({ account_id: org.account_id });
 
 	// The whole index is lowercased by the function that builds it.

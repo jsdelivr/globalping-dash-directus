@@ -14,6 +14,7 @@ export const seed = async (knex) => {
 	};
 
 	let user = await getUser();
+	const account = await knex('gp_accounts').where({ user: user.id }).first('id');
 	const admin = await knex('directus_users').where({ email: 'admin@example.com' }).select('id').first();
 
 	// One time sponsorship credits
@@ -202,9 +203,9 @@ export const seed = async (knex) => {
 	]);
 
 	for (const i of Array.from(Array(50).keys())) {
-		await knex('gp_credits').where({ user_id: user.id }).update({ amount: knex.raw('amount - ?', [ 7000 ]) });
-		await knex('gp_credits_deductions').where({ user_id: user.id }).orderBy('date', 'desc').limit(1).update({ date: relativeDayUtc((i + 1) * -3) });
+		await knex('gp_credits').where({ account_id: account.id }).update({ amount: knex.raw('amount - ?', [ 7000 ]) });
+		await knex('gp_credits_deductions').where({ account_id: account.id }).orderBy('date', 'desc').limit(1).update({ date: relativeDayUtc((i + 1) * -3) });
 	}
 
-	await knex('gp_credits').where({ user_id: user.id }).update({ amount: knex.raw('amount - ?', [ 7000 ]) });
+	await knex('gp_credits').where({ account_id: account.id }).update({ amount: knex.raw('amount - ?', [ 7000 ]) });
 };

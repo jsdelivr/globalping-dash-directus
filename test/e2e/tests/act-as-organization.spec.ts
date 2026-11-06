@@ -80,7 +80,7 @@ test('an org added through "Add organization" appears in the menu without becomi
 test('acting as an org switches every list and the header to it, and back', async ({ browser, org }) => {
 	await selectOrgs(org.member, [ org.id ]);
 	await addProbe({ account_id: org.account_id, name: 'e2e-probe-of-the-org' });
-	await addProbe({ account_id: org.member.account_id, userId: org.member.id, name: 'e2e-probe-of-the-member' });
+	await addProbe({ account_id: org.member.account_id, name: 'e2e-probe-of-the-member' });
 	await sql('gp_credits').insert({ account_id: org.account_id, amount: 777 });
 
 	const page = await pageAs(browser, org.member.email, 'user');

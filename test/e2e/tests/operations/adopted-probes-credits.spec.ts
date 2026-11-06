@@ -10,7 +10,7 @@ test.afterEach(async ({ org }) => {
 
 test('credits the owner of the probe: the org for an org probe, the user for a personal one', async ({ org }) => {
 	const orgProbe = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe', onlineTimesToday: 120 });
-	const personalProbe = await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-personal-probe', onlineTimesToday: 120 });
+	const personalProbe = await addProbe({ account_id: org.admin.account_id, name: 'e2e-personal-probe', onlineTimesToday: 120 });
 	const idleProbe = await addProbe({ account_id: org.account_id, name: 'e2e-idle-probe', onlineTimesToday: 119 });
 
 	await trigger(FLOW.adoptedProbesCredits);

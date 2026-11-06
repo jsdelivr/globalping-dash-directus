@@ -36,7 +36,7 @@ const addProbe = async (user: User, overrides: Partial<typeof probeDefaults> = {
 		id: randomUUID(),
 		uuid: randomUUID(),
 		ip: randomIP(),
-		userId: user.id,
+		account_id: user.account_id,
 		date_created: new Date(),
 		lastSyncDate: new Date(),
 	};

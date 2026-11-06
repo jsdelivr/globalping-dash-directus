@@ -675,48 +675,6 @@ fields:
       foreign_key_table: gp_accounts
       foreign_key_column: id
   - collection: directus_users
-    field: github_organizations
-    type: json
-    meta:
-      collection: directus_users
-      conditions: null
-      display: null
-      display_options: null
-      field: github_organizations
-      group: null
-      hidden: false
-      interface: input-code
-      note: null
-      options:
-        lineNumber: false
-      readonly: false
-      required: false
-      searchable: true
-      sort: 2
-      special:
-        - cast-json
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: github_organizations
-      table: directus_users
-      data_type: longtext
-      default_value: []
-      max_length: 4294967295
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_indexed: false
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: null
-      foreign_key_column: null
-  - collection: directus_users
     field: selected_orgs
     type: json
     meta:
@@ -2082,49 +2040,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_apps_approvals
-    field: user
-    type: string
-    meta:
-      collection: gp_apps_approvals
-      conditions: null
-      display: null
-      display_options: null
-      field: user
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        enableCreate: false
-        template: '{{github_username}}'
-      readonly: false
-      required: true
-      searchable: true
-      sort: 4
-      special:
-        - m2o
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: user
-      table: gp_apps_approvals
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: false
-      is_unique: false
-      is_indexed: true
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: gp_apps_approvals
     field: app
     type: string
     meta:
@@ -2241,7 +2156,7 @@ fields:
       max_length: 36
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_indexed: true
       is_primary_key: false
@@ -2283,7 +2198,7 @@ fields:
       max_length: 36
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_indexed: true
       is_primary_key: false
@@ -2374,48 +2289,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_credits
-    field: user_id
-    type: string
-    meta:
-      collection: gp_credits
-      conditions: null
-      display: null
-      display_options: null
-      field: user_id
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        enableCreate: false
-      readonly: false
-      required: false
-      searchable: true
-      sort: 4
-      special:
-        - m2o
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: user_id
-      table: gp_credits
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: true
-      is_indexed: true
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: gp_credits
     field: low_credits_notified
     type: json
     meta:
@@ -2433,7 +2306,8 @@ fields:
       required: false
       searchable: true
       sort: 6
-      special: null
+      special:
+        - cast-json
       translations: null
       validation: null
       validation_message: null
@@ -2488,7 +2362,7 @@ fields:
       max_length: 36
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: true
       is_indexed: false
       is_primary_key: false
@@ -3003,48 +2877,6 @@ fields:
       foreign_key_table: null
       foreign_key_column: null
   - collection: gp_credits_deductions
-    field: user_id
-    type: string
-    meta:
-      collection: gp_credits_deductions
-      conditions: null
-      display: null
-      display_options: null
-      field: user_id
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        enableCreate: false
-      readonly: false
-      required: false
-      searchable: true
-      sort: 4
-      special:
-        - m2o
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: user_id
-      table: gp_credits_deductions
-      data_type: varchar
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: true
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
-  - collection: gp_credits_deductions
     field: account_id
     type: uuid
     meta:
@@ -3077,7 +2909,7 @@ fields:
       max_length: 36
       numeric_precision: null
       numeric_scale: null
-      is_nullable: true
+      is_nullable: false
       is_unique: false
       is_indexed: false
       is_primary_key: false
@@ -4340,6 +4172,46 @@ fields:
       has_auto_increment: false
       foreign_key_table: directus_files
       foreign_key_column: id
+  - collection: gp_orgs
+    field: deprecated_prefix
+    type: string
+    meta:
+      collection: gp_orgs
+      conditions: null
+      display: null
+      display_options: null
+      field: deprecated_prefix
+      group: null
+      hidden: false
+      interface: input
+      note: The old name, whose u-<name> tag keeps working until an org admin confirms the new one.
+      options: null
+      readonly: false
+      required: false
+      searchable: true
+      sort: 13
+      special: null
+      translations: null
+      validation: null
+      validation_message: null
+      width: full
+    schema:
+      name: deprecated_prefix
+      table: gp_orgs
+      data_type: varchar
+      default_value: null
+      max_length: 255
+      numeric_precision: null
+      numeric_scale: null
+      is_nullable: true
+      is_unique: false
+      is_indexed: true
+      is_primary_key: false
+      is_generated: false
+      generation_expression: null
+      has_auto_increment: false
+      foreign_key_table: null
+      foreign_key_column: null
   - collection: gp_probes
     field: asn
     type: integer
@@ -5002,48 +4874,6 @@ fields:
       has_auto_increment: false
       foreign_key_table: null
       foreign_key_column: null
-  - collection: gp_probes
-    field: userId
-    type: string
-    meta:
-      collection: gp_probes
-      conditions: null
-      display: null
-      display_options: null
-      field: userId
-      group: null
-      hidden: false
-      interface: select-dropdown-m2o
-      note: null
-      options:
-        enableCreate: false
-      readonly: false
-      required: false
-      searchable: true
-      sort: 15
-      special:
-        - m2o
-      translations: null
-      validation: null
-      validation_message: null
-      width: full
-    schema:
-      name: userId
-      table: gp_probes
-      data_type: char
-      default_value: null
-      max_length: 36
-      numeric_precision: null
-      numeric_scale: null
-      is_nullable: true
-      is_unique: false
-      is_indexed: true
-      is_primary_key: false
-      is_generated: false
-      generation_expression: null
-      has_auto_increment: false
-      foreign_key_table: directus_users
-      foreign_key_column: id
   - collection: gp_probes
     field: uuid
     type: string
@@ -8317,27 +8147,6 @@ relations:
       on_update: RESTRICT
       on_delete: RESTRICT
   - collection: gp_apps_approvals
-    field: user
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: gp_apps_approvals
-      many_field: user
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: gp_apps_approvals
-      column: user
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: gp_apps_approvals_user_foreign
-      on_update: RESTRICT
-      on_delete: CASCADE
-  - collection: gp_apps_approvals
     field: app
     related_collection: gp_apps
     meta:
@@ -8401,27 +8210,6 @@ relations:
       on_update: RESTRICT
       on_delete: CASCADE
   - collection: gp_credits
-    field: user_id
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: gp_credits
-      many_field: user_id
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: gp_credits
-      column: user_id
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: gp_credits_user_id_foreign
-      on_update: RESTRICT
-      on_delete: CASCADE
-  - collection: gp_credits
     field: account_id
     related_collection: gp_accounts
     meta:
@@ -8463,27 +8251,6 @@ relations:
       constraint_name: gp_credits_additions_user_updated_foreign
       on_update: RESTRICT
       on_delete: SET NULL
-  - collection: gp_credits_deductions
-    field: user_id
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: gp_credits_deductions
-      many_field: user_id
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: gp_credits_deductions
-      column: user_id
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: gp_credits_deductions_user_id_foreign
-      on_update: RESTRICT
-      on_delete: CASCADE
   - collection: gp_credits_deductions
     field: account_id
     related_collection: gp_accounts
@@ -8608,27 +8375,6 @@ relations:
       foreign_key_table: directus_files
       foreign_key_column: id
       constraint_name: gp_orgs_banner_foreign
-      on_update: RESTRICT
-      on_delete: SET NULL
-  - collection: gp_probes
-    field: userId
-    related_collection: directus_users
-    meta:
-      junction_field: null
-      many_collection: gp_probes
-      many_field: userId
-      one_allowed_collections: null
-      one_collection: directus_users
-      one_collection_field: null
-      one_deselect_action: nullify
-      one_field: null
-      sort_field: null
-    schema:
-      table: gp_probes
-      column: userId
-      foreign_key_table: directus_users
-      foreign_key_column: id
-      constraint_name: gp_probes_userid_foreign
       on_update: RESTRICT
       on_delete: SET NULL
   - collection: gp_probes

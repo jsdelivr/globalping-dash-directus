@@ -9,7 +9,6 @@ describe('local-adoption endpoint', () => {
 	const sandbox = sinon.createSandbox();
 
 	let knexQueryBuilder: any;
-	let accountsQueryBuilder: any;
 	let databaseStub: any;
 	let updateOne: any;
 	let readOne: any;
@@ -77,16 +76,7 @@ describe('local-adoption endpoint', () => {
 		knexQueryBuilder.transacting.returns(knexQueryBuilder);
 		knexQueryBuilder.forUpdate.returns(knexQueryBuilder);
 
-		accountsQueryBuilder = {
-			where: sandbox.stub(),
-			first: sandbox.stub().callsFake((field: string) => field === 'user'
-				? Promise.resolve({ user: 'user-id' })
-				: Promise.resolve({ id: 'account-id' })),
-		};
-
-		accountsQueryBuilder.where.returns(accountsQueryBuilder);
-
-		databaseStub = sandbox.stub().callsFake((table: string) => table === 'gp_accounts' ? accountsQueryBuilder : knexQueryBuilder);
+		databaseStub = sandbox.stub().returns(knexQueryBuilder);
 		databaseStub.raw = sandbox.stub().resolves([ [{ role: 'admin' }] ]);
 		databaseStub.transaction = sandbox.stub().callsFake(async (callback: any) => callback(knexQueryBuilder));
 
@@ -135,7 +125,7 @@ describe('local-adoption endpoint', () => {
 		knexQueryBuilder.then.yields([{ ...reducedProbeData, publicIp: clientIp }]);
 
 		updateOne.resolves('probe-1');
-		readOne.resolves({ ...probeData, userId: 'user-id' });
+		readOne.resolves({ ...probeData, account_id: 'account-id' });
 		readByQuery.resolves([]);
 		notificationCreateOne.resolves('notification-1');
 
@@ -201,17 +191,17 @@ describe('local-adoption endpoint', () => {
 				.set('X-Forwarded-For', clientIp)
 				.send({
 					token: 'valid-token-123',
+					accountId: 'account-id',
 				});
 
 			expect(res.status).to.equal(200);
-			expect(res.body).to.deep.include({ id: 'probe-1', userId: 'user-id' });
+			expect(res.body).to.deep.include({ id: 'probe-1', account_id: 'account-id' });
 
 			expect(knexQueryBuilder.first.called).to.equal(true);
 			expect(updateOne.called).to.equal(true);
 
 			expect(updateOne.args[0]?.[1]).to.deep.include({
 				name: 'probe-us-new-york-01',
-				userId: 'user-id',
 				account_id: 'account-id',
 				ip: clientIp,
 			});
@@ -232,7 +222,6 @@ describe('local-adoption endpoint', () => {
 
 			knexQueryBuilder.first.onSecondCall().resolves({
 				...probeData,
-				userId: 'user-id',
 				account_id: 'account-id',
 			});
 
@@ -241,6 +230,7 @@ describe('local-adoption endpoint', () => {
 				.set('X-Forwarded-For', clientIp)
 				.send({
 					token: 'valid-token-123',
+					accountId: 'account-id',
 				});
 
 			expect(res.status).to.equal(200);
@@ -279,6 +269,7 @@ describe('local-adoption endpoint', () => {
 				.set('X-Forwarded-For', clientIp)
 				.send({
 					token: 'invalid-token',
+					accountId: 'account-id',
 				});
 
 			expect(res.status).to.equal(404);
@@ -290,10 +281,20 @@ describe('local-adoption endpoint', () => {
 			const res = await request(app)
 				.post('/adopt')
 				.set('X-Forwarded-For', clientIp)
-				.send({});
+				.send({ accountId: 'account-id' });
 
 			expect(res.status).to.equal(400);
 			expect(res.text).to.include('"body.token" is required');
+		});
+
+		it('should 400 if accountId is missing', async () => {
+			const res = await request(app)
+				.post('/adopt')
+				.set('X-Forwarded-For', clientIp)
+				.send({ token: 'valid-token-123' });
+
+			expect(res.status).to.equal(400);
+			expect(res.text).to.include('"body.accountId" is required');
 		});
 
 		it('should 400 if accountability.user is missing', async () => {
@@ -304,6 +305,7 @@ describe('local-adoption endpoint', () => {
 				.set('X-Forwarded-For', clientIp)
 				.send({
 					token: 'valid-token-123',
+					accountId: 'account-id',
 				});
 
 			expect(res.status).to.equal(400);

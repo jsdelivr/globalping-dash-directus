@@ -16,7 +16,7 @@ export const seed = async (knex) => {
 		await knex('directus_presets').insert([{
 			user: user.id,
 			collection: 'gp_probes',
-			layout_query: { tabular: { fields: [ 'id', 'userId.first_name', 'ip', 'city', 'country', 'name', 'status' ] } },
+			layout_query: { tabular: { fields: [ 'id', 'account_id.user.first_name', 'ip', 'city', 'country', 'name', 'status' ] } },
 			icon: 'bookmark',
 		},
 		{

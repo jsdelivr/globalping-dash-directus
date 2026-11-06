@@ -4,9 +4,8 @@ import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
 import type { Knex } from 'knex';
-import { ALL_ACCOUNTS, getRequestAccountId } from '../../../lib/src/accounts.js';
+import { ALL_ACCOUNTS } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { validateUrl } from './utils.js';
 
@@ -31,13 +30,11 @@ const getApplicationsSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		// PHASE5: remove `userId`, `accountId` is the only owner input.
-		userId: Joi.string(),
-		accountId: Joi.string(),
+		accountId: Joi.string().required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
-	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
+	}).required(),
+}).unknown(true);
 
 const revokeApplicationSchema = Joi.object<Request>({
 	accountability: Joi.object({
@@ -45,13 +42,11 @@ const revokeApplicationSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
-		// PHASE5: remove `userId`, `accountId` is the only owner input.
-		userId: Joi.string(),
-		accountId: Joi.string(),
+		accountId: Joi.string().required(),
 		userCreated: Joi.string(),
 		id: Joi.string().required(),
-	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
+	}).required(),
+}).unknown(true);
 
 const AllAccountsError = createError('INVALID_PAYLOAD_ERROR', 'An application can only be revoked for a single account.', 400);
 const ForeignCreatorError = createError('INVALID_PAYLOAD_ERROR', 'You can only revoke your own applications.', 400);
@@ -83,10 +78,10 @@ const getCreatorId = (userCreated: string | undefined, accountability: Request['
 export default defineEndpoint((router, context) => {
 	const { database, logger } = context;
 
-	router.get('/', validate(getApplicationsSchema), asyncWrapper(async (_req, res) => {
+	router.get('/', validate(getApplicationsSchema, { roles: [ 'admin', 'member' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
-		const query = req.query as unknown as { userId?: string; accountId?: string; offset: number; limit: number };
-		const accountId = await getRequestAccountId(query, req.accountability, context, [ 'admin', 'member' ]);
+		const query = req.query as unknown as { accountId: string; offset: number; limit: number };
+		const { accountId } = query;
 
 		const rankedTokensQuery = database('gp_tokens')
 			.select(
@@ -134,8 +129,6 @@ export default defineEndpoint((router, context) => {
 				date_last_used: token.date_last_used,
 				owner_name: token.owner_name || 'Globalping',
 				owner_url: validateUrl(token.owner_url),
-				// PHASE5: remove `user_id`, `user_created` is the only creator output.
-				user_id: token.user_created,
 				user_created: token.user_created,
 				account_id: token.account_id,
 			};
@@ -150,19 +143,18 @@ export default defineEndpoint((router, context) => {
 		res.send({ applications, total });
 	}, context));
 
-	router.post('/revoke', validate(revokeApplicationSchema), asyncWrapper(async (_req, res) => {
+	router.post('/revoke', validate(revokeApplicationSchema, { roles: [ 'admin', 'member' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 
 		try {
-			const body = req.body as { userId?: string; accountId?: string; userCreated?: string; id: string };
-			const accountId = await getRequestAccountId(body, req.accountability, context, [ 'admin', 'member' ]);
+			const body = req.body as { accountId: string; userCreated?: string; id: string };
+			const { accountId } = body;
 
 			if (accountId === ALL_ACCOUNTS) {
 				throw new AllAccountsError();
 			}
 
-			// PHASE5: drop the `userId` fallback - in the legacy form it named the creator, not only the owner.
-			const owner = { account_id: accountId, user_created: getCreatorId(body.userCreated ?? body.userId, req.accountability) };
+			const owner = { account_id: accountId, user_created: getCreatorId(body.userCreated, req.accountability) };
 
 			await Promise.all([
 				database('gp_tokens')

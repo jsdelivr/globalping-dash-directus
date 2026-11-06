@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures.ts';
 import { addApplication, addProbe, pageAs } from '../utils.ts';
 
 test('Admin mode shows the probes of every user, impersonation narrows them to one', async ({ browser, user }) => {
-	await addProbe({ account_id: user.account_id, userId: user.id, name: 'e2e-probe-of-the-user' });
+	await addProbe({ account_id: user.account_id, name: 'e2e-probe-of-the-user' });
 
 	const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
 	await page.goto('/probes');

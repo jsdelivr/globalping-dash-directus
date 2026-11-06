@@ -112,16 +112,22 @@ describe('token hooks', () => {
 			expect((error as Error).message).to.equal('You can not create a token for this account.');
 		});
 
-		it('should skip the check when account_id is not in the payload', async () => {
-			await create({ name: 'name', value: 'value' });
+		it('should reject when account_id is not in the payload', async () => {
+			const error = await Promise.resolve(create({ name: 'name', value: 'value' })).catch(err => err);
 
-			expect(raw.callCount).to.equal(0);
+			expect((error as Error).message).to.equal('The token account is required.');
 		});
 
-		it('should skip the check when account_id is null', async () => {
-			await create({ name: 'name', value: 'value', account_id: null });
+		it('should reject when account_id is null', async () => {
+			const error = await Promise.resolve(create({ name: 'name', value: 'value', account_id: null })).catch(err => err);
 
-			expect(raw.callCount).to.equal(0);
+			expect((error as Error).message).to.equal('The token account is required.');
+		});
+
+		it('should reject an update that sets account_id to null', async () => {
+			const error = await Promise.resolve(callbacks.filter['gp_tokens.items.update']?.({ account_id: null }, {}, { accountability, database })).catch(err => err);
+
+			expect((error as Error).message).to.equal('The token account is required.');
 		});
 
 		it('should skip the check for an admin', async () => {

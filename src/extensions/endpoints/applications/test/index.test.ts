@@ -10,7 +10,6 @@ describe('/applications endpoint', () => {
 	const countStub = sinon.stub();
 	const offsetStub = sinon.stub();
 	const rawStub = sinon.stub();
-	const firstStub = sinon.stub();
 	const delStub = sinon.stub();
 
 	const database = new Proxy(() => database, {
@@ -21,8 +20,6 @@ describe('/applications endpoint', () => {
 				return offsetStub;
 			} else if (property === 'raw') {
 				return rawStub;
-			} else if (property === 'first') {
-				return firstStub;
 			} else if (property === 'del') {
 				return delStub;
 			}
@@ -56,7 +53,6 @@ describe('/applications endpoint', () => {
 		offsetStub.resolves([]);
 		rawStub.resolves([ [{ role: 'admin' }] ]);
 		delStub.resolves(1);
-		firstStub.resolves({ id: 'account-id' });
 
 		accountability = {
 			user: 'user-id',
@@ -78,7 +74,7 @@ describe('/applications endpoint', () => {
 		countStub.resolves([{ total: 1 }]);
 
 		const res = await request(app).get('/').query({
-			userId: 'user-id',
+			accountId: 'account-id',
 		});
 
 		expect(res.status).to.equal(200);
@@ -91,43 +87,11 @@ describe('/applications endpoint', () => {
 					date_last_used: '2025-04-10 02:00:00',
 					owner_name: 'Globalping',
 					owner_url: 'https://globalping.io/',
-					user_id: 'user-1',
 					user_created: 'user-1',
 				},
 			],
 			total: 1,
 		});
-	});
-
-	it('should reject user request for another user', async () => {
-		const res = await request(app).get('/').query({
-			userId: 'another-user-id',
-		});
-
-		expect(res.status).to.equal(400);
-		expect(res.text).to.equal('Allowed only for the current user or admin.');
-	});
-
-	it('should accept admin request for another user', async () => {
-		accountability = {
-			user: 'admin-id',
-			admin: true,
-		};
-
-		const res = await request(app).get('/').query({
-			userId: 'another-user-id',
-		});
-
-		expect(res.status).to.equal(200);
-		expect(res.body).to.deep.equal({ applications: [], total: 0 });
-	});
-
-	it('should accept a request with accountId', async () => {
-		const res = await request(app).get('/').query({
-			accountId: 'account-id',
-		});
-
-		expect(res.status).to.equal(200);
 	});
 
 	it('should reject a request for an account the user has no access to', async () => {
@@ -141,14 +105,27 @@ describe('/applications endpoint', () => {
 		expect(res.text).to.equal('You can not access this account.');
 	});
 
-	it('should reject a request with both userId and accountId', async () => {
+	it('should accept admin request for another account', async () => {
+		rawStub.resolves([ [] ]);
+
+		accountability = {
+			user: 'admin-id',
+			admin: true,
+		};
+
 		const res = await request(app).get('/').query({
-			userId: 'user-id',
-			accountId: 'account-id',
+			accountId: 'foreign-account-id',
 		});
 
+		expect(res.status).to.equal(200);
+		expect(res.body).to.deep.equal({ applications: [], total: 0 });
+	});
+
+	it('should reject a request without accountId', async () => {
+		const res = await request(app).get('/').query({});
+
 		expect(res.status).to.equal(400);
-		expect(res.text).to.include('contains a conflict');
+		expect(res.text).to.equal('"query.accountId" is required');
 	});
 
 	it('should accept admin request for all accounts', async () => {
@@ -162,29 +139,16 @@ describe('/applications endpoint', () => {
 		});
 
 		expect(res.status).to.equal(200);
-	});
-
-	it('should accept admin request for all users', async () => {
-		accountability = {
-			user: 'admin-id',
-			admin: true,
-		};
-
-		const res = await request(app).get('/').query({
-			userId: 'all',
-		});
-
-		expect(res.status).to.equal(200);
 		expect(res.body).to.deep.equal({ applications: [], total: 0 });
 	});
 
-	it('should reject user request for all users', async () => {
+	it('should reject user request for all accounts', async () => {
 		const res = await request(app).get('/').query({
-			userId: 'all',
+			accountId: 'all',
 		});
 
 		expect(res.status).to.equal(400);
-		expect(res.text).to.equal('Allowed only for admin.');
+		expect(res.text).to.equal('You can not access this account.');
 	});
 
 	it('should reject a revoke for all accounts', async () => {
@@ -202,29 +166,35 @@ describe('/applications endpoint', () => {
 		expect(res.text).to.equal('An application can only be revoked for a single account.');
 	});
 
-	it('should accept a revoke in the legacy form, with the user_id from the list', async () => {
-		offsetStub.resolves([{
-			id: '1',
-			app_id: 'app-1',
-			date_last_used: '2025-04-10 02:00:00',
-			user_created: 'user-id',
-			app_name: 'Client Credentials App',
-			owner_name: null,
-			owner_url: null,
-		}]);
-
-		countStub.resolves([{ total: 1 }]);
-
-		const list = await request(app).get('/').query({ userId: 'user-id' });
-		const [ application ] = list.body.applications;
-
+	it('should accept a revoke of an own application', async () => {
 		const res = await request(app).post('/revoke').send({
-			userId: application.user_id,
-			id: application.id,
+			accountId: 'account-id',
+			id: 'app-1',
 		});
 
 		expect(res.status).to.equal(200);
 		expect(res.text).to.equal('Application access revoked.');
+	});
+
+	it('should reject a revoke for an account the user has no access to', async () => {
+		rawStub.resolves([ [] ]);
+
+		const res = await request(app).post('/revoke').send({
+			accountId: 'foreign-account-id',
+			id: 'app-1',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('You can not access this account.');
+	});
+
+	it('should reject a revoke without accountId', async () => {
+		const res = await request(app).post('/revoke').send({
+			id: 'app-1',
+		});
+
+		expect(res.status).to.equal(400);
+		expect(res.text).to.equal('"body.accountId" is required');
 	});
 
 	it('should reject a revoke of an application created by somebody else', async () => {
