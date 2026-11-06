@@ -146,7 +146,7 @@ export default defineEndpoint((router, context) => {
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 			context.logger.error({ githubId, status }, 'GitHub account lookup failed.');
-			res.status(status === 404 ? 400 : 503).send('Redirect destination lookup is temporarily unavailable.');
+			res.status(status === 404 ? 400 : 503).send(status === 404 ? 'GitHub account not found.' : 'Redirect destination lookup is temporarily unavailable.');
 			return;
 		}
 

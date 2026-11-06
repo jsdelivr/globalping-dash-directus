@@ -293,7 +293,16 @@ describe('/admin-sponsors endpoint', () => {
 		nock('https://api.github.com').get('/user/900000000002').reply(429);
 		const response = await request(app).get('/redirect').query({ githubId: '900000000001' });
 		expect(response.status).to.equal(503);
+		expect(response.text).to.equal('Redirect destination lookup is temporarily unavailable.');
 		expect(JSON.stringify(logError.args)).not.to.include('Bearer token');
+		expect(stubs.insert.called).to.equal(false);
+	});
+
+	it('reports a missing redirect destination separately from a temporary failure', async () => {
+		nock('https://api.github.com').get('/user/900000000002').reply(404);
+		const response = await request(app).get('/redirect').query({ githubId: '900000000001' });
+		expect(response.status).to.equal(400);
+		expect(response.text).to.equal('GitHub account not found.');
 		expect(stubs.insert.called).to.equal(false);
 	});
 
