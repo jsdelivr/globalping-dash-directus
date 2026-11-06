@@ -31,7 +31,6 @@ const addCredits = async (user: User) => {
 		state: null,
 		status: 'offline',
 		tags: '[]',
-		userId: user.id,
 		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
@@ -106,11 +105,11 @@ const addCredits = async (user: User) => {
 		}),
 	})) ]);
 
-	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 6000 ]) });
+	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: sql.raw('amount - ?', [ 6000 ]) });
 
-	await sql('gp_credits_deductions').where({ user_id: user.id }).update({ date: relativeDayUtc(-10).toISOString().split('T')[0] });
+	await sql('gp_credits_deductions').where({ account_id: user.account_id }).update({ date: relativeDayUtc(-10).toISOString().split('T')[0] });
 
-	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
+	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
 };
 
 test.beforeEach(async ({ user }) => {

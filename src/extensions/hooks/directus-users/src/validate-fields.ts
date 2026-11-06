@@ -44,12 +44,12 @@ export const validateDefaultPrefix = async (defaultPrefix: string, userIds: stri
 
 	const user = (await getDirectusUsers(userIds, accountability, context))[0];
 
-	if (!user || !user.github_username || !user.github_organizations) {
+	if (!user || !user.github_username) {
 		throw payloadError('User does not have required github data.');
 	}
 
 	const savedPrefix = user.default_prefix ? [ user.default_prefix ] : [];
-	const prefixesSchema = Joi.string().valid(user.github_username, ...user.github_organizations, ...savedPrefix);
+	const prefixesSchema = Joi.string().valid(user.github_username, ...savedPrefix);
 
 	const { error } = prefixesSchema.validate(defaultPrefix);
 

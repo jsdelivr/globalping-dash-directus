@@ -58,8 +58,9 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 - Only an org admin can edit org probe metadata (city, name).
 - Only an org admin can unassign the probe from the org. But nothing prevents it from being assigned back, e.g. if adopted by an org token, it will be assigned again automatically.
 - If another user (not from org A) adopts a probe which belongs to org A, the probe is reassigned to the new owner.
-- The `default_prefix` setting keeps its stored value and its automatic rename when it goes stale; what goes in phase 5 is the manual choice - the settings selector and the field's write permission, so it can not be set through the API either. An org account's global tag is the org name, switched on by `gp_orgs.public_probes`.
-- The prefix select for probe tags is removed (phase 5): existing tags keep the prefix stored in the row, new and edited ones always get the owner's name (org name or `github_username`).
+- Tags: a new or edited tag always gets the owner's name - the org name on an org probe, the `github_username` on a personal one; there is no prefix select. A tag already stored on a probe keeps its prefix and keeps working, whatever that prefix is.
+- The `default_prefix` setting (the personal global tag `u-<prefix>`) accepts the `github_username` or the value already stored. It is renamed automatically when it goes stale: it stays only while it is the username or the name of one of the user's orgs. An org account's global tag is the org name, switched on by `gp_orgs.public_probes`.
+- A GitHub rename of a user, or of an org with public probes, moves the old name to `deprecated_prefix` (`directus_users` or `gp_orgs`): the old global tag keeps working until the owner confirms the new one with the link from the `default_tag_change` notification (an org's goes to its org admins). A name that becomes someone's current name is released from both columns.
 
 **Tokens**
 - Org admin or member can create an org token to consume org credits; viewer can't.

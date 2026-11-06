@@ -1,5 +1,6 @@
 import { test, expect } from '../fixtures.ts';
 import { client } from '../client.ts';
+import { loginUser } from '../utils.ts';
 
 test('Settings page', async ({ page }) => {
 	const applySettings = async () => {
@@ -41,6 +42,19 @@ test('a default tag prefix set to an org name can only be moved back to the user
 	await page.getByRole('button', { name: 'Apply settings' }).click();
 
 	await expect(page.getByText('Default tag prefix')).toHaveCount(0);
+	expect((await client('directus_users').where({ id: user.id }).first('default_prefix')).default_prefix).toBe(user.github_username);
+});
+
+test('the default tag prefix accepts only the username or the stored value', async ({ user }) => {
+	const api = await loginUser(user);
+	await client('directus_users').where({ id: user.id }).update({ default_prefix: 'e2e-stored-org' });
+
+	const refused = await api.patch('/users/me', { default_prefix: 'e2e-never-an-org-of-the-user' });
+	expect(refused.status).toBe(400);
+	expect((await client('directus_users').where({ id: user.id }).first('default_prefix')).default_prefix).toBe('e2e-stored-org');
+
+	expect((await api.patch('/users/me', { default_prefix: 'e2e-stored-org' })).status).toBe(200);
+	expect((await api.patch('/users/me', { default_prefix: user.github_username })).status).toBe(200);
 	expect((await client('directus_users').where({ id: user.id }).first('default_prefix')).default_prefix).toBe(user.github_username);
 });
 

@@ -26,7 +26,7 @@ test('Org probes are readable by every member of that org and by nobody else', a
 
 test('Personal probes are readable by their owner only', async ({ org, actors }) => {
 	const orgProbeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
-	const personalProbeId = await addProbe({ account_id: org.member.account_id, userId: org.member.id, name: 'e2e-personal-probe' });
+	const personalProbeId = await addProbe({ account_id: org.member.account_id, name: 'e2e-personal-probe' });
 
 	// The member sees both their own probe and the one of the org.
 	for (const api of [ actors.member, actors.directusAdmin ]) {
@@ -39,7 +39,7 @@ test('Personal probes are readable by their owner only', async ({ org, actors })
 });
 
 test('A personal probe can only be edited by its owner, and never moved to another account', async ({ org, actors }) => {
-	const probeId = await addProbe({ account_id: org.member.account_id, userId: org.member.id, name: 'e2e-personal-probe' });
+	const probeId = await addProbe({ account_id: org.member.account_id, name: 'e2e-personal-probe' });
 
 	expect((await actors.member.patch(`/items/gp_probes/${probeId}`, { name: 'e2e-renamed-probe' })).status).toBe(200);
 
@@ -74,9 +74,8 @@ test('Org probe adoption is available to admins only', async ({ org, actors }) =
 
 	expect((await actors.admin.post('/adoption-code/verify-code', { accountId: org.account_id, code: await getAdoptionCode(ip) })).status).toBe(200);
 
-	const probe = await sql('gp_probes').where({ ip }).first('account_id', 'userId');
+	const probe = await sql('gp_probes').where({ ip }).first('account_id');
 	expect(probe.account_id).toBe(org.account_id);
-	expect(probe.userId).toBe(null);
 
 	// The adoption notification goes to the org admins.
 	const notified = await sql('directus_notifications')
@@ -121,7 +120,6 @@ test('An org probe is not offered for adoption again', async ({ org, actors }) =
 	expect((await actors.admin.post('/adoption-code/send-code', { accountId: org.account_id, ip })).status).toBe(200);
 	expect((await actors.admin.post('/adoption-code/verify-code', { accountId: org.account_id, code: await getAdoptionCode(ip) })).status).toBe(200);
 
-	// The owner is the org, so the probe has no `userId` - the guard has to see it as adopted all the same.
 	const admin = await actors.admin.post('/adoption-code/send-code', { accountId: org.account_id, ip });
 	expect(admin.status).toBe(400);
 	expect(admin.data).toBe('The probe with this IP address is already adopted');
@@ -134,7 +132,7 @@ test('An org probe is not offered for adoption again', async ({ org, actors }) =
 	}
 });
 
-test('An org probe is not offered for local adoption', async ({ org, actors }) => {
+test('An org probe is not offered for local adoption', async ({ org, user: outsider, actors }) => {
 	const ip = randomIP();
 	const token = randomToken();
 
@@ -147,7 +145,7 @@ test('An org probe is not offered for local adoption', async ({ org, actors }) =
 	const listed = await actors.admin.get('/local-adoption', { headers: { 'true-client-ip': ip } });
 	expect(listed.data).toEqual([]);
 
-	const adopted = await actors.outsider.post('/local-adoption/adopt', { token }, { headers: { 'true-client-ip': ip } });
+	const adopted = await actors.outsider.post('/local-adoption/adopt', { token, accountId: outsider.account_id }, { headers: { 'true-client-ip': ip } });
 	expect(adopted.status).toBe(404);
 
 	const probe = await sql('gp_probes').where({ ip }).first('account_id');
@@ -166,6 +164,28 @@ test('An org probe is tagged with the org name only', async ({ org, actors }) =>
 
 	const probe = await sql('gp_probes').where({ id: probeId }).first('tags');
 	expect(JSON.parse(probe.tags)).toEqual([{ prefix: org.name, value: 'berlin' }]);
+});
+
+test('A stored tag keeps any prefix, while a new tag of a personal probe needs the username', async ({ org, actors }) => {
+	const orgTag = { prefix: org.name, value: 'stored' };
+	const userTag = { prefix: org.admin.github_username, value: 'stored' };
+	const orgProbeId = await addProbe({ account_id: org.account_id, tags: JSON.stringify([ userTag ]) });
+	const personalProbeId = await addProbe({ account_id: org.admin.account_id, tags: JSON.stringify([ orgTag ]) });
+
+	const updateTags = (probeId: string, tags: object[]) => actors.admin.patch(`/items/gp_probes/${probeId}`, { tags });
+
+	expect((await updateTags(personalProbeId, [ orgTag, { prefix: org.name, value: 'new' }])).status).toBe(400);
+
+	expect((await updateTags(orgProbeId, [ userTag, { prefix: org.name, value: 'new' }])).status).toBe(200);
+	expect((await updateTags(personalProbeId, [ orgTag, { prefix: org.admin.github_username, value: 'new' }])).status).toBe(200);
+
+	const [ orgProbe, personalProbe ] = await Promise.all([
+		sql('gp_probes').where({ id: orgProbeId }).first('tags'),
+		sql('gp_probes').where({ id: personalProbeId }).first('tags'),
+	]);
+
+	expect(JSON.parse(orgProbe.tags)).toEqual([ userTag, { prefix: org.name, value: 'new' }]);
+	expect(JSON.parse(personalProbe.tags)).toEqual([ orgTag, { prefix: org.admin.github_username, value: 'new' }]);
 });
 
 test('The expired probes cron removes an org probe that stayed offline', async ({ org }) => {
@@ -238,7 +258,7 @@ test('The outdated software warning for an org probe is sent once and not repeat
 
 test('An org probe is not listed in the admin`s personal probes list', async ({ browser, org }) => {
 	await addProbe({ account_id: org.account_id, name: 'e2e-probe-of-the-org' });
-	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-probe-of-the-admin' });
+	await addProbe({ account_id: org.admin.account_id, name: 'e2e-probe-of-the-admin' });
 
 	const page = await pageAs(browser, org.admin.email, 'user');
 	await page.goto('/probes');
@@ -259,18 +279,15 @@ test('a local probe is adopted into the account it was asked for, leaving the pe
 	const intoOrg = await actors.admin.post('/local-adoption/adopt', { token: orgToken, accountId: org.account_id }, { headers: { 'true-client-ip': orgIp } });
 	expect(intoOrg.status).toBe(200);
 
-	const intoPersonal = await actors.admin.post('/local-adoption/adopt', { token: personalToken }, { headers: { 'true-client-ip': personalIp } });
+	const intoPersonal = await actors.admin.post('/local-adoption/adopt', { token: personalToken, accountId: org.admin.account_id }, { headers: { 'true-client-ip': personalIp } });
 	expect(intoPersonal.status).toBe(200);
 
 	const [ orgProbe, personalProbe ] = await Promise.all([
-		sql('gp_probes').where({ id: orgProbeId }).first('account_id', 'userId'),
-		sql('gp_probes').where({ id: personalProbeId }).first('account_id', 'userId'),
+		sql('gp_probes').where({ id: orgProbeId }).first('account_id'),
+		sql('gp_probes').where({ id: personalProbeId }).first('account_id'),
 	]);
 
 	expect(orgProbe.account_id).toBe(org.account_id);
-	expect(orgProbe.userId).toBe(null);
-
 	expect(personalProbe.account_id).toBe(org.admin.account_id);
-	expect(personalProbe.userId).toBe(org.admin.id);
 });
 

@@ -2,7 +2,7 @@ export async function up (knex) {
 	await knex.raw(`
 		UPDATE directus_users u
 		SET date_created = LEAST(
-				COALESCE((SELECT MIN(date_created) FROM gp_probes WHERE userId = u.id), NOW()),
+				COALESCE((SELECT MIN(p.date_created) FROM gp_probes p JOIN gp_accounts a ON a.id = p.account_id WHERE a.user = u.id), NOW()),
 				COALESCE((SELECT MIN(timestamp) FROM directus_notifications WHERE recipient = u.id), NOW()),
 				COALESCE(
 					IF(u.provider = 'github',

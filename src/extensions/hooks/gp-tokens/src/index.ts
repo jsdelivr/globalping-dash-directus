@@ -13,8 +13,7 @@ export type Token = {
 	date_updated?: string;
 	user_created: string;
 	user_updated?: string;
-	// PHASE5: make it required.
-	account_id?: string | null;
+	account_id: string;
 };
 
 type Revision = {
@@ -32,7 +31,10 @@ export default defineHook(({ action, filter }) => {
 	filter('gp_tokens.items.update', async (payload, _meta, context) => {
 		const token = payload as Partial<Token>;
 		validateToken(token);
-		await validateAccount(token, context);
+
+		if (Object.hasOwn(token, 'account_id')) {
+			await validateAccount(token, context);
+		}
 	});
 
 	filter('gp_tokens.items.query', (query) => {

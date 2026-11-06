@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { ref, watch, inject } from 'vue';
+	import { ref, watch, inject, computed, type Ref } from 'vue';
 	import { useApi } from '@directus/extensions-sdk';
 
 	const api = useApi();
@@ -7,7 +7,6 @@
 	const props = withDefaults(
 		defineProps<{
 			value: { value: string; prefix: string }[] | null;
-			primaryKey: string;
 			type: string;
 			disabled?: boolean;
 			font?: 'sans-serif' | 'serif' | 'monospace';
@@ -17,31 +16,39 @@
 		},
 	);
 
-	const values = inject('values');
+	const values = inject<Ref<{ account_id?: string | null }>>('values');
 
 	const emit = defineEmits([ 'input' ]);
 
-	const id = ref<string>('');
+	const accountId = computed(() => values?.value?.account_id ?? null);
+	const ownerName = ref<string | null>(null);
 
-	const prefixes = ref<string[]>([]);
+	const tags = ref<{ value: string; prefix: string }[]>([]);
+	const savedTags = ref<{ value: string; prefix: string }[]>([]);
+	watch(() => props.value, (newVal) => {
+		tags.value = newVal ?? [];
+		savedTags.value = savedTags.value.length ? savedTags.value : tags.value;
+	}, { immediate: true });
+
+	// A saved tag may keep its old prefix only while its value is unchanged; an edited value always gets the owner prefix.
+	const getPrefixOptions = (tag: { value: string; prefix: string }) => {
+		const saved = savedTags.value.find(savedTag => savedTag.value === tag.value);
+		return saved && ownerName.value && saved.prefix !== ownerName.value ? [ saved.prefix, ownerName.value ] : [];
+	};
+
 	const updatePrefix = (index: number, newPrefix: string) => {
 		const updatedArray = [ ...tags.value ];
 		updatedArray[index] = { ...tags.value[index], prefix: newPrefix };
 		emit('input', updatedArray);
 	};
-
-	const tags = ref<{ value: string; prefix: string }[]>(props.value ?? []);
-	watch(() => props.value, (newVal) => {
-		tags.value = newVal ?? [];
-	});
-
 	const updateTag = (index: number, newTag: string) => {
 		const updatedArray = [ ...tags.value ];
-		updatedArray[index] = { ...tags.value[index], value: newTag };
+		updatedArray[index] = { value: newTag, prefix: ownerName.value ?? tags.value[index].prefix };
 		emit('input', updatedArray);
 	};
+	// A new tag always gets the name of the probe owner.
 	const addTag = () => {
-		const updatedArray = [ ...tags.value, { value: '', prefix: prefixes.value[0] }];
+		const updatedArray = [ ...tags.value, { value: '', prefix: ownerName.value }];
 		emit('input', updatedArray);
 	};
 	const deleteTag = (index: number) => {
@@ -49,62 +56,43 @@
 		emit('input', updatedArray);
 	};
 
-	async function fetchUserData () {
+	async function fetchOwnerName (id: string) {
 		try {
-			const userId = values?.value?.userId || 'me';
-			const response = await api.get(`/users/${userId}`, {
+			const response = await api.get(`/items/gp_accounts/${id}`, {
 				params: {
-					fields: [ 'id', 'github_username', 'github_organizations' ],
+					fields: [ 'user.github_username', 'org.name' ],
 				},
 			});
 
-			const user = response.data.data;
-			prefixes.value = [ user.github_username, ...user.github_organizations ];
-			id.value = response.data.data.id;
+			const account = response.data.data;
+			ownerName.value = account.org?.name ?? account.user?.github_username ?? null;
 		} catch (err: any) {
 			console.error(err);
 			alert(err.message || err.toString());
 		}
 	}
 
-	watch(() => props.primaryKey, (newVal, oldVal) => {
-		if (newVal && newVal !== oldVal) {
-			fetchUserData();
+	watch(accountId, (newVal) => {
+		ownerName.value = null;
+
+		if (newVal) {
+			fetchOwnerName(newVal);
 		}
 	}, { immediate: true });
-
-	const isFetching = ref(false);
-
-	async function syncGithubData () {
-		try {
-			isFetching.value = true;
-			const response = await api.post('/sync-github-data', {
-				userId: id.value,
-			});
-			const username = response.data.github_username;
-			const organizations = response.data.github_organizations;
-			prefixes.value = [ username, ...organizations ];
-		} catch (err: any) {
-			console.error(err);
-			alert(err.message || err.toString());
-		}
-
-		isFetching.value = false;
-	}
 </script>
 
 <template>
 	<div v-for="(item, index) in tags" :key="index" class="row">
 		<p class="text">u-</p>
-		<div class="dropdown">
+		<div v-if="getPrefixOptions(item).length" class="prefix">
 			<v-select
 				:model-value="item.prefix"
-				:items="prefixes.map(value => ({text: value, value}))"
+				:items="getPrefixOptions(item).map(value => ({ text: value, value }))"
 				:disabled="disabled"
-				:placeholder="'Select prefix'"
 				@update:model-value="(newPrefix) => updatePrefix(index, newPrefix)"
 			/>
 		</div>
+		<p v-else class="text">{{ item.prefix }}</p>
 		<p class="text">-</p>
 		<div class="input">
 			<v-input
@@ -119,8 +107,7 @@
 			<v-icon name="close"/>
 		</button>
 	</div>
-	<v-button class="add-tag-button" secondary @click="addTag">Add Tag</v-button>
-	<v-button secondary :loading="isFetching" @click="syncGithubData">Sync GitHub Data</v-button>
+	<v-button secondary :disabled="disabled || !ownerName" @click="addTag">Add Tag</v-button>
 </template>
 
 <style lang="scss" scoped>
@@ -133,13 +120,13 @@
 
 .text {
 	line-height: 60px;
-	font-size: large;
 	text-align: center;
-	min-width: 30px;
+	margin-right: 4px;
 }
 
-.dropdown {
-	flex-grow: 1;
+.prefix {
+	flex: 0 0 200px;
+	margin-right: 4px;
 }
 
 .input {
@@ -149,10 +136,6 @@
 .close-button {
 	margin-left: 5px;
 	width: 30px;
-}
-
-.add-tag-button {
-	margin-right: 15px;
 }
 
 .v-input {

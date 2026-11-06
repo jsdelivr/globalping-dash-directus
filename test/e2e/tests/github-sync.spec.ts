@@ -1,7 +1,26 @@
+import axios from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { loginUser } from '../utils.ts';
 import { createOrgToken, getMemberships, getOrgWithAccount, getSelectedOrgs, membership, prepareMockGithub, selectOrgs, sync } from '../github.ts';
+
+const defaultTagChangeMessages = async (userIds: string[]) => {
+	const rows = await sql('directus_notifications')
+		.where({ type: 'default_tag_change' })
+		.whereIn('recipient', userIds)
+		.select('recipient', 'message');
+
+	return rows as { recipient: string; message: string }[];
+};
+
+// Opens the confirmation link that the notification carries.
+const confirmDefaultTag = async (message: string) => {
+	const data = /data=([\w.-]+)/.exec(message)![1];
+	const response = await axios.post(`${process.env.DIRECTUS_URL}/sync-github-data/default-tag/confirm`, null, { params: { data } });
+	expect(response.status).toBe(200);
+};
+
+const prefixesOf = (userId: string) => sql('directus_users').where({ id: userId }).first('default_prefix', 'deprecated_prefix');
 
 test.afterEach(async () => {
 	await sql('gp_orgs').whereIn('github_id', [ '9100001', '9100002' ]).delete();
@@ -144,6 +163,10 @@ test('joins an org another user already created, and follows its rename on GitHu
 
 	expect(await getMemberships(user)).toMatchObject([{ github_id: '9100001', role: 'admin' }]);
 
+	// Without public probes nobody uses the old tag, so it is not kept and nobody is asked to confirm.
+	expect(await sql('gp_orgs').where({ id: org.id }).first('deprecated_prefix')).toEqual({ deprecated_prefix: null });
+	expect(await defaultTagChangeMessages([ user.id, user2.id ])).toEqual([]);
+
 	expect(await getMemberships(user2)).toMatchObject([
 		{ github_id: '9100001', role: 'member' },
 		{ github_id: '9100002', role: 'admin' },
@@ -169,4 +192,78 @@ test('removes only the org the user left, keeping the rest with their tokens and
 	expect(await sql('gp_tokens').where({ id: keptToken }).first('id')).toBeTruthy();
 });
 
-// The members cron re-checks the orgs of users who never sign in, so it goes through GitHub with the members' own tokens.
+test('an org rename with public probes keeps the old tag until an org admin confirms the new one', async ({ user, user2 }) => {
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org', 'admin') ]);
+	await sync(user);
+	await prepareMockGithub(user2, [ membership(9100001, 'e2e-sync-org') ]);
+	await sync(user2);
+	const org = await getOrgWithAccount('9100001');
+	await sql('gp_orgs').where({ id: org.id }).update({ public_probes: 1 });
+	// Org notifications reach only the admins who selected the org.
+	await selectOrgs(user, [ org.id ]);
+
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org-renamed', 'admin') ]);
+	await sync(user);
+
+	expect(await sql('gp_orgs').where({ github_id: '9100001' }).first('name', 'deprecated_prefix')).toEqual({ name: 'e2e-sync-org-renamed', deprecated_prefix: 'e2e-sync-org' });
+
+	const messages = await defaultTagChangeMessages([ user.id, user2.id ]);
+	expect(messages.map(message => message.recipient)).toEqual([ user.id ]);
+
+	await confirmDefaultTag(messages[0]!.message);
+	expect(await sql('gp_orgs').where({ github_id: '9100001' }).first('deprecated_prefix')).toEqual({ deprecated_prefix: null });
+});
+
+test('a default prefix the user has no claim to is reset, and the old one is kept until the user confirms', async ({ user }) => {
+	await sql('directus_users').where({ id: user.id }).update({ default_prefix: 'e2e-sync-org', public_probes: 1 });
+
+	await prepareMockGithub(user, [], [], user.github_username);
+	await sync(user);
+
+	expect(await prefixesOf(user.id)).toEqual({ default_prefix: user.github_username, deprecated_prefix: 'e2e-sync-org' });
+
+	const [ notification ] = await defaultTagChangeMessages([ user.id ]);
+	await confirmDefaultTag(notification!.message);
+	expect(await prefixesOf(user.id)).toEqual({ default_prefix: user.github_username, deprecated_prefix: null });
+});
+
+test('a default prefix set to an org name of the user stays while the org keeps that name, and is reset when the org is renamed', async ({ user }) => {
+	await sql('directus_users').where({ id: user.id }).update({ default_prefix: 'e2e-sync-org', public_probes: 1 });
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org') ], [], user.github_username);
+	await sync(user);
+
+	expect(await prefixesOf(user.id)).toEqual({ default_prefix: 'e2e-sync-org', deprecated_prefix: null });
+
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org-renamed') ], [], user.github_username);
+	await sync(user);
+
+	expect(await prefixesOf(user.id)).toEqual({ default_prefix: user.github_username, deprecated_prefix: 'e2e-sync-org' });
+});
+
+test('a name taken by an org or a user stops being the deprecated tag of anybody', async ({ user, user2, org }) => {
+	const deprecate = async (name: string) => {
+		await sql('directus_users').where({ id: user2.id }).update({ deprecated_prefix: name });
+		await sql('gp_orgs').where({ id: org.id }).update({ deprecated_prefix: name });
+	};
+
+	const deprecatedPrefixes = async () => [
+		(await prefixesOf(user2.id)).deprecated_prefix,
+		(await sql('gp_orgs').where({ id: org.id }).first('deprecated_prefix')).deprecated_prefix,
+	];
+
+	await deprecate('e2e-sync-org');
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org', 'admin') ], [], user.github_username);
+	await sync(user);
+	expect(await deprecatedPrefixes()).toEqual([ null, null ]);
+
+	await deprecate('e2e-sync-org-renamed');
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org-renamed', 'admin') ], [], user.github_username);
+	await sync(user);
+	expect(await deprecatedPrefixes()).toEqual([ null, null ]);
+
+	const login = `${user.github_username}-renamed`;
+	await deprecate(login);
+	await prepareMockGithub(user, [ membership(9100001, 'e2e-sync-org-renamed', 'admin') ], [], login);
+	await sync(user);
+	expect(await deprecatedPrefixes()).toEqual([ null, null ]);
+});

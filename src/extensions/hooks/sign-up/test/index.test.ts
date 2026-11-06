@@ -38,8 +38,11 @@ describe('Sign-up hook', () => {
 	const notificationsService = {
 		createOne: sinon.stub(),
 	};
-	const query = { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'account-1' }) };
+	const query = { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'account-1' }), update: sinon.stub() };
 	const trx = sinon.stub().returns(query);
+	const database = Object.assign(sinon.stub().returns(query), {
+		transaction: async (f: any) => f(trx),
+	});
 	const context = {
 		services: {
 			ItemsService: sinon.stub().callsFake((collection) => {
@@ -64,9 +67,7 @@ describe('Sign-up hook', () => {
 		env: {
 			GITHUB_ACCESS_TOKEN: 'default-github-token',
 		},
-		database: {
-			transaction: async (f: any) => f(trx),
-		},
+		database,
 		getSchema: () => Promise.resolve({}),
 		logger: {
 			error: () => {},
@@ -123,7 +124,6 @@ describe('Sign-up hook', () => {
 			first_name: null,
 			last_name: 'jimaek',
 			github_username: null,
-			github_organizations: null,
 		};
 
 		await callbacks.filter['users.create']?.(payload);
@@ -134,19 +134,11 @@ describe('Sign-up hook', () => {
 			first_name: 'jimaek',
 			last_name: undefined,
 			github_username: 'jimaek',
-			github_organizations: null,
 			email_notifications: false,
 		});
 	});
 
-	it('action should fulfill organizations, credits', async () => {
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/memberships/orgs?per_page=100&page=1`)
-			.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
-
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
+	it('action should fulfill credits', async () => {
 		creditsAdditionsService.readByQuery.resolves([{
 			amount: 10,
 			github_id: 1834071,
@@ -165,12 +157,9 @@ describe('Sign-up hook', () => {
 				first_name: 'Dmitriy Akulov',
 				last_name: 'jimaek',
 				github_username: null,
-				github_organizations: null,
 				github_oauth_token: 'user-github-token',
 			},
 		});
-
-		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { github_organizations: [ 'jsdelivr' ] }]);
 
 		expect(creditsAdditionsService.updateByQuery.callCount).to.equal(1);
 
@@ -181,13 +170,10 @@ describe('Sign-up hook', () => {
 			{ consumed: true },
 		]);
 
-		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, user_id: '1-1-1-1', account_id: 'account-1' }]);
+		expect(creditsService.createOne.args[0]).to.deep.equal([{ amount: 30, account_id: 'account-1' }]);
 	});
 
 	it('action should lock the user before it reads credits additions', async () => {
-		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, []);
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
 		hook(events, context);
 
 		await callbacks.action['users.create']?.({
@@ -195,7 +181,6 @@ describe('Sign-up hook', () => {
 			payload: {
 				provider: 'github',
 				external_identifier: '1834071',
-				github_organizations: null,
 				github_oauth_token: 'user-github-token',
 			},
 		});
@@ -206,9 +191,6 @@ describe('Sign-up hook', () => {
 	});
 
 	it('action should fulfill user type', async () => {
-		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
 		sponsorsService.readByQuery.resolves([{
 			github_id: 1834071,
 		}]);
@@ -223,7 +205,6 @@ describe('Sign-up hook', () => {
 				first_name: 'Dmitriy Akulov',
 				last_name: 'jimaek',
 				github_username: null,
-				github_organizations: null,
 				github_oauth_token: 'user-github-token',
 			},
 		});
@@ -231,14 +212,7 @@ describe('Sign-up hook', () => {
 		expect(usersService.updateOne.args[0]).to.deep.equal([ '1-1-1-1', { user_type: 'sponsor' }]);
 	});
 
-	it('action should release a matching deprecated prefix from other users', async () => {
-		nock('https://api.github.com')
-			.matchHeader('Authorization', 'Bearer user-github-token')
-			.get(`/user/memberships/orgs?per_page=100&page=1`)
-			.reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
-
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
+	it('action should release a matching deprecated prefix from other users and orgs', async () => {
 		hook(events, context);
 
 		await callbacks.action['users.create']?.({
@@ -247,7 +221,6 @@ describe('Sign-up hook', () => {
 				provider: 'github',
 				external_identifier: '1834071',
 				github_username: 'jimaek',
-				github_organizations: null,
 				github_oauth_token: 'user-github-token',
 			},
 		});
@@ -256,12 +229,13 @@ describe('Sign-up hook', () => {
 			{ filter: { deprecated_prefix: { _eq: 'jimaek' } } },
 			{ deprecated_prefix: null },
 		]);
+
+		expect(database.args[0]).to.deep.equal([ 'gp_orgs' ]);
+		expect(query.where.args).to.deep.include([{ deprecated_prefix: 'jimaek' }]);
+		expect(query.update.args[0]).to.deep.equal([{ deprecated_prefix: null }]);
 	});
 
 	it('action send welcome notification', async () => {
-		nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } }]);
-		nock('https://api.github.com').get(`/user/1834071/orgs?per_page=100&page=1`).reply(200, []);
-
 		sponsorsService.readByQuery.resolves([{
 			github_id: '1834071',
 		}]);
@@ -276,7 +250,6 @@ describe('Sign-up hook', () => {
 				first_name: 'Dmitriy Akulov',
 				last_name: 'jimaek',
 				github_username: null,
-				github_organizations: null,
 				github_oauth_token: 'user-github-token',
 			},
 		});

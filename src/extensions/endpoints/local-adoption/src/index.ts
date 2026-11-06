@@ -3,7 +3,6 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { Accountability } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { getIpFromRequest } from '../../../lib/src/client-ip.js';
 import { type Row, createAdoptedProbe, parseRow } from '../../../lib/src/create-adopted-probe.js';
@@ -19,8 +18,7 @@ const adoptLocalProbeSchema = Joi.object<Request>({
 	}).required().unknown(true),
 	body: Joi.object({
 		token: Joi.string().required(),
-		// PHASE5: make it required.
-		accountId: Joi.string(),
+		accountId: Joi.string().required(),
 	}).required(),
 }).unknown(true);
 
@@ -59,7 +57,7 @@ export default defineEndpoint((router, context) => {
 		res.send(unadoptedProbes);
 	}, context));
 
-	router.post('/adopt', validate(adoptLocalProbeSchema), asyncWrapper(async (eReq: ExpressRequest, res) => {
+	router.post('/adopt', validate(adoptLocalProbeSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (eReq: ExpressRequest, res) => {
 		const req = eReq as Request;
 		const clientIp = getClientIp(req);
 
@@ -79,7 +77,7 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const probe = parseRow(row);
-		const accountId = await getRequestAccountId(req.body, req.accountability, context);
+		const { accountId } = req.body;
 		const updatedProbe = await createAdoptedProbe(accountId, probe, context);
 
 		res.json(updatedProbe);

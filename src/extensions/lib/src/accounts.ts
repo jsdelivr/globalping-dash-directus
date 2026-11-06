@@ -1,8 +1,6 @@
 import { createError } from '@directus/errors';
 import type { ApiExtensionContext } from '@directus/extensions';
 
-type AccountInput = { accountId?: string; userId?: string };
-
 type Accountability = { user?: string | null; admin?: boolean };
 
 export type AccountRole = 'owner' | 'admin' | 'member' | 'viewer';
@@ -59,20 +57,16 @@ export const filterOrgIdsByBeingAdmin = async (orgIds: string[], userId: string,
 	return new Set(memberships.map(membership => membership.org));
 };
 
-// The account a request acts on, checked against the requester: their own account, or an org account where they have one of
-// `roles`. `ALL_ACCOUNTS` is allowed for Directus admins only.
-// PHASE5: with `accountId` the only input there is nothing to resolve - rename to `validateAccountId` and return nothing.
-export const getRequestAccountId = async (
-	input: AccountInput,
+// The account a request acts on must be the requester's own account, or an org account where they have one of `roles`.
+// `ALL_ACCOUNTS` is allowed for Directus admins only.
+export const validateAccountId = async (
+	accountId: string,
 	accountability: Accountability,
 	context: ApiExtensionContext,
 	roles: string[] = [ 'admin' ],
-): Promise<string> => {
-	// PHASE5: remove the `userId` branch, `accountId` is the only input.
-	const accountId = input.accountId ?? await getUserAccountId(input.userId ?? accountability.user!, context.database);
-
+): Promise<void> => {
 	if (accountability.admin) {
-		return accountId;
+		return;
 	}
 
 	if (accountId === ALL_ACCOUNTS) {
@@ -82,8 +76,6 @@ export const getRequestAccountId = async (
 	if (!await isAccountAvailable(accountId, accountability.user!, context.database, roles)) {
 		throw new ForbiddenAccountError();
 	}
-
-	return accountId;
 };
 
 export const getAccountGithubId = async (accountId: string, { database }: ApiExtensionContext): Promise<string | null> => {
@@ -96,12 +88,4 @@ export const getAccountGithubId = async (accountId: string, { database }: ApiExt
 	`, { account: accountId }) as [{ github_id: string | null }[]];
 
 	return rows[0]?.github_id ?? null;
-};
-
-// A probe's owner columns for an account: the account itself, plus the user when the account is personal.
-// PHASE5: remove - `userId` is dropped and the account alone defines the owner.
-export const getAccountOwnerFields = async (accountId: string, { database }: ApiExtensionContext) => {
-	const account = await database('gp_accounts').where({ id: accountId }).first<{ user: string | null }>('user');
-
-	return { account_id: accountId, userId: account?.user ?? null };
 };
