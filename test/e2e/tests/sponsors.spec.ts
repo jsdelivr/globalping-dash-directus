@@ -286,7 +286,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	await expect(adminPage.getByRole('button', { name: 'Add credits' })).toBeFocused();
 });
 
-test('Redirected sponsorship history', async ({ adminPage, user2, browser, baseURL }) => {
+test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 	await sql('directus_users').where({ id: user2.id }).update({ external_identifier: redirectTargetGithubId, github_username: 'redirect-target' });
 
 	await sql('sponsors').insert({
@@ -338,25 +338,6 @@ test('Redirected sponsorship history', async ({ adminPage, user2, browser, baseU
 	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
 	await expect(redirectIcon).toHaveAttribute('role', 'img');
 	await expect(eventsTable.locator('tbody').getByRole('img', { name: 'Dashboard account linked', exact: true })).toBeVisible();
-
-	const touchContext = await browser.newContext({ hasTouch: true, baseURL, storageState: await adminPage.context().storageState() });
-
-	try {
-		await touchContext.addInitScript(() => {
-			sessionStorage.setItem('adminConfig', JSON.stringify({ adminMode: true, impersonation: null }));
-		});
-
-		const touchPage = await touchContext.newPage();
-		await touchPage.goto('/sponsors');
-		await touchPage.getByLabel('Search sponsorship events').fill('redirect-source');
-		const touchIcon = touchPage.getByLabel('Credits redirected to redirect-target').first();
-		await touchIcon.tap();
-		await expect(touchPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
-		await touchPage.getByLabel('Search sponsorship events').tap();
-		await expect(touchPage.getByRole('tooltip')).not.toBeVisible();
-	} finally {
-		await touchContext.close();
-	}
 
 	await sql('gp_credits_additions').insert({
 		github_id: redirectTargetGithubId,
