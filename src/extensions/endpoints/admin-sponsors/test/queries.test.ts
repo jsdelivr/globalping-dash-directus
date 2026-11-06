@@ -28,7 +28,7 @@ describe('sponsor query normalization', () => {
 			const query = builder.toSQL();
 			expect(query.bindings.slice(0, 2)).to.deep.equal([ '900000000001', '900000000001' ]);
 			expect(query.sql).to.include('OR additions.github_id = ?');
-			expect(query.sql).to.include('sponsors.github_login LIKE ?');
+			expect(query.sql).to.include('current_sponsors.github_login LIKE ?');
 		});
 	}
 

@@ -163,7 +163,7 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(200);
-		expect(stubs.whereRaw.calledWith('(sponsors.github_id IS NOT NULL OR (sponsors.github_id IS NULL AND history.has_recurring = 1))')).to.equal(true);
+		expect(stubs.whereRaw.calledWith('((current_sponsors.github_id IS NOT NULL) OR (NOT (current_sponsors.github_id IS NOT NULL) AND history.has_recurring = 1))')).to.equal(true);
 		expect(stubs.whereRaw.calledWith('COALESCE(directus_users.id, gp_orgs.id) IS NOT NULL')).to.equal(true);
 		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.receiver_github_id')).to.equal(true);
 		expect(stubs.orderByRaw.firstCall.args[0]).to.include('CASE').and.to.match(/ desc$/);
