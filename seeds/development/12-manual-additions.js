@@ -25,7 +25,6 @@ export const seed = async (knex) => {
 				provider: 'default',
 				external_identifier: recipient.githubId,
 				github_username: recipient.login,
-				github_organizations: '[]',
 				email_notifications: 0,
 				adoption_token: randomUUID(),
 				default_prefix: recipient.login,
@@ -34,8 +33,9 @@ export const seed = async (knex) => {
 
 		// Replace only these examples when rerunning this seed on an existing local database.
 		const userIds = recipients.filter(recipient => recipient.id).map(recipient => recipient.id);
-		await trx('gp_credits_deductions').whereIn('user_id', userIds).delete();
-		await trx('gp_credits').whereIn('user_id', userIds).delete();
+		const accountIds = trx('gp_accounts').whereIn('user', userIds).select('id');
+		await trx('gp_credits_deductions').whereIn('account_id', accountIds).delete();
+		await trx('gp_credits').whereIn('account_id', accountIds).delete();
 		await trx('gp_credits_additions').whereIn('github_id', recipients.map(recipient => recipient.githubId)).delete();
 
 		await trx('gp_credits_additions').insert(Array.from({ length: 24 }, (_, index) => {

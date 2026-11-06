@@ -2,7 +2,6 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { ForbiddenAccountError, getAccountRole } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 
@@ -36,13 +35,9 @@ export default defineEndpoint((router, context) => {
 		res.send({ accountId: getClaims(req.token).active_account_id });
 	}, context));
 
-	router.post('/active', validate(setActiveAccountSchema), asyncWrapper(async (_req, res) => {
+	router.post('/active', validate(setActiveAccountSchema, { roles: [ 'admin', 'member', 'viewer' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 		const { accountId } = req.body as { accountId: string };
-
-		if (!await getAccountRole(accountId, req.accountability.user, database)) {
-			throw new ForbiddenAccountError();
-		}
 
 		// Update both the previous and the current session, as a refresh may have rotated this one already.
 		await database.raw(`

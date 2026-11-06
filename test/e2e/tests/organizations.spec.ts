@@ -1,8 +1,9 @@
-import type { AxiosInstance } from 'axios';
+import { randomUUID } from 'node:crypto';
+import { type AxiosInstance } from 'axios';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { Org, User } from '../types.ts';
-import { prepareMockProbeByIp, randomIP } from '../utils.ts';
+import { randomIP, randomToken } from '../utils.ts';
 
 const getMembershipId = async (org: Org, user: User) => {
 	const membership = await sql('gp_org_members').where({ org: org.id, user: user.id }).first('id');
@@ -297,22 +298,20 @@ test('the selected orgs can only be set on your own row, and non-member orgs are
 	expect((await actors.outsider.patch(`/users/${org.member.id}`, selected)).status).toBe(403);
 });
 
-// PHASE5: remove together with the `userId` parameter.
-test('the legacy userId parameter is only accepted for yourself, or from a Directus admin', async ({ org, user: outsider, actors }) => {
-	// The own form is what the old dashboard sends.
-	expect((await actors.member.get(`/credits-timeline?userId=${org.member.id}`)).status).toBe(200);
-	const ownIp = randomIP();
-	await prepareMockProbeByIp(ownIp);
-	expect((await actors.member.post('/adoption-code/send-code', { userId: org.member.id, ip: ownIp })).status).toBe(200);
+test('every owner-scoped endpoint requires the account, and a user id does not replace it', async ({ user, actors }) => {
+	const requests = [
+		{ request: actors.outsider.get(`/credits-timeline?userId=${user.id}`), message: '"query.accountId" is required' },
+		{ request: actors.outsider.get(`/sponsorship-details?userId=${user.id}`), message: '"query.accountId" is required' },
+		{ request: actors.outsider.get(`/applications?userId=${user.id}`), message: '"query.accountId" is required' },
+		{ request: actors.outsider.post('/applications/revoke', { userId: user.id, id: randomUUID() }), message: '"body.accountId" is required' },
+		{ request: actors.outsider.post('/adoption-code/send-code', { userId: user.id, ip: randomIP() }), message: '"body.accountId" is required' },
+		{ request: actors.outsider.post('/adoption-code/verify-code', { userId: user.id, code: '111111' }), message: '"body.accountId" is required' },
+		{ request: actors.outsider.post('/local-adoption/adopt', { userId: user.id, token: randomToken() }), message: '"body.accountId" is required' },
+	];
 
-	expect((await actors.member.get(`/credits-timeline?userId=${outsider.id}`)).status).toBe(400);
-	expect((await actors.member.get(`/applications?userId=${outsider.id}`)).status).toBe(400);
-	expect((await actors.member.post('/adoption-code/send-code', { userId: outsider.id, ip: randomIP() })).status).toBe(400);
-	expect((await actors.member.post('/adoption-code/verify-code', { userId: outsider.id, code: '111111' })).status).toBe(400);
-
-	expect((await actors.directusAdmin.get(`/credits-timeline?userId=${outsider.id}`)).status).toBe(200);
-	expect((await actors.directusAdmin.get(`/applications?userId=${outsider.id}`)).status).toBe(200);
-	const adminIp = randomIP();
-	await prepareMockProbeByIp(adminIp);
-	expect((await actors.directusAdmin.post('/adoption-code/send-code', { userId: outsider.id, ip: adminIp })).status).toBe(200);
+	for (const { request, message } of requests) {
+		const response = await request;
+		expect(response.status).toBe(400);
+		expect(response.data).toBe(message);
+	}
 });

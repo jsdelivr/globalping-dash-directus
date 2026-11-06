@@ -1,36 +1,45 @@
-import type { EndpointExtensionContext, HookExtensionContext } from '@directus/extensions';
+import type { ApiExtensionContext } from '@directus/extensions';
 import { getLinkGenerator } from './link-generator.js';
 import { sendNotification } from './send-notification.js';
-
-type Context = HookExtensionContext | EndpointExtensionContext;
 
 type User = {
 	id: string;
 	github_username: string | null;
-	github_organizations: string[];
 	default_prefix: string | null;
 	deprecated_prefix: string | null;
 	public_probes: boolean;
 };
 
-export const releaseDeprecatedPrefix = async (username: string, context: Context) => {
-	const { services, getSchema } = context;
+export const releaseDeprecatedPrefix = async (name: string, context: ApiExtensionContext) => {
+	const { services, database, getSchema } = context;
 	const { UsersService } = services;
 	const usersService = new UsersService({ schema: await getSchema() });
 
-	await usersService.updateByQuery({
-		filter: {
-			deprecated_prefix: { _eq: username },
-		},
-	}, { deprecated_prefix: null });
+	await Promise.all([
+		usersService.updateByQuery({ filter: { deprecated_prefix: { _eq: name } } }, { deprecated_prefix: null }),
+		database('gp_orgs').where({ deprecated_prefix: name }).update({ deprecated_prefix: null }),
+	]);
 };
 
-export const checkDefaultPrefix = async (user: User, context: Context): Promise<void> => {
+const getOrgNames = async (userId: string, { database }: ApiExtensionContext): Promise<string[]> => {
+	const orgs = await database('gp_org_members')
+		.join('gp_orgs', 'gp_orgs.id', 'gp_org_members.org')
+		.where('gp_org_members.user', userId)
+		.select('gp_orgs.name') as { name: string }[];
+
+	return orgs.map(org => org.name);
+};
+
+export const checkDefaultPrefix = async (user: User, context: ApiExtensionContext): Promise<void> => {
 	if (!user.default_prefix || !user.github_username) {
 		return;
 	}
 
-	if ([ user.github_username, ...user.github_organizations ].includes(user.default_prefix)) {
+	if (user.default_prefix === user.github_username) {
+		return;
+	}
+
+	if ((await getOrgNames(user.id, context)).includes(user.default_prefix)) {
 		return;
 	}
 
@@ -46,9 +55,7 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 		return;
 	}
 
-	const linkGenerator = getLinkGenerator(context);
-	const defaultTagChangeLink = linkGenerator.generateDefaultTagChangeLink(user.id);
-	const settingsLink = linkGenerator.generateSettingsLink();
+	const defaultTagChangeLink = getLinkGenerator(context).generateDefaultTagChangeLink({ userId: user.id });
 
 	await database.transaction(async (trx) => {
 		const usersService = new UsersService({ schema, knex: trx });
@@ -62,7 +69,7 @@ export const checkDefaultPrefix = async (user: User, context: Context): Promise<
 			recipient: user.id,
 			type: 'default_tag_change',
 			subject: 'Action required: Confirm your default probe tag',
-			message: `Your default probe tag has been updated from **u-${user.default_prefix}** to **u-${user.github_username}**.\n\nThe old **u-${user.default_prefix}** tag will continue to work for measurement targeting until you [confirm the new tag](${defaultTagChangeLink}) or [choose a different default tag](${settingsLink}) in settings.`,
+			message: `Your default probe tag has been updated from **u-${user.default_prefix}** to **u-${user.github_username}**.\n\nThe old **u-${user.default_prefix}** tag will continue to work for measurement targeting until you [confirm the new tag](${defaultTagChangeLink}).`,
 		}, context, trx);
 	});
 };

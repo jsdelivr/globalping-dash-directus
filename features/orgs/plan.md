@@ -2,7 +2,7 @@
 
 Design: see `design.md`. Rollout is 5 phases: expand (1), switch readers (2), account migration (3), org UI (4), contract (5). Phases 3 and 4 ship together: one Directus deploy, then gp-api, then the dash. Prod never breaks: old `user_id` columns keep working until phase 5, writers set both old and new columns during the transition.
 
-## Phase 1: Directus supports orgs
+## Phase 1: Directus supports orgs (done)
 
 All org operations become possible on the Directus side. No UI yet.
 
@@ -20,7 +20,7 @@ Both shapes have to work at the same time and in both directions: a caller still
 - Dual-write: every writer that sets `userId` / `user_id` also sets `account_id` (adoption, signup credits, deductions writer stays API-side until phase 2).
 - Seeds + unit tests + e2e for permissions and sync.
 
-## Phase 2: gp-api, gp-auth, gp-dash switch to account_id
+## Phase 2: gp-api, gp-auth, gp-dash switch to account_id (done)
 
 Readers move to the new columns. No new UI. Directus is not deployed again here, so everything it needs for the new shape - schema, keys, permissions, endpoint parameters - has to be in phase 1. Accepted: until this phase ships, an org token created via raw API bills its creator personally.
 
@@ -28,7 +28,7 @@ Readers move to the new columns. No new UI. Directus is not deployed again here,
 - gp-auth: consent flow gets the account context (cookie or param), validates membership + role (viewer can't approve for org), writes `account_id` + `user_created`; the "already approved" check and issued tokens are per account. It may stop writing `user` - the phase 1 trigger fills it - but it must keep sending the approving user in `user_created`: an approval with no user at all is rejected.
 - gp-dash: `getUserFilter` and probes / credits / tokens queries read `account_id` instead of `userId` / `user_id`. Deploy together with or after the phase 1 permissions migration (filters return empty otherwise).
 
-## Phase 3: account migration
+## Phase 3: account migration (done)
 
 The back end of the "migrate to organization" button, shipped with phase 4, with gp-api for the account tier. It has to come after phase 2: until the readers use `account_id`, moving credits takes the balance out of where `credits-master` looks for it, and moving probes or tokens does nothing at all. Full design in `account-migration.md`.
 
@@ -41,7 +41,7 @@ The back end of the "migrate to organization" button, shipped with phase 4, with
 - `directus_users.default_account`, the account a new session starts in, and the org's website and description, editable by its org admins.
 - Unit tests + e2e over REST, including the bounds of `default_account`: accepted for the user's own account and for an org of any role, refused for another org or user (phase3.md 6.3).
 
-## Phase 4: gp-dash org UI
+## Phase 4: gp-dash org UI (done)
 
 User-visible org support, including the UI for the migration back end from phase 3, plus the org's public profile on the Directus side. Ships together with phase 3.
 
@@ -59,7 +59,7 @@ User-visible org support, including the UI for the migration back end from phase
 - "Organization" screen, org admins only, a navigation entry under Tokens. Settings first: the org adoption token (copy, regenerate), the public-probes switch (`gp_orgs.public_probes`, which makes the org's probes globally targetable as `u-<org name>` - what replaces "point my personal `default_prefix` at an org name" from phase 5 on), the extra adoption tokens with the username each came from and a way to remove one, the org's credits redirects, each removable, the org profile, and the org admin's own notification settings for the org. Members second: the list and role management, where demoting someone to viewer warns before saving - the database trigger deletes their org tokens and app approvals, irreversibly.
 - e2e.
 
-## Phase 5: cleanup
+## Phase 5: cleanup (done)
 
 Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
 
@@ -84,22 +84,21 @@ Remove the transition scaffolding. Only after phases 1-4 have soaked in prod.
   otherwise a renamed user squats their old name forever and a user who left an org keeps its name. Its validity check moves from
   `github_organizations` to the org names in `gp_org_members`, which the sync maintains anyway; note that it stays a wider set than
   the one the user may write, because the two answer different questions - "do you still have a claim to this name" and "what may
-  you set". `deprecated_prefix` stays as a column. `tags` stays writable: the restriction there is `validateTags`, not the
+  you set". `deprecated_prefix` stays as a column, and `gp_orgs.deprecated_prefix` is its org counterpart: when an org
+  with `public_probes` is renamed on GitHub, the old name goes there and keeps working until an org admin confirms the new one
+  with the link from the `default_tag_change` notification. A name that becomes someone's current name - sign-up, user rename,
+  org create or rename - is released from both columns, never from `default_prefix`. `tags` stays writable: the restriction there is `validateTags`, not the
   permission.
 - Accepted: a prefix outlives its owner's claim to it - if someone else takes the freed username, both accounts emit
   tags with that prefix. Already true today; generating the prefix from the owner would have been the only thing that ever healed it.
 - `format: 'v1'` is untouched - some probes keep the `u-prefix-value` separator until their owner saves the tags. Optional cleanup: the
   `searchIndex` trigger (`20261030GP:29`) indexes them as `u-prefix:value`, so dashboard search and the API disagree on those.
 
-Added while implementing phase 1 (remove or update in phase 5):
+Transition scaffolding added in phase 1, and where it ended up:
 
-- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account` (`20261029GP`) - fulfill `account_id` for the rows gp-auth writes. Dead once phase 2 ships: gp-auth sets the account itself.
-- Triggers `gp_probes_fulfill_account`, `gp_probes_fulfill_account_on_update` (`20261029GP`) - fulfill `account_id` for a probe whose owner is written through `userId` alone. Dead once `userId` is gone.
-- `gp_apps_approvals_fulfill_account` also fills the NOT NULL `user` column that gp-auth stopped writing in phase 2, so it goes together with that column - see phase 5.
-- Credits triggers (`20261029GP`) write both `user_id` and `account_id`; drop `user_id` from the inserts.
-- `after_gp_credits_update` writes deductions with both; `gp_credits_deductions` keeps both `unique_user_id_date` and `gp_credits_deductions_account_id_date_unique` - drop the legacy one.
-- `gp_credits`, `gp_credits_deductions`, `gp_probes`, `gp_tokens`, `gp_apps_approvals` keep legacy indexes on the old user columns - drop with the columns. `gp_apps_approvals_user_index` was added in `20261029GP` only to free the `user` foreign key from the unique key being replaced.
-- `gp_probes` update permission validation keeps the `userId _null` clause next to `account_id _null`; `userId` stays in the allowed update fields (dash sends it until phase 2).
-- `getRequestAccountId` loses its legacy `userId` branch: with `accountId` the only input it stops resolving anything, so it becomes `validateAccountId(accountId, accountability, context, roles)` returning nothing, and the callers read `accountId` straight from the request.
-- The phase 1 org e2e drives Directus over REST because there is no org UI yet - move whatever the phase 4 dashboard covers to UI tests, and keep REST only for what the UI can't reach.
+- Triggers `gp_tokens_fulfill_account`, `gp_apps_approvals_fulfill_account`, `gp_probes_fulfill_account`, `gp_probes_fulfill_account_on_update` (`20261029GP`) filled `account_id` from the legacy user columns; `20261117GP` drops them before the snapshot drops the columns.
+- The credits triggers write `account_id` only; `gp_credits_deductions` keeps only `gp_credits_deductions_account_id_date_unique`, and the legacy indexes on the old user columns went with the columns.
+- The `gp_probes` update permission validates `account_id _null` only, and `userId` is no longer an allowed field.
+- `getRequestAccountId` is `validateAccountId(accountId, accountability, context, roles)`, returning nothing; the callers read `accountId` straight from the request.
+- The org e2e keeps REST for the permission and data checks the UI can't reach; the dashboard flows have their own UI specs.
 - Optional: a middleware that resolves the requester's accounts once per request (personal account id + org account ids with roles) and puts them on the request, so the endpoint checks become synchronous instead of each doing its own lookup. Must be a middleware, not JWT claims: static API tokens never go through `auth.jwt`, so claims would only cover the dashboard.

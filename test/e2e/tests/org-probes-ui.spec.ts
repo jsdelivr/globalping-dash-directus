@@ -63,7 +63,7 @@ const personalAdoptionToken = async (user: User) => (await sql('directus_users')
 
 test('start commands embed the adoption token of the account the probe is adopted into', async ({ browser, org }) => {
 	await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
-	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-personal-probe' });
+	await addProbe({ account_id: org.admin.account_id, name: 'e2e-personal-probe' });
 
 	for (const [ page, probeName, owner, token ] of [
 		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', org.name, org.adoption_token ],
@@ -108,7 +108,7 @@ test('the update guide opened from a notification embeds the token of the notifi
 	}
 });
 
-test('an org probe offers the org name as the only prefix for new tags, and keeps the prefix of a saved one', async ({ browser, org }) => {
+test('a new tag of an org probe gets the org name as its prefix, and a saved tag can switch to it', async ({ browser, org }) => {
 	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe', tags: JSON.stringify([{ prefix: org.admin.github_username, value: 'legacy-tag' }]) });
 
 	const page = await actAsOrg(browser, org, org.admin);
@@ -116,32 +116,36 @@ test('an org probe offers the org name as the only prefix for new tags, and keep
 	await page.getByRole('button', { name: 'Open edit tags dialog' }).click();
 
 	const popover = page.locator('#editTagsPopover');
-	await popover.getByRole('button', { name: 'Add' }).last().click();
+	const prefixes = popover.getByLabel('Tag prefix');
+	await popover.getByRole('button', { name: 'Add tag' }).click();
+
+	await expect(prefixes).toHaveText([ `u-${org.admin.github_username}`, `u-${org.name}` ]);
 
 	await popover.getByRole('combobox').click();
-	await expect(page.getByRole('option')).toHaveText([ `u-${org.admin.github_username}`, `u-${org.name}` ]);
-	await page.keyboard.press('Escape');
+	await page.getByRole('option', { name: `u-${org.name}` }).click();
 
-	await expect(popover.getByLabel('Tag prefix').last()).toHaveText(`u-${org.name}`);
-	await expect(popover.getByRole('combobox')).toHaveCount(1);
+	await expect(prefixes).toHaveText([ `u-${org.name}`, `u-${org.name}` ]);
 });
 
-test('a personal probe offers the GitHub username as the only prefix for new tags, and keeps the prefix of a saved one', async ({ browser, org }) => {
-	const probeId = await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-personal-probe', tags: JSON.stringify([{ prefix: org.name, value: 'legacy-tag' }]) });
+test('a personal probe gives new and edited tags the GitHub username prefix, and keeps the prefix of an unchanged one', async ({ browser, org }) => {
+	const probeId = await addProbe({ account_id: org.admin.account_id, name: 'e2e-personal-probe', tags: JSON.stringify([{ prefix: org.name, value: 'legacy-tag' }]) });
 
 	const page = await pageAs(browser, org.admin.email, 'user');
 	await page.goto(`/probes/${probeId}`);
 	await page.getByRole('button', { name: 'Open edit tags dialog' }).click();
 
 	const popover = page.locator('#editTagsPopover');
-	await popover.getByRole('button', { name: 'Add' }).last().click();
+	const prefixes = popover.getByLabel('Tag prefix');
+	const warning = popover.getByText('Edited tags will get the');
+	await popover.getByRole('button', { name: 'Add tag' }).click();
 
-	await popover.getByRole('combobox').click();
-	await expect(page.getByRole('option')).toHaveText([ `u-${org.name}`, `u-${org.admin.github_username}` ]);
-	await page.keyboard.press('Escape');
+	await expect(prefixes).toHaveText([ `u-${org.name}`, `u-${org.admin.github_username}` ]);
+	await expect(warning).toBeHidden();
 
-	await expect(popover.getByLabel('Tag prefix').last()).toHaveText(`u-${org.admin.github_username}`);
-	await expect(popover.getByRole('combobox')).toHaveCount(1);
+	await popover.getByLabel('Your tag').first().fill('edited-tag');
+
+	await expect(prefixes).toHaveText([ `u-${org.admin.github_username}`, `u-${org.admin.github_username}` ]);
+	await expect(warning).toContainText(`Edited tags will get the u-${org.admin.github_username} prefix after saving.`);
 });
 
 test('making the probes public writes the org setting, and only an org admin can do it', async ({ browser, org }) => {

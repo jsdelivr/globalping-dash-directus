@@ -4,14 +4,13 @@ import { defineHook } from '@directus/extensions-sdk';
 import _ from 'lodash';
 import { type AccountRole, getAccountAccess } from '../../../lib/src/accounts.js';
 import { checkDefaultPrefix } from '../../../lib/src/deprecate-prefix.js';
-import { getGithubOrganizations, type GithubOrganization } from '../../../lib/src/github-api-client.js';
+import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
 import { syncOrganizations } from '../../../lib/src/sync-orgs.js';
 
 type User = {
 	id: string;
 	external_identifier: string | null;
 	github_username: string | null;
-	github_organizations: string[];
 	github_oauth_token: string | null;
 	user_type: string;
 	default_prefix: string | null;
@@ -162,26 +161,5 @@ const syncGithubData = async (userId: string, context: HookExtensionContext) => 
 
 	const organizations = await getGithubOrganizations(user, context);
 	await syncOrganizations(user, organizations, context);
-	await syncGithubOrganizationsList(user, organizations, context);
 	await checkDefaultPrefix(user, context);
-};
-
-// PHASE5: remove. The old flat list of org names, used for the tag prefixes until they move to the account.
-const syncGithubOrganizationsList = async (user: User, organizations: GithubOrganization[], context: HookExtensionContext) => {
-	const githubOrgs = organizations.map(org => org.login);
-
-	if (!_.isEqual(user.github_organizations.sort(), githubOrgs.sort())) {
-		await updateUser(user, { github_organizations: githubOrgs }, context);
-		user.github_organizations = githubOrgs;
-	}
-};
-
-const updateUser = async (user: User, updateObject: Partial<User>, context: HookExtensionContext) => {
-	const { services, getSchema } = context;
-	const { UsersService } = services;
-
-	const usersService = new UsersService({
-		schema: await getSchema(),
-	});
-	await usersService.updateOne(user.id, updateObject);
 };

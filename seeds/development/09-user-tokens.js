@@ -37,7 +37,6 @@ export const seed = async (knex) => {
 
 	await knex('gp_apps_approvals').insert([{
 		id: randomUUID(),
-		user: user.id,
 		user_created: user.id,
 		account_id: account.id,
 		app: authCodeApp.id,

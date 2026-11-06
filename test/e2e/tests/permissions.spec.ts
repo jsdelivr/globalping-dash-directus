@@ -25,8 +25,7 @@ const EXPECTED_ACCESS = {
 const WRITABLE_FIELDS = {
 	'gp_tokens.create': [ 'name', 'value', 'expire', 'origins', 'account_id' ],
 	'gp_tokens.update': [ 'name', 'value', 'expire', 'origins' ],
-	// PHASE5: `userId` goes away with the column.
-	'gp_probes.update': [ 'name', 'tags', 'city', 'userId', 'country', 'state', 'settings', 'account_id' ],
+	'gp_probes.update': [ 'name', 'tags', 'city', 'country', 'state', 'settings', 'account_id' ],
 	'gp_orgs.update': [ 'adoption_token', 'public_probes', 'website', 'description', 'default_role' ],
 	'gp_org_members.update': [ 'role', 'notification_preferences' ],
 };

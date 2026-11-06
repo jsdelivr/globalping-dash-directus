@@ -114,7 +114,6 @@ describe('users hooks', () => {
 			usersService.readByQuery.resolves([{
 				id: '1-1-1-1-1',
 				github_username: 'testuser',
-				github_organizations: [ 'org1', 'org2' ],
 			}]);
 
 			await callbacks.filter['users.update']?.(
@@ -188,7 +187,7 @@ describe('users hooks', () => {
 			usersService.readByQuery.resolves([{
 				id: '1-1-1-1-1',
 				github_username: 'testuser',
-				github_organizations: [ 'org1', 'org2' ],
+				default_prefix: 'testuser',
 			}]);
 
 			const err = await callbacks.filter['users.update']?.(
@@ -197,14 +196,29 @@ describe('users hooks', () => {
 				{ accountability: { user: 'userIdValue' } },
 			).catch(err => err);
 
-			expect(err.message).to.equal('"value" must be one of [testuser, org1, org2]');
+			expect(err.message).to.equal('"value" must be [testuser]');
 		});
 
-		it('should allow keeping a saved default_prefix that is no longer a GitHub org of the user', async () => {
+		it('should throw error if default_prefix is an org name the user does not have stored', async () => {
 			usersService.readByQuery.resolves([{
 				id: '1-1-1-1-1',
 				github_username: 'testuser',
-				github_organizations: [ 'org1' ],
+				default_prefix: 'old-org',
+			}]);
+
+			const err = await callbacks.filter['users.update']?.(
+				{ default_prefix: 'other-org' },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			).catch(err => err);
+
+			expect(err.message).to.equal('"value" must be one of [testuser, old-org]');
+		});
+
+		it('should allow keeping a saved default_prefix that is not the username', async () => {
+			usersService.readByQuery.resolves([{
+				id: '1-1-1-1-1',
+				github_username: 'testuser',
 				default_prefix: 'old-org',
 			}]);
 
