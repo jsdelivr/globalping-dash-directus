@@ -22,7 +22,6 @@ export const generateUser = async (suffix = '', roleName = 'User'): Promise<User
 		password: '$argon2id$v=19$m=65536,t=3,p=4$UAmnqQvr4aGkytr3SIr68Q$aglm45P0itFgFKfyWyKOgVLXzZvCZHQJJR3geuAZgwU', // password: user
 		provider: 'default',
 		email_notifications: 0,
-		github_organizations: JSON.stringify([ `Scrubs${suffix}` ]),
 		github_username: login,
 		user_type: 'sponsor',
 		adoption_token: `dyhiwcyu36tbzgqp5jiu3lpvuxdn6too${suffix}`,
@@ -134,7 +133,6 @@ export const addProbe = async (fields: Record<string, unknown>) => {
 
 	await client('gp_probes').insert({
 		id,
-		userId: null,
 		account_id: null,
 		ip: randomIP(),
 		altIps: JSON.stringify([]),
@@ -189,7 +187,6 @@ export const addApplication = async ({ accountId, userId, appId, name = 'e2e-app
 		}),
 		client('gp_apps_approvals').insert({
 			id: randomUUID(),
-			user: userId,
 			user_created: userId,
 			account_id: accountId,
 			app,
@@ -221,12 +218,12 @@ export const allUsers = ({ admin, member, viewer, outsider, otherOrgAdmin }: Act
 export const clearUserData = async (user: User) => {
 	await client('sponsors').where({ github_id: user.external_identifier }).delete();
 	await client('gp_credits_additions').where({ github_id: user.external_identifier }).delete();
-	await client('gp_credits').where({ user_id: user.id }).delete();
-	await client('gp_credits_deductions').where({ user_id: user.id }).delete();
-	await client('gp_probes').where({ userId: user.id }).delete();
+	await client('gp_credits').where({ account_id: user.account_id }).delete();
+	await client('gp_credits_deductions').where({ account_id: user.account_id }).delete();
+	await client('gp_probes').where({ account_id: user.account_id }).delete();
 	await client('gp_tokens').where({ user_created: user.id }).delete();
 	await client('gp_apps').where({ user_created: user.id }).delete();
-	await client('gp_apps_approvals').where({ user: user.id }).delete();
+	await client('gp_apps_approvals').where({ user_created: user.id }).delete();
 	await client('directus_users').where({ id: user.id }).delete();
 };
 

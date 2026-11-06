@@ -8,12 +8,10 @@ import type { Request as ExpressRequest } from 'express';
 import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { getRequestAccountId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { checkFirmwareVersions } from '../../../lib/src/check-firmware-versions.js';
 import { SYSTEM_USER_ID } from '../../../lib/src/constants.js';
 import { createAdoptedProbe, type ProbeToAdopt } from '../../../lib/src/create-adopted-probe.js';
-import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { getGlobalpingApiUrl } from '../../../lib/src/service-urls.js';
 import { findAdoptedProbeByIp } from './repositories/directus.js';
@@ -49,19 +47,18 @@ const sendCodeSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	body: Joi.object({
-		// PHASE5: remove `userId`, `accountId` is the only owner input.
-		userId: Joi.string(),
-		accountId: Joi.string(),
+		accountId: Joi.string().required(),
 		ip: Joi.string().ip({ cidr: 'forbidden' }).required(),
-	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
+	}).required(),
+}).unknown(true);
 
 export default defineEndpoint((router, context) => {
 	const { env } = context;
-	router.post('/send-code', validate(sendCodeSchema), asyncWrapper(async (_req, res) => {
+
+	router.post('/send-code', validate(sendCodeSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (_req, res) => {
 		try {
 			const req = _req as Request;
-			const accountId = await getRequestAccountId(req.body, req.accountability!, context);
+			const { accountId } = req.body;
 			let ip: string;
 
 			try {
@@ -107,17 +104,15 @@ export default defineEndpoint((router, context) => {
 			admin: Joi.boolean().required(),
 		}).required().unknown(true),
 		body: Joi.object({
-			// PHASE5: remove `userId`, `accountId` is the only owner input (required).
-			userId: Joi.string(),
-			accountId: Joi.string(),
+			accountId: Joi.string().required(),
 			code: Joi.string().required(),
-		}).xor('userId', 'accountId').required(),
-	}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
+		}).required(),
+	}).unknown(true);
 
-	router.post('/verify-code', validate(verifyCodeSchema), asyncWrapper(async (_req, res) => {
+	router.post('/verify-code', validate(verifyCodeSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 
-		const accountId = await getRequestAccountId(req.body, req.accountability!, context);
+		const { accountId } = req.body;
 		const userCode = req.body.code.replaceAll(' ', '');
 
 		await rateLimiter.consume(req.accountability?.user ?? '', 1).catch(() => { throw new TooManyRequestsError(); });
@@ -178,11 +173,8 @@ export default defineEndpoint((router, context) => {
 		}
 
 		const probe = req.body.probe as ProbeToAdopt;
-		// PHASE5: remove the legacy `user` input, gp-api passes the account.
-		const account = req.body.account as { id: string } | undefined;
-		const user = req.body.user as { id: string } | undefined;
-		const accountId = await getRequestAccountId({ accountId: account?.id, userId: user?.id }, { admin: true }, context);
-		const adoptedProbe = await createAdoptedProbe(accountId, probe, context);
+		const account = req.body.account as { id: string };
+		const adoptedProbe = await createAdoptedProbe(account.id, probe, context);
 		await checkFirmwareVersions([ adoptedProbe ], adoptedProbe.account_id, context).catch((error) => { context.logger.error(error); });
 
 		res.sendStatus(200);

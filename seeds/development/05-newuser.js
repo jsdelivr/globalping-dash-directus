@@ -26,7 +26,6 @@ export const seed = async (knex) => {
 			provider: 'default',
 			external_identifier: '1234567892',
 			email_notifications: 0,
-			github_organizations: JSON.stringify([]),
 			github_username: 'turk',
 			user_type: 'member',
 			token: 'dgx4jbUG7q7FmJF4zGFHtPyov2h3vIoB',

@@ -9,7 +9,7 @@ test.afterEach(async ({ org }) => {
 
 test('counts an online hour for org and personal probes alike, and skips an offline one', async ({ org }) => {
 	const orgProbe = await addProbe({ account_id: org.account_id, status: 'ready', onlineTimesToday: 5 });
-	const personalProbe = await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, status: 'ready', onlineTimesToday: 5 });
+	const personalProbe = await addProbe({ account_id: org.admin.account_id, status: 'ready', onlineTimesToday: 5 });
 	const offlineProbe = await addProbe({ account_id: org.account_id, status: 'offline', onlineTimesToday: 5 });
 
 	await trigger(FLOW.probesStatus);
@@ -23,7 +23,7 @@ test('counts an online hour for org and personal probes alike, and skips an offl
 
 test('the hour it counts is the one that takes a probe over the threshold and earns the credits', async ({ org }) => {
 	const orgProbe = await addProbe({ account_id: org.account_id, status: 'ready', onlineTimesToday: 119 });
-	const personalProbe = await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, status: 'ready', onlineTimesToday: 119 });
+	const personalProbe = await addProbe({ account_id: org.admin.account_id, status: 'ready', onlineTimesToday: 119 });
 
 	// One hour short of the threshold: the credits cron passes both by.
 	await trigger(FLOW.adoptedProbesCredits);

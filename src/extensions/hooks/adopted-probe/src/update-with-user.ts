@@ -4,7 +4,7 @@ import axios from 'axios';
 import Joi from 'joi';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
 import { getDefaultProbeName } from '../../../lib/src/probe-name.js';
-import { getAccountTagPrefixes, getProbes } from './repositories/directus.js';
+import { getAccountTagPrefix, getProbes } from './repositories/directus.js';
 import { type Fields, UserNotFoundError, payloadError } from './index.js';
 
 export type City = {
@@ -73,15 +73,15 @@ export const validateTags = async (fields: Fields, keys: string[], accountabilit
 	const newTags = fields.tags.filter(tag => existingTagsArrays
 		.some(existingTags => existingTags.findIndex(existingTag => tag.prefix === existingTag.prefix && tag.value === existingTag.value) === -1));
 
-	const validPrefixes = await getAccountTagPrefixes(accountId, context);
+	const prefix = await getAccountTagPrefix(accountId, context);
 
-	if (!validPrefixes.length) {
+	if (!prefix) {
 		throw payloadError('Probe owner does not have required github data.');
 	}
 
 	const tagsSchema = Joi.array().items(Joi.object({
 		value: Joi.string().trim().pattern(/^[a-zA-Z0-9-]+$/).max(32).required(),
-		prefix: Joi.string().valid(...validPrefixes).required(),
+		prefix: Joi.string().valid(prefix).required(),
 	}));
 
 	if (fields.tags.length > 5) {

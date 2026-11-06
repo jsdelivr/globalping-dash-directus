@@ -3,7 +3,6 @@ import { defineHook } from '@directus/extensions-sdk';
 import { getUserAccountId } from '../../../lib/src/accounts.js';
 import { generateBytes } from '../../../lib/src/bytes.js';
 import { releaseDeprecatedPrefix } from '../../../lib/src/deprecate-prefix.js';
-import { getGithubOrganizations } from '../../../lib/src/github-api-client.js';
 import { sendNotification } from '../../../lib/src/send-notification.js';
 
 export type User = {
@@ -15,7 +14,6 @@ export type User = {
 	last_page?: string;
 	user_type: string;
 	github_username?: string;
-	github_organizations: string[];
 	github_oauth_token: string | null;
 	email_notifications: boolean;
 	adoption_token?: string;
@@ -46,7 +44,6 @@ export default defineHook(({ filter, action }, context) => {
 		const user = payload.payload as User;
 
 		await Promise.all([
-			user.provider === 'github' && fulfillOrganizations(userId, user, context),
 			user.provider === 'github' && assignCredits(userId, user, context),
 			user.provider === 'github' && fulfillUserType(userId, user, context),
 			user.provider === 'github' && user.github_username && releaseDeprecatedPrefix(user.github_username, context),
@@ -77,11 +74,6 @@ const fulfillFirstNameAndLastName = (user: User) => {
 		user.first_name = names[0];
 		user.last_name = names.slice(1).join(' ');
 	}
-};
-
-const fulfillOrganizations = async (userId: string, user: User, context: HookExtensionContext) => {
-	const organizations = await getGithubOrganizations(user, context);
-	await updateUser(userId, { github_organizations: organizations.map(org => org.login) }, context);
 };
 
 const updateUser = async (userId: string, updateObject: Partial<User>, context: HookExtensionContext) => {
@@ -133,8 +125,7 @@ const assignCredits = async (userId: string, user: User, context: HookExtensionC
 					consumed: { _eq: false },
 				},
 			}, { consumed: true }),
-			// PHASE5: remove `user_id`, the account alone owns the credits.
-			creditsService.createOne({ amount: sum, user_id: userId, account_id: accountId }),
+			creditsService.createOne({ amount: sum, account_id: accountId }),
 		]);
 	});
 };

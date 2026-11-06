@@ -3,7 +3,7 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { getAccountGithubId, getRequestAccountId } from '../../../lib/src/accounts.js';
+import { getAccountGithubId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { authorize } from './actions/authorize.js';
@@ -68,18 +68,18 @@ export default defineEndpoint((router, context) => {
 	});
 
 	// Only the admins of an org read its redirect: the counterparty is a person the members can not look up anywhere else.
-	router.get('/credits-redirect', validate(getRedirectSchema), asyncWrapper(async (_req, res) => {
+	router.get('/credits-redirect', validate(getRedirectSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
-		const accountId = await getRequestAccountId(req.query as { accountId: string }, req.accountability, context);
+		const { accountId } = req.query as { accountId: string };
 		const githubId = await getAccountGithubId(accountId, context);
 
 		res.send({ redirects: githubId ? await getRedirects(githubId, context) : [] });
 	}, context));
 
-	router.post('/credits-redirect', validate(setRedirectSchema), asyncWrapper(async (_req, res) => {
+	router.post('/credits-redirect', validate(setRedirectSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 		const body = req.body as { accountId: string; orgId: string };
-		const accountId = await getRequestAccountId(body, req.accountability, context);
+		const { accountId } = body;
 		const [ account, githubId ] = await Promise.all([
 			database('gp_accounts').where({ id: accountId }).first<{ org: string | null }>('org'),
 			getAccountGithubId(accountId, context),
@@ -99,10 +99,10 @@ export default defineEndpoint((router, context) => {
 		res.send({ becameAdmin });
 	}, context));
 
-	router.delete('/credits-redirect', validate(deleteRedirectSchema), asyncWrapper(async (_req, res) => {
+	router.delete('/credits-redirect', validate(deleteRedirectSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 		const body = req.body as { accountId: string; source: string; target: string };
-		const accountId = await getRequestAccountId(body, req.accountability, context);
+		const { accountId } = body;
 		const githubId = await getAccountGithubId(accountId, context);
 
 		if (githubId !== body.source && githubId !== body.target) {
@@ -114,10 +114,10 @@ export default defineEndpoint((router, context) => {
 		res.send('Credits redirect removed.');
 	}, context));
 
-	router.delete('/adoption-token', validate(removeTokenSchema), asyncWrapper(async (_req, res) => {
+	router.delete('/adoption-token', validate(removeTokenSchema, { roles: [ 'admin' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 		const body = req.body as { accountId: string; token: string };
-		const accountId = await getRequestAccountId(body, req.accountability, context);
+		const { accountId } = body;
 
 		await database.transaction(trx => removeAdoptionToken(accountId, body.token, trx));
 
