@@ -78,7 +78,7 @@ export const getUserBonus = async (
 	return { bonus, dollarsInLastYear, dollarsByMonth };
 };
 
-export const addCredits = async ({ github_id, amount, reason, meta }: AddCreditsData, context: ApiExtensionContext) => {
+export const addCredits = async ({ github_id: sponsorGithubId, amount, reason, meta }: AddCreditsData, context: ApiExtensionContext) => {
 	const { services, getSchema, env } = context;
 	const { ItemsService } = services;
 
@@ -86,13 +86,13 @@ export const addCredits = async ({ github_id, amount, reason, meta }: AddCredits
 		schema: await getSchema(),
 	});
 
-	const githubId = redirectGithubId(github_id);
+	const githubId = redirectGithubId(sponsorGithubId);
 	const { bonus } = await getUserBonus(githubId, amount, context);
 	const creditsId = await creditsAdditionsService.createOne({
 		github_id: githubId,
 		amount: Math.floor(amount * parseInt(env.CREDITS_PER_DOLLAR, 10) * (100 + bonus) / 100),
 		reason,
-		meta: { ...meta, bonus },
+		meta: { ...meta, bonus, sponsorGithubId },
 	});
 	return { creditsId, githubId };
 };

@@ -70,6 +70,8 @@ pnpm run seed
 4. `pnpm run migrate:production`
 5. stop prev container, run new container
 
+For the `20261106GP-backfill-sponsor-github-id` migration, stop all old Directus instances and let in-flight sponsorship operations finish before steps 3–4, then start the updated version. Old writers do not store the original sponsor ID, so they must not create additions after this backfill. The migration only adds attribution metadata; it does not move credits or change balances.
+
 ## Commands
 
 Create extension:

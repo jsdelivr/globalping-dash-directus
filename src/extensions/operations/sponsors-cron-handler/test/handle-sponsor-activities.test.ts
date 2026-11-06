@@ -2,6 +2,7 @@ import type { OperationContext } from '@directus/extensions';
 import { expect } from 'chai';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import { SponsorActivitiesHandler } from '../src/actions/handle-sponsor-activities.js';
 
 describe('SponsorActivitiesHandler', () => {
@@ -50,6 +51,7 @@ describe('SponsorActivitiesHandler', () => {
 	let clock: sinon.SinonFakeTimers;
 
 	before(() => {
+		SOURCE_ID_TO_TARGET_ID['900000000004'] = '900000000005';
 		nock.disableNetConnect();
 		clock = sinon.useFakeTimers({ now: NOW, toFake: [ 'Date' ] });
 	});
@@ -59,6 +61,7 @@ describe('SponsorActivitiesHandler', () => {
 	});
 
 	after(() => {
+		delete SOURCE_ID_TO_TARGET_ID['900000000004'];
 		nock.cleanAll();
 		clock.restore();
 	});
@@ -108,7 +111,7 @@ describe('SponsorActivitiesHandler', () => {
 			github_id: '10',
 			amount: 50000,
 			reason: 'one_time_sponsorship',
-			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_ot_1' },
+			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_ot_1', sponsorGithubId: '10' },
 		}]);
 
 		expect(results).to.have.length(1);
@@ -224,19 +227,19 @@ describe('SponsorActivitiesHandler', () => {
 			github_id: '20',
 			amount: 100000,
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0, tierId: 'tier_rec_1' },
+			meta: { amountInDollars: 10, monthsCovered: 1, bonus: 0, tierId: 'tier_rec_1', sponsorGithubId: '20' },
 		}]);
 
 		expect(results).to.have.length(1);
 	});
 
 	it('stores un-redirected github_id in sponsors table for redirected recurring sponsor', async () => {
-		// 66716858 → '6209808' per SOURCE_ID_TO_TARGET_ID.
+		// 900000000004 → '900000000005' per SOURCE_ID_TO_TARGET_ID.
 		mockActivities([{
 			id: 'SA_redirect_rec',
 			action: 'NEW_SPONSORSHIP',
 			timestamp: activityTimestamp,
-			sponsor: { databaseId: 66716858, login: 'redirected-user' },
+			sponsor: { databaseId: 900000000004, login: 'redirected-user' },
 			sponsorsTier: { id: 'tier_rec_x', monthlyPriceInDollars: 10, isOneTime: false },
 			previousSponsorsTier: null,
 		}]);
@@ -249,10 +252,10 @@ describe('SponsorActivitiesHandler', () => {
 		await handler.handle(context);
 
 		// Sponsor row uses ORIGINAL id (so the sponsors sync loop can find it).
-		expect(sponsorsService.createOne.firstCall.args[0].github_id).to.equal('66716858');
+		expect(sponsorsService.createOne.firstCall.args[0].github_id).to.equal('900000000004');
 
 		// Credit row uses REDIRECTED id (addCredits applies redirect internally).
-		expect(creditsAdditionsService.createOne.firstCall.args[0].github_id).to.equal('6209808');
+		expect(creditsAdditionsService.createOne.firstCall.args[0].github_id).to.equal('900000000005');
 	});
 
 	it('skips recurring credit when sponsor already exists', async () => {
@@ -300,7 +303,7 @@ describe('SponsorActivitiesHandler', () => {
 			github_id: '30',
 			amount: 50000, // diff = 5, 5 * 10000 = 50000
 			reason: 'tier_changed',
-			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_2' },
+			meta: { amountInDollars: 5, bonus: 0, tierId: 'tier_2', sponsorGithubId: '30' },
 		}]);
 
 		expect(results).to.have.length(1);
@@ -352,18 +355,18 @@ describe('SponsorActivitiesHandler', () => {
 	// ── ID redirect ───────────────────────────────────────────────────────────
 
 	it('skips one-time credit when existing credit found under redirect', async () => {
-		// 66716858 → '6209808'; existing credit stored under redirected ID should match
+		// 900000000004 → '900000000005'; existing credit stored under redirected ID should match
 		mockActivities([{
 			id: 'SA_11',
 			action: 'NEW_SPONSORSHIP',
 			timestamp: activityTimestamp,
-			sponsor: { databaseId: 66716858, login: 'redirected-user' },
+			sponsor: { databaseId: 900000000004, login: 'redirected-user' },
 			sponsorsTier: { id: 'tier_ot_x', monthlyPriceInDollars: 5, isOneTime: true },
 			previousSponsorsTier: null,
 		}]);
 
 		creditsAdditionsService.readByQuery.onFirstCall().resolves([{
-			github_id: '6209808',
+			github_id: '900000000005',
 			reason: 'one_time_sponsorship',
 			meta: { amountInDollars: 5, tierId: 'tier_ot_x' },
 			date_created: '2026-05-05T15:00:05.000Z',
@@ -377,12 +380,12 @@ describe('SponsorActivitiesHandler', () => {
 	});
 
 	it('redirects github_id via SOURCE_ID_TO_TARGET_ID before creating credit', async () => {
-		// 66716858 → '6209808' per SOURCE_ID_TO_TARGET_ID in add-credits.ts
+		// 900000000004 → '900000000005' per SOURCE_ID_TO_TARGET_ID in add-credits.ts
 		mockActivities([{
 			id: 'SA_10',
 			action: 'NEW_SPONSORSHIP',
 			timestamp: activityTimestamp,
-			sponsor: { databaseId: 66716858, login: 'redirected-user' },
+			sponsor: { databaseId: 900000000004, login: 'redirected-user' },
 			sponsorsTier: { id: 'tier_ot_x', monthlyPriceInDollars: 5, isOneTime: true },
 			previousSponsorsTier: null,
 		}]);
@@ -393,7 +396,7 @@ describe('SponsorActivitiesHandler', () => {
 		const handler = new SponsorActivitiesHandler();
 		await handler.handle(context);
 
-		expect(creditsAdditionsService.createOne.firstCall.args[0].github_id).to.equal('6209808');
+		expect(creditsAdditionsService.createOne.firstCall.args[0].github_id).to.equal('900000000005');
 	});
 
 	// ── window tracking ───────────────────────────────────────────────────────
