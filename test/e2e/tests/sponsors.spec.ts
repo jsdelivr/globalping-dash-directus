@@ -323,6 +323,21 @@ test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 	await expect(redirectIcon).toBeVisible();
 	await redirectIcon.hover();
 	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
+	await adminPage.mouse.move(0, 0);
+	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
+	await eventsTable.getByRole('link', { name: 'redirect-source', exact: true }).focus();
+	await adminPage.keyboard.press('Tab');
+	await expect(redirectIcon).toBeFocused();
+	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
+	await adminPage.keyboard.press('Tab');
+	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
+	await adminPage.keyboard.press('Shift+Tab');
+	await expect(redirectIcon).toBeFocused();
+	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
+	await adminPage.keyboard.press('Escape');
+	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
+	await expect(redirectIcon).toHaveAttribute('role', 'img');
+	await expect(eventsTable.locator('tbody').getByRole('img', { name: 'Dashboard account linked', exact: true })).toBeVisible();
 
 	await sql('gp_credits_additions').insert({
 		github_id: redirectTargetGithubId,
@@ -368,8 +383,8 @@ test('Manual additions show the redirect and submit the selected bypass option',
 			status: 201,
 			json: {
 				data: {
-					githubId: bypassRedirect ? redirectSourceGithubId : redirectTargetGithubId,
-					githubLogin: bypassRedirect ? 'redirect-source' : 'redirect-target',
+					githubId: bypassRedirect ? redirectSourceGithubId : '900000000004',
+					githubLogin: bypassRedirect ? 'redirect-source' : 'redirect-updated-target',
 				},
 			},
 		});
@@ -400,5 +415,31 @@ test('Manual additions show the redirect and submit the selected bypass option',
 		expect(response.status()).toBe(201);
 		expect(response.request().postDataJSON()).toMatchObject({ githubId: redirectSourceGithubId, credits: 5000, type: 'other', bypassRedirect: bypass });
 		await expect(dialog).not.toBeVisible();
+		await expect(adminPage.getByText(`5,000 credits were added for @${bypass ? 'redirect-source' : 'redirect-updated-target'}.`, { exact: true })).toBeVisible();
 	}
+});
+
+
+test('Direct recipient lookup works without a redirect', async ({ adminPage, user }) => {
+	const githubId = '900000000003';
+	await sql('directus_users').where({ id: user.id }).update({ external_identifier: githubId, github_username: 'fixture-direct' });
+
+	await adminPage.route('https://api.github.com/users/fixture-direct', route => route.fulfill({
+		json: { id: Number(githubId), login: 'fixture-direct', avatar_url: '', html_url: 'https://github.com/fixture-direct' },
+	}));
+
+	await adminPage.goto('/sponsors');
+	await adminPage.getByRole('button', { name: 'Add credits', exact: true }).click();
+	const dialog = adminPage.getByRole('dialog', { name: 'Add credits', exact: true });
+	await dialog.getByLabel('GitHub username or ID').fill('fixture-direct');
+	const lookup = adminPage.waitForResponse(response => response.url().includes(`/admin-sponsors/redirect?githubId=${githubId}`));
+	await dialog.getByRole('button', { name: 'Look up' }).click();
+	expect(await (await lookup).json()).toEqual({ data: null });
+	await expect(dialog.getByText('@fixture-direct', { exact: true })).toBeVisible();
+	await expect(dialog.getByLabel('Bypass redirect for this addition')).toHaveCount(0);
+	await dialog.getByLabel('Other credits', { exact: true }).check();
+	await dialog.getByLabel('Credits to add').fill('5000');
+	await dialog.getByLabel('Comment').fill('Direct fixture adjustment.');
+	await dialog.getByRole('button', { name: 'Review addition' }).click();
+	await expect(dialog.locator('dd').filter({ hasText: '@fixture-direct (GitHub ID' })).toBeVisible();
 });
