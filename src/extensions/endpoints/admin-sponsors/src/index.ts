@@ -135,7 +135,7 @@ export default defineEndpoint((router, context) => {
 		const githubId = redirectGithubId(sourceGithubId);
 
 		if (githubId === sourceGithubId) {
-			res.json(null);
+			res.json({ data: null });
 			return;
 		}
 
@@ -154,7 +154,7 @@ export default defineEndpoint((router, context) => {
 			context.database('directus_users').where({ external_identifier: githubId }).first('github_username'),
 			context.database('gp_orgs').where({ github_id: githubId }).first('name'),
 		]);
-		res.send({ githubId, githubLogin, dashboardAccount: user?.github_username || org?.name || null });
+		res.send({ data: { githubId, githubLogin, dashboardAccount: user?.github_username || org?.name || null } });
 	}, context));
 
 	router.get('/summary', validate(summarySchema), asyncWrapper(async (req, res) => {
@@ -190,9 +190,11 @@ export default defineEndpoint((router, context) => {
 		const isPayment = input.type === 'payment';
 		const githubId = input.bypassRedirect ? input.githubId : redirectGithubId(input.githubId);
 		let githubLogin: string;
+		let recipientGithubLogin: string;
 
 		try {
 			githubLogin = await resolveGithubLogin(input.githubId, context);
+			recipientGithubLogin = githubId === input.githubId ? githubLogin : await resolveGithubLogin(githubId, context);
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 
@@ -217,6 +219,6 @@ export default defineEndpoint((router, context) => {
 			user_updated: accountability!.user,
 		});
 
-		res.sendStatus(201);
+		res.status(201).send({ data: { githubId, githubLogin: recipientGithubLogin } });
 	}, context));
 });

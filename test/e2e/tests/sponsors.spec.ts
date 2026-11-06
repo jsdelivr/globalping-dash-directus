@@ -357,10 +357,24 @@ test('Manual additions show the redirect and submit the selected bypass option',
 	await adminPage.route('https://api.github.com/users/redirect-source', route => route.fulfill({ json: { id: Number(redirectSourceGithubId), login: 'redirect-source', avatar_url: '', html_url: 'https://github.com/redirect-source' } }));
 
 	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/redirect?githubId=${redirectSourceGithubId}`, route => route.fulfill({
-		json: { githubId: redirectTargetGithubId, githubLogin: 'redirect-target', dashboardAccount: 'redirect-target' },
+		json: { data: { githubId: redirectTargetGithubId, githubLogin: 'redirect-target', dashboardAccount: 'redirect-target' } },
 	}));
 
-	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/manual-additions`, route => route.fulfill({ status: 201 }));
+	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/manual-additions`, (route) => {
+		if (route.request().method() !== 'POST') { return route.continue(); }
+
+		const { bypassRedirect } = route.request().postDataJSON() as { bypassRedirect: boolean };
+		return route.fulfill({
+			status: 201,
+			json: {
+				data: {
+					githubId: bypassRedirect ? redirectSourceGithubId : redirectTargetGithubId,
+					githubLogin: bypassRedirect ? 'redirect-source' : 'redirect-target',
+				},
+			},
+		});
+	});
+
 	await adminPage.goto('/sponsors');
 
 	for (const bypass of [ false, true ]) {

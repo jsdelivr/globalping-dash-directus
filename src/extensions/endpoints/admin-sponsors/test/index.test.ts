@@ -209,6 +209,7 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).post('/manual-additions').send(body);
 
 		expect(response.status).to.equal(201);
+		expect(response.body).to.deep.equal({ data: { githubId: '900000000003', githubLogin: 'fixture-direct' } });
 		expect(nock.isDone()).to.equal(true);
 
 		expect(stubs.insert.firstCall.args[0]).to.deep.include({
@@ -284,7 +285,7 @@ describe('/admin-sponsors endpoint', () => {
 		nock('https://api.github.com').get('/user/900000000002').reply(200, { login: 'fixture-recipient' });
 		const response = await request(app).get('/redirect').query({ githubId: '900000000001' });
 		expect(response.status).to.equal(200);
-		expect(response.body).to.deep.equal({ githubId: '900000000002', githubLogin: 'fixture-recipient', dashboardAccount: null });
+		expect(response.body).to.deep.equal({ data: { githubId: '900000000002', githubLogin: 'fixture-recipient', dashboardAccount: null } });
 		expect(stubs.insert.called).to.equal(false);
 	});
 
@@ -299,7 +300,7 @@ describe('/admin-sponsors endpoint', () => {
 	it('returns no redirect for a direct recipient and validates the source', async () => {
 		const direct = await request(app).get('/redirect').query({ githubId: '900000000003' });
 		expect(direct.status).to.equal(200);
-		expect(direct.body).to.equal(null);
+		expect(direct.body).to.deep.equal({ data: null });
 		expect((await request(app).get('/redirect').query({ githubId: 'invalid' })).status).to.equal(400);
 		accountability = { user: 'user-id', admin: false };
 		expect((await request(app).get('/redirect').query({ githubId: '900000000001' })).status).to.equal(403);
@@ -309,6 +310,11 @@ describe('/admin-sponsors endpoint', () => {
 		for (const bypassRedirect of [ false, true ]) {
 			it(`${bypassRedirect ? 'bypasses' : 'applies'} the redirect for a manual ${type} addition`, async () => {
 				nock('https://api.github.com').get('/user/900000000001').reply(200, { login: 'fixture-sponsor' });
+
+				if (!bypassRedirect) {
+					nock('https://api.github.com').get('/user/900000000002').reply(200, { login: 'fixture-recipient' });
+				}
+
 				const response = await request(app).post('/manual-additions').send({
 					type,
 					githubId: '900000000001',
@@ -317,10 +323,33 @@ describe('/admin-sponsors endpoint', () => {
 					...type === 'payment' ? { amountInDollars: 5 } : { comment: 'Support adjustment.' },
 				});
 				expect(response.status).to.equal(201);
+
+				expect(response.body).to.deep.equal({
+					data: {
+						githubId: bypassRedirect ? '900000000001' : '900000000002',
+						githubLogin: bypassRedirect ? 'fixture-sponsor' : 'fixture-recipient',
+					},
+				});
+
 				const addition = stubs.insert.firstCall.args[0];
 				expect(addition.github_id).to.equal(bypassRedirect ? '900000000001' : '900000000002');
 				expect(JSON.parse(addition.meta)).to.include({ sponsorGithubId: '900000000001', githubLogin: 'fixture-sponsor' });
 			});
 		}
 	}
+
+	it('does not add credits if the current recipient lookup fails', async () => {
+		nock('https://api.github.com').get('/user/900000000001').reply(200, { login: 'fixture-sponsor' });
+		nock('https://api.github.com').get('/user/900000000002').reply(429);
+		const response = await request(app).post('/manual-additions').send({
+			type: 'other',
+			githubId: '900000000001',
+			credits: 5000,
+			comment: 'Support adjustment.',
+		});
+
+		expect(response.status).to.equal(503);
+		expect(stubs.insert.called).to.equal(false);
+		expect(JSON.stringify(logError.args)).not.to.include('Bearer token');
+	});
 });

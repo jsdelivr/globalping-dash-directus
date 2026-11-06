@@ -14,11 +14,17 @@ const redirects = {
 	352555837: '1834071',
 };
 
+// GitHub's complete sponsorship history was checked on 2026-11-06: none of these
+// recipients sponsored directly. Leave newer, unaudited additions unchanged.
+const lastAuditedAdditionId = 2000207;
+
 export async function up (knex) {
 	await knex.transaction(async (trx) => {
 		for (const [ source, target ] of Object.entries(redirects)) {
 			await trx('gp_credits_additions')
 				.where('github_id', target)
+				.where('id', '<=', lastAuditedAdditionId)
+				.whereNotExists(trx('sponsors').select(trx.raw('1')).whereColumn('sponsors.github_id', 'gp_credits_additions.github_id'))
 				.whereIn('reason', [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ])
 				.whereRaw(`JSON_VALUE(meta, '$.sponsorGithubId') IS NULL`)
 				.whereRaw(`COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.manual')), 'false') <> 'true'`)
