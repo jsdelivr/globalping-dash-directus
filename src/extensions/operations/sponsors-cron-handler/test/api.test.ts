@@ -157,6 +157,7 @@ describe('Sponsors cron handler', () => {
 				monthsCovered: 1,
 				tierId: 'T_test_tier',
 				bonus: 5,
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -404,6 +405,7 @@ describe('Sponsors cron handler', () => {
 				monthsCovered: 1,
 				tierId: 'T_test_tier',
 				bonus: 0,
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -475,7 +477,7 @@ describe('Sponsors cron handler', () => {
 			amount: 100000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 1, tierId: 'T_test_tier', bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 1, tierId: 'T_test_tier', bonus: 0, sponsorGithubId: '2' },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 2 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 1 month(s).' ]);
@@ -627,7 +629,7 @@ describe('Sponsors cron handler', () => {
 			amount: 200000,
 			github_id: '2',
 			reason: 'recurring_sponsorship',
-			meta: { amountInDollars: 10, monthsCovered: 2, tierId: 'T_test_tier', bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 2, tierId: 'T_test_tier', bonus: 0, sponsorGithubId: '2' },
 		}]);
 
 		expect(result).to.deep.equal([ 'Credits item with id: 1 for user with github id: 2 created. Recurring sponsorship handled for 2 month(s).' ]);
@@ -669,7 +671,7 @@ describe('Sponsors cron handler', () => {
 			github_id: '3',
 			reason: 'recurring_sponsorship',
 			amount: 300000,
-			meta: { amountInDollars: 10, monthsCovered: 3, tierId: 'T_test_tier', bonus: 0 },
+			meta: { amountInDollars: 10, monthsCovered: 3, tierId: 'T_test_tier', bonus: 0, sponsorGithubId: '3' },
 		}]);
 
 		expect(result).to.deep.equal([ 'Sponsor with github id: 3 not found on directus sponsors list. Sponsor added to directus. Credits item with id: 1 created. Recurring sponsorship handled for 3 month(s).' ]);

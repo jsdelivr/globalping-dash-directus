@@ -77,12 +77,14 @@ const createManualAdditionSchema = Joi.object({
 		Joi.object({
 			type: Joi.string().valid('payment').required(),
 			githubId: Joi.string().pattern(/^\d+$/).max(255).required(),
+			bypassRedirect: Joi.boolean().default(false),
 			credits: Joi.number().integer().min(1).max(Number.MAX_SAFE_INTEGER).required(),
 			amountInDollars: Joi.number().positive().precision(2).required(),
 		}),
 		Joi.object({
 			type: Joi.string().valid('other').required(),
 			githubId: Joi.string().pattern(/^\d+$/).max(255).required(),
+			bypassRedirect: Joi.boolean().default(false),
 			credits: Joi.number().integer().min(1).max(Number.MAX_SAFE_INTEGER).required(),
 			comment: Joi.string().trim().max(500).pattern(/^[A-Z].*\.$/s).required(),
 		}),
@@ -92,11 +94,13 @@ const createManualAdditionSchema = Joi.object({
 type ManualAdditionInput = {
 	type: 'payment';
 	githubId: string;
+	bypassRedirect: boolean;
 	credits: number;
 	amountInDollars: number;
 } | {
 	type: 'other';
 	githubId: string;
+	bypassRedirect: boolean;
 	credits: number;
 	comment: string;
 };
@@ -123,6 +127,35 @@ const allowAdmin: RequestHandler = (req, res, next) => {
 
 export default defineEndpoint((router, context) => {
 	router.use(allowAdmin);
+
+	router.get('/redirect', validate(Joi.object({
+		query: Joi.object({ githubId: Joi.string().pattern(/^\d+$/).max(255).required() }).required(),
+	}).unknown(true)), asyncWrapper(async (req, res) => {
+		const sourceGithubId = req.query.githubId as string;
+		const githubId = redirectGithubId(sourceGithubId);
+
+		if (githubId === sourceGithubId) {
+			res.json({ data: null });
+			return;
+		}
+
+		let githubLogin: string;
+
+		try {
+			githubLogin = await resolveGithubLogin(githubId, context);
+		} catch (error) {
+			const status = isAxiosError(error) ? error.response?.status : undefined;
+			context.logger.error({ githubId, status }, 'GitHub account lookup failed.');
+			res.status(status === 404 ? 400 : 503).send(status === 404 ? 'GitHub account not found.' : 'Redirect destination lookup is temporarily unavailable.');
+			return;
+		}
+
+		const [ user, org ] = await Promise.all([
+			context.database('directus_users').where({ external_identifier: githubId }).first('github_username'),
+			context.database('gp_orgs').where({ github_id: githubId }).first('name'),
+		]);
+		res.send({ data: { githubId, githubLogin, dashboardAccount: user?.github_username || org?.name || null } });
+	}, context));
 
 	router.get('/summary', validate(summarySchema), asyncWrapper(async (req, res) => {
 		const query = req.query as unknown as { period: SponsorsPeriod };
@@ -155,11 +188,13 @@ export default defineEndpoint((router, context) => {
 		const accountability = (req as Request & { accountability: EventContext['accountability'] }).accountability;
 		const input = req.body as ManualAdditionInput;
 		const isPayment = input.type === 'payment';
-		const githubId = redirectGithubId(input.githubId);
+		const githubId = input.bypassRedirect ? input.githubId : redirectGithubId(input.githubId);
 		let githubLogin: string;
+		let recipientGithubLogin: string;
 
 		try {
-			githubLogin = await resolveGithubLogin(githubId, context);
+			githubLogin = await resolveGithubLogin(input.githubId, context);
+			recipientGithubLogin = githubId === input.githubId ? githubLogin : await resolveGithubLogin(githubId, context);
 		} catch (error) {
 			const status = isAxiosError(error) ? error.response?.status : undefined;
 
@@ -178,12 +213,12 @@ export default defineEndpoint((router, context) => {
 			amount: input.credits,
 			reason: isPayment ? 'one_time_sponsorship' : 'other',
 			meta: JSON.stringify(isPayment
-				? { amountInDollars: input.amountInDollars, githubLogin, manual: true }
-				: { comment: input.comment, githubLogin, manual: true }),
+				? { amountInDollars: input.amountInDollars, githubLogin, manual: true, sponsorGithubId: input.githubId }
+				: { comment: input.comment, githubLogin, manual: true, sponsorGithubId: input.githubId }),
 			date_created: new Date(),
 			user_updated: accountability!.user,
 		});
 
-		res.sendStatus(201);
+		res.status(201).send({ data: { githubId, githubLogin: recipientGithubLogin } });
 	}, context));
 });
