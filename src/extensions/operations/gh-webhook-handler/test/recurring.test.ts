@@ -82,6 +82,7 @@ describe('GitHub webhook recurring handler', () => {
 				amountInDollars: 15,
 				bonus: 5,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -140,6 +141,7 @@ describe('GitHub webhook recurring handler', () => {
 				amountInDollars: 5,
 				bonus: 0,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 

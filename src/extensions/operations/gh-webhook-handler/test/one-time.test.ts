@@ -50,6 +50,7 @@ describe('GitHub webhook one-time handler', () => {
 				amountInDollars: 5,
 				bonus: 0,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -95,6 +96,7 @@ describe('GitHub webhook one-time handler', () => {
 				amountInDollars: 5,
 				bonus: 20,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
@@ -125,6 +127,7 @@ describe('GitHub webhook one-time handler', () => {
 				amountInDollars: 5,
 				bonus: 0,
 				tierId: 'MDEyOlNwb25zb3JzVGllcjE=',
+				sponsorGithubId: '2',
 			},
 		}]);
 
