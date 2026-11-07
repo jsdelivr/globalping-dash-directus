@@ -29,7 +29,7 @@ const openMigration = async (page: Page, org: Org) => {
 const transfer = async (dialog: Locator, button: string) => {
 	await dialog.getByRole('button', { name: button }).click();
 	const confirmation = dialog.page().getByRole('dialog');
-	await expect(confirmation).toContainText('This can\'t be undone.');
+	await expect(confirmation).toContainText('This transfer cannot be undone.');
 	await confirmation.getByRole('button', { name: button }).click();
 };
 
