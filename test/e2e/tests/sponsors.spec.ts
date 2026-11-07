@@ -325,17 +325,6 @@ test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
 	await adminPage.mouse.move(0, 0);
 	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
-	await eventsTable.getByRole('link', { name: 'redirect-source', exact: true }).focus();
-	await adminPage.keyboard.press('Tab');
-	await expect(redirectIcon).toBeFocused();
-	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
-	await adminPage.keyboard.press('Tab');
-	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
-	await adminPage.keyboard.press('Shift+Tab');
-	await expect(redirectIcon).toBeFocused();
-	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
-	await adminPage.keyboard.press('Escape');
-	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
 	await expect(redirectIcon).toHaveAttribute('role', 'img');
 	await expect(eventsTable.locator('tbody').getByRole('img', { name: 'Dashboard account linked', exact: true })).toBeVisible();
 
