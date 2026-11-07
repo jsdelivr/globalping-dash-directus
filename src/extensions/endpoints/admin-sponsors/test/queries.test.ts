@@ -1,8 +1,17 @@
 import { expect } from 'chai';
 import knex from 'knex';
+import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import { applyManualSearch, applySearch, fillChartPoints, normalizeManualAddition, normalizeSponsorAccount, normalizeSponsorshipEvent, utcMonthSql } from '../src/queries.js';
 
 describe('sponsor query normalization', () => {
+	before(() => {
+		SOURCE_ID_TO_TARGET_ID['900000000001'] = '900000000002';
+	});
+
+	after(() => {
+		delete SOURCE_ID_TO_TARGET_ID['900000000001'];
+	});
+
 	it('names the credit destination when the sponsor and recipient differ', () => {
 		const row = {
 			id: 30,
@@ -26,9 +35,16 @@ describe('sponsor query normalization', () => {
 			const builder = database('gp_credits_additions as additions');
 			apply(builder, '900000000001', 'added-by-expression');
 			const query = builder.toSQL();
-			expect(query.bindings.slice(0, 2)).to.deep.equal([ '900000000001', '900000000001' ]);
+			expect(query.bindings.slice(0, 3)).to.deep.equal([ '900000000001', '900000000001', '900000000002' ]);
 			expect(query.sql).to.include('OR additions.github_id = ?');
 			expect(query.sql).to.include('current_sponsors.github_login LIKE ?');
+		});
+
+		it(`keeps direct-recipient ID searches in ${name}`, () => {
+			const database = knex({ client: 'mysql' });
+			const builder = database('gp_credits_additions as additions');
+			apply(builder, '900000000003', 'added-by-expression');
+			expect(builder.toSQL().bindings.slice(0, 3)).to.deep.equal([ '900000000003', '900000000003', '900000000003' ]);
 		});
 	}
 

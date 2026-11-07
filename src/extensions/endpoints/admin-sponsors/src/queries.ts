@@ -1,5 +1,5 @@
 import type { Knex } from 'knex';
-import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
+import { redirectGithubId, SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import type {
 	AccountsQuery,
 	EventsQuery,
@@ -83,9 +83,6 @@ const additionGithubLoginSql = (alias = 'additions') => `NULLIF(JSON_UNQUOTE(JSO
 
 export const utcMonthSql = (column: string) => `DATE_FORMAT(CONVERT_TZ(${column}, @@session.time_zone, '+00:00'), '%Y-%m')`;
 
-const redirectEntries = Object.entries(SOURCE_ID_TO_TARGET_ID);
-const redirectCases = redirectEntries.map(() => 'WHEN ? THEN ?').join(' ');
-
 const activeSponsorSql = '(current_sponsors.github_id IS NOT NULL)';
 const sponsorLoginSql = 'current_sponsors.github_login';
 const sponsorMonthlyAmountSql = 'current_sponsors.monthly_amount';
@@ -114,7 +111,7 @@ export const applySearch = (query: Knex.QueryBuilder, search: string | undefined
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.whereRaw(`(${sponsorIdSql} = ? OR ${receiverIdSql} = ?)`, [ search, search ]);
+			builder.whereRaw(`(${sponsorIdSql} = ? OR ${receiverIdSql} = ? OR ${receiverIdSql} = ?)`, [ search, search, redirectGithubId(search) ]);
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
@@ -133,7 +130,7 @@ export const applyManualSearch = (query: Knex.QueryBuilder, search: string | und
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.whereRaw(`(${sponsorGithubIdSql()} = ? OR additions.github_id = ?)`, [ search, search ]);
+			builder.whereRaw(`(${sponsorGithubIdSql()} = ? OR additions.github_id = ? OR additions.github_id = ?)`, [ search, search, redirectGithubId(search) ]);
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
@@ -406,6 +403,8 @@ export const getSponsorshipEvents = async (database: Knex, range: SponsorsPeriod
 };
 
 export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRange, query: AccountsQuery): Promise<PageResult<SponsorAccount>> => {
+	const redirectEntries = Object.entries(SOURCE_ID_TO_TARGET_ID);
+	const redirectCases = redirectEntries.map(() => 'WHEN ? THEN ?').join(' ');
 	const valueSql = sponsorshipValueSql();
 	const periodAccounts = periodEventsQuery(database, range).select(
 		database.raw(`${sponsorGithubIdSql()} AS github_id`),

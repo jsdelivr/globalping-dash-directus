@@ -10,6 +10,7 @@ import endpoint from '../src/index.js';
 
 describe('/admin-sponsors endpoint', () => {
 	const stubs = {
+		raw: sinon.stub(),
 		where: sinon.stub(),
 		whereIn: sinon.stub(),
 		whereRaw: sinon.stub(),
@@ -182,6 +183,33 @@ describe('/admin-sponsors endpoint', () => {
 		expect(invalidSort.status).to.equal(400);
 		expect(invalidDirection.status).to.equal(400);
 		expect(stubs.limit.called).to.equal(false);
+	});
+
+	it('maps a sponsor account to its configured credit recipient', async () => {
+		stubs.limit.resolves([{
+			github_id: '900000000001',
+			receiver_github_id: '900000000002',
+			github_login: 'fixture-sponsor',
+			dashboard_account_id: 'recipient-id',
+			dashboard_account_name: 'fixture-recipient',
+			current_monthly_amount: 25,
+			is_active: 1,
+			has_recurring: 1,
+			period_sponsorship_value: 25,
+			period_events: 1,
+			latest_event: '2026-01-15T12:00:00Z',
+		}]);
+
+		const response = await request(app).get('/accounts');
+		expect(response.status).to.equal(200);
+		expect(response.body.items[0]).to.include({ githubId: '900000000001', dashboardAccountId: 'recipient-id', redirectTarget: 'fixture-recipient' });
+		const receiverCase = stubs.raw.getCalls().find(call => call.args[0].endsWith('AS receiver_github_id'))!;
+		expect(receiverCase.args[0]).to.include('WHEN ? THEN ?');
+		const bindings = receiverCase.args[1] as string[];
+		const sourceIndex = bindings.indexOf('900000000001');
+		expect(bindings.slice(sourceIndex, sourceIndex + 2)).to.deep.equal([ '900000000001', '900000000002' ]);
+		expect(stubs.leftJoin.calledWith('directus_users', 'directus_users.external_identifier', 'additions.receiver_github_id')).to.equal(true);
+		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.receiver_github_id')).to.equal(true);
 	});
 
 	it('applies manual-addition pagination defaults and parses filters and sorting', async () => {
