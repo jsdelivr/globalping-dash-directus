@@ -4,6 +4,23 @@ import sinon from 'sinon';
 import { applyManualSearch, applySearch, fillChartPoints, getSponsorAccounts, getSponsorshipEvents, normalizeManualAddition, normalizeSponsorAccount, normalizeSponsorshipEvent, utcMonthSql } from '../src/queries.js';
 
 describe('sponsor query normalization', () => {
+	it('names the credit destination when the sponsor and recipient differ', () => {
+		const row = {
+			id: 30,
+			date_created: '2026-01-15T12:00:00Z',
+			github_id: '900000000001',
+			receiver_github_id: '900000000002',
+			github_login: 'fixture-sponsor',
+			dashboard_account_id: 'recipient-id',
+			dashboard_account_name: 'fixture-recipient',
+			dashboard_account_is_org: 1,
+			reason: 'recurring_sponsorship' as const,
+			meta: { amountInDollars: 25 },
+		};
+		expect(normalizeSponsorshipEvent(row)).to.include({ redirectTarget: 'fixture-recipient', dashboardAccountIsOrg: true });
+		expect(normalizeSponsorshipEvent({ ...row, receiver_github_id: row.github_id })).to.have.property('redirectTarget', null);
+	});
+
 	it('matches the sponsor GitHub ID exactly while searching event usernames', () => {
 		const builder = {
 			where: sinon.stub().returnsThis(),
@@ -14,12 +31,12 @@ describe('sponsor query normalization', () => {
 
 		const where = sinon.spy((callback: (builder: Knex.QueryBuilder) => void) => callback(builder as unknown as Knex.QueryBuilder));
 
-		applySearch({ where } as unknown as Knex.QueryBuilder, '66716858');
+		applySearch({ where } as unknown as Knex.QueryBuilder, '900000000001');
 
-		expect(builder.whereRaw.calledOnceWithExactly(`COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id) = ?`, [ '66716858' ])).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly('sponsors.github_login LIKE ?', [ '%66716858%' ])).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
+		expect(builder.whereRaw.calledOnceWithExactly(`(COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id) = ? OR additions.github_id = ? OR additions.github_id IN (SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?))`, [ '900000000001', '900000000001', '900000000001' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('sponsors.github_login LIKE ?', [ '%900000000001%' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%900000000001%' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%900000000001%' ])).to.equal(true);
 	});
 
 	it('matches the sponsor GitHub ID exactly while searching manual-addition usernames', () => {
@@ -32,12 +49,12 @@ describe('sponsor query normalization', () => {
 
 		const where = sinon.spy((callback: (builder: Knex.QueryBuilder) => void) => callback(builder as unknown as Knex.QueryBuilder));
 
-		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '66716858', 'added-by-expression');
+		applyManualSearch({ where } as unknown as Knex.QueryBuilder, '900000000001', 'added-by-expression');
 
-		expect(builder.whereRaw.calledOnceWithExactly(`COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id) = ?`, [ '66716858' ])).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly('sponsors.github_login LIKE ?', [ '%66716858%' ])).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%66716858%' ])).to.equal(true);
-		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%66716858%' ])).to.equal(true);
+		expect(builder.whereRaw.calledOnceWithExactly(`(COALESCE(JSON_VALUE(additions.meta, '$.sponsorGithubId'), additions.github_id) = ? OR additions.github_id = ? OR additions.github_id IN (SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?))`, [ '900000000001', '900000000001', '900000000001' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('sponsors.github_login LIKE ?', [ '%900000000001%' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly('COALESCE(directus_users.github_username, gp_orgs.name) LIKE ?', [ '%900000000001%' ])).to.equal(true);
+		expect(builder.orWhereRaw.calledWithExactly(`NULLIF(JSON_UNQUOTE(JSON_EXTRACT(additions.meta, '$.githubLogin')), '') LIKE ?`, [ '%900000000001%' ])).to.equal(true);
 	});
 
 	it('groups monthly chart timestamps in UTC', () => {
@@ -63,6 +80,7 @@ describe('sponsor query normalization', () => {
 			dashboardAccountId: 'user-id',
 			dashboardAccountName: 'dashboard-example',
 			dashboardAccountIsOrg: false,
+			redirectTarget: null,
 			reason: 'recurring_sponsorship',
 			manual: true,
 			amountInDollars: 150,
@@ -90,6 +108,7 @@ describe('sponsor query normalization', () => {
 			dashboardAccountId: null,
 			dashboardAccountName: null,
 			dashboardAccountIsOrg: false,
+			redirectTarget: null,
 			reason: 'tier_changed',
 			manual: false,
 			amountInDollars: 25,
@@ -132,6 +151,7 @@ describe('sponsor query normalization', () => {
 			dashboardAccountId: 'recipient-id',
 			dashboardAccountName: 'example',
 			dashboardAccountIsOrg: true,
+			redirectTarget: null,
 			addedBy: 'Admin User',
 			type: 'payment',
 			credits: 25_000,
@@ -159,6 +179,7 @@ describe('sponsor query normalization', () => {
 			dashboardAccountId: null,
 			dashboardAccountName: null,
 			dashboardAccountIsOrg: false,
+			redirectTarget: null,
 			addedBy: null,
 			type: 'other',
 			credits: 5000,
@@ -186,6 +207,7 @@ describe('sponsor query normalization', () => {
 			dashboardAccountId: 'user-id',
 			dashboardAccountName: 'dashboard-example',
 			dashboardAccountIsOrg: false,
+			redirectTarget: null,
 			status: 'former',
 			currentMonthlyAmount: null,
 			periodSponsorshipValue: 125.5,
@@ -249,7 +271,7 @@ describe('sponsor query normalization', () => {
 		after(() => database.destroy());
 
 		it('shows events under the sponsor and the account of the receiver', async () => {
-			await getSponsorshipEvents(database, range, { period: '2026', offset: 0, limit: 10, search: '66716858', sort: 'date', direction: 'desc' });
+			await getSponsorshipEvents(database, range, { period: '2026', offset: 0, limit: 10, search: '900000000001', sort: 'date', direction: 'desc' });
 
 			const rowsSql = sql.find(query => query.includes(' AS github_id'))!;
 			expect(rowsSql).to.include(`${sponsorIdSql} AS github_id`);
@@ -260,7 +282,7 @@ describe('sponsor query normalization', () => {
 		});
 
 		it('groups accounts by the sponsor and links them by the receiver', async () => {
-			await getSponsorAccounts(database, range, { period: '2026', offset: 0, limit: 10, search: '66716858', statuses: [ 'active' ], linked: true, sort: 'currentMonthly', direction: 'desc' });
+			await getSponsorAccounts(database, range, { period: '2026', offset: 0, limit: 10, search: '900000000001', statuses: [ 'active' ], linked: true, sort: 'currentMonthly', direction: 'desc' });
 
 			const rowsSql = sql.find(query => query.includes('is_active'))!;
 			expect(rowsSql).to.include(`${sponsorIdSql} AS github_id`);
@@ -268,9 +290,9 @@ describe('sponsor query normalization', () => {
 			expect(rowsSql).to.include('LEFT JOIN sponsors ON sponsors.github_id = additions.github_id');
 			expect(rowsSql).to.include('IF(sponsors.github_id IS NOT NULL, 1, 0) AS is_active');
 			expect(rowsSql).to.include('sponsors.monthly_amount AS current_monthly_amount');
-			expect(rowsSql).to.include('CASE WHEN additions.github_id = additions.receiver_github_id THEN COALESCE(directus_users.github_username, gp_orgs.name) END');
+			expect(rowsSql).to.include('CASE WHEN additions.github_id = COALESCE(redirects.target_github_id, additions.github_id) THEN COALESCE(directus_users.github_username, gp_orgs.name) END');
 			expect(rowsSql).to.include('additions.github_id = ?');
-			expect(rowsSql).to.include('`directus_users`.`external_identifier` = `additions`.`receiver_github_id`');
+			expect(rowsSql).to.include('`directus_users`.`external_identifier` = COALESCE(redirects.target_github_id, additions.github_id)');
 			expect(rowsSql).to.include('COALESCE(directus_users.id, gp_orgs.id) IS NOT NULL');
 		});
 	});

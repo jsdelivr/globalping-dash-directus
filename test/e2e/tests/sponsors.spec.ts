@@ -1,9 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 
 const unlinkedGithubId = `9${Math.floor(Math.random() * 100000000)}`;
-const redirectSourceGithubId = '66716858';
-const redirectTargetGithubId = '6209808';
+const redirectSourceGithubId = '900000000001';
+const redirectTargetGithubId = '900000000002';
 const sponsorshipReasons = [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ];
 const sponsorGithubIdSql = `COALESCE(JSON_VALUE(meta, '$.sponsorGithubId'), github_id)`;
 const sponsorshipValueSql = `COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.amountInDollars')) AS DECIMAL(18,2)), 0)
@@ -128,8 +129,9 @@ test.beforeEach(async ({ user, user2, org }) => {
 });
 
 test.afterEach(async ({ org }) => {
-	await sql('gp_credits_additions').whereIn('github_id', [ unlinkedGithubId, redirectTargetGithubId, org.github_id ]).delete();
+	await sql('gp_credits_additions').whereIn('github_id', [ unlinkedGithubId, redirectSourceGithubId, redirectTargetGithubId, org.github_id ]).delete();
 	await sql('sponsors').where({ github_id: redirectSourceGithubId }).delete();
+	await sql('gp_credits_redirects').where({ source_github_id: redirectSourceGithubId }).delete();
 });
 
 test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
@@ -287,7 +289,10 @@ test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	await expect(adminPage.getByRole('button', { name: 'Add credits' })).toBeFocused();
 });
 
-test('Redirected sponsor account', async ({ adminPage }) => {
+test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
+	await sql('directus_users').where({ id: user2.id }).update({ external_identifier: redirectTargetGithubId, github_username: 'redirect-target' });
+	await sql('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: redirectSourceGithubId, target_github_id: redirectTargetGithubId });
+
 	await sql('sponsors').insert({
 		github_id: redirectSourceGithubId,
 		github_login: 'redirect-source',
@@ -307,6 +312,7 @@ test('Redirected sponsor account', async ({ adminPage }) => {
 	});
 
 	await adminPage.goto('/sponsors');
+	const eventsTable = adminPage.getByRole('heading', { name: 'Sponsorship events' }).locator('xpath=ancestor::section[1]');
 	const accountsTable = adminPage.getByRole('heading', { name: 'Sponsor accounts' }).locator('xpath=ancestor::section[1]');
 
 	for (const search of [ redirectSourceGithubId, 'redirect-source' ]) {
@@ -318,4 +324,169 @@ test('Redirected sponsor account', async ({ adminPage }) => {
 		await expect(accountsTable.locator('tbody tr').first()).toContainText('Active recurring');
 		await expect(accountsTable.locator('tbody tr').first()).toContainText('$30');
 	}
+
+	for (const search of [ redirectTargetGithubId, redirectSourceGithubId, 'redirect-source' ]) {
+		const eventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${search}`));
+		await adminPage.getByLabel('Search sponsorship events').fill(search);
+		await eventsResponse;
+		await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
+		await expect(eventsTable.locator('tbody tr').first()).toContainText('redirect-source');
+		await expect(eventsTable.locator('tbody tr').first()).toContainText('$30');
+	}
+
+	const redirectIcon = eventsTable.locator('tbody').getByLabel('Credits redirected to redirect-target');
+	await expect(redirectIcon).toBeVisible();
+	await redirectIcon.hover();
+	await expect(adminPage.getByRole('tooltip')).toHaveText('Credits redirected to redirect-target');
+	await adminPage.mouse.move(0, 0);
+	await expect(adminPage.getByRole('tooltip')).not.toBeVisible();
+	await expect(redirectIcon).toHaveAttribute('role', 'img');
+	await expect(eventsTable.locator('tbody').getByRole('img', { name: 'Dashboard account linked', exact: true })).toBeVisible();
+
+	await sql('gp_credits_additions').insert({
+		github_id: redirectTargetGithubId,
+		amount: 5000,
+		reason: 'one_time_sponsorship',
+		date_created: previousMonthDate(2),
+		meta: JSON.stringify({ amountInDollars: 5, githubLogin: 'redirect-target', manual: true }),
+	});
+
+	await sql('gp_credits_additions').insert({
+		github_id: redirectTargetGithubId,
+		amount: 5000,
+		reason: 'one_time_sponsorship',
+		date_created: previousMonthDate(2),
+		meta: JSON.stringify({ amountInDollars: 5, sponsorGithubId: redirectTargetGithubId }),
+	});
+
+	for (const githubId of [ redirectSourceGithubId, redirectTargetGithubId ]) {
+		const response = await adminPage.request.get(`${process.env.DIRECTUS_URL}/admin-sponsors/accounts?search=${githubId}`);
+		expect(response.ok()).toBe(true);
+		const { items } = await response.json();
+		expect(items).toHaveLength(2);
+
+		expect(items).toEqual(expect.arrayContaining([
+			expect.objectContaining({ githubId: redirectSourceGithubId, githubLogin: 'redirect-source', redirectTarget: 'redirect-target', dashboardAccountName: 'redirect-target', periodEvents: 1 }),
+			expect.objectContaining({ githubId: redirectTargetGithubId, githubLogin: 'redirect-target', redirectTarget: null, dashboardAccountName: 'redirect-target', periodEvents: 2 }),
+		]));
+	}
+});
+
+test('Manual additions show the redirect and submit the selected bypass option', async ({ adminPage, user, user2 }) => {
+	for (const [ actor, githubId, username ] of [ [ user, redirectSourceGithubId, 'redirect-source' ], [ user2, redirectTargetGithubId, 'redirect-target' ] ] as const) {
+		await sql('directus_users').where({ id: actor.id }).update({ external_identifier: githubId, github_username: username });
+	}
+
+	await adminPage.route('https://api.github.com/users/redirect-source', route => route.fulfill({ json: { id: Number(redirectSourceGithubId), login: 'redirect-source', avatar_url: '', html_url: 'https://github.com/redirect-source' } }));
+
+	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/redirect?githubId=${redirectSourceGithubId}`, route => route.fulfill({
+		json: { data: { githubId: redirectTargetGithubId, githubLogin: 'redirect-target', dashboardAccount: 'redirect-target' } },
+	}));
+
+	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/manual-additions`, (route) => {
+		if (route.request().method() !== 'POST') { return route.continue(); }
+
+		const { bypassRedirect } = route.request().postDataJSON() as { bypassRedirect: boolean };
+		return route.fulfill({
+			status: 201,
+			json: {
+				data: {
+					githubId: bypassRedirect ? redirectSourceGithubId : '900000000004',
+					githubLogin: bypassRedirect ? 'redirect-source' : 'redirect-updated-target',
+				},
+			},
+		});
+	});
+
+	await adminPage.goto('/sponsors');
+
+	for (const bypass of [ false, true ]) {
+		await adminPage.getByRole('button', { name: 'Add credits', exact: true }).click();
+		const dialog = adminPage.getByRole('dialog', { name: 'Add credits', exact: true });
+		await dialog.getByLabel('GitHub username or ID').fill('redirect-source');
+		await dialog.getByRole('button', { name: 'Look up' }).click();
+		await expect(dialog.getByText('Credits will be redirected to @redirect-target.')).toBeVisible();
+		const checkbox = dialog.getByLabel('Bypass redirect for this addition');
+		await expect(checkbox).not.toBeChecked();
+
+		if (bypass) { await checkbox.check(); }
+
+		await dialog.getByLabel('Other credits', { exact: true }).check();
+		await dialog.getByLabel('Credits to add').fill('5000');
+		await dialog.getByLabel('Comment').fill('Redirect test addition.');
+		await dialog.getByRole('button', { name: 'Review addition' }).click();
+		const destination = bypass ? 'redirect-source' : 'redirect-target';
+		await expect(dialog.locator('dd').filter({ hasText: `@${destination} (GitHub ID` })).toBeVisible();
+		const created = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.request().method() === 'POST');
+		await dialog.getByRole('button', { name: 'Add credits', exact: true }).click();
+		const response = await created;
+		expect(response.status()).toBe(201);
+		expect(response.request().postDataJSON()).toMatchObject({ githubId: redirectSourceGithubId, credits: 5000, type: 'other', bypassRedirect: bypass });
+		await expect(dialog).not.toBeVisible();
+		await expect(adminPage.getByText(`5,000 credits were added for @${bypass ? 'redirect-source' : 'redirect-updated-target'}.`, { exact: true })).toBeVisible();
+	}
+});
+
+
+test('Direct recipient lookup works without a redirect', async ({ adminPage, user }) => {
+	const githubId = '900000000003';
+	await sql('directus_users').where({ id: user.id }).update({ external_identifier: githubId, github_username: 'fixture-direct' });
+
+	await adminPage.route('https://api.github.com/users/fixture-direct', route => route.fulfill({
+		json: { id: Number(githubId), login: 'fixture-direct', avatar_url: '', html_url: 'https://github.com/fixture-direct' },
+	}));
+
+	await adminPage.goto('/sponsors');
+	await adminPage.getByRole('button', { name: 'Add credits', exact: true }).click();
+	const dialog = adminPage.getByRole('dialog', { name: 'Add credits', exact: true });
+	await dialog.getByLabel('GitHub username or ID').fill('fixture-direct');
+	const lookup = adminPage.waitForResponse(response => response.url().includes(`/admin-sponsors/redirect?githubId=${githubId}`));
+	await dialog.getByRole('button', { name: 'Look up' }).click();
+	expect(await (await lookup).json()).toEqual({ data: null });
+	await expect(dialog.getByText('@fixture-direct', { exact: true })).toBeVisible();
+	await expect(dialog.getByLabel('Bypass redirect for this addition')).toHaveCount(0);
+	await dialog.getByLabel('Other credits', { exact: true }).check();
+	await dialog.getByLabel('Credits to add').fill('5000');
+	await dialog.getByLabel('Comment').fill('Direct fixture adjustment.');
+	await dialog.getByRole('button', { name: 'Review addition' }).click();
+	await expect(dialog.locator('dd').filter({ hasText: '@fixture-direct (GitHub ID' })).toBeVisible();
+});
+
+test('Failed redirect lookup requires an explicit bypass before adding credits', async ({ adminPage, user }) => {
+	await sql('directus_users').where({ id: user.id }).update({ external_identifier: redirectSourceGithubId, github_username: 'redirect-source' });
+
+	await adminPage.route('https://api.github.com/users/redirect-source', route => route.fulfill({
+		json: { id: Number(redirectSourceGithubId), login: 'redirect-source', avatar_url: '', html_url: 'https://github.com/redirect-source' },
+	}));
+
+	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/redirect?githubId=${redirectSourceGithubId}`, route => route.fulfill({ status: 503, contentType: 'text/html', body: 'Redirect destination lookup is temporarily unavailable.' }));
+
+	await adminPage.route(`${process.env.DIRECTUS_URL}/admin-sponsors/manual-additions`, route => route.request().method() !== 'POST' ? route.continue() : route.fulfill({
+		status: 201,
+		json: { data: { githubId: redirectSourceGithubId, githubLogin: 'redirect-source' } },
+	}));
+
+	await adminPage.goto('/sponsors');
+	await adminPage.getByRole('button', { name: 'Add credits', exact: true }).click();
+	const dialog = adminPage.getByRole('dialog', { name: 'Add credits', exact: true });
+	await dialog.getByLabel('GitHub username or ID').fill('redirect-source');
+	await dialog.getByRole('button', { name: 'Look up' }).click();
+	await expect(dialog.getByText('@redirect-source', { exact: true })).toBeVisible();
+	await expect(dialog.getByText('The redirect destination could not be checked. Retry the lookup or bypass the redirect for this addition.')).toBeVisible();
+	await expect(dialog.getByLabel('Bypass redirect for this addition')).not.toBeChecked();
+	await dialog.getByLabel('Other credits', { exact: true }).check();
+	await dialog.getByLabel('Credits to add').fill('5000');
+	await dialog.getByLabel('Comment').fill('Bypass fixture adjustment.');
+	await dialog.getByRole('button', { name: 'Review addition' }).click();
+	await expect(dialog.getByRole('heading', { name: 'Review addition' })).toHaveCount(0);
+	await expect(dialog.getByText('Retry the lookup or explicitly bypass the redirect.')).toBeVisible();
+	await dialog.getByLabel('Bypass redirect for this addition').check();
+	await dialog.getByRole('button', { name: 'Review addition' }).click();
+	await expect(dialog.locator('dd').filter({ hasText: '@redirect-source (GitHub ID' })).toBeVisible();
+	await expect(dialog.getByText('Bypassed for this addition', { exact: true })).toBeVisible();
+	const created = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.request().method() === 'POST');
+	await dialog.getByRole('button', { name: 'Add credits', exact: true }).click();
+	expect((await created).request().postDataJSON()).toMatchObject({ githubId: redirectSourceGithubId, credits: 5000, type: 'other', bypassRedirect: true });
+	await expect(dialog).not.toBeVisible();
+	await expect(adminPage.getByText('5,000 credits were added for @redirect-source.', { exact: true })).toBeVisible();
 });

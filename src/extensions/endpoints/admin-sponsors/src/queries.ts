@@ -27,6 +27,7 @@ type SponsorshipEventRow = {
 	id: number;
 	date_created: string | Date;
 	github_id: string;
+	receiver_github_id?: string;
 	github_login: string | null;
 	dashboard_account_id: string | null;
 	dashboard_account_name: string | null;
@@ -39,6 +40,7 @@ export type ManualAdditionRow = {
 	id: number;
 	date_created: string | Date;
 	github_id: string;
+	receiver_github_id?: string;
 	github_login: string | null;
 	dashboard_account_id: string | null;
 	dashboard_account_name: string | null;
@@ -58,6 +60,7 @@ type SponsorsChartRow = {
 
 export type SponsorAccountRow = {
 	github_id: string;
+	receiver_github_id?: string;
 	github_login: string | null;
 	dashboard_account_id: string | null;
 	dashboard_account_name: string | null;
@@ -98,7 +101,7 @@ const periodEventsQuery = (database: Knex, range: SponsorsPeriodRange) => databa
 	.where('additions.date_created', '>=', range.from)
 	.where('additions.date_created', '<', range.to);
 
-export const applySearch = (query: Knex.QueryBuilder, search: string | undefined, metadataGithubLoginSql = additionGithubLoginSql(), sponsorIdSql = sponsorGithubIdSql()) => {
+export const applySearch = (query: Knex.QueryBuilder, search: string | undefined, metadataGithubLoginSql = additionGithubLoginSql(), sponsorIdSql = sponsorGithubIdSql(), receiverIdSql = 'additions.github_id') => {
 	if (!search) {
 		return;
 	}
@@ -106,7 +109,7 @@ export const applySearch = (query: Knex.QueryBuilder, search: string | undefined
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.whereRaw(`${sponsorIdSql} = ?`, [ search ]);
+			builder.whereRaw(`(${sponsorIdSql} = ? OR ${receiverIdSql} = ? OR ${receiverIdSql} IN (SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?))`, [ search, search, search ]);
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
@@ -125,7 +128,7 @@ export const applyManualSearch = (query: Knex.QueryBuilder, search: string | und
 	const value = `%${search}%`;
 	query.where((builder) => {
 		if (/^\d+$/.test(search)) {
-			builder.whereRaw(`${sponsorGithubIdSql()} = ?`, [ search ]);
+			builder.whereRaw(`(${sponsorGithubIdSql()} = ? OR additions.github_id = ? OR additions.github_id IN (SELECT target_github_id FROM gp_credits_redirects WHERE source_github_id = ?))`, [ search, search, search ]);
 		} else {
 			builder.where('additions.github_id', 'like', value);
 		}
@@ -165,6 +168,7 @@ export const normalizeSponsorshipEvent = (row: SponsorshipEventRow): Sponsorship
 		dashboardAccountId: row.dashboard_account_id,
 		dashboardAccountName: row.dashboard_account_name,
 		dashboardAccountIsOrg: toNumber(row.dashboard_account_is_org) === 1,
+		redirectTarget: row.receiver_github_id && row.receiver_github_id !== row.github_id ? row.dashboard_account_name || `GitHub ID ${row.receiver_github_id}` : null,
 		reason: row.reason,
 		manual: meta.manual === true,
 		amountInDollars,
@@ -184,6 +188,7 @@ export const normalizeManualAddition = (row: ManualAdditionRow): ManualAddition 
 		dashboardAccountId: row.dashboard_account_id,
 		dashboardAccountName: row.dashboard_account_name,
 		dashboardAccountIsOrg: toNumber(row.dashboard_account_is_org) === 1,
+		redirectTarget: row.receiver_github_id && row.receiver_github_id !== row.github_id ? row.dashboard_account_name || `GitHub ID ${row.receiver_github_id}` : null,
 		addedBy: row.added_by,
 		type: row.reason === 'one_time_sponsorship' ? 'payment' : 'other',
 		credits: toNumber(row.amount),
@@ -213,6 +218,7 @@ export const normalizeSponsorAccount = (row: SponsorAccountRow): SponsorAccount 
 	dashboardAccountId: row.dashboard_account_id,
 	dashboardAccountName: row.dashboard_account_name,
 	dashboardAccountIsOrg: toNumber(row.dashboard_account_is_org) === 1,
+	redirectTarget: row.receiver_github_id && row.receiver_github_id !== row.github_id ? row.dashboard_account_name || `GitHub ID ${row.receiver_github_id}` : null,
 	status: toNumber(row.is_active) ? 'active' : toNumber(row.has_recurring) ? 'former' : 'one-time',
 	currentMonthlyAmount: row.current_monthly_amount === null ? null : toNumber(row.current_monthly_amount),
 	periodSponsorshipValue: toNumber(row.period_sponsorship_value),
@@ -336,6 +342,7 @@ export const getManualAdditions = async (database: Knex, query: ManualAdditionsQ
 			'additions.id',
 			'additions.date_created',
 			database.raw(`${sponsorGithubIdSql()} AS github_id`),
+			'additions.github_id as receiver_github_id',
 			database.raw(`COALESCE(sponsors.github_login, ${ownAccountNameSql()}, ${additionGithubLoginSql()}) AS github_login`),
 			database.raw(`${dashboardAccountIdSql} AS dashboard_account_id`),
 			database.raw(`${dashboardAccountNameSql} AS dashboard_account_name`),
@@ -381,6 +388,7 @@ export const getSponsorshipEvents = async (database: Knex, range: SponsorsPeriod
 			'additions.id',
 			'additions.date_created',
 			database.raw(`${sponsorGithubIdSql()} AS github_id`),
+			'additions.github_id as receiver_github_id',
 			database.raw(`COALESCE(sponsors.github_login, ${ownAccountNameSql()}, ${additionGithubLoginSql()}) AS github_login`),
 			database.raw(`${dashboardAccountIdSql} AS dashboard_account_id`),
 			database.raw(`${dashboardAccountNameSql} AS dashboard_account_name`),
@@ -399,9 +407,9 @@ export const getSponsorshipEvents = async (database: Knex, range: SponsorsPeriod
 
 export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRange, query: AccountsQuery): Promise<PageResult<SponsorAccount>> => {
 	const valueSql = sponsorshipValueSql();
+	const receiverGithubIdSql = 'COALESCE(redirects.target_github_id, additions.github_id)';
 	const periodAccounts = periodEventsQuery(database, range).select(
 		database.raw(`${sponsorGithubIdSql()} AS github_id`),
-		database.raw(`SUBSTRING_INDEX(GROUP_CONCAT(additions.github_id ORDER BY additions.date_created DESC, additions.id DESC), ',', 1) AS receiver_github_id`),
 		database.raw(`SUBSTRING_INDEX(GROUP_CONCAT(${additionGithubLoginSql()} ORDER BY additions.date_created DESC, additions.id DESC), ',', 1) AS github_login`),
 		database.raw(`SUM(${valueSql}) AS period_sponsorship_value`),
 		database.raw('COUNT(*) AS period_events'),
@@ -416,11 +424,12 @@ export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRa
 
 	const base = database.from(periodAccounts.as('additions'))
 		.leftJoin(recurringHistory.as('history'), 'history.github_id', 'additions.github_id')
-		.leftJoin('directus_users', 'directus_users.external_identifier', 'additions.receiver_github_id')
-		.leftJoin('gp_orgs', 'gp_orgs.github_id', 'additions.receiver_github_id');
+		.leftJoin('gp_credits_redirects as redirects', 'redirects.source_github_id', 'additions.github_id')
+		.leftJoin('directus_users', 'directus_users.external_identifier', database.raw(receiverGithubIdSql))
+		.leftJoin('gp_orgs', 'gp_orgs.github_id', database.raw(receiverGithubIdSql));
 
 	joinSponsors(base, 'additions.github_id');
-	applySearch(base, query.search, 'additions.github_login', 'additions.github_id');
+	applySearch(base, query.search, 'additions.github_login', 'additions.github_id', receiverGithubIdSql);
 
 	if (query.statuses?.length) {
 		const conditions: string[] = [];
@@ -438,7 +447,7 @@ export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRa
 		base.whereRaw(`${dashboardAccountIdSql} IS ${query.linked ? 'NOT ' : ''}NULL`);
 	}
 
-	const accountNameSql = ownAccountNameSql('additions.github_id', 'additions.receiver_github_id');
+	const accountNameSql = ownAccountNameSql('additions.github_id', receiverGithubIdSql);
 	const sortExpressions: Record<AccountsQuery['sort'], string> = {
 		sponsor: `COALESCE(sponsors.github_login, ${accountNameSql}, additions.github_login, additions.github_id)`,
 		status: `CASE
@@ -456,6 +465,7 @@ export const getSponsorAccounts = async (database: Knex, range: SponsorsPeriodRa
 		base.clone().clearSelect().clearOrder().count({ total: 'additions.github_id' }).first(),
 		base.clone().select(
 			'additions.github_id',
+			database.raw(`${receiverGithubIdSql} AS receiver_github_id`),
 			database.raw(`COALESCE(sponsors.github_login, ${accountNameSql}, additions.github_login) AS github_login`),
 			database.raw(`${dashboardAccountIdSql} AS dashboard_account_id`),
 			database.raw(`${dashboardAccountNameSql} AS dashboard_account_name`),

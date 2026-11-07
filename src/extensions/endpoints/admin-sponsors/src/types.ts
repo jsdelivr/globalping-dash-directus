@@ -57,6 +57,7 @@ export type SponsorshipEvent = {
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
 	dashboardAccountIsOrg: boolean;
+	redirectTarget: string | null;
 	reason: SponsorshipReason;
 	manual: boolean;
 	amountInDollars: number;
@@ -72,6 +73,7 @@ export type ManualAddition = {
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
 	dashboardAccountIsOrg: boolean;
+	redirectTarget: string | null;
 	addedBy: string | null;
 	type: ManualAdditionType;
 	credits: number;
@@ -85,6 +87,7 @@ export type SponsorAccount = {
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
 	dashboardAccountIsOrg: boolean;
+	redirectTarget: string | null;
 	status: SponsorStatus;
 	currentMonthlyAmount: number | null;
 	periodSponsorshipValue: number;

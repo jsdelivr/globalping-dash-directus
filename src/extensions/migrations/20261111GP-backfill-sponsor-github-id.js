@@ -7,18 +7,20 @@ export async function up (knex) {
 	const redirected = await Promise.all(redirects.map(redirect => knex('gp_credits_additions')
 		.where({ github_id: redirect.target_github_id })
 		.whereIn('reason', SPONSORSHIP_REASONS)
+		.whereRaw(`JSON_VALUE(meta, '$.sponsorGithubId') IS NULL`)
+		.whereRaw(`COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.manual')), 'false') <> 'true'`)
 		.update({ meta: knex.raw('JSON_SET(meta, \'$.sponsorGithubId\', ?)', [ redirect.source_github_id ]) })));
 
 	const own = await knex('gp_credits_additions')
 		.whereIn('reason', SPONSORSHIP_REASONS)
 		.whereNotIn('github_id', targets)
+		.whereRaw(`JSON_VALUE(meta, '$.sponsorGithubId') IS NULL`)
+		.whereRaw(`COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.manual')), 'false') <> 'true'`)
 		.update({ meta: knex.raw('JSON_SET(meta, \'$.sponsorGithubId\', github_id)') });
 
 	console.log(`Stamped sponsorGithubId on ${own + redirected.reduce((sum, count) => sum + count, 0)} credits additions.`);
 }
 
-export async function down (knex) {
-	await knex('gp_credits_additions')
-		.whereIn('reason', SPONSORSHIP_REASONS)
-		.update({ meta: knex.raw('JSON_REMOVE(meta, \'$.sponsorGithubId\')') });
+export async function down () {
+	console.log('There is no down operation for that migration.');
 }
