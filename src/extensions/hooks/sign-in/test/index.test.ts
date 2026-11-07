@@ -192,12 +192,13 @@ describe('Sign-in hook', () => {
 			nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).delay(50).reply(200, []);
 			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token', default_account: 'account-id' });
+			// Force a final write so the test can wait for the background sync's database work.
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [ 'fixture-org' ], github_oauth_token: 'user-github-token', default_account: 'account-id' });
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
 
 			// With a default account the sync is still running in the background when the sign-in returns.
 			expect(nock.isDone()).to.equal(false);
-			await waitFor(() => nock.isDone());
+			await waitFor(() => usersService.updateOne.calledWithExactly('123', { github_organizations: [] }));
 		});
 
 		it('should use the org created by a concurrent sync of another member', async () => {
