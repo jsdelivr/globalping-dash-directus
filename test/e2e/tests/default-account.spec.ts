@@ -15,7 +15,7 @@ const orgRow = (org: Org) => sql('gp_orgs').where({ id: org.id }).first('public_
 
 const dialogOf = async (page: Page) => {
 	await page.goto('/');
-	const dialog = page.getByRole('dialog', { name: 'Few more steps to go!' });
+	const dialog = page.getByRole('dialog', { name: 'Set up your account' });
 	await expect(dialog).toBeVisible();
 	return dialog;
 };
@@ -46,10 +46,10 @@ test('a user in no org can only pick the personal account, and make their probes
 	const dialog = await dialogOf(page);
 
 	await expect(dialog.getByRole('radio', { name: /^Organization/ })).toBeDisabled();
-	await expect(dialog).toContainText('You aren\'t a member of any GitHub organization yet.');
+	await expect(dialog).toContainText('No GitHub organizations are available for your account.');
 
 	await dialog.locator('#onboarding-public-probes').check();
-	await dialog.getByRole('button', { name: 'Apply' }).click();
+	await dialog.getByRole('button', { name: 'Save preferences' }).click();
 	await expect(dialog).toBeHidden();
 
 	const row = await userRow(user);
@@ -63,14 +63,14 @@ test('an org admin picks the org: it is selected, becomes the default and active
 	const dialog = await pickOrg(page, org);
 
 	await dialog.locator('#onboarding-org-public-probes').check();
-	await dialog.getByLabel('Website URL').fill('example.com');
-	await dialog.getByLabel('Website URL').blur();
-	await expect(dialog).toContainText('Enter a full URL, e.g., https://example.com');
-	await expect(dialog.getByRole('button', { name: 'Apply' })).toBeDisabled();
-	await dialog.getByLabel('Website URL').fill('https://example.com');
+	await dialog.getByLabel('Website').fill('example.com');
+	await dialog.getByLabel('Website').blur();
+	await expect(dialog).toContainText('Enter a full URL, such as https://example.com.');
+	await expect(dialog.getByRole('button', { name: 'Save preferences' })).toBeDisabled();
+	await dialog.getByLabel('Website').fill('https://example.com');
 	await dialog.getByLabel('Description').fill('We measure the internet.');
 
-	await Promise.all([ page.waitForEvent('load'), dialog.getByRole('button', { name: 'Apply' }).click() ]);
+	await Promise.all([ page.waitForEvent('load'), dialog.getByRole('button', { name: 'Save preferences' }).click() ]);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 
@@ -81,7 +81,7 @@ test('an org admin picks the org: it is selected, becomes the default and active
 	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
 });
 
-test('an org admin adds a banner during the onboarding, which is uploaded on "Apply"', async ({ browser, org }) => {
+test('an org admin adds a banner during the onboarding, which is uploaded on "Save preferences"', async ({ browser, org }) => {
 	const page = await onboard(browser, org.admin);
 	await dialogOf(page);
 	const dialog = await pickOrg(page, org);
@@ -95,7 +95,7 @@ test('an org admin adds a banner during the onboarding, which is uploaded on "Ap
 	await expect(dialog.getByRole('img', { name: 'Banner preview' })).toHaveAttribute('src', /^blob:/);
 	expect((await sql('gp_orgs').where({ id: org.id }).first('banner')).banner).toBe(null);
 
-	await Promise.all([ page.waitForEvent('load'), dialog.getByRole('button', { name: 'Apply' }).click() ]);
+	await Promise.all([ page.waitForEvent('load'), dialog.getByRole('button', { name: 'Save preferences' }).click() ]);
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 
 	const { banner } = await sql('gp_orgs').where({ id: org.id }).first('banner');
@@ -109,8 +109,8 @@ test('the org profile is offered only to admins and only while it is empty', asy
 	const memberDialog = await pickOrg(memberPage, org);
 
 	await expect(memberDialog.getByText('Make the organization probes public')).toHaveCount(0);
-	await expect(memberDialog.getByLabel('Website URL')).toHaveCount(0);
-	await Promise.all([ memberPage.waitForEvent('load'), memberDialog.getByRole('button', { name: 'Apply' }).click() ]);
+	await expect(memberDialog.getByLabel('Website')).toHaveCount(0);
+	await Promise.all([ memberPage.waitForEvent('load'), memberDialog.getByRole('button', { name: 'Save preferences' }).click() ]);
 	expect((await userRow(org.member)).default_account).toBe(org.account_id);
 
 	await sql('gp_orgs').where({ id: org.id }).update({ website: 'https://example.com' });
@@ -119,7 +119,7 @@ test('the org profile is offered only to admins and only while it is empty', asy
 	const adminDialog = await pickOrg(adminPage, org);
 
 	await expect(adminDialog.getByText('Make the organization probes public')).toBeVisible();
-	await expect(adminDialog.getByLabel('Website URL')).toHaveCount(0);
+	await expect(adminDialog.getByLabel('Website')).toHaveCount(0);
 });
 
 test('a new session opens the default account, or the personal one while the default org is not offered', async ({ browser, org }) => {
@@ -190,5 +190,5 @@ test('an admin impersonating a user who has not picked a default account sees no
 
 	await page.reload();
 	await expect(page.getByText(`Impersonating ${user.github_username}`)).toBeVisible();
-	await expect(page.getByRole('dialog', { name: 'Few more steps to go!' })).toHaveCount(0);
+	await expect(page.getByRole('dialog', { name: 'Set up your account' })).toHaveCount(0);
 });

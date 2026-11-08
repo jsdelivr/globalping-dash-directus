@@ -50,11 +50,11 @@ test('an org admin switches between the personal and organization settings, and 
 	await page.getByRole('tab', { name: 'Organization' }).click();
 	await expect(page).toHaveURL(/\/settings\?tab=organization$/);
 
-	await page.getByLabel('Website URL').fill('https://example.org');
+	await page.getByLabel('Website').fill('https://example.org');
 	await page.getByRole('tab', { name: 'Personal' }).click();
 	await unsavedChanges.getByRole('button', { name: 'Cancel' }).click();
 	await expect(page.getByRole('tab', { name: 'Organization' })).toHaveAttribute('aria-selected', 'true');
-	await expect(page.getByLabel('Website URL')).toHaveValue('https://example.org');
+	await expect(page.getByLabel('Website')).toHaveValue('https://example.org');
 
 	await page.getByRole('tab', { name: 'Personal' }).click();
 	await unsavedChanges.getByRole('button', { name: 'Leave' }).click();
@@ -164,12 +164,12 @@ test('an org admin edits the org website and description', async ({ browser, org
 	const page = await actAsOrg(browser, org, org.admin);
 	await page.goto('/settings?tab=organization');
 
-	await page.getByLabel('Website URL').fill('https://john-org');
-	await page.getByLabel('Website URL').blur();
-	await expect(page.getByText('Enter a full URL, e.g., https://example.com')).toBeVisible();
+	await page.getByLabel('Website').fill('https://john-org');
+	await page.getByLabel('Website').blur();
+	await expect(page.getByText('Enter a full URL, such as https://example.com.')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Apply settings' })).toBeDisabled();
 
-	await page.getByLabel('Website URL').fill('https://example.org/about');
+	await page.getByLabel('Website').fill('https://example.org/about');
 	await page.getByLabel('Description').fill('Probes everywhere.');
 	await expect(page.getByText('18/200')).toBeVisible();
 	await page.getByRole('button', { name: 'Apply settings' }).click();
@@ -198,7 +198,7 @@ test('an org admin stages a banner and it is uploaded, replaced and removed with
 	await pick(1224, 200);
 	await expect(page.locator('#org-banner-error')).toHaveText('');
 	await expect(preview).toHaveAttribute('src', /^blob:/);
-	await expect(page.getByText('New image, applied when you save')).toBeVisible();
+	await expect(page.getByText('Save your changes to apply the new banner.')).toBeVisible();
 	expect(await bannerOf()).toBe(null);
 
 	await apply.click();
@@ -219,7 +219,7 @@ test('an org admin stages a banner and it is uploaded, replaced and removed with
 
 	// A staged removal can be undone, and is applied only on save.
 	await page.getByRole('button', { name: 'Remove banner' }).click();
-	await expect(page.getByText('The banner will be removed when you save')).toBeVisible();
+	await expect(page.getByText('Save your changes to remove the banner.')).toBeVisible();
 	await page.getByRole('button', { name: 'Undo' }).click();
 	await expect(preview).toHaveAttribute('src', /\/assets\//);
 	await expect(apply).toBeDisabled();

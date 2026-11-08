@@ -45,9 +45,9 @@ const openAccounts = async (page: Page) => {
 	expect(await submenu.evaluate(el => el.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
 };
 
-const openAddOrganization = async (page: Page) => {
+const openManageAccounts = async (page: Page) => {
 	await openAccounts(page);
-	await page.getByRole('menuitem', { name: 'Add organization' }).click();
+	await page.getByRole('menuitem', { name: 'Manage accounts' }).click();
 };
 
 const orgRow = (page: Page, name: string) => page.getByRole('dialog').getByRole('row', { name });
@@ -57,14 +57,14 @@ const switchTo = async (page: Page, name: string) => {
 	await Promise.all([ page.waitForEvent('load'), page.getByRole('menuitem', { name, exact: true }).click() ]);
 };
 
-test('an org added through "Add organization" appears in the menu without becoming active', async ({ browser, org }) => {
+test('an org added through "Manage accounts" appears in the menu without becoming active', async ({ browser, org }) => {
 	const page = await pageAs(browser, org.member.email, 'user');
 	await page.goto('/');
 
 	await openAccounts(page);
 	await expect(page.getByRole('menuitem', { name: org.name, exact: true })).toHaveCount(0);
 
-	await page.getByRole('menuitem', { name: 'Add organization' }).click();
+	await page.getByRole('menuitem', { name: 'Manage accounts' }).click();
 	await orgRow(page, org.name).getByRole('button', { name: 'Add' }).click();
 	await expect(orgRow(page, org.name).getByRole('button', { name: 'Remove' })).toBeVisible();
 	expect(await selectedOrgsOf(org.member)).toEqual([ org.id ]);
@@ -178,12 +178,12 @@ test('the account submenu keeps keyboard and touch activation', async ({ browser
 	}
 });
 
-test('a user in no org is told so in "Add organization"', async ({ browser, user }) => {
+test('a user in no org is told so in "Manage accounts"', async ({ browser, user }) => {
 	const page = await pageAs(browser, user.email, 'user');
 	await page.goto('/');
 
-	await openAddOrganization(page);
-	await expect(page.getByRole('dialog')).toContainText('You are not a member of any organization on GitHub.');
+	await openManageAccounts(page);
+	await expect(page.getByRole('dialog')).toContainText('No GitHub organizations are available for your account.');
 });
 
 test('a viewer acts as the org and sees its probes', async ({ browser, org }) => {
@@ -210,7 +210,7 @@ test('removing the active org, or its disappearing from the selection, switches 
 	await switchTo(page, org.name);
 	await expect(page.getByLabel('Profile')).toContainText(org.name);
 
-	await openAddOrganization(page);
+	await openManageAccounts(page);
 	await Promise.all([ page.waitForEvent('load'), orgRow(page, org.name).getByRole('button', { name: 'Remove' }).click() ]);
 
 	await expect(page.getByLabel('Profile')).toContainText(org.member.github_username);
@@ -290,7 +290,7 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 
 	const adminAccount = await sessionAccount(page);
 
-	await openAddOrganization(page);
+	await openManageAccounts(page);
 	await expect(orgRow(page, org.name).getByRole('button', { name: 'Remove' })).toBeDisabled();
 	await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
 
