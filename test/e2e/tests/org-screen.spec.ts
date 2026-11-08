@@ -41,6 +41,28 @@ test('Settings shows the organization settings to an org admin, and the personal
 	await expect(page.getByRole('heading', { name: 'General' })).toHaveCount(0);
 });
 
+test('Settings links open the organization tab only for an active org admin, on desktop and mobile', async ({ browser, org }) => {
+	for (const [ user, canManageOrg ] of [ [ org.admin, true ], [ org.member, false ], [ org.viewer, false ], [ null, false ] ] as const) {
+		const page = user ? await actAsOrg(browser, org, user) : await pageAs(browser, org.admin.email, 'user');
+		const settingsPath = canManageOrg ? '/settings?tab=organization' : '/settings';
+
+		for (const mobile of [ false, true ]) {
+			await page.setViewportSize({ width: mobile ? 400 : 1280, height: 900 });
+			await page.goto('/');
+			await page.getByLabel(mobile ? 'Menu' : 'Profile', { exact: true }).click();
+			const link = mobile
+				? page.locator('[data-pc-name=drawer]').getByRole('link', { name: /Settings$/ })
+				: page.getByRole('menuitem', { name: 'Settings', exact: true }).locator('a');
+			await expect(link).toHaveAttribute('href', settingsPath);
+			await link.click();
+			await expect(page).toHaveURL(new URL(settingsPath, process.env.DASH_URL!).href);
+			await expect(page.getByRole('heading', { name: canManageOrg ? 'General' : 'Account details', exact: true })).toBeVisible();
+		}
+
+		await page.context().close();
+	}
+});
+
 test('an org admin switches between the personal and organization settings, and unsaved changes are confirmed first', async ({ browser, org }) => {
 	const page = await actAsOrg(browser, org, org.admin);
 	await page.goto('/settings');
