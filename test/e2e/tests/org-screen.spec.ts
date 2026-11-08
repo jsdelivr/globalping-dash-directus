@@ -13,7 +13,7 @@ test('the Organization screen explains what each role can do', async ({ browser,
 	const trigger = page.getByRole('columnheader', { name: 'Role' }).getByLabel('Organization roles');
 	await trigger.hover();
 	const tooltip = page.getByRole('tooltip');
-	await expect(tooltip).toContainText('Manages the organization\'s settings, adoption token, members and their roles.');
+	await expect(tooltip).toContainText('Manages the organization\'s settings, adoption token, members, and their roles.');
 	await expect(tooltip).toContainText('Can\'t adopt or edit probes.');
 	await expect(tooltip).toContainText('Can\'t create tokens or run measurements on globalping.io as the organization.');
 	await page.getByRole('columnheader', { name: 'Member', exact: true }).hover();
@@ -129,19 +129,20 @@ test('an org admin removes an extra adoption token after confirming', async ({ b
 	expect(JSON.parse((await orgRow(org.id)).extra_adoption_tokens)).toEqual([{ github_username: 'e2e-other-member', token: 'e2eothertoken00000000000000000000' }]);
 });
 
-test('an org admin sees the credits redirect of the org and clears it after confirming', async ({ browser, org }) => {
+test('an org admin sees the sponsorship credit redirect of the org and removes it after confirming', async ({ browser, org }) => {
 	await sql('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: org.github_id, target_github_id: org.member.external_identifier });
 
 	const page = await actAsOrg(browser, org, org.admin);
 	await page.goto('/settings?tab=organization');
 
+	await expect(page.getByRole('heading', { name: 'Sponsorship credit redirects' })).toBeVisible();
 	const redirect = page.getByRole('listitem').filter({ hasText: org.member.github_username });
 	await expect(redirect).toContainText(org.name);
 
-	await redirect.getByRole('button', { name: 'Clear' }).click();
-	await page.getByRole('dialog').getByRole('button', { name: 'Clear redirect' }).click();
+	await redirect.getByRole('button', { name: 'Remove' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click();
 
-	await expect(page.getByRole('heading', { name: 'Credits redirect' })).toHaveCount(0);
+	await expect(page.getByRole('heading', { name: 'Sponsorship credit redirects' })).toHaveCount(0);
 	expect(await sql('gp_credits_redirects').where({ source_github_id: org.github_id })).toHaveLength(0);
 });
 

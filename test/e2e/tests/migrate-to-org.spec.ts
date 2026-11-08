@@ -45,7 +45,7 @@ test.afterEach(async ({ org }) => {
 });
 
 test('migration lists admin and member organizations independently of the account menu', async ({ browser, org }) => {
-	const noOrgs = 'You must be an admin or a member of an organization to transfer resources.';
+	const noOrgs = 'No organizations are available for transfers. You need an admin or member role.';
 	const migrate = (page: Page) => page.locator('#migrate-org');
 
 	const viewerPage = await settingsWithOrg(browser, org, org.viewer);
@@ -161,7 +161,7 @@ test('a redirect set while acting as the org replaces an inherited one, and both
 
 	// Redirecting removes the existing redirects, so it asks first when there are any.
 	await dialog.getByRole('button', { name: 'Redirect credits' }).click();
-	await expect(page.getByRole('dialog')).toContainText(`This will remove ${org.name} → ${org.member.github_username}.`);
+	await expect(page.getByRole('dialog')).toContainText(`This will remove the existing redirects: ${org.name} → ${org.member.github_username}.`);
 	await page.getByRole('dialog').getByRole('button', { name: 'Redirect credits' }).click();
 	await expect(redirects).toHaveText(new RegExp(`${org.member.github_username}.*${org.name}`));
 	await expect(dialog.getByRole('button', { name: 'Redirect credits' })).toHaveCount(0);
