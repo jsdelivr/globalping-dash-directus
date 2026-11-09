@@ -282,6 +282,11 @@ export const sessionAccount = async (page: Page) => {
 export const actAsOrg = async (browser: Browser, org: Org, user: User) => {
 	await client('directus_users').where({ id: user.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 	const page = await pageAs(browser, user.email, 'user');
-	await page.context().request.post(`${process.env.DIRECTUS_URL}/accounts/active`, { data: { accountId: org.account_id } });
+	const response = await page.context().request.post(`${process.env.DIRECTUS_URL}/accounts/active`, { data: { accountId: org.account_id } });
+
+	if (!response.ok()) {
+		throw new Error(`${response.status()} ${response.statusText()}`);
+	}
+
 	return page;
 };
