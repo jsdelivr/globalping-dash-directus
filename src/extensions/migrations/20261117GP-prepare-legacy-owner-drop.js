@@ -1,6 +1,15 @@
 // Runs on its own, before the snapshot drops the legacy owner columns: a trigger that reads a dropped column breaks every write
 // to its table.
 export async function up (knex) {
+	// The columns go NOT NULL first: an ALTER that fails here leaves the fulfill triggers below in place to keep filling them.
+	// Not through the snapshot: Directus rewrites a char column as varchar when it alters one, which a foreign key rejects.
+	await knex.raw(`ALTER TABLE gp_apps_approvals MODIFY account_id CHAR(36) NOT NULL;`);
+	await knex.raw(`ALTER TABLE gp_apps_approvals MODIFY user_created CHAR(36) NOT NULL;`);
+	await knex.raw(`ALTER TABLE gp_credits MODIFY account_id CHAR(36) NOT NULL;`);
+	await knex.raw(`ALTER TABLE gp_credits_deductions MODIFY account_id CHAR(36) NOT NULL;`);
+
+	console.log('account_id and user_created made NOT NULL');
+
 	await knex.raw(`DROP TRIGGER IF EXISTS gp_tokens_fulfill_account;`);
 	await knex.raw(`DROP TRIGGER IF EXISTS gp_apps_approvals_fulfill_account;`);
 	await knex.raw(`DROP TRIGGER IF EXISTS gp_probes_fulfill_account;`);
@@ -62,14 +71,6 @@ export async function up (knex) {
 	await knex.raw(`ALTER TABLE gp_credits_deductions DROP INDEX IF EXISTS user_id_and_date_index;`);
 
 	console.log('gp_credits_deductions user_id indexes dropped');
-
-	// Not through the snapshot: Directus rewrites a char column as varchar when it alters one, which a foreign key rejects.
-	await knex.raw(`ALTER TABLE gp_apps_approvals MODIFY account_id CHAR(36) NOT NULL;`);
-	await knex.raw(`ALTER TABLE gp_apps_approvals MODIFY user_created CHAR(36) NOT NULL;`);
-	await knex.raw(`ALTER TABLE gp_credits MODIFY account_id CHAR(36) NOT NULL;`);
-	await knex.raw(`ALTER TABLE gp_credits_deductions MODIFY account_id CHAR(36) NOT NULL;`);
-
-	console.log('account_id and user_created made NOT NULL');
 }
 
 export async function down () {
