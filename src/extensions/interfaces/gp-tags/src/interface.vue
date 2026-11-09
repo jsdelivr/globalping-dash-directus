@@ -24,16 +24,12 @@
 	const ownerName = ref<string | null>(null);
 
 	const tags = ref<{ value: string; prefix: string }[]>([]);
-	const savedTags = ref<{ value: string; prefix: string }[]>([]);
 	watch(() => props.value, (newVal) => {
 		tags.value = newVal ?? [];
-		savedTags.value = savedTags.value.length ? savedTags.value : tags.value;
 	}, { immediate: true });
 
-	// A saved tag may keep its old prefix only while its value is unchanged; an edited value always gets the owner prefix.
 	const getPrefixOptions = (tag: { value: string; prefix: string }) => {
-		const saved = savedTags.value.find(savedTag => savedTag.value === tag.value);
-		return saved && ownerName.value && saved.prefix !== ownerName.value ? [ saved.prefix, ownerName.value ] : [];
+		return ownerName.value && tag.prefix !== ownerName.value ? [ tag.prefix, ownerName.value ] : [];
 	};
 
 	const updatePrefix = (index: number, newPrefix: string) => {
@@ -63,6 +59,8 @@
 					fields: [ 'user.github_username', 'org.name' ],
 				},
 			});
+
+			if (accountId.value !== id) { return; }
 
 			const account = response.data.data;
 			ownerName.value = account.org?.name ?? account.user?.github_username ?? null;
