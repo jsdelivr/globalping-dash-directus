@@ -356,7 +356,7 @@ describe('adopted-probe hook', () => {
 		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(payload.name).to.equal('probe-fr-paris-01');
+		expect(payload.name).to.equal('fr-paris-01');
 	});
 
 	it('should send valid error if the name is too long', async () => {
@@ -386,7 +386,7 @@ describe('adopted-probe hook', () => {
 		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(payload.name).to.equal('probe-fr-paris-02');
+		expect(payload.name).to.equal('fr-paris-02');
 	});
 
 	it('should increment name index based on the existing names if there are other probes with the default names', async () => {
@@ -398,7 +398,7 @@ describe('adopted-probe hook', () => {
 			city: 'Paris',
 		});
 
-		adoptedProbes.readByQuery.resolves([{ id: 'id-2', name: 'probe-fr-paris-100' }]);
+		adoptedProbes.readByQuery.resolves([{ id: 'id-2', name: 'fr-paris-100' }]);
 
 		hook(events, context);
 		const payload = { name: null };
@@ -406,7 +406,7 @@ describe('adopted-probe hook', () => {
 		await callbacks.filter['gp_probes.items.update']?.(payload, { keys: [ '1' ] }, context);
 		await callbacks.action['gp_probes.items.update']?.({ payload, keys: [ '1' ] }, context);
 
-		expect(payload.name).to.equal('probe-fr-paris-101');
+		expect(payload.name).to.equal('fr-paris-101');
 	});
 
 	it('should update non-city meta fields of the adopted probe', async () => {
