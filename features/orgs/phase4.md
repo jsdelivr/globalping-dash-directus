@@ -8,7 +8,7 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 - The active account lives on the Directus session (`design.md`, Users): `POST /accounts/active` sets it, the signed claims carry it, and gp-api trusts them. Directus re-checks the membership on every refresh: the account must be the user's own or an org they are a member of, and a viewer's org may be read but runs no measurements (403).
 - Every Directus endpoint takes `accountId`; `userId` survives only as a `// PHASE5: remove` shim for the old dashboard.
 - `/oauth/token/introspect` returns the account a token acts for (phase 2).
-- The `transfer-data` extension, `gp_credits_redirects`, the validated `gp_orgs.extra_adoption_tokens`, `directus_users.default_account` and the org website and description (phase 3).
+- The `transfer-data` extension, `gp_credits_redirects`, the removable `gp_orgs.extra_adoption_tokens`, `directus_users.default_account` and the org website and description (phase 3).
 - The `github_username` of each member, attached by a Directus hook to the rows of a top level `gp_org_members` read that includes `id` (phase 3), which is what the members list renders; a role is changed by the membership `id`. It can not be named in `fields` and it does not survive a nested read, so the list is its own request and the name is taken off the rows.
 
 ## Contract for this phase
@@ -66,7 +66,7 @@ Process: one screen at a time, each behind the endpoint that already enforces th
 
 - The org adoption token: copy and regenerate.
 - The public probes switch (`gp_orgs.public_probes`), which makes the org's probes globally targetable as `u-<org name>`. This is what replaces "point my personal `default_prefix` at an org name" from phase 5 on: whoever wants org-named probes moves them into the org.
-- The extra adoption tokens: the org's `extra_adoption_tokens`, each shown with the username it came from and removable. Without this list the tokens would be permanent and invisible: a member who migrated and then left could keep adopting probes into the org forever. The update hook accepts removals only (phase 3), so the UI cannot do anything worse than delete an entry.
+- The extra adoption tokens: the org's `extra_adoption_tokens`, each shown with the username it came from and removable. Without this list the tokens would be permanent and invisible: a member who migrated and then left could keep adopting probes into the org forever. Removal is the only write the back end offers (phase 3), so the UI cannot do anything worse than delete an entry.
 - The org's credits redirects in both directions - an inherited `acme-org => john` and a member's `john => acme-org` - each cleared after a confirmation. The person on the other side can clear theirs in the migrate section (7.3), and pointing their own sponsorship somewhere ends it too.
 
 6.3 **Members.** Every member with their role, and the role selector. Demoting someone to viewer deletes their org tokens and app

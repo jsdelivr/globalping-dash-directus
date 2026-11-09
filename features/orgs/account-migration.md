@@ -26,7 +26,7 @@ A probe can not simply be moved: it keeps reporting the adoption token of its us
 
 - a user moves all of their probes at once, never a single one: the token is what moves, and it is per user;
 - the array holds one entry per member who migrated, so a second migration never overwrites the first;
-- any org admin can edit the array - in practice, remove entries. The update hook validates the value: the shape of every entry, and that the new array is a subset of the old one, so an org admin can never append or rewrite a token. It is a read-modify-write, and the losing side of two simultaneous edits simply repeats it;
+- any org admin can remove an entry, through the `transfer-data` extension; the field itself is not writable through the items API, so nothing can append or rewrite a token;
 - reading it is only for org admins, like `adoption_token`: the field stays out of the `gp_orgs` read permission, and the `gp-orgs` read hook adds it for the org admins. A field in the permission can be named in a filter by every member who reads the row, so even with the output stripped it would hand every member the tokens of every other member, one character at a time;
 - the array is listed in the org settings with the username each token came from (phase 4). Without that list the tokens would be permanent and invisible: a member who migrated and then left could keep adopting probes into the org forever.
 

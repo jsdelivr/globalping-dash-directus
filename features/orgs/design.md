@@ -28,7 +28,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 | gp_credits_deductions | read | filter => `MY_ACCOUNTS` |
 | gp_credits_additions | read | + `_or` branch: `{ "github_id": { "_in": "$CURRENT_USER.memberships.org.github_id" } }` |
 | gp_orgs (new) | read | `{ "members": { "user": { "_eq": "$CURRENT_USER" } } }`. `adoption_token` and `extra_adoption_tokens` are visible only to org admins: they stay out of the read permission and a read hook adds them for org admins (permission fields can't differ per branch). |
-| gp_orgs (new) | update | `{ "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } }`; fields: `adoption_token` (regenerate), `public_probes`, `extra_adoption_tokens` (removals only), `website`, `description`. The banner goes through its own endpoint. |
+| gp_orgs (new) | update | `{ "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } }`; fields: `adoption_token` (regenerate), `public_probes`, `website`, `description`. The banner and the removal of an entry of `extra_adoption_tokens` go through their own endpoints. |
 | gp_org_members (new) | read | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }` — member sees own row, org admin sees all |
 | gp_org_members (new) | update | `{ "_or": [ { "user": { "_eq": "$CURRENT_USER" } }, { "org": { "members": { "user": { "_eq": "$CURRENT_USER" }, "role": { "_eq": "admin" } } } } ] }`; fields: `role, notification_preferences`. Per-field rules in a filter hook (like the gp_tokens create): `role` - only by an org admin of that org, `notification_preferences` - only on own row. |
 

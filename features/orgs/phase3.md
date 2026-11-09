@@ -48,24 +48,21 @@ A migration stamps the field on every existing sponsorship addition so the match
 
 1.6 **`gp_orgs.user_type`** (member | sponsor | special) ships with this schema change, readable by the org's members; what sets it and what it changes is step 4.
 
-## 2. `extra_adoption_tokens` validation
+## 2. `extra_adoption_tokens` access
 
-Before anything writes the column, the rule that guards it has to exist - step 3 is the first writer.
+2.1 **Reading it is only for org admins**, exactly the way `adoption_token` already is: the field stays out of the `gp_orgs` read permission, and the `gp-orgs` read hook puts it back on the rows of the orgs the caller administers. Default-deny, so a bug in the hook hides the tokens instead of leaking them, and naming the field in a query is refused for everybody.
 
-2.1 **Update hook on `gp_orgs`.** The value is validated on every update: the shape of every entry, and the new array being a **subset** of the old one - entries distinct, each one already stored. An org admin may therefore remove entries and never append, rewrite or repeat a token. One org per update: a single payload applied to several orgs at once has no meaning here, since the array it has to be a subset of is a different one for each. Only update: `create` is left alone because the user policy does not grant it and the only programmatic creator (`sync-orgs.ts`) never names the field.
-
-It is a read-modify-write against the stored value, so two simultaneous removals both answer 200 and the later one wins, undoing the other. The update response carries the stored array back through the read hook, which is what lets the caller notice.
-
-2.2 **Reading it is only for org admins**, exactly the way `adoption_token` already is: the field stays out of the `gp_orgs` read permission, and the `gp-orgs` read hook puts it back on the rows of the orgs the caller administers. Default-deny, so a bug in the hook hides the tokens instead of leaking them, and naming the field in a query is refused for everybody. Writing it is the other half: `extra_adoption_tokens` joins `adoption_token` and `public_probes` in the `gp_orgs` update permission, which is what makes the removal UI of phase 4 reachable, and 2.1 is what makes it safe.
+2.2 **Writing it is not a permission at all.** The field stays out of the `gp_orgs` update permission, so no payload can append, rewrite or repeat a token. The one thing an org admin may do - remove an entry - is an endpoint of the `transfer-data` extension (3.1), which locks the org row and rejects a token the org does not hold.
 
 ## 3. The `transfer-data` extension
 
-3.1 **Shape.** One Directus extension, five endpoints:
+3.1 **Shape.** One Directus extension:
 
 - `transfer probes`, `transfer tokens`, `transfer credits` - one per entity kind, each its own transaction. A user may hand over their probes and keep their credits; nothing forces the three to happen together or in any order. Each answers with what it moved - `{ probes }`, `{ tokens, apps }` or `{ credits }` - and `becameAdmin` (3.3), and refuses with 400 when there is nothing to move, so an empty transfer neither reports success nor makes anybody an org admin. `tokens` counts the API tokens without an app, `apps` the distinct apps of the moved app tokens.
 - `credits-redirect` GET - the redirects where the account's github id is the source or the target. It is the only reader of the table (1.4), and the org half of it is only for org admins for the reason 1.4 gives: the counterparty of an org's redirect is a person no other row a member can read names. Each side comes back with its name - the user's `github_username` or the org's `name`, the bare id when neither table knows it - because the dash shows `john => acme-org` and can read no other user's row.
 - `credits-redirect` POST - a person points their sponsorship at an org they belong to. Only that direction exists: an org receives a sponsorship, it never passes one on. It also ends every row that touches the caller, in either direction - sending their own money somewhere says they are nobody's stand-in any more. Pointing at an org that is itself redirected is allowed and needs no thought: the lookup is one hop (1.3). It answers with `becameAdmin` (3.3), like the transfers.
 - `credits-redirect` DELETE - removes one named row, `{ source, target }`, and either of the two sides may do it: the one giving its sponsorship away, and the one that has been receiving it. Naming the row is what lets an org end a single member's donation rather than all of them, and it is what makes the inherited `org -> user` rows removable - by the org that funds them, and by the person they route through.
+- `adoption-token` DELETE - removes one entry of the org's `extra_adoption_tokens` (2.2), for the org admins of the account named in the request.
 
 A transfer names the org and always moves the caller's own personal data. The redirect endpoints act for the account named in the request, like every other endpoint (`accountId`), and check the caller's role there.
 
@@ -79,7 +76,7 @@ A transfer names the org and always moves the caller's own personal data. The re
 | `credits-redirect` POST, own sponsorship | always | always | never |
 | `credits-redirect` DELETE, a row this account is a side of | always | always for their own account, never for the org's | never |
 
-The matrix is the whole rule; probes have no exception. A redirect is about where money goes, not about who may act for an org, and reading one as permission would tie a probe capability to a row either side can delete. Somebody who has to hand probes over to an org that already has an org admin asks that org admin instead.
+The matrix is the whole rule; probes have no exception. A redirect is about where money goes, not about who may act for an org, and reading one as permission would tie a probe capability to a row either side can delete. A member who has to hand probes over to an org that already has an org admin asks to be made an org admin first.
 
 The dash cannot pre-compute the probes row - a member may not read the org's memberships, so it cannot tell whether the org has an org admin - so that rejection has to come back as its own error, distinguishable from "you are a viewer" and from "no such org", and worded for the person reading it.
 
@@ -95,7 +92,7 @@ Known and accepted: an org that has not approved the `globalping` OAuth app is i
 
 3.4 **Probes.** `account_id` moves to the org's account; name, tags, custom location and settings stay. The only behavioural change is the global tag: a probe that was targetable as `u-<owner's default_prefix>` through the owner's `public_probes` is now covered by the org's own `public_probes`, under the org's name. The old tag is replaced outright - no `deprecated_prefix` entry and no grace period, unlike the rename GitHub forces on a user. The difference is consent: the phase 4 screen names both tags before the transfer runs, so the owner chooses it. Whoever targets the old tag from the outside does not see that screen, which is the cost we accept.
 
-Also accepted: nothing can send a transferred probe back. `gp_probes.account_id` is rejected on update for everybody, so an org admin cannot disown what was handed to them. It stays tolerable because probes can only be transferred into an org that has no org admin, and the transfer makes the sender that org admin - whoever has to live with the probes is the person who moved them.
+Also accepted: nothing can send a transferred probe back. `gp_probes.account_id` can only be cleared on update, never pointed at another account, so an org admin can unassign a probe but not return it. It stays tolerable because a member can only transfer probes into an org that has no org admin, and the transfer makes them that org admin - whoever has to live with the probes is the person who moved them.
 
 3.5 **Adoption token, inside the probes transfer.** The probes cannot move alone - they keep reporting the user's adoption token and the API would adopt them straight back. So the user's current token is appended to `gp_orgs.extra_adoption_tokens` as `{ github_username, token }` and a fresh personal token is generated for the user. Consequences to keep in mind while implementing: a user moves all of their probes at once, never one; the array holds one entry per member who migrated, so a second migration never overwrites the first.
 
