@@ -21,7 +21,7 @@ const findAdoptedProbes = async (filter: Filter, { services, getSchema }: ApiExt
 };
 
 export const getDefaultProbeName = async (accountId: string, probe: { id?: string; country: string; city: string }, context: ApiExtensionContext) => {
-	const prefix = `probe-${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}`;
+	const prefix = `${probe.country.toLowerCase().replaceAll(' ', '-')}-${probe.city.toLowerCase().replaceAll(' ', '-')}`;
 
 	const currentProbes = await findAdoptedProbes({
 		account_id: { _eq: accountId },

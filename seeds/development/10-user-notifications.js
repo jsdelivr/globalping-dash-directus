@@ -18,7 +18,7 @@ export const seed = async (knex) => {
 
 	// for the unassigned notification
 	const unassignedProbes = [
-		{ name: 'london-probe-3', ip: '2.13.209.2' },
+		{ name: 'gb-london-03', ip: '2.13.209.2' },
 		{ name: 'Buenos Aires Probe 777', ip: '46.255.119.175' },
 		{ name: 'frankfurt-probe-99', ip: '86.127.218.245' },
 		{ name: 'seoul-probe-101', ip: '144.62.235.209' },
@@ -27,7 +27,7 @@ export const seed = async (knex) => {
 
 	// for the deleted notification
 	const deletedProbes = [
-		{ name: 'brussels-probe-10', ip: '181.23.72.25' },
+		{ name: 'be-brussels-10', ip: '181.23.72.25' },
 		{ name: 'Prague Probe 13', ip: '201.166.208.21' },
 		{ name: 'ouagadougou-probe-42', ip: '63.225.254.134' },
 		{ name: 'antananarivo-probe-17', ip: '163.22.229.134' },

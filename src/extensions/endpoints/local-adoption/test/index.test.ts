@@ -210,7 +210,7 @@ describe('local-adoption endpoint', () => {
 			expect(updateOne.called).to.equal(true);
 
 			expect(updateOne.args[0]?.[1]).to.deep.include({
-				name: 'probe-us-new-york-01',
+				name: 'us-new-york-01',
 				userId: 'user-id',
 				account_id: 'account-id',
 				ip: clientIp,
@@ -220,8 +220,8 @@ describe('local-adoption endpoint', () => {
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
 				account: 'account-id',
-				subject: 'New probe probe-us-new-york-01 adopted',
-				message: 'A new probe [probe-us-new-york-01](/probes/probe-1) with IP address **192.168.1.10** has been assigned to your account.',
+				subject: 'New probe us-new-york-01 adopted',
+				message: 'A new probe [us-new-york-01](/probes/probe-1) with IP address **192.168.1.10** has been assigned to your account.',
 			});
 
 			expect(readOne.calledWith('probe-1')).to.equal(true);
