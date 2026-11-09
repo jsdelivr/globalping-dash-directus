@@ -92,7 +92,7 @@ export default defineHook(({ filter }, context) => {
 		}
 
 		// The onboarding offers the orgs of the user, so until a default account is picked the sign-in waits for the sync.
-		if (sync && !user.default_account) {
+		if (sync && !user.default_account && jwtMeta.type === 'login') {
 			await Promise.race([ sync, setTimeout(3000) ]);
 		}
 
