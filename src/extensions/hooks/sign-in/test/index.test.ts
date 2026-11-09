@@ -144,7 +144,7 @@ describe('Sign-in hook', () => {
 	});
 
 	describe('auth.jwt background sync', () => {
-		const loginMeta = { user: '123', provider: 'github' };
+		const loginMeta = { user: '123', provider: 'github', type: 'login' };
 
 		it('should sync orgs, memberships and the organizations list on login', async () => {
 			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
@@ -254,7 +254,7 @@ describe('Sign-in hook', () => {
 
 			hook(events, context);
 
-			// auth.jwt fires on refresh too; the hook does not gate on meta.type, so the full sync runs all the same.
+			// auth.jwt fires on refresh too.
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, { ...loginMeta, type: 'refresh' });
 			await waitFor(() => usersService.updateOne.callCount === 1);
 
