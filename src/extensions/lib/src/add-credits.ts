@@ -1,23 +1,6 @@
 import type { ApiExtensionContext } from '@directus/extensions';
 import dayjs from 'dayjs';
 
-export const SOURCE_ID_TO_TARGET_ID: Record<string, string> = {
-	// For example:
-	// 6191378: '1834071',
-	66716858: '6209808',
-	203478287: '163146',
-	21207279: '219827779',
-	138994461: '90101384',
-	133026984: '38296588',
-	154700772: '180483416',
-	20308900: '1583095',
-	138632438: '191276444',
-	46052696: '628622',
-	36424661: '59905',
-	177108879: '209476416',
-	352555837: '1834071',
-};
-
 type CreditsAddition = {
 	meta: { amountInDollars?: number; monthsCovered?: number };
 	date_created: string;
@@ -86,7 +69,7 @@ export const addCredits = async ({ github_id: sponsorGithubId, amount, reason, m
 		schema: await getSchema(),
 	});
 
-	const githubId = redirectGithubId(sponsorGithubId);
+	const githubId = await redirectGithubId(sponsorGithubId, context);
 	const { bonus } = await getUserBonus(githubId, amount, context);
 	const creditsId = await creditsAdditionsService.createOne({
 		github_id: githubId,
@@ -110,8 +93,9 @@ export const addRecurringCredits = async ({ githubId, monthlyAmount, monthsToAwa
 	return { creditsId, totalAmount };
 };
 
-export const redirectGithubId = (githubId: string) => {
-	return SOURCE_ID_TO_TARGET_ID[githubId] || githubId;
+export const redirectGithubId = async (githubId: string, { database }: ApiExtensionContext): Promise<string> => {
+	const redirect = await database('gp_credits_redirects').where({ source_github_id: githubId }).first<{ target_github_id: string } | undefined>('target_github_id');
+	return redirect?.target_github_id ?? githubId;
 };
 
 const getPrevious12Dates = (endDate?: Date) => {

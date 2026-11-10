@@ -1,18 +1,38 @@
 import { defineHook } from '@directus/extensions-sdk';
-import { addAdoptionToken } from './actions/add-adoption-token.js';
+import { addAdoptionTokens } from './actions/add-adoption-tokens.js';
+import { collectBanners, deleteBanners } from './actions/delete-banners.js';
+import { validateWebsite } from './actions/validate.js';
 import type { Org } from './types.js';
 
-export default defineHook(({ filter }) => {
+export default defineHook(({ filter, action }, hookContext) => {
 	filter('gp_orgs.items.read', async (payload, _meta, context) => {
 		const orgs = payload as Org[];
-		const { accountability, database } = context;
+		const { accountability } = context;
 
 		if (!accountability?.user || accountability.admin) {
 			return payload;
 		}
 
-		await addAdoptionToken(orgs, accountability.user, database);
+		// Adoption tokens are not readable through permissions (members and viewers can read the org, but not its tokens), so this hook adds them for org admins only.
+		await addAdoptionTokens(orgs, context);
 
 		return payload;
+	});
+
+	filter('gp_orgs.items.create', (payload) => {
+		validateWebsite((payload as Record<string, unknown>).website);
+	});
+
+	filter('gp_orgs.items.update', (payload) => {
+		validateWebsite((payload as Record<string, unknown>).website);
+	});
+
+	// The filter runs before the access check to store file ids for action to delete.
+	filter('gp_orgs.items.delete', async (payload, _meta, context) => {
+		await collectBanners(payload as string[], context);
+	});
+
+	action('gp_orgs.items.delete', async ({ keys }) => {
+		await deleteBanners(keys as string[], hookContext);
 	});
 });

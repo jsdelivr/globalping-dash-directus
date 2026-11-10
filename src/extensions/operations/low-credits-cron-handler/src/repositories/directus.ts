@@ -4,7 +4,7 @@ import { sendNotification } from '../../../../lib/src/send-notification.js';
 import type { NotifiedListUpdate, CandidateRow } from '../types.js';
 
 // The threshold and the switch come from the recipient's own preferences: the personal ones for a user account, the per-org ones
-// for an org member. An org balance produces a row per admin.
+// for an org member. Only the admins who selected the org are notified.
 export const getCandidates = async ({ database }: OperationContext): Promise<CandidateRow[]> => {
 	const rows = (await database.raw(`
 		SELECT
@@ -14,7 +14,8 @@ export const getCandidates = async ({ database }: OperationContext): Promise<Can
 			c.low_credits_notified AS allNotifiedUsers,
 			COALESCE(u.id, m.user) AS recipient,
 			COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(COALESCE(u.notification_preferences, m.notification_preferences), '$.low_credits.parameter')) AS UNSIGNED), ?) AS threshold,
-			COALESCE(JSON_UNQUOTE(JSON_EXTRACT(COALESCE(u.notification_preferences, m.notification_preferences), '$.low_credits.enabled')), 'true') != 'false' AS enabled
+			COALESCE(JSON_UNQUOTE(JSON_EXTRACT(COALESCE(u.notification_preferences, m.notification_preferences), '$.low_credits.enabled')), 'true') != 'false'
+				AND (m.user IS NULL OR JSON_CONTAINS((SELECT selected_orgs FROM directus_users WHERE id = m.user), JSON_QUOTE(m.org))) AS enabled
 		FROM gp_credits c
 		JOIN gp_accounts a ON a.id = c.account_id
 		LEFT JOIN directus_users u ON u.id = a.user
@@ -38,7 +39,7 @@ const parseNotifiedList = (value: string, recipient: string): string[] => {
 export const notifyRecipients = async (context: OperationContext, toNotify: CandidateRow[], trx: OperationContext['database']): Promise<void> => {
 	for (const row of toNotify) {
 		await sendNotification({
-			account: row.account_id,
+			account_id: row.account_id,
 			recipient: row.recipient,
 			type: 'low_credits',
 			subject: 'Your Globalping credits are running low',

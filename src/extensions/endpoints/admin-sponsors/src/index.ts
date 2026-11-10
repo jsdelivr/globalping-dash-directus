@@ -132,7 +132,7 @@ export default defineEndpoint((router, context) => {
 		query: Joi.object({ githubId: Joi.string().pattern(/^\d+$/).max(255).required() }).required(),
 	}).unknown(true)), asyncWrapper(async (req, res) => {
 		const sourceGithubId = req.query.githubId as string;
-		const githubId = redirectGithubId(sourceGithubId);
+		const githubId = await redirectGithubId(sourceGithubId, context);
 
 		if (githubId === sourceGithubId) {
 			res.json({ data: null });
@@ -188,7 +188,7 @@ export default defineEndpoint((router, context) => {
 		const accountability = (req as Request & { accountability: EventContext['accountability'] }).accountability;
 		const input = req.body as ManualAdditionInput;
 		const isPayment = input.type === 'payment';
-		const githubId = input.bypassRedirect ? input.githubId : redirectGithubId(input.githubId);
+		const githubId = input.bypassRedirect ? input.githubId : await redirectGithubId(input.githubId, context);
 		let githubLogin: string;
 		let recipientGithubLogin: string;
 

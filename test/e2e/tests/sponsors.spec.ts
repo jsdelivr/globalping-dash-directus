@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 
@@ -5,6 +6,7 @@ const unlinkedGithubId = `9${Math.floor(Math.random() * 100000000)}`;
 const redirectSourceGithubId = '900000000001';
 const redirectTargetGithubId = '900000000002';
 const sponsorshipReasons = [ 'recurring_sponsorship', 'one_time_sponsorship', 'tier_changed' ];
+const sponsorGithubIdSql = `COALESCE(JSON_VALUE(meta, '$.sponsorGithubId'), github_id)`;
 const sponsorshipValueSql = `COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.amountInDollars')) AS DECIMAL(18,2)), 0)
 	* CASE WHEN reason = 'recurring_sponsorship'
 		THEN COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.monthsCovered')) AS UNSIGNED), 1)
@@ -40,13 +42,13 @@ test.beforeEach(async ({ user, user2, org }) => {
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', previousFrom).where('date_created', '<', previousTo)
 			.sum({ value: sql.raw(sponsorshipValueSql) }).first(),
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', pastYear).where('date_created', '<', now)
-			.countDistinct({ sponsors: sql.raw(`COALESCE(JSON_VALUE(meta, '$.sponsorGithubId'), github_id)`) }).sum({
+			.countDistinct({ sponsors: sql.raw(sponsorGithubIdSql) }).sum({
 				value: sql.raw(sponsorshipValueSql),
 				recurring: sql.raw(`CASE WHEN reason IN ('recurring_sponsorship', 'tier_changed') THEN ${sponsorshipValueSql} ELSE 0 END`),
 				oneTime: sql.raw(`CASE WHEN reason = 'one_time_sponsorship' THEN ${sponsorshipValueSql} ELSE 0 END`),
 			}).first(),
 		sql('gp_credits_additions').whereIn('reason', sponsorshipReasons).where('date_created', '>=', new Date('2024-01-01T00:00:00.000Z')).where('date_created', '<', new Date('2025-01-01T00:00:00.000Z'))
-			.countDistinct({ sponsors: sql.raw(`COALESCE(JSON_VALUE(meta, '$.sponsorGithubId'), github_id)`) }).sum({ value: sql.raw(sponsorshipValueSql) }).first(),
+			.countDistinct({ sponsors: sql.raw(sponsorGithubIdSql) }).sum({ value: sql.raw(sponsorshipValueSql) }).first(),
 	]);
 
 	baseline = {
@@ -129,6 +131,7 @@ test.beforeEach(async ({ user, user2, org }) => {
 test.afterEach(async ({ org }) => {
 	await sql('gp_credits_additions').whereIn('github_id', [ unlinkedGithubId, redirectSourceGithubId, redirectTargetGithubId, org.github_id ]).delete();
 	await sql('sponsors').where({ github_id: redirectSourceGithubId }).delete();
+	await sql('gp_credits_redirects').where({ source_github_id: redirectSourceGithubId }).delete();
 });
 
 test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
@@ -288,6 +291,7 @@ test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 
 test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 	await sql('directus_users').where({ id: user2.id }).update({ external_identifier: redirectTargetGithubId, github_username: 'redirect-target' });
+	await sql('gp_credits_redirects').insert({ id: randomUUID(), source_github_id: redirectSourceGithubId, target_github_id: redirectTargetGithubId });
 
 	await sql('sponsors').insert({
 		github_id: redirectSourceGithubId,
@@ -309,6 +313,17 @@ test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 
 	await adminPage.goto('/sponsors');
 	const eventsTable = adminPage.getByRole('heading', { name: 'Sponsorship events' }).locator('xpath=ancestor::section[1]');
+	const accountsTable = adminPage.getByRole('heading', { name: 'Sponsor accounts' }).locator('xpath=ancestor::section[1]');
+
+	for (const search of [ redirectSourceGithubId, 'redirect-source' ]) {
+		const accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${search}`));
+		await adminPage.getByLabel('Search sponsor accounts').fill(search);
+		await accountsResponse;
+		await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
+		await expect(accountsTable.locator('tbody tr').first()).toContainText('redirect-source');
+		await expect(accountsTable.locator('tbody tr').first()).toContainText('Active recurring');
+		await expect(accountsTable.locator('tbody tr').first()).toContainText('$30');
+	}
 
 	for (const search of [ redirectTargetGithubId, redirectSourceGithubId, 'redirect-source' ]) {
 		const eventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${search}`));
@@ -344,12 +359,16 @@ test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 		meta: JSON.stringify({ amountInDollars: 5, sponsorGithubId: redirectTargetGithubId }),
 	});
 
-	for (const [ githubId, githubLogin, periodEvents ] of [ [ redirectSourceGithubId, 'redirect-source', 1 ], [ redirectTargetGithubId, 'redirect-target', 2 ] ] as const) {
+	for (const githubId of [ redirectSourceGithubId, redirectTargetGithubId ]) {
 		const response = await adminPage.request.get(`${process.env.DIRECTUS_URL}/admin-sponsors/accounts?search=${githubId}`);
 		expect(response.ok()).toBe(true);
 		const { items } = await response.json();
-		expect(items).toHaveLength(1);
-		expect(items[0]).toMatchObject({ githubId, githubLogin, redirectTarget: null, periodEvents });
+		expect(items).toHaveLength(2);
+
+		expect(items).toEqual(expect.arrayContaining([
+			expect.objectContaining({ githubId: redirectSourceGithubId, githubLogin: 'redirect-source', redirectTarget: 'redirect-target', dashboardAccountName: 'redirect-target', periodEvents: 1 }),
+			expect.objectContaining({ githubId: redirectTargetGithubId, githubLogin: 'redirect-target', redirectTarget: null, dashboardAccountName: 'redirect-target', periodEvents: 2 }),
+		]));
 	}
 });
 
