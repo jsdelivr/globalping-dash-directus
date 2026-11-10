@@ -2,6 +2,7 @@ import type { Locator } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import type { User } from '../types.ts';
+import { getSelectedOrgs, selectOrgs } from '../github.ts';
 import { actAsOrg, addProbe, pageAs } from '../utils.ts';
 
 const ADMIN_ONLY_HINT = 'Only organization admins can do this';
@@ -163,20 +164,30 @@ test('making the probes public writes the org setting, and only an org admin can
 	}
 });
 
-test('an org probe opened from the personal account is read-only and asks to switch to the org', async ({ browser, org }) => {
+test('a link to a probe of a selected org switches the account to that org', async ({ browser, org }) => {
 	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
-	await sql('directus_users').where({ id: org.admin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 
 	const page = await pageAs(browser, org.admin.email, 'user');
 	await page.goto(`/probes/${probeId}`);
 
-	const deleteButton = page.getByRole('button', { name: 'Delete probe' });
-	await expectEditable(deleteButton, false);
-	await expectEditable(page.getByRole('button', { name: 'Open add tags dialog' }), false);
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	await expectEditable(page.getByRole('button', { name: 'Delete probe' }), true);
+});
 
-	await expect(async () => {
-		await page.mouse.move(0, 0);
-		await deleteButton.locator('..').hover();
-		await expect(page.getByText('This is an organization probe, switch to the organization account')).toBeVisible({ timeout: 1000 });
-	}).toPass();
+test('a link to a probe of a non-selected org is read-only until the org is added and switched to', async ({ browser, org }) => {
+	const probeId = await addProbe({ account_id: org.account_id, name: 'e2e-org-probe' });
+	await selectOrgs(org.admin, []);
+
+	const page = await pageAs(browser, org.admin.email, 'user');
+	await page.goto(`/probes/${probeId}`);
+
+	await expect(page.getByText(`This probe belongs to the organization ${org.name}`)).toBeVisible();
+	await expectEditable(page.getByRole('button', { name: 'Delete probe' }), false);
+	await expect(page.getByLabel('Profile')).not.toContainText(org.name);
+
+	await page.getByRole('button', { name: 'Add and switch' }).click();
+
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
+	await expectEditable(page.getByRole('button', { name: 'Delete probe' }), true);
+	expect(await getSelectedOrgs(org.admin)).toEqual([ org.id ]);
 });
