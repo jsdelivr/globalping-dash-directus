@@ -36,14 +36,7 @@ New rules only (existing clauses like tokens' `app_id _null` / `user_created _eq
 
 **Users**
 - User joins/leaves the org only through GitHub update -> sync.
-- The user menu has an "Act as organization" submenu, which stores the active account on the server:
-  `POST /accounts/active` writes the account id (not the org id) into `directus_sessions.active_account` after checking
-  the membership. The `auth.jwt` filter copies it on every refresh into the next session row and emits it as the signed
-  claims `active_account_id` / `active_account_role`, which gp-api trusts without a database lookup; `GET /accounts/active`
-  returns the claim of the cookie, so the dashboard shows what the readers bill. The signed `user_account_id` claim stays the
-  personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves
-  on another. A refresh rotates the session row, so a switch also updates the row a refresh already rotated into, and a refresh
-  retried with the old cookie keeps the newer choice.
+- The user menu has an "Act as organization" submenu, which stores the active account on the server: `POST /accounts/active` writes the account id (not the org id) into `directus_sessions.active_account` after checking the membership. The `auth.jwt` filter copies it on every refresh into the next session row and emits it as the signed claims `active_account_id` / `active_account_role`, which gp-api trusts without a database lookup; `GET /accounts/active` returns the claim of the cookie, so the dashboard shows what the readers bill. The signed `user_account_id` claim stays the personal account. It is per session, which is the point - the same user can act as the org on one machine and as themselves on another. A refresh rotates the session row, so a switch also updates the row a refresh already rotated into, and a refresh retried with the old cookie keeps the newer choice. A switch reloads only its own tab; other tabs keep showing their account, and their probe actions still work because gp-api checks the role in the probe's account when it differs from the active one (sessions only; a token stays bound to its account).
 - Losing the membership is noticed on the next refresh (the filter falls back to the `default_account` while it is still valid, else to the personal account), so a stale claim lives
   at most `SESSION_COOKIE_TTL`. Logout or expiry drops the choice with the session, so the next login starts in the user's
   `default_account` while it is still valid, else in the personal account. The claims also carry the tier of the active
