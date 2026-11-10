@@ -2,8 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { actAsOrg, pageAs, png } from '../utils.ts';
+import { getMemberships, membership, prepareMockGithub, sync } from '../github.ts';
 
-const orgRow = (orgId: string) => sql('gp_orgs').where({ id: orgId }).first('adoption_token', 'public_probes', 'extra_adoption_tokens');
+const orgRow = (orgId: string) => sql('gp_orgs').where({ id: orgId }).first('adoption_token', 'public_probes', 'extra_adoption_tokens', 'default_role');
 const roleOf = async (orgId: string, userId: string) => (await sql('gp_org_members').where({ org: orgId, user: userId }).first('role')).role as string;
 
 test('the Organization screen explains what each role can do', async ({ browser, org }) => {
@@ -181,6 +182,34 @@ test('an org admin changes roles after confirming, with a warning on demotion fr
 	await page.getByRole('option', { name: 'Viewer' }).click();
 	await page.getByRole('dialog').getByRole('button', { name: 'Change to viewer' }).click();
 	await expect.poll(() => roleOf(org.id, org.member.id)).toBe('viewer');
+});
+
+test('an org admin sets the default role for new members after confirming, and the GitHub sync applies it', async ({ browser, org, user, user2 }) => {
+	const page = await actAsOrg(browser, org, org.admin);
+	await page.goto('/settings?tab=organization');
+
+	const defaultRole = page.getByLabel('Default role for new members');
+	await expect(defaultRole).toContainText('Member');
+
+	await defaultRole.click();
+	await page.getByRole('option', { name: 'Viewer' }).click();
+	await expect(page.getByRole('dialog')).toContainText('GitHub admins of the organization always join as admins');
+	await page.getByRole('dialog').getByRole('button', { name: 'Set to viewer' }).click();
+	await expect.poll(async () => (await orgRow(org.id)).default_role).toBe('viewer');
+	await expect(defaultRole).toContainText('Viewer');
+
+	await prepareMockGithub(user, [ membership(Number(org.github_id), org.name) ]);
+	await sync(user);
+	expect(await getMemberships(user)).toMatchObject([{ github_id: org.github_id, role: 'viewer' }]);
+
+	await defaultRole.click();
+	await page.getByRole('option', { name: 'Member' }).click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Set to member' }).click();
+	await expect.poll(async () => (await orgRow(org.id)).default_role).toBe('member');
+
+	await prepareMockGithub(user2, [ membership(Number(org.github_id), org.name) ]);
+	await sync(user2);
+	expect(await getMemberships(user2)).toMatchObject([{ github_id: org.github_id, role: 'member' }]);
 });
 
 test('an org admin edits the org website and description', async ({ browser, org }) => {

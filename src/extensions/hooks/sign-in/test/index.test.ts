@@ -222,6 +222,35 @@ describe('Sign-in hook', () => {
 			expect(itemsService.createOne.args[1]?.[0]).to.deep.include({ org: 'winner-id', user: '123', role: 'admin' });
 		});
 
+		it('should give a new member the default role of the org, and a GitHub admin the admin role', async () => {
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+
+			nock('https://api.github.com')
+				.get(`/user/memberships/orgs?per_page=100&page=1`)
+				.reply(200, [
+					{ state: 'active', role: 'member', organization: { id: 1, login: 'jsdelivr' } },
+					{ state: 'active', role: 'admin', organization: { id: 2, login: 'globalping' } },
+				]);
+
+			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
+
+			// Both orgs exist already and want new members as viewers.
+			itemsService.readByQuery.onFirstCall().resolves([
+				{ id: 'org-1', name: 'jsdelivr', github_id: '1', default_role: 'viewer' },
+				{ id: 'org-2', name: 'globalping', github_id: '2', default_role: 'viewer' },
+			]);
+
+			hook(events, context);
+
+			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			await waitFor(() => usersService.updateOne.callCount === 1);
+
+			expect(itemsService.createOne.args.map(([ payload ]) => payload)).to.have.deep.members([
+				{ org: 'org-1', user: '123', role: 'viewer' },
+				{ org: 'org-2', user: '123', role: 'admin' },
+			]);
+		});
+
 		it('should keep going when a parallel sync of the same user created the membership first', async () => {
 			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
 

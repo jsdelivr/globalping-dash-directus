@@ -12,6 +12,7 @@ type Org = {
 	id: string;
 	name: string;
 	github_id: string;
+	default_role: string;
 };
 
 type Membership = {
@@ -61,7 +62,7 @@ const createOrg = async (githubOrg: GithubOrganization, { services, getSchema }:
 		}) as string;
 		// Org credits are assigned to the org by a trigger.
 
-		return { id, name: githubOrg.login, github_id: githubOrg.githubId };
+		return { id, name: githubOrg.login, github_id: githubOrg.githubId, default_role: 'member' };
 	} catch (error) {
 		// A concurrent sync of another member may create the org first; the loser then reads the winner's row.
 		if (!isDirectusError(error, ErrorCode.RecordNotUnique)) {
@@ -92,10 +93,12 @@ const createMemberships = async (user: User, githubOrgs: GithubOrganization[], d
 		const membership = membershipByGithubId.get(githubOrg.githubId);
 
 		if (!membership) {
+			const org = directusOrgs.get(githubOrg.githubId)!;
+
 			await membersService.createOne({
-				org: directusOrgs.get(githubOrg.githubId)!.id,
+				org: org.id,
 				user: user.id,
-				role: githubOrg.role,
+				role: githubOrg.role === 'admin' ? 'admin' : org.default_role,
 			}).catch((error: unknown) => {
 				// A concurrent sync of the same user may create the membership first.
 				if (!isDirectusError(error, ErrorCode.RecordNotUnique)) {
