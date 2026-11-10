@@ -3,10 +3,9 @@ import type { EndpointExtensionContext } from '@directus/extensions';
 import { defineEndpoint } from '@directus/extensions-sdk';
 import axios from 'axios';
 import type { Request as ExpressRequest } from 'express';
-import Joi from 'joi';
+import Joi, { type CustomHelpers, type ErrorReport } from 'joi';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { getLinkGenerator } from '../../../lib/src/link-generator.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 import { syncGithubData } from './actions/sync-github-data.js';
@@ -27,6 +26,22 @@ export const rateLimiter = new RateLimiterMemory({
 	duration: 60 * 60,
 });
 
+const allowOnlyForCurrentUserAndAdmin = (value: Request, helpers: CustomHelpers): Request | ErrorReport => {
+	if (value.accountability.admin) {
+		return value;
+	}
+
+	if (value.body.userId === 'all') {
+		return helpers.message({ custom: 'Allowed only for admin.' });
+	}
+
+	if (value.accountability.user !== value.body.userId) {
+		return helpers.message({ custom: 'Allowed only for the current user or admin.' });
+	}
+
+	return value;
+};
+
 const syncGithubDataSchema = Joi.object<Request>({
 	accountability: Joi.object({
 		user: Joi.string().required(),
@@ -35,7 +50,7 @@ const syncGithubDataSchema = Joi.object<Request>({
 	body: Joi.object({
 		userId: Joi.string().required(),
 	}).required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('body')).unknown(true);
+}).custom(allowOnlyForCurrentUserAndAdmin).unknown(true);
 
 export default defineEndpoint((router, context: EndpointExtensionContext) => {
 	router.post('/', validate(syncGithubDataSchema), asyncWrapper(async (_req, res) => {
@@ -65,10 +80,19 @@ export default defineEndpoint((router, context: EndpointExtensionContext) => {
 			throw new InvalidPayloadError();
 		}
 
-		const tokenPayload = getLinkGenerator(context).verifyToken(data, 'default-tag-change');
+		const tokenPayload = getLinkGenerator(context).verifyToken<{ userId: string } | { orgId: string }>(data, 'default-tag-change');
 
 		if (!tokenPayload) {
 			throw new InvalidPayloadError();
+		}
+
+		if ('orgId' in tokenPayload) {
+			await context.database('gp_orgs')
+				.where({ id: tokenPayload.orgId })
+				.update({ deprecated_prefix: null });
+
+			res.status(200).send();
+			return;
 		}
 
 		const { UsersService } = context.services;

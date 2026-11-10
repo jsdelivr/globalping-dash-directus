@@ -88,7 +88,6 @@ export const seed = async (knex) => {
 					provider: 'default',
 					external_identifier: member.external_identifier,
 					email_notifications: 0,
-					github_organizations: JSON.stringify([ name ]),
 					github_username: username,
 					token: `${username}token0000000000000000000000`,
 					adoption_token: `${username}adoptiontoken000000000000000`,
@@ -119,11 +118,11 @@ export const seed = async (knex) => {
 			// Everyone gets personal items; admins and members also get org ones (viewers can't own org items).
 			// Org approvals use another app since approvals are unique per (user, app) for now.
 			const itemSets = [
-				{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), probeUserId: userId, accountId: personalAccount.id, app: authCodeApp, systemTags: [] },
-				...role !== 'viewer' ? [{ suffix: '-org', ip: member.ip, probeUserId: null, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
+				{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), accountId: personalAccount.id, app: authCodeApp, systemTags: [] },
+				...role !== 'viewer' ? [{ suffix: '-org', ip: member.ip, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
 			];
 
-			for (const { suffix, ip, probeUserId, accountId, app, systemTags } of itemSets) {
+			for (const { suffix, ip, accountId, app, systemTags } of itemSets) {
 				await knex('gp_probes').insert({
 					id: randomUUID(),
 					uuid: randomUUID(),
@@ -145,7 +144,6 @@ export const seed = async (knex) => {
 					lastSyncDate: new Date(),
 					tags: '[]',
 					systemTags: JSON.stringify(systemTags),
-					userId: probeUserId,
 					account_id: accountId,
 				});
 
@@ -160,7 +158,6 @@ export const seed = async (knex) => {
 
 				await knex('gp_apps_approvals').insert({
 					id: randomUUID(),
-					user: userId,
 					user_created: userId,
 					account_id: accountId,
 					app: app.id,

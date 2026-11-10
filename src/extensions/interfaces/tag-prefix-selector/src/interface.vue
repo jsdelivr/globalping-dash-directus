@@ -26,12 +26,13 @@
 			const userId = props.primaryKey || 'me';
 			const response = await api.get(`/users/${userId}`, {
 				params: {
-					fields: [ 'id', 'github_username', 'github_organizations' ],
+					fields: [ 'github_username', 'default_prefix' ],
 				},
 			});
 
+			// The stored value stays in the list, so saving the form does not change it.
 			const user = response.data.data;
-			prefixes.value = [ user.github_username, ...user.github_organizations ];
+			prefixes.value = [ ...new Set([ user.github_username, user.default_prefix ].filter(Boolean)) ];
 		} catch (err: any) {
 			console.error(err);
 			alert(err.message || err.toString());

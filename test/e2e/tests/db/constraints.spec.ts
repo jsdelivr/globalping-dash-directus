@@ -27,14 +27,14 @@ test('A user is a member of an org only once', async ({ org }) => {
 });
 
 test('An account has a single credits row', async ({ user }) => {
-	await sql('gp_credits').insert({ account_id: user.account_id, user_id: user.id, amount: 1000 });
+	await sql('gp_credits').insert({ account_id: user.account_id, amount: 1000 });
 
 	await expect(sql('gp_credits').insert({ account_id: user.account_id, amount: 500 })).rejects.toThrow(/Duplicate/);
 });
 
 test('An account is charged once per day', async ({ user, org }) => {
 	const date = '2026-01-01';
-	await sql('gp_credits_deductions').insert({ account_id: user.account_id, user_id: user.id, amount: 100, date });
+	await sql('gp_credits_deductions').insert({ account_id: user.account_id, amount: 100, date });
 
 	await expect(sql('gp_credits_deductions').insert({ account_id: user.account_id, amount: 200, date })).rejects.toThrow(/Duplicate/);
 

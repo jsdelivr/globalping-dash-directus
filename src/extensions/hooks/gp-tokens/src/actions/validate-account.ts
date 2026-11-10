@@ -4,6 +4,7 @@ import { isAccountAvailable } from '../../../../lib/src/accounts.js';
 import type { Token } from '../index.js';
 
 const ForbiddenAccountError = createError('INVALID_PAYLOAD_ERROR', 'You can not create a token for this account.', 400);
+const MissingAccountError = createError('INVALID_PAYLOAD_ERROR', 'The token account is required.', 400);
 const UserNotFoundError = createError('UNAUTHORIZED', 'User not found.', 401);
 
 export const validateAccount = async (token: Partial<Token>, context: EventContext) => {
@@ -13,9 +14,8 @@ export const validateAccount = async (token: Partial<Token>, context: EventConte
 		return;
 	}
 
-	// PHASE5: it should always be present.
 	if (!token.account_id) {
-		return;
+		throw new MissingAccountError();
 	}
 
 	if (!accountability?.user) {

@@ -2,9 +2,8 @@ import { defineEndpoint } from '@directus/extensions-sdk';
 import type { EventContext } from '@directus/types';
 import type { Request as ExpressRequest } from 'express';
 import Joi from 'joi';
-import { ALL_ACCOUNTS, getAccountGithubId, getRequestAccountId } from '../../../lib/src/accounts.js';
+import { ALL_ACCOUNTS, getAccountGithubId } from '../../../lib/src/accounts.js';
 import { asyncWrapper } from '../../../lib/src/async-wrapper.js';
-import { allowOnlyForCurrentUserAndAdmin } from '../../../lib/src/joi-validators.js';
 import { queryParser } from '../../../lib/src/middlewares/query-parser.js';
 import { validate } from '../../../lib/src/middlewares/validate.js';
 
@@ -31,9 +30,7 @@ const creditsTimelineSchema = Joi.object<Request>({
 		admin: Joi.boolean().required(),
 	}).required().unknown(true),
 	query: Joi.object({
-		// PHASE5: remove `userId`, `accountId` is the only owner input.
-		userId: Joi.string(),
-		accountId: Joi.string(),
+		accountId: Joi.string().required(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 		type: Joi.alternatives().try(
@@ -44,8 +41,8 @@ const creditsTimelineSchema = Joi.object<Request>({
 			Joi.array().items(Joi.string().valid(...ALLOWED_REASONS)),
 			Joi.string().valid(...ALLOWED_REASONS),
 		).optional().default(ALLOWED_REASONS),
-	}).xor('userId', 'accountId').required(),
-}).custom(allowOnlyForCurrentUserAndAdmin('query')).unknown(true); // PHASE5: remove allowOnlyForCurrentUserAndAdmin.
+	}).required(),
+}).unknown(true);
 
 const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
 	const fullReasons: Record<string, string[]> = {
@@ -67,10 +64,10 @@ const getAdditionReasonsFromQuery = (reasonsInQuery: string[]) => {
 export default defineEndpoint((router, context) => {
 	const { database } = context;
 
-	router.get('/', queryParser({ keys: [ 'reason', 'type' ] }), validate(creditsTimelineSchema), asyncWrapper(async (_req, res) => {
+	router.get('/', queryParser({ keys: [ 'reason', 'type' ] }), validate(creditsTimelineSchema, { roles: [ 'admin', 'member', 'viewer' ], context }), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
-		const query = req.query as unknown as { userId?: string; accountId?: string; offset: number; limit: number; reason: string | string[]; type: string | string[] };
-		const accountId = await getRequestAccountId(query, req.accountability!, context, [ 'admin', 'member', 'viewer' ]);
+		const query = req.query as unknown as { accountId: string; offset: number; limit: number; reason: string | string[]; type: string | string[] };
+		const { accountId } = query;
 		const sqlQueries = [];
 
 		const typesInQuery = Array.isArray(query.type) ? query.type : [ query.type ];

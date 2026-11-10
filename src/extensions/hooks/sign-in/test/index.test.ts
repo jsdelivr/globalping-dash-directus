@@ -35,16 +35,11 @@ describe('Sign-in hook', () => {
 		createOne: sinon.stub(),
 	};
 	const rawStub = sinon.stub();
-	const database = new Proxy(() => database, {
-		get: (_target, property) => {
-			if (property === 'raw') {
-				return rawStub;
-			} else if (property === 'transaction') {
-				return async (callback: (trx: unknown) => unknown) => callback({});
-			}
-
-			return database;
-		},
+	const orgNames = sinon.stub();
+	const query = { join: () => query, where: () => query, select: orgNames, update: async () => 0 };
+	const database = Object.assign(() => query, {
+		raw: rawStub,
+		transaction: async (callback: (trx: unknown) => unknown) => callback({}),
 	});
 	const context = {
 		services: {
@@ -78,6 +73,7 @@ describe('Sign-in hook', () => {
 		itemsService.createOne.resolves('created-id');
 		itemsService.deleteMany.resolves();
 		rawStub.resolves([ [] ]);
+		orgNames.resolves([]);
 	});
 
 	afterEach(() => {
@@ -146,8 +142,8 @@ describe('Sign-in hook', () => {
 	describe('auth.jwt background sync', () => {
 		const loginMeta = { user: '123', provider: 'github', type: 'login' };
 
-		it('should sync orgs, memberships and the organizations list on login', async () => {
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+		it('should sync orgs and memberships on login', async () => {
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -159,7 +155,7 @@ describe('Sign-in hook', () => {
 			hook(events, context);
 
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
-			await waitFor(() => usersService.updateOne.callCount === 1);
+			await waitFor(() => itemsService.createOne.callCount === 2);
 
 			expect(itemsService.readOne.calledWith('123', {}, { emitEvents: false })).to.equal(true);
 			expect(nock.isDone()).to.equal(true);
@@ -167,9 +163,6 @@ describe('Sign-in hook', () => {
 			// The org and the membership are created.
 			expect(itemsService.createOne.args[0]?.[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
 			expect(itemsService.createOne.args[1]?.[0]).to.deep.include({ org: 'created-id', user: '123', role: 'admin' });
-
-			// The legacy organizations list is updated.
-			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
 		});
 
 		it('should wait for the sync until a default account is picked, and not after', async () => {
@@ -181,7 +174,7 @@ describe('Sign-in hook', () => {
 
 			hook(events, context);
 
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token', default_account: null });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_oauth_token: 'user-github-token', default_account: null });
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
 
 			// The membership exists as soon as the sign-in returns.
@@ -192,17 +185,17 @@ describe('Sign-in hook', () => {
 			nock('https://api.github.com').get(`/user/memberships/orgs?per_page=100&page=1`).delay(50).reply(200, []);
 			nock('https://api.github.com').get(`/user/456/orgs?per_page=100&page=1`).reply(200, []);
 
-			// Force a final write so the test can wait for the background sync's database work.
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [ 'fixture-org' ], github_oauth_token: 'user-github-token', default_account: 'account-id' });
+			// A username change forces a final write, so the test can wait for the background sync's database work.
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'newUsername', github_oauth_token: 'user-github-token', default_account: 'account-id', default_prefix: 'oldUsername', public_probes: false });
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
 
 			// With a default account the sync is still running in the background when the sign-in returns.
 			expect(nock.isDone()).to.equal(false);
-			await waitFor(() => usersService.updateOne.calledWithExactly('123', { github_organizations: [] }));
+			await waitFor(() => usersService.updateOne.calledWithExactly('123', { default_prefix: 'newUsername' }, { emitEvents: false }));
 		});
 
 		it('should use the org created by a concurrent sync of another member', async () => {
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.get(`/user/memberships/orgs?per_page=100&page=1`)
@@ -217,7 +210,7 @@ describe('Sign-in hook', () => {
 			hook(events, context);
 
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
-			await waitFor(() => usersService.updateOne.callCount === 1);
+			await waitFor(() => itemsService.createOne.callCount === 2);
 
 			expect(itemsService.createOne.args[1]?.[0]).to.deep.include({ org: 'winner-id', user: '123', role: 'admin' });
 		});
@@ -243,7 +236,7 @@ describe('Sign-in hook', () => {
 			hook(events, context);
 
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
-			await waitFor(() => usersService.updateOne.callCount === 1);
+			await waitFor(() => itemsService.createOne.callCount === 2);
 
 			expect(itemsService.createOne.args.map(([ payload ]) => payload)).to.have.deep.members([
 				{ org: 'org-1', user: '123', role: 'viewer' },
@@ -252,7 +245,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should keep going when a parallel sync of the same user created the membership first', async () => {
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'newUsername', github_oauth_token: 'user-github-token', default_prefix: 'oldUsername', public_probes: false });
 
 			nock('https://api.github.com')
 				.get(`/user/memberships/orgs?per_page=100&page=1`)
@@ -265,6 +258,7 @@ describe('Sign-in hook', () => {
 			hook(events, context);
 
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, loginMeta);
+			// Prefix repair happens after org sync, giving this otherwise read-only path a completion signal.
 			await waitFor(() => usersService.updateOne.callCount === 1);
 
 			expect(itemsService.createOne.callCount).to.equal(2);
@@ -272,7 +266,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should run the same sync on a token refresh, not only on login', async () => {
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_organizations: [], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: null, github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -285,15 +279,14 @@ describe('Sign-in hook', () => {
 
 			// auth.jwt fires on refresh too.
 			await callbacks.filter['auth.jwt']?.({ id: '123' }, { ...loginMeta, type: 'refresh' });
-			await waitFor(() => usersService.updateOne.callCount === 1);
+			await waitFor(() => itemsService.createOne.callCount === 2);
 
 			expect(nock.isDone()).to.equal(true);
 			expect(itemsService.createOne.args[0]?.[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
-			expect(usersService.updateOne.args[0]).to.deep.equal([ '123', { github_organizations: [ 'jsdelivr' ] }]);
 		});
 
-		it('should not update the organizations list if it is the same', async () => {
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
+		it('should not create anything when orgs and memberships are unchanged', async () => {
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_oauth_token: 'user-github-token', default_prefix: 'staleUsername', public_probes: false });
 
 			itemsService.readByQuery.onFirstCall().resolves([{ id: 'org-id', name: 'jsdelivr', github_id: '1' }]);
 			itemsService.readByQuery.onSecondCall().resolves([{ id: 'membership-id', role: 'member', org: { github_id: '1' } }]);
@@ -323,7 +316,6 @@ describe('Sign-in hook', () => {
 				id: '123',
 				external_identifier: '456',
 				github_username: 'newUsername',
-				github_organizations: [ 'jsdelivr' ],
 				github_oauth_token: 'user-github-token',
 				default_prefix: 'oldUsername',
 				deprecated_prefix: null,
@@ -356,7 +348,7 @@ describe('Sign-in hook', () => {
 		});
 
 		it('should log the error if the user token is invalid', async () => {
-			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_organizations: [ 'jsdelivr' ], github_oauth_token: 'user-github-token' });
+			itemsService.readOne.resolves({ account: [ 'account-id' ], id: '123', external_identifier: '456', github_username: 'oldUsername', github_oauth_token: 'user-github-token' });
 
 			nock('https://api.github.com')
 				.matchHeader('Authorization', 'Bearer user-github-token')
@@ -409,7 +401,6 @@ describe('Sign-in hook', () => {
 				account: [ 'account-id' ],
 				id: 'user-id',
 				github_username: null,
-				github_organizations: [],
 			});
 
 			hook(events, context);
@@ -428,7 +419,6 @@ describe('Sign-in hook', () => {
 				account: [ 'account-id' ],
 				id: 'user-id',
 				github_username: 'testUser',
-				github_organizations: [],
 			});
 
 			hook(events, context);

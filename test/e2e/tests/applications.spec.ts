@@ -109,22 +109,3 @@ test('an application is revoked for one creator in one account only', async ({ o
 	expect(allAccounts.data).toBe('An application can only be revoked for a single account.');
 	expect(await storedFor(app)).toEqual({ approvals: [ personal ], tokens: [ personal ] });
 });
-
-// PHASE5: remove - the dashboard sends the account by then.
-test('the legacy userId form keeps naming the owner and the creator at once', async ({ user, org, actors }) => {
-	const app = await addApplication({ accountId: user.account_id, userId: user.id });
-	const listedApp = [{ id: app, user_created: user.id, account_id: user.account_id }];
-
-	// The dashboard of the previous release sends the user of the row, which is its creator as well.
-	expect(await listed(actors.outsider, `userId=${user.id}`)).toEqual(listedApp);
-	expect(await listed(actors.directusAdmin, `userId=${user.id}`)).toEqual(listedApp);
-
-	// And still refuses to name somebody else.
-	const foreign = await actors.outsider.post('/applications/revoke', { userId: org.admin.id, id: app });
-	expect(foreign.status).toBe(400);
-	expect(foreign.data).toBe('Allowed only for the current user or admin.');
-
-	// The admin revokes for the impersonated user without naming the creator separately.
-	expect((await actors.directusAdmin.post('/applications/revoke', { userId: user.id, id: app })).status).toBe(200);
-	expect(await storedFor(app)).toEqual({ approvals: [], tokens: [] });
-});

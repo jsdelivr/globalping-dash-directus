@@ -31,15 +31,8 @@ describe('adoption code endpoints', () => {
 	sql.orWhere.returns(sql);
 	sql.orWhereRaw.returns(sql);
 	sql.orderByRaw.returns(sql);
-	const accountsSql = {
-		where: sinon.stub(),
-		first: sinon.stub().callsFake((field: string) => field === 'user'
-			? Promise.resolve({ user: 'first-user-id' })
-			: Promise.resolve({ id: 'account-id' })),
-	};
-	accountsSql.where.returns(accountsSql);
-	const databaseStub = Object.assign((table: string) => table === 'gp_accounts' ? accountsSql : sql, {
-		raw: sinon.stub().resolves([ [{ role: 'admin' }] ]),
+	const databaseStub = Object.assign(() => sql, {
+		raw: sinon.stub(),
 	});
 	const endpointContext = {
 		logger: {
@@ -76,7 +69,6 @@ describe('adoption code endpoints', () => {
 	app.use(router);
 
 	const adoptionCodeGPApiResponse: ProbeToAdopt = {
-		userId: null,
 		account_id: null,
 		ip: '1.1.1.1',
 		name: null,
@@ -111,7 +103,6 @@ describe('adoption code endpoints', () => {
 
 	const adoptedProbe: Probe = {
 		...adoptionCodeGPApiResponse,
-		userId: 'first-user-id',
 		account_id: 'account-id',
 		id: 'generatedId',
 		name: 'fr-paris-01',
@@ -140,6 +131,7 @@ describe('adoption code endpoints', () => {
 	beforeEach(() => {
 		sinon.resetHistory();
 		sql.first.reset();
+		databaseStub.raw.resolves([ [{ role: 'admin' }] ]);
 		readByQuery.resolves([]);
 		readOne.resolves(adoptedProbe);
 		createOne.resolves('generatedId');
@@ -169,7 +161,7 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
@@ -186,7 +178,7 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '2a04:4e42:0200:0000:0000:0000:0000:0485',
 			});
 
@@ -203,7 +195,7 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '2a04:4e42:200::485',
 			});
 
@@ -216,7 +208,7 @@ describe('adoption code endpoints', () => {
 			accountability = {};
 
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
@@ -224,17 +216,19 @@ describe('adoption code endpoints', () => {
 			expect(res.text).to.equal('"accountability.user" is required');
 		});
 
-		it('should reject requests with another user', async () => {
+		it('should reject requests with a foreign account', async () => {
+			databaseStub.raw.resolves([ [] ]);
+
 			const res = await request(app).post('/send-code').send({
-				userId: 'another-user-id',
+				accountId: 'another-account-id',
 				ip: '1.1.1.1',
 			});
 
 			expect(res.status).to.equal(400);
-			expect(res.text).to.equal('Allowed only for the current user or admin.');
+			expect(res.text).to.equal('You can not access this account.');
 		});
 
-		it('should allow admin requests with another user', async () => {
+		it('should allow admin requests with a foreign account', async () => {
 			accountability = {
 				user: 'first-user-id',
 				admin: true,
@@ -247,7 +241,7 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			const res = await request(app).post('/send-code').send({
-				userId: 'another-user-id',
+				accountId: 'another-account-id',
 				ip: '1.1.1.1',
 			});
 
@@ -258,25 +252,25 @@ describe('adoption code endpoints', () => {
 
 		it('should reject without ip', async () => {
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 			});
 
 			expect(res.status).to.equal(400);
 			expect(res.text).to.equal('"body.ip" is required');
 		});
 
-		it('should reject without userId', async () => {
+		it('should reject without accountId', async () => {
 			const res = await request(app).post('/send-code').send({
 				ip: '1.1.1.1',
 			});
 
 			expect(res.status).to.equal(400);
-			expect(res.text).to.equal('"body" must contain at least one of [userId, accountId]');
+			expect(res.text).to.equal('"body.accountId" is required');
 		});
 
 		it('should reject with wrong ip', async () => {
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.863',
 			});
 
@@ -288,7 +282,7 @@ describe('adoption code endpoints', () => {
 			sql.first.resolves({});
 
 			const res = await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
@@ -317,12 +311,12 @@ describe('adoption code endpoints', () => {
 				return true;
 			}).reply(200, adoptionCodeGPApiResponse);
 
-			await request(app).post('/send-code').send({ userId: 'first-user-id', ip: '1.1.1.1' });
-			await request(app).post('/send-code').send({ userId: 'first-user-id', ip: '2.2.2.2' });
+			await request(app).post('/send-code').send({ accountId: 'account-id', ip: '1.1.1.1' });
+			await request(app).post('/send-code').send({ accountId: 'account-id', ip: '2.2.2.2' });
 
 			// The second send-code must not invalidate the first: both codes still verify.
-			const first = await request(app).post('/verify-code').send({ userId: 'first-user-id', code: firstCode });
-			const second = await request(app).post('/verify-code').send({ userId: 'first-user-id', code: secondCode });
+			const first = await request(app).post('/verify-code').send({ accountId: 'account-id', code: firstCode });
+			const second = await request(app).post('/verify-code').send({ accountId: 'account-id', code: secondCode });
 
 			expect(first.status).to.equal(200);
 			expect(second.status).to.equal(200);
@@ -339,12 +333,12 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -374,7 +368,6 @@ describe('adoption code endpoints', () => {
 				longitude: 2.35,
 				asn: 12876,
 				network: 'SCALEWAY S.A.S.',
-				userId: 'first-user-id',
 				account_id: 'account-id',
 				lastSyncDate: new Date(),
 				isIPv4Supported: true,
@@ -437,13 +430,13 @@ describe('adoption code endpoints', () => {
 
 			await request(app).post('/send-code').send({
 				ip: '1.1.1.1',
-				userId: 'first-user-id',
+				accountId: 'account-id',
 			});
 
-			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null, account_id: null });
+			sql.first.resolves({ ...row, id: 'existing-probe-id', account_id: null });
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -457,7 +450,6 @@ describe('adoption code endpoints', () => {
 				originalLocation: null,
 				customLocation: null,
 				name: 'fr-paris-01',
-				userId: 'first-user-id',
 				account_id: 'account-id',
 				tags: [],
 				settings: { meteredConnection: false },
@@ -510,13 +502,13 @@ describe('adoption code endpoints', () => {
 
 			await request(app).post('/send-code').send({
 				ip: '1.1.1.1',
-				userId: 'first-user-id',
+				accountId: 'account-id',
 			});
 
-			sql.first.resolves({ ...row, id: 'existing-probe-id', userId: null, account_id: null });
+			sql.first.resolves({ ...row, id: 'existing-probe-id', account_id: null });
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -555,7 +547,6 @@ describe('adoption code endpoints', () => {
 				originalLocation: null,
 				customLocation: null,
 				name: 'fr-paris-01',
-				userId: 'first-user-id',
 				account_id: 'account-id',
 				tags: [],
 				settings: { meteredConnection: false },
@@ -597,14 +588,13 @@ describe('adoption code endpoints', () => {
 
 			await request(app).post('/send-code').send({
 				ip: '1.1.1.1',
-				userId: 'first-user-id',
+				accountId: 'account-id',
 			});
 
 			sql.first.resolves({
 				...row,
 				name: 'another-user-probe-01',
 				id: 'existing-probe-id',
-				userId: 'another-user-id',
 				account_id: 'another-account-id',
 				city: 'Berlin',
 				country: 'DE',
@@ -622,7 +612,7 @@ describe('adoption code endpoints', () => {
 			});
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -661,7 +651,6 @@ describe('adoption code endpoints', () => {
 				originalLocation: null,
 				customLocation: null,
 				name: 'fr-paris-01',
-				userId: 'first-user-id',
 				account_id: 'account-id',
 				tags: [],
 				settings: { meteredConnection: false },
@@ -693,14 +682,14 @@ describe('adoption code endpoints', () => {
 			}).reply(504);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			readOne.resolves({ ...adoptedProbe, name: null });
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -719,12 +708,12 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code: ` ${[ ...code ].join(' ')} `,
 			});
 
@@ -759,7 +748,6 @@ describe('adoption code endpoints', () => {
 				region: 'Western Europe',
 				latitude: 48.85,
 				longitude: 2.35,
-				userId: 'first-user-id',
 				account_id: 'account-id',
 				name: 'fr-paris-01',
 				localAdoptionServer: null,
@@ -776,14 +764,14 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			accountability = {};
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -793,7 +781,7 @@ describe('adoption code endpoints', () => {
 			expect(createOne.callCount).to.equal(0);
 		});
 
-		it('should reject another user requests', async () => {
+		it('should reject requests with a foreign account', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -803,22 +791,24 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
+			databaseStub.raw.resolves([ [] ]);
+
 			const res = await request(app).post('/verify-code').send({
-				userId: 'another-user-id',
+				accountId: 'another-account-id',
 				code,
 			});
 
 			expect(nock.isDone()).to.equal(true);
 			expect(res.status).to.equal(400);
-			expect(res.text).to.deep.equal('Allowed only for the current user or admin.');
+			expect(res.text).to.deep.equal('You can not access this account.');
 			expect(createOne.callCount).to.equal(0);
 		});
 
-		it('should allow another user admin requests', async () => {
+		it('should allow admin requests with a foreign account', async () => {
 			accountability = {
 				user: 'first-user-id',
 				admin: true,
@@ -833,12 +823,12 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'another-user-id',
+				accountId: 'another-account-id',
 				ip: '1.1.1.1',
 			});
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'another-user-id',
+				accountId: 'another-account-id',
 				code,
 			});
 
@@ -849,7 +839,7 @@ describe('adoption code endpoints', () => {
 			expect(notificationCreateOne.callCount).to.equal(1);
 
 			expect(notificationCreateOne.args[0]?.[0]).to.deep.include({
-				account_id: 'account-id',
+				account_id: 'another-account-id',
 				subject: 'New probe fr-paris-01 adopted',
 				message: 'A new probe [fr-paris-01](/probes/generatedId) with IP address **1.1.1.1** has been assigned to your account.',
 			});
@@ -863,12 +853,12 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 			});
 
 			expect(nock.isDone()).to.equal(true);
@@ -877,7 +867,7 @@ describe('adoption code endpoints', () => {
 			expect(createOne.callCount).to.equal(0);
 		});
 
-		it('should reject without userId', async () => {
+		it('should reject without accountId', async () => {
 			let code = '';
 			nock('https://api.globalping.io').post('/v1/adoption-code', (body) => {
 				expect(body.ip).to.equal('1.1.1.1');
@@ -887,7 +877,7 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
@@ -897,7 +887,7 @@ describe('adoption code endpoints', () => {
 
 			expect(nock.isDone()).to.equal(true);
 			expect(res.status).to.equal(400);
-			expect(res.text).to.deep.equal('"body" must contain at least one of [userId, accountId]');
+			expect(res.text).to.deep.equal('"body.accountId" is required');
 			expect(createOne.callCount).to.equal(0);
 		});
 
@@ -909,12 +899,12 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code: 'KLS67',
 			});
 
@@ -933,14 +923,14 @@ describe('adoption code endpoints', () => {
 			}).reply(200, adoptionCodeGPApiResponse);
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
 			readByQuery.resolves([{ id: 'otherProbeId' }]);
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -970,7 +960,7 @@ describe('adoption code endpoints', () => {
 			});
 
 			await request(app).post('/send-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				ip: '1.1.1.1',
 			});
 
@@ -978,7 +968,7 @@ describe('adoption code endpoints', () => {
 			readOne.resolves({ ...adoptedProbe, hardwareDeviceFirmware: 'v1.9', isOutdated: true });
 
 			const res = await request(app).post('/verify-code').send({
-				userId: 'first-user-id',
+				accountId: 'account-id',
 				code,
 			});
 
@@ -1020,7 +1010,6 @@ describe('adoption code endpoints', () => {
 
 		const adoptionTokenRequest = {
 			probe: {
-				userId: null,
 				ip: '1.1.1.1',
 				name: null,
 				altIps: [],
@@ -1050,7 +1039,7 @@ describe('adoption code endpoints', () => {
 				allowedCountries: [ 'FR' ],
 				localAdoptionServer: null,
 			},
-			user: { id: 'first-user-id' },
+			account: { id: 'account-id' },
 		};
 
 		it('should adopt unassigned probe', async () => {
@@ -1086,7 +1075,7 @@ describe('adoption code endpoints', () => {
 				region: 'Western Europe',
 				latitude: 48.85,
 				longitude: 2.35,
-				userId: 'first-user-id',
+				account_id: 'account-id',
 				name: 'fr-paris-01',
 			});
 
@@ -1105,7 +1094,6 @@ describe('adoption code endpoints', () => {
 				...row,
 				id: 'existing-probe-id',
 				name: 'other-user-probe-01',
-				userId: 'another-user-id',
 				account_id: 'another-account-id',
 				city: 'Berlin',
 				country: 'DE',
@@ -1160,7 +1148,6 @@ describe('adoption code endpoints', () => {
 					originalLocation: null,
 					customLocation: null,
 					name: 'fr-paris-01',
-					userId: 'first-user-id',
 					account_id: 'account-id',
 					tags: [],
 					settings: { meteredConnection: false },
@@ -1227,7 +1214,7 @@ describe('adoption code endpoints', () => {
 				longitude: 2.35,
 				asn: 12876,
 				network: 'SCALEWAY S.A.S.',
-				userId: 'first-user-id',
+				account_id: 'account-id',
 				isIPv4Supported: true,
 				isIPv6Supported: false,
 			});
@@ -1240,7 +1227,6 @@ describe('adoption code endpoints', () => {
 				...row,
 				id: 'assignedProbeId',
 				name: 'existing-probe-name',
-				userId: 'first-user-id',
 				ip: '2.2.2.2',
 				uuid: 'assignedProbeUuid',
 				version: '0.27.0',
