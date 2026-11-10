@@ -128,7 +128,7 @@ const addProbeWithUser = async (user2: User) => {
 const addOfflineProbeWithSameAsn = async (user: User) => {
 	await sql('gp_probes').insert({
 		...defaultProbe,
-		name: 'probe-bf-ouagadougou-01',
+		name: 'bf-ouagadougou-01',
 		ip: '1.1.1.1',
 		uuid: 'outdatedUuid',
 		status: 'offline',
@@ -161,7 +161,7 @@ test('Software probe adoption (token)', async ({ page, user }) => {
 	});
 
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 });
 
 test('Software probe adoption by asn/city', async ({ page, user }) => {
@@ -197,7 +197,7 @@ test('Software probe adoption (code)', async ({ page }) => {
 	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 });
 
 test('Hardware probe adoption', async ({ page }) => {
@@ -213,7 +213,7 @@ test('Hardware probe adoption', async ({ page }) => {
 	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 });
 
 test('Probe adoption of non-synced probe', async ({ page }) => {
@@ -228,7 +228,7 @@ test('Probe adoption of non-synced probe', async ({ page }) => {
 	await page.getByTestId('adoption-code').locator('input').first().fill(await getAdoptionCode('2.2.2.2'));
 	await page.getByLabel('Verify the code').click();
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 });
 
 test('Probe adoption by code fails if probe is already adopted', async ({ page, user2 }) => {
@@ -261,7 +261,7 @@ test('Adoption of a probe adopted by another user', async ({ page, user, user2 }
 	});
 
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 	await expect(sql('gp_probes').where({ userId: user2.id }).select()).resolves.toMatchObject([]);
 });
 
@@ -288,10 +288,10 @@ test('Adoption of a probe with different data in SQL and API', async ({ page, us
 	});
 
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 	await expect(page.getByText('Ouagadougou').first()).toBeVisible();
 	await page.getByRole('button', { name: 'Notifications' }).click();
-	await expect(page.getByText('New probe probe-bf-ouagadougou-01 adopted').first()).toBeVisible();
+	await expect(page.getByText('New probe bf-ouagadougou-01 adopted').first()).toBeVisible();
 	await expect(page.getByText('outdated software').first()).not.toBeVisible();
 });
 
@@ -318,9 +318,9 @@ test('Adoption of a probe with old node version', async ({ page, user }) => {
 	});
 
 	await page.getByRole('button', { name: 'Finish' }).click();
-	await expect(page.getByText('probe-bf-ouagadougou-01').first()).toBeVisible();
+	await expect(page.getByText('bf-ouagadougou-01', { exact: true }).first()).toBeVisible();
 	await expect(page.getByText('Ouagadougou').first()).toBeVisible();
 	await page.getByRole('button', { name: 'Notifications' }).click();
-	await expect(page.getByText('New probe probe-bf-ouagadougou-01 adopted').first()).toBeVisible();
+	await expect(page.getByText('New probe bf-ouagadougou-01 adopted').first()).toBeVisible();
 	await expect(page.getByText('outdated software').first()).toBeVisible();
 });
