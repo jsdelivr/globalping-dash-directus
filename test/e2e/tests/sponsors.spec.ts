@@ -24,6 +24,8 @@ let baseline: {
 	year2024Value: number;
 };
 
+const formatMoney = (value: number) => `$${new Intl.NumberFormat('en-US').format(value)}`;
+
 const previousMonthDate = (day: number) => {
 	const now = new Date();
 
@@ -134,6 +136,22 @@ test.afterEach(async ({ org }) => {
 	await sql('gp_credits_redirects').where({ source_github_id: redirectSourceGithubId }).delete();
 });
 
+test('Sponsors page totals', { tag: '@sequential' }, async ({ adminPage }) => {
+	await adminPage.goto('/sponsors');
+
+	await expect(adminPage.getByTestId('active-sponsors')).toHaveText(String(baseline.active + 1));
+	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(baseline.previousValue + 245));
+	await expect(adminPage.getByTestId('next-month-value')).toHaveText(formatMoney(baseline.monthly + 10));
+	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.periodSponsors + 4));
+	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.periodValue + 245));
+	await expect(adminPage.getByText(`${formatMoney(baseline.periodRecurring + 195)} recurring · ${formatMoney(baseline.periodOneTime + 50)} one-time`, { exact: true })).toBeVisible();
+
+	await adminPage.getByLabel('Sponsorship period').click();
+	await adminPage.getByRole('option', { name: '2024' }).click();
+	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.year2024Sponsors + 1));
+	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.year2024Value + 25));
+});
+
 test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	for (const route of [ 'summary', 'events', 'accounts', 'manual-additions' ]) {
 		const response = await page.request.get(`${process.env.DIRECTUS_URL}/admin-sponsors/${route}`);
@@ -143,14 +161,6 @@ test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	await adminPage.goto('/sponsors');
 	await expect(adminPage.getByRole('heading', { name: 'Sponsors', exact: true })).toBeVisible();
 	await expect(adminPage.getByRole('link', { name: 'Sponsors' })).toBeVisible();
-
-	const formatMoney = (value: number) => `$${new Intl.NumberFormat('en-US').format(value)}`;
-	await expect(adminPage.getByTestId('active-sponsors')).toHaveText(String(baseline.active + 1));
-	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(baseline.previousValue + 245));
-	await expect(adminPage.getByTestId('next-month-value')).toHaveText(formatMoney(baseline.monthly + 10));
-	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.periodSponsors + 4));
-	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.periodValue + 245));
-	await expect(adminPage.getByText(`${formatMoney(baseline.periodRecurring + 195)} recurring · ${formatMoney(baseline.periodOneTime + 50)} one-time`, { exact: true })).toBeVisible();
 	await expect(adminPage.getByText('Credits issued', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByText('Bonus', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByText('Sponsors credited', { exact: true })).toHaveCount(0);
@@ -252,11 +262,6 @@ test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	await sortedAccountsResponse;
 	await expect(adminPage).toHaveURL(/accountsSort=periodValue/);
 	await expect(adminPage).toHaveURL(/accountsOrder=asc/);
-
-	await adminPage.getByLabel('Sponsorship period').click();
-	await adminPage.getByRole('option', { name: '2024' }).click();
-	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.year2024Sponsors + 1));
-	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.year2024Value + 25));
 
 	await adminPage.getByRole('button', { name: 'Manual additions' }).click();
 	const manualAdditionsDialog = adminPage.getByRole('dialog', { name: 'Manual additions' });

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import axios from 'axios';
 import _ from 'lodash';
-import { test, expect } from '../fixtures.ts';
+import { test, expect, type Page } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { User } from '../types.ts';
 import { getAdoptionCode, prepareMockProbeByIp, randomIP } from '../utils.ts';
@@ -122,6 +122,12 @@ const addProbeWithUser = async (user2: User) => {
 	return { ...defaultProbe, ...owner };
 };
 
+const openAdoptionDialog = async (page: Page) => {
+	const probesLoaded = page.waitForResponse(response => /\/items\/gp_probes\?filter=[^&]+$/.test(response.url()));
+	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await probesLoaded;
+};
+
 const addOfflineProbeWithSameAsn = async (user: User) => {
 	await sql('gp_probes').insert({
 		...defaultProbe,
@@ -143,7 +149,7 @@ test('Probes page', async ({ page, user }) => {
 test('Software probe adoption (token)', async ({ page, user }) => {
 	const probe = await addProbeWithoutUser();
 	await page.goto('/probes');
-	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await openAdoptionDialog(page);
 	await page.getByRole('button', { name: 'Software probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
 
@@ -182,11 +188,12 @@ test('Software probe adoption by asn/city', async ({ page, user }) => {
 
 test('Software probe adoption (code)', async ({ page }) => {
 	await addProbeWithoutUser();
+	await page.clock.install();
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Software probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
-	await page.waitForTimeout(10000);
+	await page.clock.fastForward(10000);
 	await page.getByLabel('Adopt the probe manually').click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
@@ -198,11 +205,12 @@ test('Software probe adoption (code)', async ({ page }) => {
 
 test('Hardware probe adoption', async ({ page }) => {
 	await addProbeWithoutUser();
+	await page.clock.install();
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Hardware probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
-	await page.waitForTimeout(5000);
+	await page.clock.fastForward(5000);
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
@@ -213,11 +221,12 @@ test('Hardware probe adoption', async ({ page }) => {
 });
 
 test('Probe adoption of non-synced probe', async ({ page }) => {
+	await page.clock.install();
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Hardware probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
-	await page.waitForTimeout(5000);
+	await page.clock.fastForward(5000);
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
@@ -229,11 +238,12 @@ test('Probe adoption of non-synced probe', async ({ page }) => {
 
 test('Probe adoption by code fails if probe is already adopted', async ({ page, user2 }) => {
 	await addProbeWithUser(user2);
+	await page.clock.install();
 	await page.goto('/probes');
 	await page.getByRole('button', { name: 'Adopt a probe' }).click();
 	await page.getByRole('button', { name: 'Hardware probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
-	await page.waitForTimeout(5000);
+	await page.clock.fastForward(5000);
 	await page.getByRole('button', { name: 'Adopt the probe manually' }).click();
 	await page.getByPlaceholder('Enter the IP address of your probe').fill('2.2.2.2');
 	await page.getByLabel('Send adoption code').click();
@@ -243,7 +253,7 @@ test('Probe adoption by code fails if probe is already adopted', async ({ page, 
 test('Adoption of a probe adopted by another user', async ({ page, user, user2 }) => {
 	const probe = await addProbeWithUser(user2);
 	await page.goto('/probes');
-	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await openAdoptionDialog(page);
 	await page.getByRole('button', { name: 'Software probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
 
@@ -264,7 +274,7 @@ test('Adoption of a probe adopted by another user', async ({ page, user, user2 }
 test('Adoption of a probe with different data in SQL and API', async ({ page, user }) => {
 	const probe = await addProbeWithoutUser({ nodeVersion: 'v16.0.0' });
 	await page.goto('/probes');
-	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await openAdoptionDialog(page);
 	await page.getByRole('button', { name: 'Software probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
 
@@ -294,7 +304,7 @@ test('Adoption of a probe with different data in SQL and API', async ({ page, us
 test('Adoption of a probe with old node version', async ({ page, user }) => {
 	const probe = await addProbeWithoutUser({ nodeVersion: 'v16.0.0' });
 	await page.goto('/probes');
-	await page.getByRole('button', { name: 'Adopt a probe' }).click();
+	await openAdoptionDialog(page);
 	await page.getByRole('button', { name: 'Software probe' }).click();
 	await page.getByRole('button', { name: 'Next step' }).click();
 
