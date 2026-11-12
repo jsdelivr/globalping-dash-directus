@@ -296,32 +296,27 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 	expect(await sessionAccount(page)).toBe(adminAccount);
 });
 
-test('admin mode offers no account to act as, and leaving it brings the active org back', async ({ browser, org }) => {
-	const admin = await sql('directus_users').where({ email: process.env.ADMIN_EMAIL }).first('id');
+test('admin mode offers no account to act as, and leaving it brings the active org back', async ({ browser, org, admin }) => {
 	await sql('gp_org_members').insert({ id: randomUUID(), org: org.id, user: admin.id, role: 'member' });
-	await sql('directus_users').where({ id: admin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+	await selectOrgs(admin, [ org.id ]);
 
-	try {
-		const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
-		await page.goto('/probes');
-		await switchTo(page, org.name);
-		await expect(page.getByLabel('Profile')).toContainText(org.name);
+	const page = await pageAs(browser, admin.email, 'user');
+	await page.goto('/probes');
+	await switchTo(page, org.name);
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
 
-		await page.getByLabel('Admin Panel').click();
-		await page.getByRole('switch').click();
-		await expect(page.getByText('Admin Mode')).toBeVisible();
+	await page.getByLabel('Admin Panel').click();
+	await page.getByRole('switch').click();
+	await expect(page.getByText('Admin Mode')).toBeVisible();
 
-		await page.getByLabel('Profile').click();
-		await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
-		await expect(page.getByRole('menuitem', { name: 'Switch account' })).toHaveCount(0);
-		await page.keyboard.press('Escape');
+	await page.getByLabel('Profile').click();
+	await expect(page.getByRole('menuitem', { name: 'Settings' })).toBeVisible();
+	await expect(page.getByRole('menuitem', { name: 'Switch account' })).toHaveCount(0);
+	await page.keyboard.press('Escape');
 
-		await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
+	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
 
-		await page.getByLabel('Admin Panel').click();
-		await page.getByRole('switch').click();
-		await expect(page.getByLabel('Profile')).toContainText(org.name);
-	} finally {
-		await sql('directus_users').where({ id: admin.id }).update({ selected_orgs: '[]' });
-	}
+	await page.getByLabel('Admin Panel').click();
+	await page.getByRole('switch').click();
+	await expect(page.getByLabel('Profile')).toContainText(org.name);
 });
