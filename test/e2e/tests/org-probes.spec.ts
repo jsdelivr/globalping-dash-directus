@@ -188,7 +188,7 @@ test('A stored tag keeps any prefix, while a new tag of a personal probe needs t
 	expect(JSON.parse(personalProbe.tags)).toEqual([ orgTag, { prefix: org.admin.github_username, value: 'new' }]);
 });
 
-test('The expired probes cron removes an org probe that stayed offline', async ({ org }) => {
+test('The expired probes cron removes an org probe that stayed offline', { tag: '@sequential' }, async ({ org }) => {
 	const expiredId = await addProbe({
 		account_id: org.account_id,
 		name: 'e2e-org-probe-expired',
@@ -219,7 +219,7 @@ test('The expired probes cron removes an org probe that stayed offline', async (
 	expect(notifications.map(n => n.type).sort()).toEqual([ 'offline_probe', 'probe_unassigned' ]);
 });
 
-test('The offline warning for an org probe is sent once and not repeated on the next cron run', async ({ org }) => {
+test('The offline warning for an org probe is sent once and not repeated on the next cron run', { tag: '@sequential' }, async ({ org }) => {
 	const probeId = await addProbe({
 		account_id: org.account_id,
 		name: 'e2e-org-probe-offline',
@@ -238,7 +238,7 @@ test('The offline warning for an org probe is sent once and not repeated on the 
 	expect(warnings).toEqual([{ collection: 'gp_probes', item: probeId }]);
 });
 
-test('The outdated software warning for an org probe is sent once and not repeated on the next cron run', async ({ org }) => {
+test('The outdated software warning for an org probe is sent once and not repeated on the next cron run', { tag: '@sequential' }, async ({ org }) => {
 	const outdatedProbeId = await addProbe({
 		account_id: org.account_id,
 		name: 'e2e-org-probe-outdated',

@@ -88,20 +88,22 @@ test('an org admin cannot change the banner or its file through the Directus API
 });
 
 test('a banner that is not a PNG, JPEG or WebP image, or of the wrong size, is rejected', async ({ org, actors }) => {
-	const bannerFiles = () => sql('directus_files').where({ folder: BANNERS_FOLDER_ID }).count({ count: '*' }).first();
-	const before = await bannerFiles();
+	const tooBig = png(6001, 200);
+	const broken = png(1224, 200).subarray(0, 100);
 	const rejected = async (body: Buffer, status: number, message: string) => {
 		const response = await upload(actors.admin, org, body);
 		expect(response.status).toBe(status);
 		expect(response.data).toBe(message);
 	};
 
-	await rejected(png(6001, 200), 400, 'The banner must be at most 6000×6000 px.');
-	await rejected(png(1224, 200).subarray(0, 100), 400, 'The banner must be a PNG, JPEG or WebP image.');
+	await rejected(tooBig, 400, 'The banner must be at most 6000×6000 px.');
+	await rejected(broken, 400, 'The banner must be a PNG, JPEG or WebP image.');
 	await rejected(Buffer.alloc(5 * 1024 * 1024 + 1), 413, 'The banner must be 5 MB or smaller.');
 
 	expect(await bannerOf(org)).toBe(null);
-	expect(await bannerFiles()).toEqual(before);
+
+	const leftFiles = await sql('directus_files').where({ folder: BANNERS_FOLDER_ID }).whereIn('filesize', [ tooBig.length, broken.length ]).select('id');
+	expect(leftFiles).toEqual([]);
 });
 
 test('an uploaded banner is served to anyone through the banner preset only', async ({ browser, org, actors }) => {

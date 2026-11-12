@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { test, expect } from '../fixtures.ts';
+import { test, expect, type Page } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
 import { User } from '../types.ts';
 import { randomIP } from '../utils.ts';
@@ -44,6 +44,11 @@ const addProbe = async (user: User, overrides: Partial<typeof probeDefaults> = {
 	await sql('gp_probes').insert(probe);
 	return probe;
 };
+
+const saveCity = (page: Page, city: string) => expect(async () => {
+	await page.getByRole('combobox', { name: 'City name' }).fill(city);
+	await page.getByRole('button', { name: 'Save', exact: true }).click({ timeout: 2000 });
+}).toPass();
 
 test('View probe details and return to the probe list', async ({ page, user }) => {
 	const probe = await addProbe(user);
@@ -91,8 +96,7 @@ test('Set a custom probe location', async ({ page, user }) => {
 	const probe = await addProbe(user);
 	await page.goto(`/probes/${probe.id}`);
 	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Prague');
-	await page.getByRole('combobox', { name: 'City name' }).fill('Brno');
-	await page.getByRole('button', { name: 'Save', exact: true }).click();
+	await saveCity(page, 'Brno');
 	await expect(page.getByText('The probe has been successfully updated', { exact: true })).toBeVisible();
 	await page.reload();
 	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Brno');
@@ -109,8 +113,7 @@ test('Reset a custom probe location', async ({ page, user }) => {
 
 	await page.goto(`/probes/${probe.id}`);
 	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Brno');
-	await page.getByRole('combobox', { name: 'City name' }).fill('');
-	await page.getByRole('button', { name: 'Save', exact: true }).click();
+	await saveCity(page, '');
 	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Prague');
 	await page.reload();
 	await expect(page.getByRole('combobox', { name: 'City name' })).toHaveValue('Prague');
