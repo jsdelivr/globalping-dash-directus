@@ -138,7 +138,7 @@ export const seed = async (knex) => {
 		}),
 		consumed: 1,
 		date_created: relativeDayUtc(-30),
-		github_id: '1234567892',
+		github_id: '9200000002', // Unlinked former sponsor; the fresh user has no credit history.
 		user_updated: null,
 	}, {
 		amount: 50000,

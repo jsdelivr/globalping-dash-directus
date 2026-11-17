@@ -41,9 +41,9 @@ How the code is written for it:
 3. **Permissions migration** - the per-table rules from `design.md` (MY_ACCOUNTS, MINE_OR_ADMIN, org/members rules, additions github_id branch); `gp_orgs.public_probes` is added to the org read/update rules by `20261103GP` (readable by members, writable by org admins). `20261104GP` opens `gp_accounts` for reading (own account, and the accounts of the orgs one is a member of) and adds the `account` and `memberships` aliases to the user read fields: without them the dashboard can not learn the account id it has to filter every list by, and phase 2 has no Directus deploy of its own to add it
 
 4. **Seeds** - org data to verify every later step against:
-   - `john-org` and `turk-org`; existing john and turk are org admins of their orgs
-   - new users john2 (admin), john3 (member), john4 (member), john5 (viewer), john6 (viewer), names "John 2" etc.; same set for turk (turk2..turk6)
-   - each new user gets a single item in probes, tokens, approvals (where the role allows it)
+   - Four logins: Directus admin, populated regular user, teammate, and a fresh user with no org memberships or application data.
+   - The regular user is an admin in `admin-org`, a member in `member-org`, a viewer in `viewer-org`, and a member of the empty, adminless `unclaimed-org`. The teammate is an admin in the three populated orgs.
+   - Populated orgs have probes, tokens, approvals and credit history; both regular actors have personal data. See the [development account matrix](../../README.md#development-accounts) for credentials and reset behavior.
 
 5. **GitHub client**:
    - `getGithubOrganizations()` merges two sources, both incomplete alone: `/user/memberships/orgs` (roles + private memberships, but orgs restricting our OAuth app are silently missing) and `/user/{id}/orgs` (includes the restricted ones, public memberships only, no roles - added as `member`). Both go with the user's token, there is no fallback to ours. Any failure, including a missing token, throws an explicit error asking the user to sign in again.

@@ -3,54 +3,51 @@ import relativeDayUtc from 'relative-day-utc';
 
 const ORGS = [
 	{
-		name: 'john-org',
+		name: 'admin-org',
 		github_id: '9000000001',
-		adoption_token: 'johnorgadoptiontoken000000000001',
+		adoption_token: 'adminorgadoptiontoken00000000001',
 		extra_adoption_tokens: [
 			{ github_username: 'john-old1', token: 'johnold1adoptiontoken00000000001' },
 			{ github_username: 'john-old2', token: 'johnold2adoptiontoken00000000001' },
 		],
-		website: 'https://john-org.example.com',
-		description: 'John\'s organization runs probes in Europe and the US.',
+		website: 'https://admin-org.example.com',
+		description: 'A public sponsor organization where the regular user is an admin.',
 		public_probes: 1,
 		user_type: 'sponsor',
 		sponsors: [{ github_id: '1234567890', github_login: 'john' }],
 		members: [
-			{ github_username: 'john', role: 'admin', notification_preferences: { probe_adopted: { enabled: false }, low_credits: { enabled: true, emailEnabled: true } } },
-			{ github_username: 'john2', first_name: 'John', last_name: '2', role: 'admin', external_identifier: '2000000002', ip: '192.0.2.22' },
-			{ github_username: 'john3', first_name: 'John', last_name: '3', role: 'member', external_identifier: '2000000003', ip: '192.0.2.23' },
-			{ github_username: 'john4', first_name: 'John', last_name: '4', role: 'member', external_identifier: '2000000004', ip: '192.0.2.24' },
-			{ github_username: 'john5', first_name: 'John', last_name: '5', role: 'viewer', external_identifier: '2000000005', ip: '192.0.2.25' },
-			{ github_username: 'john6', first_name: 'John', last_name: '6', role: 'viewer', external_identifier: '2000000006', ip: '192.0.2.26' },
+			{ github_username: 'john', role: 'admin', ip: '192.0.2.21', notification_preferences: { probe_adopted: { enabled: false }, low_credits: { enabled: true, emailEnabled: true } } },
+			{ github_username: 'teammate', first_name: 'Test', last_name: 'Teammate', role: 'admin', external_identifier: '2000000002', ip: '192.0.2.22' },
 		],
 	},
 	{
-		name: 'turk-org',
+		name: 'member-org',
 		github_id: '9000000002',
-		adoption_token: 'turkorgadoptiontoken000000000001',
-		// acme-sponsor sends its credits to turk-org through a redirect.
-		sponsors: [{ github_id: '1234567892', github_login: 'turk' }, { github_id: '9200000001', github_login: 'acme-sponsor', redirected: true }],
+		adoption_token: 'memberorgadoptiontoken0000000001',
+		// acme-sponsor sends its credits to member-org through a redirect.
+		sponsors: [{ github_id: '2000000002', github_login: 'teammate' }, { github_id: '9200000001', github_login: 'acme-sponsor', redirected: true }],
 		members: [
-			{ github_username: 'turk', role: 'admin' },
-			{ github_username: 'turk2', first_name: 'Turk', last_name: '2', role: 'admin', external_identifier: '3000000002', ip: '192.0.2.32' },
-			{ github_username: 'turk3', first_name: 'Turk', last_name: '3', role: 'member', external_identifier: '3000000003', ip: '192.0.2.33' },
-			{ github_username: 'turk4', first_name: 'Turk', last_name: '4', role: 'member', external_identifier: '3000000004', ip: '192.0.2.34' },
-			{ github_username: 'turk5', first_name: 'Turk', last_name: '5', role: 'viewer', external_identifier: '3000000005', ip: '192.0.2.35' },
-			{ github_username: 'turk6', first_name: 'Turk', last_name: '6', role: 'viewer', external_identifier: '3000000006', ip: '192.0.2.36' },
+			{ github_username: 'john', role: 'member', ip: '192.0.2.31' },
+			{ github_username: 'teammate', role: 'admin', ip: '192.0.2.32' },
 		],
 	},
 	{
-		name: 'shared-org',
+		name: 'viewer-org',
 		github_id: '9000000003',
-		adoption_token: 'sharedorgadoptiontoken0000000001',
+		adoption_token: 'viewerorgadoptiontoken0000000001',
 		sponsors: [{ github_id: '1234567890', github_login: 'john' }],
 		members: [
-			{ github_username: 'john', role: 'admin' },
-			{ github_username: 'turk', role: 'admin' },
-			{ github_username: 'john2', role: 'member' },
-			{ github_username: 'turk3', role: 'member' },
-			{ github_username: 'john5', role: 'viewer' },
+			{ github_username: 'john', role: 'viewer' },
+			{ github_username: 'teammate', role: 'admin', ip: '192.0.2.42' },
 		],
+	},
+	{
+		name: 'unclaimed-org',
+		// IDs 9000000001..9 already have manual credit additions in 04-user-credits.js.
+		github_id: '9000000010',
+		adoption_token: 'unclaimedorgadoptiontoken000001',
+		populated: false,
+		members: [{ github_username: 'john', role: 'member' }],
 	},
 ];
 
@@ -64,7 +61,7 @@ export const seed = async (knex) => {
 	const authCodeApp = await knex('gp_apps').where({ name: 'Auth Code App' }).first('id');
 	const discordApp = await knex('gp_apps').where({ name: 'Discord App' }).first('id');
 
-	for (const { members, sponsors = [], extra_adoption_tokens: extraAdoptionTokens, ...org } of ORGS) {
+	for (const { members, sponsors = [], populated = true, extra_adoption_tokens: extraAdoptionTokens, ...org } of ORGS) {
 		const { name, github_id: githubId } = org;
 		const orgId = randomUUID();
 		await knex('gp_orgs').insert({ id: orgId, ...org, extra_adoption_tokens: extraAdoptionTokens && JSON.stringify(extraAdoptionTokens) });
@@ -74,7 +71,7 @@ export const seed = async (knex) => {
 			const { github_username: username, role } = member;
 			let userId;
 
-			// New users (john2, turk2) get a new user record.
+			// The teammate is created once, then reused in the other organizations.
 			if (member.external_identifier) {
 				userId = randomUUID();
 
@@ -96,7 +93,7 @@ export const seed = async (knex) => {
 					date_created: new Date(),
 				});
 
-			// Existing users (john, turk) keep the items from earlier seeds.
+			// John and the reused teammate already exist.
 			} else {
 				({ id: userId } = await knex('directus_users').where({ github_username: username }).first('id'));
 			}
@@ -109,18 +106,13 @@ export const seed = async (knex) => {
 				notification_preferences: member.notification_preferences && JSON.stringify(member.notification_preferences),
 			});
 
-			// Existing users (john, turk) keep the items from earlier seeds.
-			if (!member.external_identifier) {
-				continue;
-			}
-
 			const personalAccount = await knex('gp_accounts').where({ user: userId }).first('id');
 
-			// Everyone gets personal items; admins and members also get org ones (viewers can't own org items).
-			// Org approvals use another app since approvals are unique per (user, app) for now.
+			// John keeps his existing personal data. Only the new teammate needs personal items.
+			// Org items are created for every admin/member of a populated org, including reused users.
 			const itemSets = [
-				{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), probeUserId: userId, accountId: personalAccount.id, app: authCodeApp, systemTags: [] },
-				...role !== 'viewer' ? [{ suffix: '-org', ip: member.ip, probeUserId: null, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
+				...member.external_identifier ? [{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), probeUserId: userId, accountId: personalAccount.id, app: authCodeApp, systemTags: [] }] : [],
+				...populated && role !== 'viewer' ? [{ suffix: `-${name}`, ip: member.ip, probeUserId: null, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
 			];
 
 			for (const { suffix, ip, probeUserId, accountId, app, systemTags } of itemSets) {
@@ -169,11 +161,25 @@ export const seed = async (knex) => {
 			}
 		}
 
-		await seedOrgCredits(knex, { name, orgAccountId: orgAccount.id, githubId });
-		await seedOrgSponsors(knex, { githubId, sponsors });
+		if (populated) {
+			await seedOrgCredits(knex, { name, orgAccountId: orgAccount.id, githubId });
+			await seedOrgSponsors(knex, { githubId, sponsors });
+		}
 	}
 
-	console.log('Mock organizations created: john-org, turk-org and shared-org with admin/member/viewer users');
+	for (const username of [ 'john', 'teammate' ]) {
+		const user = await knex('directus_users').where({ github_username: username }).first('id', 'github_organizations');
+		const account = await knex('gp_accounts').where({ user: user.id }).first('id');
+		const orgs = await knex('gp_org_members').join('gp_orgs', 'gp_orgs.id', 'gp_org_members.org').where({ user: user.id }).select('gp_orgs.id', 'gp_orgs.name');
+
+		await knex('directus_users').where({ id: user.id }).update({
+			github_organizations: JSON.stringify([ ...new Set([ ...JSON.parse(user.github_organizations), ...orgs.map(org => org.name) ]) ]),
+			selected_orgs: JSON.stringify(orgs.filter(org => org.name !== 'unclaimed-org').map(org => org.id)),
+			default_account: account.id,
+		});
+	}
+
+	console.log('Mock organizations created: admin-org, member-org, viewer-org and unclaimed-org. Teammate login: teammate@example.com password: user');
 };
 
 // Sponsorship and probe credits of the org itself, so the org credits page has a history to show.
