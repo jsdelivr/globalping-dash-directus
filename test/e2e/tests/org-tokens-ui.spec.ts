@@ -6,7 +6,7 @@ import { actAsOrg, pageAs } from '../utils.ts';
 
 const generateToken = async (page: Page, name: string) => {
 	await page.goto('/tokens');
-	await page.getByLabel('Generate new token').click();
+	await page.getByLabel('Generate a new token').click();
 	await page.getByLabel('Token name').fill(name);
 	await page.getByLabel('Generate token').click();
 	await expect(page.getByTestId('token-value').locator('code').first()).not.toBeEmpty();
@@ -40,17 +40,17 @@ test('an org viewer can not generate a token, and is told why', async ({ browser
 	const page = await actAsOrg(browser, org, org.viewer);
 	await page.goto('/tokens');
 
-	const generate = page.getByLabel('Generate new token');
+	const generate = page.getByLabel('Generate a new token');
 	await expect(generate).toBeDisabled();
 
 	// The tooltip directive binds after hydration, so the hover is retried until the hint shows.
 	await expect(async () => {
 		await page.mouse.move(0, 0);
 		await generate.locator('..').hover();
-		await expect(page.getByText('Org viewers can\'t create tokens')).toBeVisible({ timeout: 1000 });
+		await expect(page.getByRole('tooltip')).toHaveText('Organization viewers cannot create tokens.', { timeout: 1000 });
 	}).toPass();
 
-	await expect(page.getByTestId('applications-table')).toContainText('No data to show');
+	await expect(page.getByTestId('applications-table')).toContainText('Organization viewers cannot authorize apps for this account.');
 	await expect(page.getByText('You can not access this account')).toHaveCount(0);
 });
 

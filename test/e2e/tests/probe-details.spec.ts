@@ -154,7 +154,7 @@ test('Delete a probe', async ({ page, user }) => {
 		await page.getByRole('button', { name: 'Delete probe', exact: true }).click();
 		await page.getByRole('dialog', { name: 'Delete probe', exact: true }).getByRole('button', { name: 'Delete probe', exact: true }).click();
 		await expect(page.getByRole('heading', { name: 'Probes', exact: true })).toBeVisible();
-		await expect(page.getByText('You don\'t have any probes yet.', { exact: true })).toBeVisible();
+		await expect(page.getByText('You do not have any probes yet.', { exact: true })).toBeVisible();
 	} finally {
 		// Fixture cleanup only finds adopted probes; this one now has no owner.
 		await sql('gp_probes').where({ id: probe.id }).delete();

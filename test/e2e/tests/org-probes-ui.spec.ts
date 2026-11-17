@@ -5,7 +5,7 @@ import type { User } from '../types.ts';
 import { getSelectedOrgs, selectOrgs } from '../github.ts';
 import { actAsOrg, addProbe, pageAs } from '../utils.ts';
 
-const ADMIN_ONLY_HINT = 'Only organization admins can do this';
+const ADMIN_ONLY_HINT = 'Only organization admins can manage probes.';
 
 const expectEditable = async (locator: Locator, editable: boolean) => editable ? expect(locator).toBeEnabled() : expect(locator).toBeDisabled();
 
@@ -66,7 +66,7 @@ test('start commands embed the adoption token of the account the probe is adopte
 	await addProbe({ account_id: org.admin.account_id, userId: org.admin.id, name: 'e2e-personal-probe' });
 
 	for (const [ page, probeName, owner, token ] of [
-		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', org.name, org.adoption_token ],
+		[ await actAsOrg(browser, org, org.admin), 'e2e-org-probe', `${org.name}’s`, org.adoption_token ],
 		[ await pageAs(browser, org.admin.email, 'user'), 'e2e-personal-probe', 'your', await personalAdoptionToken(org.admin) ],
 	] as const) {
 		await page.goto('/probes');
@@ -89,14 +89,14 @@ test('an org admin updating an outdated org probe gets the org adoption token', 
 	await page.getByRole('link', { name: 'our guide' }).click();
 
 	const dialog = page.getByRole('dialog');
-	await expect(dialog).toContainText(`includes ${org.name} secret adoption token`);
+	await expect(dialog).toContainText(`includes ${org.name}’s secret adoption token`);
 	await expect(dialog).toContainText(`GP_ADOPTION_TOKEN=${org.adoption_token}`);
 });
 
 test('the update guide opened from a notification embeds the token of the notified account, not of the active one', async ({ browser, org }) => {
 	for (const [ page, accountId, owner, token ] of [
 		[ await actAsOrg(browser, org, org.admin), org.admin.account_id, 'your', await personalAdoptionToken(org.admin) ],
-		[ await pageAs(browser, org.admin.email, 'user'), org.account_id, org.name, org.adoption_token ],
+		[ await pageAs(browser, org.admin.email, 'user'), org.account_id, `${org.name}’s`, org.adoption_token ],
 	] as const) {
 		await page.goto(`/probes?view=update-a-probe&account=${accountId}`);
 

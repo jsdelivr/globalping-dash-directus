@@ -85,7 +85,7 @@ test('Generate new token', async ({ page }) => {
 	await page.goto('/tokens');
 
 	// Generating a token
-	await page.getByLabel('Generate new token').click();
+	await page.getByLabel('Generate a new token').click();
 	await page.getByLabel('Token name').fill('e2e-test-new-token');
 	await page.getByRole('button', { name: '3 months' }).click();
 	await page.getByRole('combobox').fill('www.jsdelivr.com');
@@ -132,7 +132,7 @@ test('Delete token', async ({ page, user }) => {
 test('Applications table', async ({ page, user }) => {
 	await addApplication(user);
 	await page.goto('/tokens');
-	await expect(page.locator('h2')).toHaveText('Authorized Apps');
+	await expect(page.locator('h2')).toHaveText('Authorized apps');
 
 	await page.pause();
 

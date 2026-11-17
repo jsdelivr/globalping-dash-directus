@@ -15,8 +15,8 @@ test('the Organization screen explains what each role can do', async ({ browser,
 	await trigger.hover();
 	const tooltip = page.getByRole('tooltip');
 	await expect(tooltip).toContainText('Manages the organization\'s settings, adoption token, members, and their roles.');
-	await expect(tooltip).toContainText('Can\'t adopt or edit probes.');
-	await expect(tooltip).toContainText('Can\'t create tokens or run measurements on globalping.io as the organization.');
+	await expect(tooltip).toContainText('Cannot adopt or edit probes.');
+	await expect(tooltip).toContainText('Cannot create tokens or run measurements on globalping.io as the organization.');
 	await page.getByRole('columnheader', { name: 'Member', exact: true }).hover();
 	await expect(tooltip).toBeHidden();
 });
@@ -166,13 +166,13 @@ test('an org admin changes roles after confirming, with a warning on demotion fr
 
 	await page.getByLabel(`Role of ${org.viewer.github_username}`).click();
 	await page.getByRole('option', { name: 'Member' }).click();
-	await expect(page.getByRole('dialog')).toContainText('they\'ll become an admin again on their next sign-in');
+	await expect(page.getByRole('dialog')).toContainText('they will regain the Admin role on their next sign-in');
 	await page.getByRole('dialog').getByRole('button', { name: 'Change to member' }).click();
 	await expect.poll(() => roleOf(org.id, org.viewer.id)).toBe('member');
 
 	await page.getByLabel(`Role of ${org.member.github_username}`).click();
 	await page.getByRole('option', { name: 'Viewer' }).click();
-	await expect(page.getByRole('dialog')).toContainText('This can\'t be undone.');
+	await expect(page.getByRole('dialog')).toContainText('Their tokens and app approvals for this organization will be permanently deleted.');
 
 	await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
 	await expect(page.getByLabel(`Role of ${org.member.github_username}`)).toContainText('Member');
@@ -193,7 +193,7 @@ test('an org admin sets the default role for new members after confirming, and t
 
 	await defaultRole.click();
 	await page.getByRole('option', { name: 'Viewer' }).click();
-	await expect(page.getByRole('dialog')).toContainText('GitHub admins of the organization always join as admins');
+	await expect(page.getByRole('dialog')).toContainText('GitHub organization admins always join as admins.');
 	await page.getByRole('dialog').getByRole('button', { name: 'Set to viewer' }).click();
 	await expect.poll(async () => (await orgRow(org.id)).default_role).toBe('viewer');
 	await expect(defaultRole).toContainText('Viewer');
