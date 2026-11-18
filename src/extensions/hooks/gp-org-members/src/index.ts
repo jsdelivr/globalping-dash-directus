@@ -1,6 +1,6 @@
 import { createError } from '@directus/errors';
 import { defineHook } from '@directus/extensions-sdk';
-import { addUsernames } from './actions/add-usernames.js';
+import { addGitHubProfiles } from './actions/add-github-profiles.js';
 import { validatePreferences, validateRole } from './actions/validate.js';
 import { getMemberships } from './repositories/directus.js';
 import type { Fields, MemberRow } from './types.js';
@@ -14,8 +14,8 @@ export default defineHook(({ filter }) => {
 
 		if (!accountability?.user) { return payload; }
 
-		// The github_username of a member is not readable through permissions, so it is added here for the memberships the caller may see.
-		await addUsernames(members, context);
+		// Add public GitHub profile fields for the memberships the caller may see.
+		await addGitHubProfiles(members, context);
 
 		return payload;
 	});

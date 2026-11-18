@@ -43,16 +43,16 @@ describe('org members hooks', () => {
 		select.reset();
 	});
 
-	it('should add the name of the member to every membership of the payload', async () => {
-		select.resolves([{ id: 'm-1', github_username: 'alice' }, { id: 'm-2', github_username: 'bob' }]);
+	it('should add GitHub profile fields to every membership of the payload', async () => {
+		select.resolves([{ id: 'm-1', github_username: 'alice', github_id: '123' }, { id: 'm-2', github_username: 'bob', github_id: null }]);
 
 		const payload = [{ id: 'm-1', role: 'admin' }, { id: 'm-2', role: 'member' }];
 
 		await read(payload);
 
 		expect(queryBuilder.whereIn.firstCall.args).to.deep.equal([ 'gp_org_members.id', [ 'm-1', 'm-2' ] ]);
-		expect(payload[0]).to.deep.equal({ id: 'm-1', role: 'admin', github_username: 'alice' });
-		expect(payload[1]).to.deep.equal({ id: 'm-2', role: 'member', github_username: 'bob' });
+		expect(payload[0]).to.deep.equal({ id: 'm-1', role: 'admin', github_username: 'alice', github_id: '123' });
+		expect(payload[1]).to.deep.equal({ id: 'm-2', role: 'member', github_username: 'bob', github_id: null });
 	});
 
 	it('should not read the database when the payload carries no membership id', async () => {

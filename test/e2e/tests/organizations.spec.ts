@@ -215,19 +215,26 @@ test('the org adoption token and the public probes switch can only be changed by
 	expect(renamed.name).toBe('e2e-renamed-org');
 });
 
-test('an org admin reads the names of the members', async ({ org, actors }) => {
-	// Like the org adoption token, the name is added by a hook, so it comes back without being asked for and cannot be named in `fields`.
+test('an org admin reads the GitHub profiles of the members', async ({ org, actors }) => {
+	// The read hook adds the GitHub profile fields without including them in `fields`.
 	const members = async (api: AxiosInstance) => (await api.get('/items/gp_org_members?fields=id,role&limit=50')).data.data;
-	const names = (rows: { role: string; github_username: string }[]) => Object.fromEntries(rows.map(row => [ row.github_username, row.role ]));
+	const profiles = (rows: { role: string; github_username: string; github_id: string }[]) => {
+		return Object.fromEntries(rows.map(row => [ row.github_username, { github_id: row.github_id, role: row.role }]));
+	};
 
-	expect(names(await members(actors.admin))).toEqual({
-		[org.admin.github_username]: 'admin',
-		[org.member.github_username]: 'member',
-		[org.viewer.github_username]: 'viewer',
+	expect(profiles(await members(actors.admin))).toEqual({
+		[org.admin.github_username]: { github_id: org.admin.external_identifier, role: 'admin' },
+		[org.member.github_username]: { github_id: org.member.external_identifier, role: 'member' },
+		[org.viewer.github_username]: { github_id: org.viewer.external_identifier, role: 'viewer' },
 	});
 
-	expect(names(await members(actors.member))).toEqual({ [org.member.github_username]: 'member' });
-	expect(names(await members(actors.viewer))).toEqual({ [org.viewer.github_username]: 'viewer' });
+	expect(profiles(await members(actors.member))).toEqual({
+		[org.member.github_username]: { github_id: org.member.external_identifier, role: 'member' },
+	});
+
+	expect(profiles(await members(actors.viewer))).toEqual({
+		[org.viewer.github_username]: { github_id: org.viewer.external_identifier, role: 'viewer' },
+	});
 
 	const byName = await actors.admin.get('/items/gp_org_members?filter[github_username][_eq]=e2e-nobody');
 	expect(byName.status).toBe(403);
