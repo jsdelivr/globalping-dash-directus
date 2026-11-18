@@ -28,11 +28,31 @@ You can run the project by following these steps:
 6. `docker compose up --build -d`
 7. `corepack enable`
 8. `pnpm init:dev`
-9. Go to http://localhost:18055 and log in:
-    - Using your GitHub account
-    - As a regular user with lots of testing data using email `user@example.com` and password `user`
-    - As a regular user with no data (fresh account) using email `newuser@example.com` and password `newuser`
-    - As an admin using email `admin@example.com` and password `password`
+9. Go to http://localhost:18055 and log in using your GitHub account or one of the [development accounts](#development-accounts).
+
+### Development accounts
+
+The development seeds provide four logins. Use the regular user for normal dashboard development; organization roles apply per organization, independently of the Directus administrator role.
+
+| Email | Password | GitHub username | Purpose |
+| --- | --- | --- | --- |
+| `user@example.com` | `user` | `john` | Populated personal account; admin, member and viewer scenarios across organizations |
+| `teammate@example.com` | `user` | `teammate` | Another regular user; second-admin actions and other users' items |
+| `newuser@example.com` | `newuser` | `turk` | Fresh user and onboarding; no organizations, probes, credits/history, API tokens or app approvals |
+| `admin@example.com` | `password` | — | Directus administration |
+
+The regular user and teammate start in their personal accounts, with their populated organizations selected. `unclaimed-org` starts unselected; select it when testing the first contribution/claim flow. The fresh user has no default account selected, so onboarding opens on login.
+
+| Organization | Regular user (`john`) | Teammate | Initial data |
+| --- | --- | --- | --- |
+| `admin-org` | Admin | Admin | Populated, public, sponsor; profile and legacy adoption tokens |
+| `member-org` | Member | Admin | Populated, private; redirected sponsorship example |
+| `viewer-org` | Viewer | Admin | Populated, private; read-only role for the regular user |
+| `unclaimed-org` | Member | Not a member | Empty and without an admin; first contribution/claim scenarios |
+
+Populated organizations contain probes, API tokens, app approvals and credit history. The teammate also has personal items; the regular user's larger personal dataset comes from the earlier seeds. After transferring data or claiming `unclaimed-org`, reseed to restore the initial scenarios.
+
+Two additional user records, `test-manual-additions-production` and `test-manual-additions-staging`, are non-login recipients for manual-credit examples. They have no email/password and stay separate because refreshing those examples resets their credit history. These six development user records are separate from the internal System service user created by migrations. Unlinked sponsor/recipient identities and legacy adoption-token usernames are metadata, not extra logins. E2E tests generate and clean up their own users and organizations.
 
 ### Updates
 
@@ -44,11 +64,13 @@ pnpm run migrate:development
 docker compose up --build -d
 ```
 
-To refresh the seed data if needed:
+To restore the development accounts and seed data:
 
 ```
-pnpm run seed
+pnpm run seed:development
 ```
+
+This resets local application data and removes non-admin users, including accounts created through GitHub login. Use it only on a disposable development database.
 
 ## Prod first deploy
 

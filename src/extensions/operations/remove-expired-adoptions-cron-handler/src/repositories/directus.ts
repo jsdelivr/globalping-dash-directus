@@ -87,7 +87,7 @@ const formatExpirationDate = (lastSyncDate: Date) => {
 
 const notifySingleProbe = async (probe: AdoptedProbe, accountId: string, context: OperationContext) => {
 	await sendNotification({
-		account: accountId,
+		account_id: accountId,
 		item: probe.id,
 		collection: 'gp_probes',
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
@@ -100,7 +100,7 @@ const notifyMultipleProbes = async (probes: AdoptedProbe[], accountId: string, c
 	const lines = probes.map(probe => `- ${probe.name ? `[${escapeMdSymbols(probe.name)}](/probes/${probe.id})` : `[probe](/probes/${probe.id})`}${getIPSuffix(probe.ip)} - **${formatExpirationDate(probe.lastSyncDate)}**`);
 
 	await sendNotification({
-		account: accountId,
+		account_id: accountId,
 		collection: 'gp_probes',
 		metadata: probes.map(p => p.id),
 		type: OFFLINE_PROBE_NOTIFICATION_TYPE,
@@ -119,7 +119,7 @@ export const deleteAdoptions = async (probes: AdoptedProbe[], context: Operation
 
 	await Bluebird.map(probes, async (probe) => {
 		await sendNotification({
-			account: probe.account_id,
+			account_id: probe.account_id,
 			type: 'probe_unassigned',
 			subject: probe.name ? `Your probe ${probe.name} has been deleted` : 'Your probe has been deleted',
 			message: `Your ${probe.name ? `probe **${escapeMdSymbols(probe.name)}**` : 'probe'}${getIPSuffix(probe.ip)} has been deleted from your account due to being offline for more than ${REMOVE_AFTER_DAYS} days. You can adopt it again when it is back online.`,

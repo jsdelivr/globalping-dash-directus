@@ -52,7 +52,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				account: 'accountId1',
+				account_id: 'accountId1',
 				collection: 'gp_probes',
 				metadata: [ 'probeId1', 'probeId2' ],
 				type: 'offline_probe',
@@ -87,7 +87,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				account: 'accountId1',
+				account_id: 'accountId1',
 				item: 'probeId1',
 				collection: 'gp_probes',
 				type: 'offline_probe',
@@ -98,7 +98,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[1]).to.deep.equal([
 			{
-				account: 'accountId2',
+				account_id: 'accountId2',
 				item: 'probeId2',
 				collection: 'gp_probes',
 				type: 'offline_probe',
@@ -204,7 +204,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				account: 'accountId1',
+				account_id: 'accountId1',
 				item: 'probeId1',
 				collection: 'gp_probes',
 				type: 'offline_probe',
@@ -236,7 +236,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				account: 'accountId1',
+				account_id: 'accountId1',
 				type: 'probe_unassigned',
 				subject: 'Your probe home-lab has been deleted',
 				message: 'Your probe **home-lab** with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',
@@ -284,7 +284,7 @@ describe('Remove expired adoptions CRON handler', () => {
 
 		expect(createOne.args[0]).to.deep.equal([
 			{
-				account: 'accountId1',
+				account_id: 'accountId1',
 				type: 'probe_unassigned',
 				subject: 'Your probe has been deleted',
 				message: 'Your probe with IP address **1.1.1.1** has been deleted from your account due to being offline for more than 30 days. You can adopt it again when it is back online.',

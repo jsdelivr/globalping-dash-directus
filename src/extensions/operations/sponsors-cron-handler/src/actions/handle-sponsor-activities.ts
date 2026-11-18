@@ -1,7 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
 import _ from 'lodash';
-import { addCredits, redirectGithubId } from '../../../../lib/src/add-credits.js';
+import { addCredits } from '../../../../lib/src/add-credits.js';
 import { createDirectusSponsor, getRecentCreditsAdditions, sponsorExists } from '../repositories/directus.js';
 import { getGithubSponsorActivities } from '../repositories/github-activities.js';
 import type { CreditsAddition, GithubActivity, GithubSponsor, NewSponsorshipActivity } from '../types.js';
@@ -39,11 +39,11 @@ export class SponsorActivitiesHandler {
 		const remainingAdditions = [ ...additions ];
 
 		const remainingActivities = activities.filter((activity) => {
-			const githubId = this.getGithubId(activity);
+			const sponsorId = String(activity.sponsor.databaseId);
 			const reason = this.getReason(activity);
 			const tierId = activity.sponsorsTier.id;
 
-			const idx = remainingAdditions.findIndex(a => a.github_id === githubId
+			const idx = remainingAdditions.findIndex(a => a.meta.sponsorGithubId === sponsorId
 				&& a.reason === reason
 				&& a.meta.tierId === tierId);
 
@@ -63,13 +63,13 @@ export class SponsorActivitiesHandler {
 		const remainingAdditions = [ ...additions ];
 
 		return activities.filter((activity) => {
-			const githubId = this.getGithubId(activity);
+			const sponsorId = String(activity.sponsor.databaseId);
 			const reason = this.getReason(activity);
 			const amount = this.amountInDollars(activity);
 			const activityTime = new Date(activity.timestamp).getTime();
 
 			const idx = remainingAdditions.findIndex((a) => {
-				if (a.github_id !== githubId) { return false; }
+				if (a.meta.sponsorGithubId !== sponsorId) { return false; }
 
 				if (a.reason !== reason) { return false; }
 
@@ -137,10 +137,6 @@ export class SponsorActivitiesHandler {
 		}, context);
 
 		return `Activity ${activity.id}: recurring sponsorship credits added for github_id ${githubId}`;
-	}
-
-	private getGithubId (activity: GithubActivity): string {
-		return redirectGithubId(String(activity.sponsor.databaseId));
 	}
 
 	private getReason (activity: GithubActivity): Reason {

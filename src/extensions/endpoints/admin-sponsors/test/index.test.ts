@@ -5,7 +5,6 @@ import type { Knex } from 'knex';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import { SOURCE_ID_TO_TARGET_ID } from '../../../lib/src/add-credits.js';
 import endpoint from '../src/index.js';
 
 describe('/admin-sponsors endpoint', () => {
@@ -58,7 +57,6 @@ describe('/admin-sponsors endpoint', () => {
 	app.use(router);
 
 	before(() => {
-		SOURCE_ID_TO_TARGET_ID['900000000001'] = '900000000002';
 		nock.disableNetConnect();
 		nock.enableNetConnect('127.0.0.1');
 	});
@@ -67,6 +65,7 @@ describe('/admin-sponsors endpoint', () => {
 		sinon.resetHistory();
 		Object.values(stubs).forEach(stub => stub.returns(database));
 		stubs.first.resolves({});
+		stubs.first.withArgs('target_github_id').callsFake(() => stubs.where.lastCall?.args[0]?.source_github_id === '900000000001' ? { target_github_id: '900000000002' } : undefined);
 		stubs.limit.resolves([]);
 		stubs.insert.resolves();
 		nock('https://api.github.com').get('/user/900000000003').reply(200, { login: 'fixture-direct' });
@@ -78,7 +77,6 @@ describe('/admin-sponsors endpoint', () => {
 	});
 
 	after(() => {
-		delete SOURCE_ID_TO_TARGET_ID['900000000001'];
 		nock.enableNetConnect();
 	});
 
@@ -164,9 +162,9 @@ describe('/admin-sponsors endpoint', () => {
 		});
 
 		expect(response.status).to.equal(200);
-		expect(stubs.whereRaw.calledWith('((current_sponsors.github_id IS NOT NULL) OR (NOT (current_sponsors.github_id IS NOT NULL) AND history.has_recurring = 1))')).to.equal(true);
+		expect(stubs.whereRaw.calledWith('(sponsors.github_id IS NOT NULL OR (sponsors.github_id IS NULL AND history.has_recurring = 1))')).to.equal(true);
 		expect(stubs.whereRaw.calledWith('COALESCE(directus_users.id, gp_orgs.id) IS NOT NULL')).to.equal(true);
-		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.receiver_github_id')).to.equal(true);
+		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', database)).to.equal(true);
 		expect(stubs.orderByRaw.firstCall.args[0]).to.include('CASE').and.to.match(/ desc$/);
 		expect(stubs.offset.calledWith(10)).to.equal(true);
 		expect(stubs.limit.calledWith(20)).to.equal(true);
@@ -203,13 +201,10 @@ describe('/admin-sponsors endpoint', () => {
 		const response = await request(app).get('/accounts');
 		expect(response.status).to.equal(200);
 		expect(response.body.items[0]).to.include({ githubId: '900000000001', dashboardAccountId: 'recipient-id', redirectTarget: 'fixture-recipient' });
-		const receiverCase = stubs.raw.getCalls().find(call => call.args[0].endsWith('AS receiver_github_id'))!;
-		expect(receiverCase.args[0]).to.include('WHEN ? THEN ?');
-		const bindings = receiverCase.args[1] as string[];
-		const sourceIndex = bindings.indexOf('900000000001');
-		expect(bindings.slice(sourceIndex, sourceIndex + 2)).to.deep.equal([ '900000000001', '900000000002' ]);
-		expect(stubs.leftJoin.calledWith('directus_users', 'directus_users.external_identifier', 'additions.receiver_github_id')).to.equal(true);
-		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', 'additions.receiver_github_id')).to.equal(true);
+		expect(stubs.raw.calledWith('COALESCE(redirects.target_github_id, additions.github_id) AS receiver_github_id')).to.equal(true);
+		expect(stubs.leftJoin.calledWith('gp_credits_redirects as redirects', 'redirects.source_github_id', 'additions.github_id')).to.equal(true);
+		expect(stubs.leftJoin.calledWith('directus_users', 'directus_users.external_identifier', database)).to.equal(true);
+		expect(stubs.leftJoin.calledWith('gp_orgs', 'gp_orgs.github_id', database)).to.equal(true);
 	});
 
 	it('applies manual-addition pagination defaults and parses filters and sorting', async () => {

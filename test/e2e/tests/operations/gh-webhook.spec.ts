@@ -97,7 +97,7 @@ test('a request that is not signed with the shared secret is refused', async ({ 
 });
 
 test('a sponsorship of a redirected github id credits the target user', async ({ org, user }) => {
-	// A pair out of SOURCE_ID_TO_TARGET_ID in add-credits.ts: an org that sponsors, and the user its credits belong to.
+	// A pair seeded into gp_credits_redirects: an org that sponsors, and the user its credits belong to.
 	org.github_id = '66716858';
 	user.external_identifier = '6209808';
 	await sql('sponsors').where({ github_id: org.github_id }).delete();
@@ -122,4 +122,32 @@ test('a sponsorship of a redirected github id credits the target user', async ({
 	// Only the credits move: the sponsor on record is still the github account that pays.
 	const sponsor = await sql('sponsors').where({ github_id: org.github_id }).first('github_login', 'monthly_amount');
 	expect(sponsor).toMatchObject({ github_login: org.name, monthly_amount: 5 });
+});
+
+test('a redirect added after the deploy routes the credits, and deleting it sends them back', async ({ org, user }) => {
+	await sql('gp_credits_redirects').insert({ id: crypto.randomUUID(), source_github_id: org.github_id, target_github_id: user.external_identifier });
+
+	try {
+		expect((await postWebhook(sponsorshipEvent({ login: org.name, githubId: org.github_id, dollars: 5, oneTime: true }))).status).toBe(200);
+
+		expect(await additionsFor(org.github_id)).toHaveLength(0);
+
+		const redirected = await additionsFor(user.external_identifier);
+		expect(redirected).toHaveLength(1);
+		expect(redirected[0]).toMatchObject({ amount: 5 * CREDITS_PER_DOLLAR });
+
+		// The sponsor on record is the id that paid, whatever the routing did with the money.
+		expect(redirected[0].meta).toMatchObject({ sponsorGithubId: org.github_id });
+
+		await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).delete();
+
+		expect((await postWebhook(sponsorshipEvent({ login: org.name, githubId: org.github_id, dollars: 7, oneTime: true }))).status).toBe(200);
+
+		const own = await additionsFor(org.github_id);
+		expect(own).toHaveLength(1);
+		expect(own[0]).toMatchObject({ amount: 7 * CREDITS_PER_DOLLAR });
+		expect(await additionsFor(user.external_identifier)).toHaveLength(1);
+	} finally {
+		await sql('gp_credits_redirects').where({ source_github_id: org.github_id }).delete();
+	}
 });

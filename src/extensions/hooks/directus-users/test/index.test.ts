@@ -200,6 +200,23 @@ describe('users hooks', () => {
 			expect(err.message).to.equal('"value" must be one of [testuser, org1, org2]');
 		});
 
+		it('should allow keeping a saved default_prefix that is no longer a GitHub org of the user', async () => {
+			usersService.readByQuery.resolves([{
+				id: '1-1-1-1-1',
+				github_username: 'testuser',
+				github_organizations: [ 'org1' ],
+				default_prefix: 'old-org',
+			}]);
+
+			const err = await callbacks.filter['users.update']?.(
+				{ default_prefix: 'old-org' },
+				{ keys: [ '1-1-1-1-1' ] },
+				{ accountability: { user: 'userIdValue' } },
+			).catch(err => err);
+
+			expect(err).to.equal(undefined);
+		});
+
 		it('should throw error if notification_preferences has invalid type key', async () => {
 			const err = await callbacks.filter['users.update']?.(
 				{ notification_preferences: { not_existing_type: { enabled: true, emailEnabled: true } } },

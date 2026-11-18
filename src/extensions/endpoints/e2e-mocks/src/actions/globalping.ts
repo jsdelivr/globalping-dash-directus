@@ -42,7 +42,9 @@ const codes = new TTLCache<string, string>({ ttl: 30 * 60 * 1000 });
 
 export const globalpingRoutes = (router: Router, env: ApiExtensionContext['env']) => {
 	router.post('/globalping/state', (req, res) => {
-		probeIps.set((req.body as { ip: string }).ip, true);
+		const { ip } = req.body as { ip: string };
+		probeIps.set(ip, true);
+		codes.delete(ip);
 		res.sendStatus(200);
 	});
 

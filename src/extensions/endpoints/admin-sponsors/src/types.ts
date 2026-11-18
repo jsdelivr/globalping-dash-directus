@@ -56,6 +56,7 @@ export type SponsorshipEvent = {
 	githubLogin: string | null;
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
+	dashboardAccountIsOrg: boolean;
 	redirectTarget: string | null;
 	reason: SponsorshipReason;
 	manual: boolean;
@@ -71,6 +72,7 @@ export type ManualAddition = {
 	githubLogin: string | null;
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
+	dashboardAccountIsOrg: boolean;
 	redirectTarget: string | null;
 	addedBy: string | null;
 	type: ManualAdditionType;
@@ -84,6 +86,7 @@ export type SponsorAccount = {
 	githubLogin: string | null;
 	dashboardAccountId: string | null;
 	dashboardAccountName: string | null;
+	dashboardAccountIsOrg: boolean;
 	redirectTarget: string | null;
 	status: SponsorStatus;
 	currentMonthlyAmount: number | null;

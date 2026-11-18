@@ -13,9 +13,11 @@ Use email/password login directly in [Directus](http://localhost:18055). Use the
 | Account | Email | Password |
 | --- | --- | --- |
 | Regular user with test data | `user@example.com` | `user` |
+| Teammate with personal and org items | `teammate@example.com` | `user` |
 | Fresh user | `newuser@example.com` | `newuser` |
 | Admin | `admin@example.com` | `password` |
 
+- See [Development accounts](README.md#development-accounts) for the organization role matrix, non-login fixtures and reset behavior. The regular user covers admin/member/viewer roles across orgs; the fresh user has no orgs or application data.
 - Rebuild Directus after extension changes: `docker compose up --build -d directus`. Restart it after schema changes.
 - Keep actual secrets and generated tokens in ignored `.env.*` files.
 

@@ -143,6 +143,15 @@ describe('/e2e-mocks endpoint', () => {
 			expect(secondRes.body).to.deep.equal({ code: null });
 		});
 
+		it('should forget the unread code when the ip is prepared again', async () => {
+			await request(app).post('/globalping/state').send({ ip: '1.2.3.5' });
+			await request(app).post('/globalping/adoption-code').send({ ip: '1.2.3.5', code: '123456' });
+			await request(app).post('/globalping/state').send({ ip: '1.2.3.5' });
+
+			const res = await request(app).get('/globalping/adoption-code').query({ ip: '1.2.3.5' });
+			expect(res.body).to.deep.equal({ code: null });
+		});
+
 		it('should proxy an ip nothing was prepared for to the API itself', async () => {
 			nock(GLOBALPING_URL).post('/adoption-code', { ip: '9.9.9.9', code: '654321' }).reply(200, { ip: '9.9.9.9', city: 'Prague' });
 

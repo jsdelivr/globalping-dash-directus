@@ -185,6 +185,7 @@ const getOrgNotifiedUsers = async (accountId: string) => {
 
 const promoteToAdmin = async (org: { id: string; member: User }) => {
 	await sql('gp_org_members').where({ org: org.id, user: org.member.id }).update({ role: 'admin' });
+	await sql('directus_users').where({ id: org.member.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
 	return org.member;
 };
 
@@ -224,6 +225,16 @@ test('leaves out the admin who turned the notification off in the org, and keeps
 
 	// The one who is not being told is not remembered either, so turning it back on notifies them.
 	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([ secondAdmin.id ]);
+});
+
+test('leaves out the admin who has not selected the org', async ({ org }) => {
+	await sql('gp_org_members').where({ org: org.id, user: org.member.id }).update({ role: 'admin' });
+	await addOrgCredits(org.account_id, 100);
+
+	await trigger(FLOW.lowCredits);
+
+	expect(await notifiedRecipients(org)).toEqual([ org.admin.id ]);
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([ org.admin.id ]);
 });
 
 test('clears every admin from the list once the org balance recovers', async ({ org }) => {
@@ -268,5 +279,31 @@ test('notifies the admin who turns the notification back on, and does not repeat
 
 	// One each: the second run must not tell the first admin a second time.
 	expect(perAdmin.map(row => row.count)).toEqual([ 1, 1 ]);
+});
+
+test('clears the admin who unselected the org once the balance recovers, and notifies them again after reselecting', async ({ org }) => {
+	await addOrgCredits(org.account_id, 100);
+	await trigger(FLOW.lowCredits);
+
+	expect(await notifiedRecipients(org)).toEqual([ org.admin.id ]);
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([ org.admin.id ]);
+
+	await sql('directus_users').where({ id: org.admin.id }).update({ selected_orgs: JSON.stringify([]) });
+	await sql('gp_credits').where({ account_id: org.account_id }).update({ amount: 100000 });
+	await trigger(FLOW.lowCredits);
+
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([]);
+
+	await sql('gp_credits').where({ account_id: org.account_id }).update({ amount: 100 });
+	await trigger(FLOW.lowCredits);
+
+	expect(await notifiedRecipients(org)).toEqual([ org.admin.id ]);
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([]);
+
+	await sql('directus_users').where({ id: org.admin.id }).update({ selected_orgs: JSON.stringify([ org.id ]) });
+	await trigger(FLOW.lowCredits);
+
+	expect(await notifiedRecipients(org)).toEqual([ org.admin.id, org.admin.id ]);
+	expect(await getOrgNotifiedUsers(org.account_id)).toEqual([ org.admin.id ]);
 });
 

@@ -112,8 +112,7 @@ export const seed = async (knex) => {
 		expire: '2036-01-01',
 		name: 'For Client Credentials App',
 		origins: '[]',
-		user_created: user.id,
-		account_id: account.id,
+		user_created: null,
 		user_updated: null,
 		value: 'XfP0hC+L1TNOOTIP0U6LX7GWSUDuL/oEqTr+Dm+Z7gg=', // token: cd4j7g2m37e74wxivpuuj2xdt2acl6j6
 		app_id: clientCredentialsApp.id,
@@ -129,8 +128,7 @@ export const seed = async (knex) => {
 		expire: '2035-02-05',
 		name: 'For Client Credentials App',
 		origins: '[]',
-		user_created: user.id,
-		account_id: account.id,
+		user_created: null,
 		user_updated: null,
 		value: 'jR3Jx0KCKRc6IhuavjG7MqzslEFBDvTEb76hOMvVEx8=', // token: 3f2qkqbct7skzarkpihsrnak2brdasxk
 		app_id: clientCredentialsApp.id,

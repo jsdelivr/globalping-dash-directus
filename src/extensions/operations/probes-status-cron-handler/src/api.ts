@@ -2,7 +2,7 @@ import { setTimeout } from 'node:timers/promises';
 import type { OperationContext } from '@directus/extensions';
 import { defineOperationApi } from '@directus/extensions-sdk';
 import _ from 'lodash';
-import { checkOnlineStatus } from './actions/check-online-status.js';
+import { increaseOnlineTimes } from './repositories/directus.js';
 
 export default defineOperationApi({
 	id: 'probes-status-cron-handler',
@@ -11,8 +11,8 @@ export default defineOperationApi({
 			await setTimeout(_.random(0, 5 * 60 * 1000));
 		}
 
-		const onlineIds = await checkOnlineStatus(context);
+		const online = await increaseOnlineTimes(context);
 
-		return onlineIds.length ? `Online probes count: ${onlineIds.length}` : 'No online probes';
+		return online ? `Online probes count: ${online}` : 'No online probes';
 	},
 });

@@ -1,3 +1,5 @@
+import { directusRequest } from '../migration-utils/directus-request.js';
+
 const DIRECTUS_URL = process.env.DIRECTUS_URL;
 const ADMIN_ACCESS_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
 const GP_SYSTEM_KEY = process.env.GP_SYSTEM_KEY;
@@ -6,26 +8,6 @@ const SYSTEM_USER_ID = 'f3249755-8b2b-43e6-878e-d5387afe1a24';
 
 if (!DIRECTUS_URL || !ADMIN_ACCESS_TOKEN || !GP_SYSTEM_KEY) {
 	throw new Error(`DIRECTUS_URL, ADMIN_ACCESS_TOKEN and GP_SYSTEM_KEY must be set. Actual values: DIRECTUS_URL: ${DIRECTUS_URL}.`);
-}
-
-async function directusRequest (path, method = 'GET', body) {
-	const response = await fetch(`${DIRECTUS_URL}${path}`, {
-		method,
-		headers: {
-			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${ADMIN_ACCESS_TOKEN}`,
-		},
-		body: body ? JSON.stringify(body) : undefined,
-	});
-
-	if (!response.ok) {
-		const responseText = await response.text();
-
-		throw new Error(`Fetch request failed. Status: ${response.status} ${response.statusText}. Response body: ${responseText}`);
-	}
-
-	const json = await response.json();
-	return json.data;
 }
 
 async function createPolicy () {

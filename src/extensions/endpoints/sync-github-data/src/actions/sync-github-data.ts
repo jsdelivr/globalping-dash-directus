@@ -22,7 +22,7 @@ const NotEnoughDataError = createError('INVALID_PAYLOAD_ERROR', 'Not enough data
 export const syncGithubData = async (userId: string, context: EndpointExtensionContext) => {
 	const user = await getDirectusUser(userId, context);
 
-	if (!user || !user.external_identifier) {
+	if (!user.external_identifier) {
 		throw new NotEnoughDataError();
 	}
 
