@@ -16,5 +16,5 @@ jobs:
           name: jsdelivr/globalping-dash-directus/globalping-dash-directus-staging
           username: jsdelivr
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
+          registry: ghcr.io
           tag_names: true
