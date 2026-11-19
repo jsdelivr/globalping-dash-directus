@@ -95,7 +95,7 @@ export default defineEndpoint((router, context) => {
 				database.raw('ROW_NUMBER() OVER (PARTITION BY app_id, account_id, user_created ORDER BY date_last_used DESC) AS row_num'),
 			)
 			.whereNotNull('app_id')
-			.modify(q => filterByOwner(q, accountId, query.userCreated, req.accountability))
+			.modify(q => filterByOwner(q, accountId, query.userCreated ?? query.userId, req.accountability)) // PHASE5: drop the `userId` fallback - in the legacy form it named the creator, not only the owner.
 			.as('rankedTokens');
 
 		const [ appTokens, [{ total }] ] = await Promise.all([
