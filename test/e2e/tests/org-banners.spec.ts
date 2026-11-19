@@ -34,28 +34,25 @@ const imageSize = async (browser: Browser, url: string) => {
 	return size;
 };
 
-test('the public list has the orgs with public probes and a profile, and a single org is found by any case of its name', async ({ org, org2, actors }) => {
+test('orgs with public probes are listed and found by name even without a profile', async ({ org, org2 }) => {
 	await sql('gp_orgs').where({ id: org.id }).update({ public_probes: true, website: 'https://example.com' });
 	await sql('gp_orgs').where({ id: org2.id }).update({ public_probes: true, website: '', description: '' });
 
-	const names = async () => (await anonymous.get('/organizations')).data.map((item: { name: string }) => item.name);
+	const emptyProfile = { name: org2.name, website: '', description: '', bannerId: null };
 
 	const list = await anonymous.get('/organizations');
 	expect(list.status).toBe(200);
 	expect(list.data).toContainEqual({ name: org.name, website: 'https://example.com', description: null, bannerId: null });
-	expect(await names()).not.toContain(org2.name);
+	expect(list.data).toContainEqual(emptyProfile);
 
-	// A banner alone is a profile.
-	expect((await upload(actors.otherOrgAdmin, org2, png(1224, 200))).status).toBe(200);
-	expect(await names()).toContain(org2.name);
-
-	// An org with private probes is not listed whatever its profile.
-	await sql('gp_orgs').where({ id: org2.id }).update({ public_probes: false, description: 'Hidden' });
-	expect(await names()).not.toContain(org2.name);
-
-	const single = await anonymous.get(`/organizations/${org.name.toUpperCase()}`);
+	const single = await anonymous.get(`/organizations/${org2.name.toUpperCase()}`);
 	expect(single.status).toBe(200);
-	expect(single.data).toEqual({ name: org.name, website: 'https://example.com', description: null, bannerId: null });
+	expect(single.data).toEqual(emptyProfile);
+
+	await sql('gp_orgs').where({ id: org2.id }).update({ public_probes: false, description: 'Hidden' });
+	const privateList = await anonymous.get('/organizations');
+	expect(privateList.status).toBe(200);
+	expect(privateList.data).not.toContainEqual(expect.objectContaining({ name: org2.name }));
 
 	expect((await anonymous.get(`/organizations/${org2.name}`)).status).toBe(404);
 	expect((await anonymous.get('/organizations/e2e-org-missing')).status).toBe(404);

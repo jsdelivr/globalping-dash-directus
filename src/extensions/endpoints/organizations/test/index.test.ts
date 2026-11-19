@@ -29,10 +29,9 @@ describe('/organizations endpoint', () => {
 	const builder = (table: string) => {
 		const chain: Record<string, unknown> = {};
 
-		[ 'where', 'whereIn', 'whereNotNull', 'orWhere', 'select', 'orderBy', 'forUpdate', 'first', 'update' ].forEach((method) => {
+		[ 'where', 'whereIn', 'select', 'orderBy', 'forUpdate', 'first', 'update' ].forEach((method) => {
 			chain[method] = (...args: unknown[]) => {
 				calls.push({ table, method, args });
-				typeof args[0] === 'function' && (args[0] as (query: unknown) => void)(chain);
 				return chain;
 			};
 		});
@@ -97,8 +96,8 @@ describe('/organizations endpoint', () => {
 	});
 
 	describe('GET /', () => {
-		it('should list the public orgs with a profile', async () => {
-			const orgs = [{ name: 'acme', website: 'https://acme.com', description: null, bannerId: 'banner-id' }];
+		it('should list public orgs even without a profile', async () => {
+			const orgs = [{ name: 'acme', website: null, description: null, bannerId: null }];
 			results.gp_orgs = orgs;
 			accountability = { user: null, admin: false };
 
@@ -106,23 +105,21 @@ describe('/organizations endpoint', () => {
 
 			expect(res.status).to.equal(200);
 			expect(res.body).to.deep.equal(orgs);
-			expect(callsOf('gp_orgs', 'where')[0]).to.deep.equal([{ public_probes: true }]);
-			expect(callsOf('gp_orgs', 'whereNotNull')).to.deep.equal([ [ 'banner' ] ]);
-			expect(callsOf('gp_orgs', 'orWhere')).to.deep.equal([ [ 'website', '<>', '' ], [ 'description', '<>', '' ] ]);
+			expect(callsOf('gp_orgs', 'where')).to.deep.equal([ [{ public_probes: true }] ]);
 			expect(callsOf('gp_orgs', 'select')).to.deep.equal([ [ 'name', 'website', 'description', 'banner as bannerId' ] ]);
 		});
 	});
 
 	describe('GET /:name', () => {
-		it('should return one public org matched case-insensitively', async () => {
-			const org = { name: 'acme', website: null, description: 'Probes', bannerId: null };
+		it('should return a public org without a profile, matched case-insensitively', async () => {
+			const org = { name: 'acme', website: null, description: null, bannerId: null };
 			results.gp_orgs = org;
 
 			const res = await request(app).get('/ACME');
 
 			expect(res.status).to.equal(200);
 			expect(res.body).to.deep.equal(org);
-			expect(callsOf('gp_orgs', 'where')).to.deep.include([{ name: 'ACME' }]);
+			expect(callsOf('gp_orgs', 'where')).to.deep.equal([ [{ public_probes: true }], [{ name: 'ACME' }] ]);
 		});
 
 		it('should return 404 for an org that is missing or not public', async () => {
