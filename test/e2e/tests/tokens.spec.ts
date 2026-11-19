@@ -74,7 +74,7 @@ const addApplication = async (user: User) => {
 test('Tokens table', async ({ page, user }) => {
 	await addToken(user);
 	await page.goto('/tokens');
-	await expect(page.locator('h1')).toHaveText('Tokens');
+	await expect(page.locator('h1')).toHaveText('Your tokens');
 
 	// Validate token data is in table
 	await expect(page.getByTestId('tokens-table').locator('tbody tr').first()).toContainText('e2e-test-existing-token');
@@ -132,7 +132,7 @@ test('Delete token', async ({ page, user }) => {
 test('Applications table', async ({ page, user }) => {
 	await addApplication(user);
 	await page.goto('/tokens');
-	await expect(page.locator('h2')).toHaveText('Authorized apps');
+	await expect(page.locator('h2')).toHaveText('Your authorized apps');
 
 	await page.pause();
 

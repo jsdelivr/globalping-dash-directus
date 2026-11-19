@@ -24,7 +24,7 @@ const storedFor = async (appId: string) => {
 	return { approvals: owners(approvals), tokens: owners(tokens) };
 };
 
-test('applications are listed per creator, and a Directus admin sees the whole account', async ({ org, actors }) => {
+test('applications are listed per creator, and a Directus admin has to name the creator', async ({ org, actors }) => {
 	const app = await addApplication({ accountId: org.account_id, userId: org.admin.id });
 	await addApplication({ accountId: org.account_id, userId: org.member.id, appId: app });
 	// The same app approved for a personal account is a separate row and must not show up in the org list.
@@ -34,16 +34,15 @@ test('applications are listed per creator, and a Directus admin sees the whole a
 	expect(await listed(actors.member, `accountId=${org.account_id}`)).toEqual([{ id: app, user_created: org.member.id, account_id: org.account_id }]);
 	expect(await listed(actors.admin, `accountId=${org.admin.account_id}`)).toEqual([{ id: app, user_created: org.admin.id, account_id: org.admin.account_id }]);
 
-	const impersonated = await listed(actors.directusAdmin, `accountId=${org.account_id}`);
-	expect(impersonated).toEqual(expect.arrayContaining([
+	expect(await listed(actors.directusAdmin, `accountId=${org.account_id}`)).toEqual([]);
+	expect(await listed(actors.directusAdmin, `accountId=${org.account_id}&userCreated=${org.member.id}`)).toEqual([{ id: app, user_created: org.member.id, account_id: org.account_id }]);
+
+	const allAccounts = await listed(actors.directusAdmin, 'accountId=all');
+	expect(allAccounts).toEqual(expect.arrayContaining([
 		{ id: app, user_created: org.admin.id, account_id: org.account_id },
 		{ id: app, user_created: org.member.id, account_id: org.account_id },
+		{ id: app, user_created: org.admin.id, account_id: org.admin.account_id },
 	]));
-
-	// Without impersonation the admin lists every account at once.
-	const allAccounts = await listed(actors.directusAdmin, 'accountId=all');
-	expect(allAccounts.length).toBeGreaterThan(impersonated.length);
-	expect(new Set(allAccounts.map(application => application.account_id)).size).toBeGreaterThan(1);
 });
 
 test('the applications list is allowed to a member but refused to a viewer of the same org', async ({ org, actors }) => {
@@ -58,13 +57,13 @@ test('a Directus admin revokes the applications of the impersonated user', async
 	// The same app approved by somebody else has to survive the revoke.
 	await addApplication({ accountId: user2.account_id, userId: user2.id, appId: app });
 
-	expect(await listed(actors.directusAdmin, `accountId=${user.account_id}`)).toEqual([{ id: app, user_created: user.id, account_id: user.account_id }]);
+	expect(await listed(actors.directusAdmin, `accountId=${user.account_id}&userCreated=${user.id}`)).toEqual([{ id: app, user_created: user.id, account_id: user.account_id }]);
 
 	const response = await actors.directusAdmin.post('/applications/revoke', { accountId: user.account_id, userCreated: user.id, id: app });
 	expect(response.status).toBe(200);
 
-	expect(await listed(actors.directusAdmin, `accountId=${user.account_id}`)).toEqual([]);
-	expect(await listed(actors.directusAdmin, `accountId=${user2.account_id}`)).toEqual([{ id: app, user_created: user2.id, account_id: user2.account_id }]);
+	expect(await listed(actors.directusAdmin, `accountId=${user.account_id}&userCreated=${user.id}`)).toEqual([]);
+	expect(await listed(actors.directusAdmin, `accountId=${user2.account_id}&userCreated=${user2.id}`)).toEqual([{ id: app, user_created: user2.id, account_id: user2.account_id }]);
 	expect(await storedFor(app)).toEqual({ approvals: [ `${user2.id}@${user2.account_id}` ], tokens: [ `${user2.id}@${user2.account_id}` ] });
 });
 

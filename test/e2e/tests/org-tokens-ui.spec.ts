@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import { test, expect } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
-import { actAsOrg, pageAs } from '../utils.ts';
+import { actAsOrg, addApplication, addToken, pageAs } from '../utils.ts';
 
 const generateToken = async (page: Page, name: string) => {
 	await page.goto('/tokens');
@@ -33,6 +33,26 @@ test('a token generated on the personal account belongs to the personal account'
 	await generateToken(page, name);
 
 	expect(await tokenAccountId(name)).toBe(org.member.account_id);
+	await page.context().close();
+});
+
+test('a Directus admin acting as an org sees only the tokens and apps they created', async ({ browser, org, admin }) => {
+	await sql('gp_org_members').insert({ id: randomUUID(), org: org.id, user: admin.id, role: 'admin' });
+
+	await Promise.all([
+		addToken({ accountId: org.account_id, userId: admin.id, name: 'e2e-token-of-the-directus-admin' }),
+		addToken({ accountId: org.account_id, userId: org.admin.id, name: 'e2e-token-of-the-org-admin' }),
+		addApplication({ accountId: org.account_id, userId: admin.id, name: 'e2e-app-of-the-directus-admin' }),
+		addApplication({ accountId: org.account_id, userId: org.admin.id, name: 'e2e-app-of-the-org-admin' }),
+	]);
+
+	const page = await actAsOrg(browser, org, admin);
+	await page.goto('/tokens');
+
+	await expect(page.getByTestId('tokens-table')).toContainText('e2e-token-of-the-directus-admin');
+	await expect(page.getByTestId('tokens-table')).not.toContainText('e2e-token-of-the-org-admin');
+	await expect(page.getByTestId('applications-table')).toContainText('e2e-app-of-the-directus-admin');
+	await expect(page.getByTestId('applications-table')).not.toContainText('e2e-app-of-the-org-admin');
 	await page.context().close();
 });
 
