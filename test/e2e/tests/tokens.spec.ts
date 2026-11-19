@@ -134,8 +134,6 @@ test('Applications table', async ({ page, user }) => {
 	await page.goto('/tokens');
 	await expect(page.locator('h2')).toHaveText('Your authorized apps');
 
-	await page.pause();
-
 	await expect(page.getByTestId('applications-table').locator('tbody tr').first()).toContainText('Auth Code App');
 	await expect(page.getByTestId('applications-table').locator('tbody tr').first()).toContainText('Never');
 });

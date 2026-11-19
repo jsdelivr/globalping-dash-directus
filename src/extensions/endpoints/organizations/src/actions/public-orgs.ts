@@ -7,10 +7,8 @@ export type PublicOrg = {
 	bannerId: string | null;
 };
 
-// An org is listed when its probes are public and it has filled in at least one part of its profile.
 const queryPublicOrgs = ({ database }: EndpointExtensionContext) => database('gp_orgs')
 	.where({ public_probes: true })
-	.where(query => query.whereNotNull('banner').orWhere('website', '<>', '').orWhere('description', '<>', ''))
 	.select('name', 'website', 'description', 'banner as bannerId');
 
 export const getPublicOrgs = (context: EndpointExtensionContext): Promise<PublicOrg[]> => queryPublicOrgs(context).orderBy('name');
