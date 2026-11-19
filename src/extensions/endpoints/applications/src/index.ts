@@ -34,6 +34,7 @@ const getApplicationsSchema = Joi.object<Request>({
 		// PHASE5: remove `userId`, `accountId` is the only owner input.
 		userId: Joi.string(),
 		accountId: Joi.string(),
+		userCreated: Joi.string(),
 		offset: Joi.number().optional().default(0),
 		limit: Joi.number().optional().max(100).default(10),
 	}).xor('userId', 'accountId').required(),
@@ -56,18 +57,6 @@ const revokeApplicationSchema = Joi.object<Request>({
 const AllAccountsError = createError('INVALID_PAYLOAD_ERROR', 'An application can only be revoked for a single account.', 400);
 const ForeignCreatorError = createError('INVALID_PAYLOAD_ERROR', 'You can only revoke your own applications.', 400);
 
-const filterByOwner = (query: Knex.QueryBuilder, accountId: string, accountability: Request['accountability']) => {
-	if (accountId === ALL_ACCOUNTS) {
-		return;
-	}
-
-	query.where({ account_id: accountId });
-
-	if (!accountability.admin) {
-		query.where({ user_created: accountability.user });
-	}
-};
-
 const getCreatorId = (userCreated: string | undefined, accountability: Request['accountability']) => {
 	if (!userCreated || userCreated === accountability.user) {
 		return accountability.user;
@@ -80,12 +69,20 @@ const getCreatorId = (userCreated: string | undefined, accountability: Request['
 	return userCreated;
 };
 
+const filterByOwner = (query: Knex.QueryBuilder, accountId: string, userCreated: string | undefined, accountability: Request['accountability']) => {
+	if (accountId === ALL_ACCOUNTS) {
+		return;
+	}
+
+	query.where({ account_id: accountId, user_created: getCreatorId(userCreated, accountability) });
+};
+
 export default defineEndpoint((router, context) => {
 	const { database, logger } = context;
 
 	router.get('/', validate(getApplicationsSchema), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
-		const query = req.query as unknown as { userId?: string; accountId?: string; offset: number; limit: number };
+		const query = req.query as unknown as { userId?: string; accountId?: string; userCreated?: string; offset: number; limit: number };
 		const accountId = await getRequestAccountId(query, req.accountability, context, [ 'admin', 'member' ]);
 
 		const rankedTokensQuery = database('gp_tokens')
@@ -98,7 +95,7 @@ export default defineEndpoint((router, context) => {
 				database.raw('ROW_NUMBER() OVER (PARTITION BY app_id, account_id, user_created ORDER BY date_last_used DESC) AS row_num'),
 			)
 			.whereNotNull('app_id')
-			.modify(q => filterByOwner(q, accountId, req.accountability))
+			.modify(q => filterByOwner(q, accountId, query.userCreated ?? query.userId, req.accountability)) // PHASE5: drop the `userId` fallback - in the legacy form it named the creator, not only the owner.
 			.as('rankedTokens');
 
 		const [ appTokens, [{ total }] ] = await Promise.all([
