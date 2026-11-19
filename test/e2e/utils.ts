@@ -163,6 +163,15 @@ export const addProbe = async (fields: Record<string, unknown>) => {
 	return id;
 };
 
+export const addToken = ({ accountId, userId, name = 'e2e-token' }: { accountId: string; userId: string; name?: string }) => client('gp_tokens').insert({
+	name,
+	value: randomToken(),
+	origins: '[]',
+	date_created: new Date(),
+	user_created: userId,
+	account_id: accountId,
+});
+
 export const addApplication = async ({ accountId, userId, appId, name = 'e2e-app' }: { accountId: string; userId: string; appId?: string; name?: string }) => {
 	const app = appId ?? randomUUID();
 
