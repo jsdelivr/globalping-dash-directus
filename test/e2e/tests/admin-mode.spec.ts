@@ -32,7 +32,7 @@ test('Admin mode shows the applications of every user, impersonation narrows the
 
 	const page = await pageAs(browser, process.env.ADMIN_EMAIL!, process.env.ADMIN_PASSWORD!);
 	await page.goto('/tokens');
-	await expect(page.locator('h1')).toHaveText('Tokens');
+	await expect(page.locator('h1')).toHaveText('Your tokens');
 
 	// The admin approved nothing, so their own list is empty until admin mode is on.
 	await expect(page.locator('tbody tr')).toHaveCount(0);
