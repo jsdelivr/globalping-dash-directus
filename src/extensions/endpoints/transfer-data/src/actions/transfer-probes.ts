@@ -7,7 +7,7 @@ const NoGithubUsernameError = createError('INVALID_PAYLOAD_ERROR', 'A GitHub use
 const NoProbesError = createError('INVALID_PAYLOAD_ERROR', 'You have no probes to transfer.', 400);
 
 // The probes keep reporting the user's adoption token, so the token moves with them and the user gets a fresh one.
-const handOverAdoptionToken = async ({ userId, orgId }: Transfer, trx: Knex.Transaction) => {
+const handOverAdoptionToken = async ({ userId, userGithubId, orgId }: Transfer, trx: Knex.Transaction) => {
 	const user = await trx('directus_users')
 		.where({ id: userId })
 		.first<{ adoption_token: string | null; github_username: string | null }>('adoption_token', 'github_username');
@@ -22,9 +22,9 @@ const handOverAdoptionToken = async ({ userId, orgId }: Transfer, trx: Knex.Tran
 
 	await trx.raw(`
 		UPDATE gp_orgs
-		SET extra_adoption_tokens = JSON_ARRAY_APPEND(extra_adoption_tokens, '$', JSON_OBJECT('github_username', :username, 'token', :token))
+		SET extra_adoption_tokens = JSON_ARRAY_APPEND(extra_adoption_tokens, '$', JSON_OBJECT('github_username', :username, 'github_id', :githubId, 'token', :token))
 		WHERE id = :org
-	`, { username: user.github_username, token: user.adoption_token, org: orgId });
+	`, { username: user.github_username, githubId: userGithubId, token: user.adoption_token, org: orgId });
 
 	await trx('directus_users').where({ id: userId }).update({ adoption_token: await generateBytes() });
 };
