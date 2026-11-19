@@ -19,6 +19,8 @@ const transfer = (api: AxiosInstance, what: string, orgId: string) => api.post(`
 
 test('a member of an org with no admin can move probes, tokens and credits, and becomes an admin', async ({ org, actors }) => {
 	await demoteTheAdmin(org);
+	const legacyToken = { github_username: 'former-member', token: 'legacy-adoption-token' };
+	await sql('gp_orgs').where({ id: org.id }).update({ extra_adoption_tokens: JSON.stringify([ legacyToken ]) });
 
 	const probeId = await addProbe({ userId: org.member.id, account_id: org.member.account_id });
 	await addApplication({ accountId: org.member.account_id, userId: org.member.id });
@@ -51,7 +53,10 @@ test('a member of an org with no admin can move probes, tokens and credits, and 
 
 	// The probes report the member's adoption token, so it moves with them and the member gets a fresh one.
 	const orgRow = await sql('gp_orgs').where({ id: org.id }).first('extra_adoption_tokens');
-	expect(JSON.parse(orgRow.extra_adoption_tokens)).toEqual([{ github_username: org.member.github_username, token: org.member.adoption_token }]);
+	expect(JSON.parse(orgRow.extra_adoption_tokens)).toEqual([
+		legacyToken,
+		{ github_username: org.member.github_username, github_id: org.member.external_identifier, token: org.member.adoption_token },
+	]);
 
 	const memberRow = await sql('directus_users').where({ id: org.member.id }).first('adoption_token');
 	expect(memberRow.adoption_token).not.toBe(org.member.adoption_token);

@@ -7,7 +7,7 @@ const ORGS = [
 		github_id: '9000000001',
 		adoption_token: 'adminorgadoptiontoken00000000001',
 		extra_adoption_tokens: [
-			{ github_username: 'john-old1', token: 'johnold1adoptiontoken00000000001' },
+			{ github_username: 'john', github_id: '1234567890', token: 'johnold1adoptiontoken00000000001' },
 			{ github_username: 'john-old2', token: 'johnold2adoptiontoken00000000001' },
 		],
 		website: 'https://admin-org.example.com',

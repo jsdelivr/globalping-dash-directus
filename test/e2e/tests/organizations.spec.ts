@@ -254,7 +254,7 @@ test('the users of an org stay unreadable to each other', async ({ org, actors }
 
 test('the extra adoption tokens are visible to admins only and are removed one by one through the endpoint', async ({ org, actors }) => {
 	const alice = { github_username: 'e2e-alice', token: 'e2e-alice-token' };
-	const bob = { github_username: 'e2e-bob', token: 'e2e-bob-token' };
+	const bob = { github_username: 'e2e-bob', github_id: '12345678', token: 'e2e-bob-token' };
 
 	await sql('gp_orgs').where({ id: org.id }).update({ extra_adoption_tokens: JSON.stringify([ alice, bob ]) });
 

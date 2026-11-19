@@ -7,7 +7,7 @@ describe('transfer probes', () => {
 	const TRANSFER = {
 		userId: 'user-1',
 		userAccountId: 'user-account',
-		userGithubId: 'gh-user',
+		userGithubId: '12345678',
 		orgId: 'org-1',
 		orgAccountId: 'org-account',
 		orgGithubId: 'gh-org',
@@ -39,11 +39,11 @@ describe('transfer probes', () => {
 		Object.keys(updates).forEach(table => delete updates[table]);
 	});
 
-	it('should move the probes, add the user adoption token to the org and generate a new token for the user', async () => {
+	it('should move the probes, add the adoption token and GitHub ID to the org, and generate a new token for the user', async () => {
 		expect(await transferProbes(TRANSFER, trx)).to.deep.equal({ probes: 1 });
 
 		expect(updates.gp_probes).to.deep.equal([{ account_id: 'org-account' }]);
-		expect(raw.firstCall.args[1]).to.deep.equal({ username: 'alice', token: 'old-token', org: 'org-1' });
+		expect(raw.firstCall.args[1]).to.deep.equal({ username: 'alice', githubId: '12345678', token: 'old-token', org: 'org-1' });
 		expect((updates.directus_users?.[0] as { adoption_token: string }).adoption_token).to.have.length(32);
 		expect((updates.directus_users?.[0] as { adoption_token: string }).adoption_token).to.not.equal('old-token');
 	});
