@@ -10,15 +10,12 @@ type User = {
 	public_probes: boolean;
 };
 
-export const releaseDeprecatedPrefix = async (name: string, context: ApiExtensionContext) => {
-	const { services, database, getSchema } = context;
-	const { UsersService } = services;
-	const usersService = new UsersService({ schema: await getSchema() });
+export const releaseDeprecatedPrefix = async (name: string, context: ApiExtensionContext, trx: ApiExtensionContext['database'] = context.database) => {
+	const { services, getSchema } = context;
+	const usersService = new services.UsersService({ schema: await getSchema(), knex: trx });
 
-	await Promise.all([
-		usersService.updateByQuery({ filter: { deprecated_prefix: { _eq: name } } }, { deprecated_prefix: null }),
-		database('gp_orgs').where({ deprecated_prefix: name }).update({ deprecated_prefix: null }),
-	]);
+	await usersService.updateByQuery({ filter: { deprecated_prefix: { _eq: name } } }, { deprecated_prefix: null });
+	await trx('gp_orgs').where({ deprecated_prefix: name }).update({ deprecated_prefix: null });
 };
 
 const getOrgNames = async (userId: string, { database }: ApiExtensionContext): Promise<string[]> => {

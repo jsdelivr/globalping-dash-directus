@@ -58,32 +58,37 @@ const createOrgs = async (githubOrgs: GithubOrganization[], context: ApiExtensio
 };
 
 const createOrg = async (githubOrg: GithubOrganization, context: ApiExtensionContext): Promise<Org> => {
-	const { services, getSchema } = context;
-	const orgsService = new services.ItemsService('gp_orgs', { schema: await getSchema() });
+	const { services, getSchema, database } = context;
+	const schema = await getSchema();
 
 	try {
-		const id = await orgsService.createOne({
-			name: githubOrg.login,
-			github_id: githubOrg.githubId,
-			adoption_token: await generateBytes(),
-		}) as string;
-		// Org credits are assigned to the org by a trigger.
+		return await database.transaction(async (trx) => {
+			const orgsService = new services.ItemsService('gp_orgs', { schema, knex: trx });
 
-		await releaseDeprecatedPrefix(githubOrg.login, context);
+			const id = await orgsService.createOne({
+				name: githubOrg.login,
+				github_id: githubOrg.githubId,
+				adoption_token: await generateBytes(),
+			}) as string;
+			// Org credits are assigned to the org by a trigger.
 
-		return { id, name: githubOrg.login, github_id: githubOrg.githubId, default_role: 'member', public_probes: false };
+			await releaseDeprecatedPrefix(githubOrg.login, context, trx);
+
+			return { id, name: githubOrg.login, github_id: githubOrg.githubId, default_role: 'member', public_probes: false };
+		});
 	} catch (error) {
 		// A concurrent sync of another member may create the org first; the loser then reads the winner's row.
 		if (!isDirectusError(error, ErrorCode.RecordNotUnique)) {
 			throw error;
 		}
 
+		const orgsService = new services.ItemsService('gp_orgs', { schema });
 		const [ org ] = await orgsService.readByQuery({ filter: { github_id: { _eq: githubOrg.githubId } } }) as Org[];
 		return org!;
 	}
 };
 
-const renameOrg = async (org: Org, name: string, context: ApiExtensionContext) => {
+export const renameOrg = async (org: Pick<Org, 'id' | 'name' | 'public_probes'>, name: string, context: ApiExtensionContext) => {
 	await context.database.transaction(async (trx) => {
 		const changed = await trx('gp_orgs')
 			.where({ id: org.id, name: org.name })
@@ -93,12 +98,12 @@ const renameOrg = async (org: Org, name: string, context: ApiExtensionContext) =
 		if (changed && org.public_probes) {
 			await sendOrgTagChangeNotification(org, name, context, trx);
 		}
-	});
 
-	await releaseDeprecatedPrefix(name, context);
+		await releaseDeprecatedPrefix(name, context, trx);
+	});
 };
 
-const sendOrgTagChangeNotification = async (org: Org, name: string, context: ApiExtensionContext, trx: ApiExtensionContext['database']) => {
+const sendOrgTagChangeNotification = async (org: Pick<Org, 'id' | 'name'>, name: string, context: ApiExtensionContext, trx: ApiExtensionContext['database']) => {
 	const account = await trx('gp_accounts').where({ org: org.id }).first<{ id: string }>('id');
 	const defaultTagChangeLink = getLinkGenerator(context).generateDefaultTagChangeLink({ orgId: org.id });
 

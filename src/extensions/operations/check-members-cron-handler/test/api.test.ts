@@ -33,17 +33,17 @@ describe('Check org members CRON handler', () => {
 
 	const database = sinon.stub().returns(query) as any;
 	const userRow = sinon.stub();
-	const userQuery = { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: userRow };
+	const orgUpdate = sinon.stub().resolves(1);
+	const userQuery = { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: userRow, update: orgUpdate };
 	const trx = sinon.stub().returns(userQuery);
 	database.transaction = (callback: (trx: unknown) => unknown) => callback(trx);
 
 	const deleteMany = sinon.stub().resolves([]);
 	const readMany = sinon.stub().resolves([]);
 	const updateOne = sinon.stub().resolves();
-	const orgUpdateOne = sinon.stub().resolves();
 	const services = {
-		ItemsService: sinon.stub().returns({ deleteMany, readMany, updateOne: orgUpdateOne }),
-		UsersService: sinon.stub().returns({ updateOne }),
+		ItemsService: sinon.stub().returns({ deleteMany, readMany }),
+		UsersService: sinon.stub().returns({ updateOne, updateByQuery: sinon.stub().resolves() }),
 	} as any;
 
 	const context = { data, database, env, getSchema, services, logger, accountability };
@@ -319,7 +319,8 @@ describe('Check org members CRON handler', () => {
 
 		const result = await operationApi.handler({}, context as any);
 
-		expect(orgUpdateOne.args[0]).to.deep.equal([ org.orgId, { name: 'jsdelivr-renamed' }]);
+		expect(userQuery.where.args).to.deep.include([{ id: org.orgId, name: org.orgName }]);
+		expect(orgUpdate.args[0]).to.deep.equal([{ name: 'jsdelivr-renamed' }]);
 		expect(deleteMany.args[0]![0]).to.deep.equal([ 'membership-2' ]);
 		expect(result).to.equal('Checked 1 orgs. Removed memberships: [membership-2]. Errors: [].');
 	});
@@ -331,7 +332,7 @@ describe('Check org members CRON handler', () => {
 
 		await operationApi.handler({}, context as any);
 
-		expect(orgUpdateOne.callCount).to.equal(0);
+		expect(orgUpdate.callCount).to.equal(0);
 		expect(deleteMany.args[0]).to.deep.equal([ [ 'membership-2' ] ]);
 	});
 

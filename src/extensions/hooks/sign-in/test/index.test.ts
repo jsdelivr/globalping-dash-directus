@@ -39,7 +39,7 @@ describe('Sign-in hook', () => {
 	const query = { join: () => query, where: () => query, select: orgNames, update: async () => 0 };
 	const database = Object.assign(() => query, {
 		raw: rawStub,
-		transaction: async (callback: (trx: unknown) => unknown) => callback({}),
+		transaction: async (callback: (trx: unknown) => unknown) => callback(database),
 	});
 	const context = {
 		services: {

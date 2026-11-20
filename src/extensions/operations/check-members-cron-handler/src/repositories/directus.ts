@@ -11,8 +11,9 @@ type Row = {
 	orgId: string;
 	orgName: string;
 	orgGithubId: string;
+	orgPublicProbes: number;
 	membershipId: string;
-	githubId: string | null;
+	githubId: string;
 	githubUsername: string | null;
 	githubOauthToken: string | null;
 };
@@ -26,6 +27,7 @@ export const getOrgsToCheck = async ({ database }: OperationContext): Promise<Or
 			orgId: 'o.id',
 			orgName: 'o.name',
 			orgGithubId: 'o.github_id',
+			orgPublicProbes: 'o.public_probes',
 			membershipId: 'm.id',
 			githubId: 'u.external_identifier',
 			githubUsername: 'u.github_username',
@@ -35,18 +37,12 @@ export const getOrgsToCheck = async ({ database }: OperationContext): Promise<Or
 	const orgs = new Map<string, Org>();
 
 	for (const row of rows) {
-		const org: Org = orgs.get(row.orgId) ?? { id: row.orgId, name: row.orgName, githubId: row.orgGithubId, members: [] };
+		const org: Org = orgs.get(row.orgId) ?? { id: row.orgId, name: row.orgName, githubId: row.orgGithubId, publicProbes: Boolean(row.orgPublicProbes), members: [] };
 		org.members.push({ membershipId: row.membershipId, githubId: row.githubId, githubUsername: row.githubUsername, githubOauthToken: row.githubOauthToken });
 		orgs.set(row.orgId, org);
 	}
 
 	return [ ...orgs.values() ];
-};
-
-export const renameOrg = async (orgId: string, name: string, { services, getSchema }: OperationContext) => {
-	const { ItemsService } = services;
-	const orgsService = new ItemsService('gp_orgs', { schema: await getSchema() });
-	await orgsService.updateOne(orgId, { name });
 };
 
 export const removeMemberships = async (membershipIds: string[], context: OperationContext) => {
