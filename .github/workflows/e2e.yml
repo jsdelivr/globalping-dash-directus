@@ -37,6 +37,7 @@ jobs:
       - name: Build dashboard repo
         env:
             CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
+            BASE_BRANCH: ${{ github.base_ref }}
         run: |
           pnpm run test:e2e:build:dash
       - name: Run tests
