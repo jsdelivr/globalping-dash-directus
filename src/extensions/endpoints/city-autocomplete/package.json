@@ -20,7 +20,7 @@
 	},
 	"scripts": {
 		"download:files": "tsx src/download.ts",
-		"build": "pnpm run download:files && directus-extension build",
+		"build": "pnpm run download:files && directus-extension build --no-minify",
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
 		"validate": "directus-extension validate",
