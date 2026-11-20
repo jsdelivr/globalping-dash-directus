@@ -20,14 +20,16 @@ const validateRequest = (schema: Joi.ObjectSchema, req: Request, res: Response) 
 	return true;
 };
 
-const hasAccountId = (schema: Joi.ObjectSchema) => {
+const getAccountIdSource = (schema: Joi.ObjectSchema) => {
 	const { keys } = schema.describe();
-	return !!(keys.body?.keys?.accountId || keys.query?.keys?.accountId);
+	return ([ 'body', 'query' ] as const).find(source => keys[source]?.keys?.accountId);
 };
 
 // A schema with `accountId` must say which org roles may act on the account.
 export const validate = (schema: Joi.ObjectSchema, rolesPermissions?: RolesPermissions) => {
-	if (hasAccountId(schema) !== !!rolesPermissions) {
+	const accountIdSource = getAccountIdSource(schema);
+
+	if (!!accountIdSource !== !!rolesPermissions) {
 		throw new Error('Pass `rolesPermissions` for a schema with `accountId`, and only for it.');
 	}
 
@@ -40,7 +42,7 @@ export const validate = (schema: Joi.ObjectSchema, rolesPermissions?: RolesPermi
 	return asyncWrapper(async (req, res, next) => {
 		if (!validateRequest(schema, req, res)) { return; }
 
-		await validateAccountId(req.body.accountId ?? req.query.accountId, (req as AccountRequest).accountability, rolesPermissions.context, rolesPermissions.roles);
+		await validateAccountId(req[accountIdSource!].accountId, (req as AccountRequest).accountability, rolesPermissions.context, rolesPermissions.roles);
 		next();
 	}, rolesPermissions.context);
 };

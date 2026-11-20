@@ -24,6 +24,11 @@ const storedFor = async (appId: string) => {
 	return { approvals: owners(approvals), tokens: owners(tokens) };
 };
 
+test('the account in the query is the one that is checked, a body value does not stand in for it', async ({ org, actors }) => {
+	const response = await actors.member.get('/applications?accountId=all&limit=100', { data: { accountId: org.account_id } });
+	expect(response.status).toBe(400);
+});
+
 test('applications are listed per creator, and a Directus admin has to name the creator', async ({ org, actors }) => {
 	const app = await addApplication({ accountId: org.account_id, userId: org.admin.id });
 	await addApplication({ accountId: org.account_id, userId: org.member.id, appId: app });
