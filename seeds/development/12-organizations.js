@@ -165,12 +165,11 @@ export const seed = async (knex) => {
 	}
 
 	for (const username of [ 'john', 'teammate' ]) {
-		const user = await knex('directus_users').where({ github_username: username }).first('id', 'github_organizations');
+		const user = await knex('directus_users').where({ github_username: username }).first('id');
 		const account = await knex('gp_accounts').where({ user: user.id }).first('id');
 		const orgs = await knex('gp_org_members').join('gp_orgs', 'gp_orgs.id', 'gp_org_members.org').where({ user: user.id }).select('gp_orgs.id', 'gp_orgs.name');
 
 		await knex('directus_users').where({ id: user.id }).update({
-			github_organizations: JSON.stringify([ ...new Set([ ...JSON.parse(user.github_organizations), ...orgs.map(org => org.name) ]) ]),
 			selected_orgs: JSON.stringify(orgs.filter(org => org.name !== 'unclaimed-org').map(org => org.id)),
 			default_account: account.id,
 		});
