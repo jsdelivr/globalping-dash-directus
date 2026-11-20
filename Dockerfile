@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22-alpine AS dependencies
 
 RUN corepack enable
 WORKDIR /builder
@@ -55,9 +55,13 @@ COPY src/extensions/operations/sponsors-cron-handler/package.json src/extensions
 # END: EXTENSIONS-BUILD-BLOCK
 
 RUN pnpm install --frozen-lockfile
-COPY src src
-RUN pnpm -r build
+
+FROM dependencies AS apm
 RUN pnpm --filter elastic-apm deploy --prod --legacy /apm-deploy
+
+FROM dependencies AS builder
+COPY src src
+RUN pnpm -r --workspace-concurrency=8 build
 
 # Gathering all extensions into one folder to copy in a single COPY command.
 RUN set -eux; \
@@ -77,7 +81,7 @@ RUN apk add --no-cache curl
 USER node
 
 ENV ELASTIC_APM_CONFIG_FILE=/directus/apm/elastic-apm-node.cjs
-COPY --from=builder /apm-deploy/node_modules /directus/apm/node_modules
+COPY --from=apm /apm-deploy/node_modules /directus/apm/node_modules
 COPY src/extensions/hooks/elastic-apm/apm/ /directus/apm/
 ENV NODE_OPTIONS="--experimental-loader /directus/apm/node_modules/elastic-apm-node/loader.mjs -r /directus/apm/node_modules/elastic-apm-node/start.js -r /directus/apm/elastic-apm-filters.cjs"
 COPY --from=builder /out/extensions /directus/extensions
