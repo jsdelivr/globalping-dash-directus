@@ -85,7 +85,6 @@ export const seed = async (knex) => {
 					provider: 'default',
 					external_identifier: member.external_identifier,
 					email_notifications: 0,
-					github_organizations: JSON.stringify([ name ]),
 					github_username: username,
 					token: `${username}token0000000000000000000000`,
 					adoption_token: `${username}adoptiontoken000000000000000`,
@@ -111,11 +110,11 @@ export const seed = async (knex) => {
 			// John keeps his existing personal data. Only the new teammate needs personal items.
 			// Org items are created for every admin/member of a populated org, including reused users.
 			const itemSets = [
-				...member.external_identifier ? [{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), probeUserId: userId, accountId: personalAccount.id, app: authCodeApp, systemTags: [] }] : [],
-				...populated && role !== 'viewer' ? [{ suffix: `-${name}`, ip: member.ip, probeUserId: null, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
+				...member.external_identifier ? [{ suffix: '', ip: member.ip.replace('192.0.2.', '198.51.100.'), accountId: personalAccount.id, app: authCodeApp, systemTags: [] }] : [],
+				...populated && role !== 'viewer' ? [{ suffix: `-${name}`, ip: member.ip, accountId: orgAccount.id, app: discordApp, systemTags: org.public_probes ? [ `u-${name}` ] : [] }] : [],
 			];
 
-			for (const { suffix, ip, probeUserId, accountId, app, systemTags } of itemSets) {
+			for (const { suffix, ip, accountId, app, systemTags } of itemSets) {
 				await knex('gp_probes').insert({
 					id: randomUUID(),
 					uuid: randomUUID(),
@@ -137,7 +136,6 @@ export const seed = async (knex) => {
 					lastSyncDate: new Date(),
 					tags: '[]',
 					systemTags: JSON.stringify(systemTags),
-					userId: probeUserId,
 					account_id: accountId,
 				});
 
@@ -152,7 +150,6 @@ export const seed = async (knex) => {
 
 				await knex('gp_apps_approvals').insert({
 					id: randomUUID(),
-					user: userId,
 					user_created: userId,
 					account_id: accountId,
 					app: app.id,
@@ -168,12 +165,11 @@ export const seed = async (knex) => {
 	}
 
 	for (const username of [ 'john', 'teammate' ]) {
-		const user = await knex('directus_users').where({ github_username: username }).first('id', 'github_organizations');
+		const user = await knex('directus_users').where({ github_username: username }).first('id');
 		const account = await knex('gp_accounts').where({ user: user.id }).first('id');
 		const orgs = await knex('gp_org_members').join('gp_orgs', 'gp_orgs.id', 'gp_org_members.org').where({ user: user.id }).select('gp_orgs.id', 'gp_orgs.name');
 
 		await knex('directus_users').where({ id: user.id }).update({
-			github_organizations: JSON.stringify([ ...new Set([ ...JSON.parse(user.github_organizations), ...orgs.map(org => org.name) ]) ]),
 			selected_orgs: JSON.stringify(orgs.filter(org => org.name !== 'unclaimed-org').map(org => org.id)),
 			default_account: account.id,
 		});

@@ -31,7 +31,6 @@ const addData = async (user: User) => {
 		status: 'ready',
 		tags: JSON.stringify([{ value: 'tag-1', prefix: user.github_username }]),
 		systemTags: JSON.stringify([ 'datacenter-network' ]),
-		userId: user.id,
 		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
@@ -67,7 +66,6 @@ const addData = async (user: User) => {
 		state: null,
 		status: 'offline',
 		tags: '[]',
-		userId: user.id,
 		account_id: user.account_id,
 		uuid: randomUUID(),
 		version: '0.28.0',
@@ -103,7 +101,7 @@ const addData = async (user: User) => {
 		}),
 	})) ]);
 
-	await sql('gp_credits').where({ user_id: user.id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
+	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: sql.raw('amount - ?', [ 1000 ]) });
 };
 
 test('Index page', async ({ page, user }) => {

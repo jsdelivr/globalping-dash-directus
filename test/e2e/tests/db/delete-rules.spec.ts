@@ -40,8 +40,8 @@ test.afterEach(async () => {
 test('Deleting a user removes their account and everything that hangs on it', async () => {
 	const user = await generateUser('Deleted');
 	const tokenId = await addToken(user.id, user.account_id);
-	await sql('gp_credits').insert({ account_id: user.account_id, user_id: user.id, amount: 1000 });
-	const probeId = await addProbe({ account_id: user.account_id, userId: user.id });
+	await sql('gp_credits').insert({ account_id: user.account_id, amount: 1000 });
+	const probeId = await addProbe({ account_id: user.account_id });
 	probeIds.push(probeId);
 
 	await sql('directus_users').where({ id: user.id }).delete();
@@ -51,8 +51,7 @@ test('Deleting a user removes their account and everything that hangs on it', as
 	expect(await sql('gp_credits').where({ account_id: user.account_id }).first('id')).toBeUndefined();
 
 	// The probe itself outlives its owner, it just becomes unassigned.
-	const probe = await sql('gp_probes').where({ id: probeId }).first('userId', 'account_id');
-	expect(probe.userId).toBe(null);
+	const probe = await sql('gp_probes').where({ id: probeId }).first('account_id');
 	expect(probe.account_id).toBe(null);
 });
 

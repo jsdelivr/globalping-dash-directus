@@ -22,7 +22,6 @@ test('Local adoption endpoint adopts probe', async ({ user }) => {
 
 	await sql('gp_probes').insert({
 		id: probeId,
-		userId: null,
 		ip: probeIp,
 		altIps: JSON.stringify([]),
 		uuid: probeUuid,
@@ -80,6 +79,7 @@ test('Local adoption endpoint adopts probe', async ({ user }) => {
 
 	const adoptRes = await axios.post(`${process.env.DIRECTUS_URL}/local-adoption/adopt`, {
 		token,
+		accountId: user.account_id,
 	}, {
 		headers: {
 			'Authorization': `Bearer ${accessToken}`,
@@ -90,5 +90,5 @@ test('Local adoption endpoint adopts probe', async ({ user }) => {
 	expect(adoptRes.status).toBe(200);
 
 	const adoptedProbe = await sql('gp_probes').where({ id: probeId }).first();
-	expect(adoptedProbe.userId).toBe(user.id);
+	expect(adoptedProbe.account_id).toBe(user.account_id);
 });

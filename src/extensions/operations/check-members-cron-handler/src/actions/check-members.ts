@@ -1,6 +1,7 @@
 import type { OperationContext } from '@directus/extensions';
 import Bluebird from 'bluebird';
-import { getOrgsToCheck, removeMemberships, renameOrg } from '../repositories/directus.js';
+import { renameOrg } from '../../../../lib/src/sync-orgs.js';
+import { getOrgsToCheck, removeMemberships } from '../repositories/directus.js';
 import { findLeftMemberships } from '../repositories/github.js';
 
 export const checkMembers = async (context: OperationContext) => {
@@ -13,7 +14,7 @@ export const checkMembers = async (context: OperationContext) => {
 			const { left, orgName } = await findLeftMemberships(org, context);
 
 			if (orgName && orgName !== org.name) {
-				await renameOrg(org.id, orgName, context);
+				await renameOrg({ id: org.id, name: org.name, public_probes: org.publicProbes }, orgName, context);
 			}
 
 			await removeMemberships(left, context);

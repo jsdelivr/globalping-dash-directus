@@ -14,6 +14,7 @@ const addToken = async (user: User) => {
 		expire: null,
 		origins: '["https://globalping.io"]',
 		user_created: user.id,
+		account_id: user.account_id,
 		user_updated: null,
 	});
 };
@@ -33,7 +34,8 @@ const addApplication = async (user: User) => {
 
 	await sql('gp_apps_approvals').insert([{
 		id: randomUUID(),
-		user: user.id,
+		user_created: user.id,
+		account_id: user.account_id,
 		app: appId,
 		scopes: JSON.stringify([ 'measurements' ]),
 	}]);
@@ -46,6 +48,7 @@ const addApplication = async (user: User) => {
 		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
+		account_id: user.account_id,
 		user_updated: null,
 		value: randomToken(),
 		app_id: appId,
@@ -62,6 +65,7 @@ const addApplication = async (user: User) => {
 		name: 'For Auth Code App',
 		origins: '[]',
 		user_created: user.id,
+		account_id: user.account_id,
 		user_updated: null,
 		value: randomToken(),
 		app_id: appId,

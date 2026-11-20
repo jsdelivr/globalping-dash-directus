@@ -5,7 +5,6 @@ import { User } from '../../types.ts';
 
 const addCredits = async (user: User, amount: number, notifiedUsers: string[] = []) => {
 	await sql('gp_credits').insert({
-		user_id: user.id,
 		account_id: user.account_id,
 		amount,
 		low_credits_notified: JSON.stringify(notifiedUsers),
@@ -13,7 +12,7 @@ const addCredits = async (user: User, amount: number, notifiedUsers: string[] = 
 };
 
 const getNotifiedUsers = async (user: User) => {
-	const credits = await sql('gp_credits').where({ user_id: user.id }).select('low_credits_notified').first();
+	const credits = await sql('gp_credits').where({ account_id: user.account_id }).select('low_credits_notified').first();
 	return JSON.parse(credits.low_credits_notified) as string[];
 };
 
@@ -108,7 +107,7 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 		}),
 	});
 
-	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 10000 });
+	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: 10000 });
 	await trigger(FLOW.lowCredits);
 
 	notifications = await sql('directus_notifications')
@@ -125,7 +124,7 @@ test('resets the flag while disabled, then notifies again after re-enabling', as
 		}),
 	});
 
-	await sql('gp_credits').where({ user_id: user.id }).update({ amount: 100 });
+	await sql('gp_credits').where({ account_id: user.account_id }).update({ amount: 100 });
 
 	await trigger(FLOW.lowCredits);
 

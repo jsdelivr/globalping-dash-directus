@@ -10,7 +10,6 @@ export type User = {
 	password: string;
 	provider: string;
 	email_notifications: number;
-	github_organizations: string;
 	github_username: string;
 	user_type: string;
 	adoption_token: string;

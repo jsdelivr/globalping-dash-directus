@@ -44,7 +44,7 @@ test('org credits are readable by every member of that org and by nobody else', 
 });
 
 test('personal credits are readable by their owner only', async ({ org, actors }) => {
-	await sql('gp_credits').insert({ account_id: org.member.account_id, user_id: org.member.id, amount: 4321 });
+	await sql('gp_credits').insert({ account_id: org.member.account_id, amount: 4321 });
 
 	for (const api of [ actors.member, actors.directusAdmin ]) {
 		expect(await countAccountItems(api, 'gp_credits', org.member.account_id)).toBe(1);
@@ -125,12 +125,12 @@ test('the credits page shows the org credits and history to every role in the or
 	// Credit additions are also added to the account total, by a database trigger.
 	await sql('gp_credits').insert([
 		{ account_id: org.account_id, amount: 1234 },
-		{ account_id: org.member.account_id, user_id: org.member.id, amount: 4321 },
+		{ account_id: org.member.account_id, amount: 4321 },
 	]);
 
 	await sql('gp_credits_deductions').insert([
 		{ account_id: org.account_id, amount: 111, date: recentDay.toISOString().split('T')[0] },
-		{ account_id: org.member.account_id, user_id: org.member.id, amount: 222, date: recentDay.toISOString().split('T')[0] },
+		{ account_id: org.member.account_id, amount: 222, date: recentDay.toISOString().split('T')[0] },
 	]);
 
 	await sql('gp_credits_additions').insert([

@@ -17,7 +17,20 @@ describe('/sync-github-data endpoint', () => {
 	const itemsUpdateOne = sinon.stub();
 	const deleteMany = sinon.stub();
 	const userRow = sinon.stub();
-	const trx = sinon.stub().returns({ where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: userRow });
+	const orgsWhere = sinon.stub().returnsThis();
+	const orgsUpdate = sinon.stub();
+	const orgNames = sinon.stub();
+	const tables: Record<string, unknown> = {
+		directus_users: { where: sinon.stub().returnsThis(), forUpdate: sinon.stub().returnsThis(), first: userRow },
+		gp_orgs: { where: orgsWhere, update: orgsUpdate },
+		gp_org_members: { join: sinon.stub().returnsThis(), where: sinon.stub().returnsThis(), select: orgNames },
+		gp_accounts: { where: sinon.stub().returnsThis(), first: sinon.stub().resolves({ id: 'org-account-1' }) },
+	};
+	const database = Object.assign((table: string) => tables[table], {
+		transaction: async (callback: (trx: unknown) => unknown) => callback(database),
+	});
+	// Each gp_orgs update as [where, data].
+	const orgUpdates = () => orgsUpdate.args.map((args, i) => [ orgsWhere.args[i]?.[0], args[0] ]);
 	const itemsServiceStub = sinon.stub().returns({
 		readOne,
 		readByQuery,
@@ -47,9 +60,7 @@ describe('/sync-github-data endpoint', () => {
 			UsersService: usersServiceStub,
 			NotificationsService: notificationsServiceStub,
 		},
-		database: {
-			transaction: async (callback: (trx: unknown) => unknown) => callback(trx),
-		},
+		database,
 		getSchema: sinon.stub().resolves({}),
 	} as unknown as EndpointExtensionContext;
 
@@ -88,12 +99,13 @@ describe('/sync-github-data endpoint', () => {
 		itemsCreateOne.resolves('created-id');
 		deleteMany.resolves();
 		userRow.resolves({ selected_orgs: null });
+		orgsUpdate.resolves(1);
+		orgNames.resolves([]);
 
 		readOne.resolves({
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
-			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
 		});
 
@@ -120,7 +132,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(res.body).to.deep.equal({
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		});
 
 		expect(readOne.callCount).to.equal(1);
@@ -128,7 +139,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(updateOne.args[0]?.[1]).to.deep.equal({
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		});
 	});
 
@@ -154,7 +164,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(res.body).to.deep.equal({
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		});
 
 		expect(readOne.callCount).to.equal(1);
@@ -162,7 +171,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(updateOne.args[0]?.[1]).to.deep.equal({
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		});
 	});
 
@@ -178,7 +186,6 @@ describe('/sync-github-data endpoint', () => {
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: null,
-			github_organizations: [],
 			github_oauth_token: 'user-github-token',
 		});
 
@@ -191,7 +198,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(res.body).to.deep.equal({
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		});
 
 		expect(readOne.callCount).to.equal(1);
@@ -199,7 +205,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(updateOne.args[0]?.[1]).to.deep.equal({
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		});
 	});
 
@@ -229,6 +234,11 @@ describe('/sync-github-data endpoint', () => {
 
 		const createdOrgs = () => itemsCreateOne.args.map(args => args[0]).filter((payload: any) => payload.github_id);
 
+		const expectReleased = (name: string) => {
+			expect(updateByQuery.args).to.deep.include([{ filter: { deprecated_prefix: { _eq: name } } }, { deprecated_prefix: null }]);
+			expect(orgUpdates()).to.deep.include([{ deprecated_prefix: name }, { deprecated_prefix: null }]);
+		};
+
 		it('should create the org and the membership for a new org', async () => {
 			seedDirectus({});
 			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
@@ -238,6 +248,7 @@ describe('/sync-github-data endpoint', () => {
 
 			expect(createdOrgs()[0]).to.deep.include({ name: 'jsdelivr', github_id: '1' });
 			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'admin' });
+			expectReleased('jsdelivr');
 		});
 
 		it('should promote a member to admin', async () => {
@@ -310,7 +321,6 @@ describe('/sync-github-data endpoint', () => {
 
 			expect(createdOrgs()[0]).to.deep.include({ name: 'restricted-org', github_id: '5' });
 			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'member' });
-			expect(res.body.github_organizations).to.deep.equal([ 'restricted-org' ]);
 		});
 
 		it('should prefer the membership role over the public list', async () => {
@@ -330,11 +340,9 @@ describe('/sync-github-data endpoint', () => {
 			seedDirectus({});
 			seedGithub([{ state: 'pending', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
 
-			const res = await sync();
-			expect(res.status).to.equal(200);
+			expect((await sync()).status).to.equal(200);
 
 			expect(itemsCreateOne.callCount).to.equal(0);
-			expect(res.body.github_organizations).to.deep.equal([]);
 		});
 
 		it('should treat a billing manager as a member', async () => {
@@ -346,17 +354,54 @@ describe('/sync-github-data endpoint', () => {
 			expect(createdMemberships()[0]).to.deep.equal({ org: 'created-id', user: 'directus-id', role: 'member' });
 		});
 
-		it('should update the org name when it changed on GitHub', async () => {
+		const seedRenamedOrg = (publicProbes: boolean) => {
 			seedDirectus({
-				orgs: [{ id: 'org-1', name: 'old-name', github_id: '1' }],
+				orgs: [{ id: 'org-1', name: 'old-name', github_id: '1', public_probes: publicProbes }],
 				memberships: [{ id: 'membership-1', role: 'admin', org: { id: 'org-1', github_id: '1' } }],
 			});
 
 			seedGithub([{ state: 'active', role: 'admin', organization: { id: 1, login: 'jsdelivr' } }]);
+		};
+
+		it('should rename the org and keep the old tag of an org with public probes until it is confirmed', async () => {
+			seedRenamedOrg(true);
 
 			expect((await sync()).status).to.equal(200);
 
-			expect(itemsUpdateOne.args[0]).to.deep.equal([ 'org-1', { name: 'jsdelivr' }]);
+			expect(orgUpdates()).to.deep.include([{ id: 'org-1', name: 'old-name' }, { name: 'jsdelivr', deprecated_prefix: 'old-name' }]);
+			expectReleased('jsdelivr');
+
+			const notification = createNotification.args[0]?.[0];
+			const link = notification.message.match(/\((https:\/\/dash\.globalping\.io\/default-tag\/confirm\?[^)]+)\)/)[1];
+
+			expect(notification).to.deep.equal({
+				account_id: 'org-account-1',
+				type: 'default_tag_change',
+				subject: 'Action required: Confirm the default probe tag of your organization',
+				message: `The default tag of your organization **jsdelivr** has changed from **u-old-name** to **u-jsdelivr**.\n\nThe old **u-old-name** tag keeps working until you [confirm the new one](${link}).`,
+			});
+
+			const data = new URL(link).searchParams.get('data')!;
+			expect(getLinkGenerator(endpointContext).verifyToken(data, 'default-tag-change')).to.include({ orgId: 'org-1' });
+		});
+
+		it('should rename the org without keeping the old tag of an org without public probes', async () => {
+			seedRenamedOrg(false);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(orgUpdates()).to.deep.include([{ id: 'org-1', name: 'old-name' }, { name: 'jsdelivr' }]);
+			expectReleased('jsdelivr');
+			expect(createNotification.args).to.deep.equal([]);
+		});
+
+		it('should not notify when another sync already renamed the org', async () => {
+			seedRenamedOrg(true);
+			orgsUpdate.resolves(0);
+
+			expect((await sync()).status).to.equal(200);
+
+			expect(createNotification.args).to.deep.equal([]);
 		});
 
 		it('should follow the Link pagination to read every membership page', async () => {
@@ -381,7 +426,6 @@ describe('/sync-github-data endpoint', () => {
 
 			expect(nock.isDone()).to.equal(true);
 			expect(createdOrgs().map((org: any) => org.github_id)).to.have.members([ '1', '2' ]);
-			expect(res.body.github_organizations).to.deep.equal([ 'org-page-1', 'org-page-2' ]);
 		});
 	});
 
@@ -429,7 +473,6 @@ describe('/sync-github-data endpoint', () => {
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
-			github_organizations: [ 'old-org' ],
 			github_oauth_token: null,
 		});
 
@@ -463,7 +506,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(res.body).to.deep.equal({
 			github_username: 'old-username',
-			github_organizations: [ 'old-org' ],
 		});
 
 		expect(readOne.callCount).to.equal(1);
@@ -475,7 +517,6 @@ describe('/sync-github-data endpoint', () => {
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
-			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
 			default_prefix: 'old-username',
 			deprecated_prefix: null,
@@ -495,7 +536,6 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', {
 			github_username: 'new-username',
-			github_organizations: [ 'new-org' ],
 		}]);
 
 		expect(updateOne.args[1]).to.deep.equal([ 'directus-id', {
@@ -503,7 +543,7 @@ describe('/sync-github-data endpoint', () => {
 			deprecated_prefix: 'old-username',
 		}, { emitEvents: false }]);
 
-		expect(updateByQuery.args[0]).to.deep.equal([
+		expect(updateByQuery.args).to.deep.include([
 			{ filter: { deprecated_prefix: { _eq: 'new-username' } } },
 			{ deprecated_prefix: null },
 		]);
@@ -516,6 +556,7 @@ describe('/sync-github-data endpoint', () => {
 		});
 
 		expect(createNotification.args[0]?.[0].message).to.include('default-tag/confirm');
+		expect(createNotification.args[0]?.[0].message).to.not.include('settings');
 	});
 
 	it('should update an invalid default_prefix without moving it to deprecated_prefix for `public_probes: false`', async () => {
@@ -523,7 +564,6 @@ describe('/sync-github-data endpoint', () => {
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
-			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
 			default_prefix: 'old-username',
 			deprecated_prefix: null,
@@ -541,7 +581,7 @@ describe('/sync-github-data endpoint', () => {
 
 		expect(updateOne.callCount).to.equal(2);
 
-		expect(updateByQuery.args[0]).to.deep.equal([
+		expect(updateByQuery.args).to.deep.include([
 			{ filter: { deprecated_prefix: { _eq: 'new-username' } } },
 			{ deprecated_prefix: null },
 		]);
@@ -558,7 +598,6 @@ describe('/sync-github-data endpoint', () => {
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
-			github_organizations: [ 'old-org' ],
 			github_oauth_token: 'user-github-token',
 			default_prefix: 'old-username',
 			deprecated_prefix: null,
@@ -581,11 +620,12 @@ describe('/sync-github-data endpoint', () => {
 			id: 'directus-id',
 			external_identifier: '123456',
 			github_username: 'old-username',
-			github_organizations: [ 'my-org' ],
 			github_oauth_token: 'user-github-token',
 			default_prefix: 'my-org',
 			deprecated_prefix: null,
 		});
+
+		orgNames.resolves([{ name: 'my-org' }]);
 
 		nock('https://api.github.com').get('/user/123456').reply(200, { login: 'new-username' });
 		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, [{ state: 'active', role: 'member', organization: { id: 1, login: 'my-org' } }]);
@@ -596,25 +636,50 @@ describe('/sync-github-data endpoint', () => {
 		expect(nock.isDone()).to.equal(true);
 		expect(res.status).to.equal(200);
 
-		expect(updateOne.callCount).to.equal(1);
+		expect(updateOne.args).to.deep.equal([ [ 'directus-id', { github_username: 'new-username' }] ]);
+		expect(createNotification.args).to.deep.equal([]);
+	});
 
-		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', {
-			github_username: 'new-username',
-			github_organizations: [ 'my-org' ],
-		}]);
+	it('should reset a default_prefix of an org the user is no longer a member of', async () => {
+		readOne.resolves({
+			id: 'directus-id',
+			external_identifier: '123456',
+			github_username: 'old-username',
+			github_oauth_token: 'user-github-token',
+			default_prefix: 'left-org',
+			deprecated_prefix: null,
+			public_probes: false,
+		});
 
-		expect(updateByQuery.callCount).to.equal(0);
-		expect(createNotification.callCount).to.equal(0);
+		nock('https://api.github.com').get('/user/123456').reply(200, { login: 'old-username' });
+		nock('https://api.github.com').get('/user/memberships/orgs?per_page=100&page=1').reply(200, []);
+		nock('https://api.github.com').get('/user/123456/orgs?per_page=100&page=1').reply(200, []);
+
+		const res = await request(app).post('/').send({ userId: 'directus-id' });
+
+		expect(res.status).to.equal(200);
+		expect(updateOne.args).to.deep.equal([ [ 'directus-id', { default_prefix: 'old-username' }, { emitEvents: false }] ]);
 	});
 
 	it('should confirm the prefix update and clear deprecated_prefix', async () => {
-		const link = getLinkGenerator(endpointContext).generateDefaultTagChangeLink('directus-id');
+		const link = getLinkGenerator(endpointContext).generateDefaultTagChangeLink({ userId: 'directus-id' });
 		const data = new URL(link).searchParams.get('data')!;
 
 		const res = await request(app).post('/default-tag/confirm').query({ data });
 
 		expect(res.status).to.equal(200);
 		expect(updateOne.args[0]).to.deep.equal([ 'directus-id', { deprecated_prefix: null }]);
+	});
+
+	it('should confirm the org prefix update and clear the org deprecated_prefix', async () => {
+		const link = getLinkGenerator(endpointContext).generateDefaultTagChangeLink({ orgId: 'org-1' });
+		const data = new URL(link).searchParams.get('data')!;
+
+		const res = await request(app).post('/default-tag/confirm').query({ data });
+
+		expect(res.status).to.equal(200);
+		expect(orgUpdates()).to.deep.equal([ [{ id: 'org-1' }, { deprecated_prefix: null }] ]);
+		expect(updateOne.args).to.deep.equal([]);
 	});
 
 	it('should reject an invalid confirmation token', async () => {

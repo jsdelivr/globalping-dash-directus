@@ -128,6 +128,19 @@ test('the members cron checks a renamed org by its id and refreshes the stored n
 	expect(await sql('gp_tokens').where({ id: memberToken }).first('id')).toBeUndefined();
 });
 
+test('the members cron renames a public org like the sync does: the old tag stays until an org admin confirms', async ({ org }) => {
+	const newLogin = `${org.name}-renamed`;
+	await sql('gp_orgs').where({ id: org.id }).update({ public_probes: 1 });
+	// Org notifications reach only the admins who selected the org.
+	await selectOrgs(org.admin, [ org.id ]);
+	await prepareMockMember(org.admin, [{ id: Number(org.github_id), login: newLogin }]);
+
+	await trigger(FLOW.checkMembers);
+
+	expect(await sql('gp_orgs').where({ id: org.id }).first('name', 'deprecated_prefix')).toEqual({ name: newLogin, deprecated_prefix: org.name });
+	expect(await sql('directus_notifications').where({ type: 'default_tag_change', recipient: org.admin.id }).count({ count: '*' }).first()).toMatchObject({ count: 1 });
+});
+
 /*
  * An org that restricts our OAuth app answers 403 to every member's own membership check, so no member can be the
  * in-org checker. The cron must not give up on it - it falls back to the public org lists and still removes leavers.

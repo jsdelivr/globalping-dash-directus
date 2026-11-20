@@ -67,7 +67,7 @@ test('migration lists admin and member organizations independently of the accoun
 test('probes move into an org with no admin, the user becomes its admin and gets a new adoption token', async ({ browser, org }) => {
 	await demoteTheAdmin(org);
 	await sql('directus_users').where({ id: org.member.id }).update({ public_probes: true });
-	const probeId = await addProbe({ userId: org.member.id, account_id: org.member.account_id });
+	const probeId = await addProbe({ account_id: org.member.account_id });
 
 	const page = await settingsWithOrg(browser, org, org.member);
 	const dialog = await openMigration(page, org);
@@ -87,7 +87,7 @@ test('probes move into an org with no admin, the user becomes its admin and gets
 test('a member moving probes into an org with an admin is told inside the dialog what to do', async ({ browser, org }) => {
 	await sql('directus_users').where({ id: org.member.id }).update({ public_probes: true });
 	await sql('gp_orgs').where({ id: org.id }).update({ public_probes: true });
-	const probeId = await addProbe({ userId: org.member.id, account_id: org.member.account_id });
+	const probeId = await addProbe({ account_id: org.member.account_id });
 
 	const page = await actAsOrg(browser, org, org.member);
 	await page.goto('/settings');
@@ -101,7 +101,7 @@ test('a member moving probes into an org with an admin is told inside the dialog
 });
 
 test('an admin moving probes into their own org keeps their role and is not told they became an admin', async ({ browser, org }) => {
-	const probeId = await addProbe({ userId: org.admin.id, account_id: org.admin.account_id });
+	const probeId = await addProbe({ account_id: org.admin.account_id });
 
 	const page = await settingsWithOrg(browser, org, org.admin);
 	const dialog = await openMigration(page, org);

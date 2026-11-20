@@ -974,9 +974,6 @@ importers:
       joi:
         specifier: ^18.0.1
         version: 18.0.1
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       rate-limiter-flexible:
         specifier: ^8.0.1
         version: 8.0.1

@@ -9,9 +9,9 @@ export const seed = async (knex) => {
 	const account = await knex('gp_accounts').where({ user: user.id }).first('id');
 
 	const [ readyProbes, offlineProbes, outdatedProbes ] = await Promise.all([
-		knex('gp_probes').where({ userId: user.id, status: 'ready' }).select('id', 'name', 'ip').limit(7),
-		knex('gp_probes').where({ userId: user.id, status: 'offline' }).select('id', 'name', 'ip', 'lastSyncDate').limit(10),
-		knex('gp_probes').where({ userId: user.id, isOutdated: true }).select('id', 'name', 'ip', 'hardwareDevice'),
+		knex('gp_probes').where({ account_id: account.id, status: 'ready' }).select('id', 'name', 'ip').limit(7),
+		knex('gp_probes').where({ account_id: account.id, status: 'offline' }).select('id', 'name', 'ip', 'lastSyncDate').limit(10),
+		knex('gp_probes').where({ account_id: account.id, isOutdated: true }).select('id', 'name', 'ip', 'hardwareDevice'),
 	]);
 
 	// used to set status to archive on the last 40% of outdated probes

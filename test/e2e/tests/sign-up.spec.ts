@@ -31,11 +31,9 @@ const createGithubUser = async (githubId: string, token: string, login: string) 
 	return response.data.data.id as string;
 };
 
-const waitForCredits = async (userId: string) => {
+const waitForCredits = async (accountId: string) => {
 	for (let attempt = 0; attempt < 50; attempt++) {
-		// PHASE5: user_id is dropped, switch this poll to account_id. We poll the legacy column on purpose:
-		// user_id is always written, so a null account_id shows up as a clear assertion failure, not a timeout.
-		const row = await sql('gp_credits').where({ user_id: userId }).first('account_id', 'amount') as { account_id: string | null; amount: number } | undefined;
+		const row = await sql('gp_credits').where({ account_id: accountId }).first('amount') as { amount: number } | undefined;
 
 		if (row) {
 			return row;
@@ -44,7 +42,7 @@ const waitForCredits = async (userId: string) => {
 		await setTimeout(100);
 	}
 
-	throw new Error(`No gp_credits row for ${userId}.`);
+	throw new Error(`No gp_credits row for ${accountId}.`);
 };
 
 test('a new GitHub user gets their pending credits on the account', async () => {
@@ -65,12 +63,11 @@ test('a new GitHub user gets their pending credits on the account', async () => 
 
 	try {
 		const account = await sql('gp_accounts').where({ user: userId }).first('id') as { id: string };
-		const credits = await waitForCredits(userId);
+		const credits = await waitForCredits(account.id);
 
-		expect(credits.account_id).toBe(account.id);
 		expect(credits.amount).toBe(12345);
 	} finally {
-		await sql('gp_credits').where({ user_id: userId }).delete();
+		await sql('gp_credits').whereIn('account_id', sql('gp_accounts').where({ user: userId }).select('id')).delete();
 		await sql('gp_accounts').where({ user: userId }).delete();
 		await sql('gp_credits_additions').where({ github_id: githubId }).delete();
 		await sql('directus_users').where({ id: userId }).delete();

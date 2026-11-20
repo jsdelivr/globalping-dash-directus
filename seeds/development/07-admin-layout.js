@@ -20,7 +20,7 @@ export const seed = async (knex) => {
 	await knex('directus_presets').insert([{
 		user: admin.id,
 		collection: 'gp_probes',
-		layout_query: { tabular: { fields: [ 'id', 'userId.first_name', 'ip', 'city', 'country', 'name', 'status', 'onlineTimesToday' ] } },
+		layout_query: { tabular: { fields: [ 'id', 'account_id.user.first_name', 'ip', 'city', 'country', 'name', 'status', 'onlineTimesToday' ] } },
 		icon: 'bookmark',
 	},
 	{
@@ -32,7 +32,7 @@ export const seed = async (knex) => {
 	{
 		user: admin.id,
 		collection: 'gp_credits',
-		layout_query: { tabular: { fields: [ 'id', 'user_id.first_name', 'amount' ] } },
+		layout_query: { tabular: { fields: [ 'id', 'account_id.user.first_name', 'amount' ] } },
 		icon: 'bookmark',
 	},
 	{
@@ -44,7 +44,7 @@ export const seed = async (knex) => {
 	{
 		user: admin.id,
 		collection: 'gp_credits_deductions',
-		layout_query: { tabular: { fields: [ 'id', 'user_id.first_name', 'amount', 'date' ] } },
+		layout_query: { tabular: { fields: [ 'id', 'account_id.user.first_name', 'amount', 'date' ] } },
 		icon: 'bookmark',
 	},
 	{

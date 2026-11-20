@@ -35,17 +35,17 @@ export class LinkGenerator {
 		return `${this.getNormalizedDashUrl()}/settings`;
 	}
 
-	public generateDefaultTagChangeLink (userId: string): string {
+	public generateDefaultTagChangeLink (owner: { userId: string } | { orgId: string }): string {
 		const query = new URLSearchParams({
-			data: this.createToken({ userId }, 'default-tag-change'),
+			data: this.createToken(owner, 'default-tag-change'),
 		});
 		return `${this.getNormalizedDashUrl()}/default-tag/confirm?${query.toString()}`;
 	}
 
 	// TODO: `allowLegacyNoAudience` is only for legacy no-aud tokens, so previous email links still work. Should be removed after 01.07.2026.
-	public verifyToken (data: string, audience: Audience, allowLegacyNoAudience = false): { userId: string; type?: string } | null {
+	public verifyToken<Payload = { userId: string; type?: string }> (data: string, audience: Audience, allowLegacyNoAudience = false): Payload | null {
 		try {
-			const payload = jwt.verify(data, this.context.env.SECRET!, allowLegacyNoAudience ? {} : { audience }) as { userId: string; type?: string; aud?: string };
+			const payload = jwt.verify(data, this.context.env.SECRET!, allowLegacyNoAudience ? {} : { audience }) as Payload & { aud?: string };
 
 			if (!payload || typeof payload !== 'object') {
 				return null;

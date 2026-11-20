@@ -9,5 +9,6 @@ export type Org = {
 	id: string;
 	name: string;
 	githubId: string;
+	publicProbes: boolean;
 	members: OrgMember[];
 };
