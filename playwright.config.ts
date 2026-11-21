@@ -44,6 +44,7 @@ export default defineConfig({
 
 		{
 			name: 'generate',
+			default: false,
 			testMatch: generator,
 			dependencies: [ 'setup' ],
 		},
