@@ -1,3 +1,4 @@
+import { cpus } from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
@@ -5,14 +6,14 @@ dotenv.config({
 	path: './.env.scripts.e2e',
 });
 
-const sequential = /tests\/operations\/|@sequential/;
+const sequential = /tests[\\/]operations[\\/]|@sequential/;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
 	testDir: './test/e2e',
-	workers: '75%',
+	workers: Math.min(8, Math.max(1, Math.floor(cpus().length * 0.75))),
 	retries: process.env.CI ? 2 : 0,
 	use: {
 		...devices['Desktop Chrome'],
