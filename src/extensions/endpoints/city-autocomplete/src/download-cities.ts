@@ -44,7 +44,7 @@ type CityCsvRow = {
 const query = async (url: string): Promise<Buffer> => {
 	const result = await axios.get(url, {
 		responseType: 'arraybuffer',
-		timeout: 5000,
+		timeout: 60000,
 	});
 
 	return result.data;
