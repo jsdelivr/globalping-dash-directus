@@ -7,6 +7,7 @@ dotenv.config({
 });
 
 const sequential = /tests[\\/]operations[\\/]|@sequential/;
+const generator = '**/generate-test.spec.ts';
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -36,8 +37,15 @@ export default defineConfig({
 
 		{
 			name: 'parallel',
+			testIgnore: generator,
 			grepInvert: sequential,
 			dependencies: [ 'sequential' ],
+		},
+
+		{
+			name: 'generate',
+			testMatch: generator,
+			dependencies: [ 'setup' ],
 		},
 	],
 });
