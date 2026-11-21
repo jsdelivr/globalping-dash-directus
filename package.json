@@ -74,7 +74,7 @@
 		"test:e2e:build:directus": "docker compose -f docker-compose.e2e.yml up --build -d && pnpm run init:e2e && docker compose -f docker-compose.e2e.yml stop",
 		"test:e2e:build:dash": "./scripts/build-dash.sh",
 		"test:e2e:run": "pnpm exec playwright test --grep-invert='.*generate-test\\.spec\\.ts'",
-		"test:e2e:generate": "pnpm exec playwright test test/e2e/generate-test.spec.ts --headed"
+		"test:e2e:generate": "pnpm exec playwright test --project=generate --headed"
 	},
 	"repository": {
 		"type": "git",
