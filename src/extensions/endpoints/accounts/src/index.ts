@@ -49,3 +49,5 @@ export default defineEndpoint((router, context) => {
 		res.send({ accountId });
 	}, context));
 });
+
+// Exercise the build and test cache with a change in this extension.
