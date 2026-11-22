@@ -72,6 +72,15 @@ pnpm run seed:development
 
 This resets local application data and removes non-admin users, including accounts created through GitHub login. Use it only on a disposable development database.
 
+### Build and test caching
+
+Run `pnpm build` and `pnpm test` to reuse successful extension builds and unit tests locally. Use
+`pnpm -r build` or `pnpm -r test` to run the scripts directly.
+
+Docker stores extension build results in a BuildKit cache mount. GitHub Actions keeps separate
+caches for the regular CI job and the E2E image builder. When Turbo runs a build, it checks the
+GeoNames archive ETag before reusing generated city data.
+
 ## Prod first deploy
 
 1. copy `.env.scripts.development.example` to `.env.scripts.production` and fulfill all empty values except `ADMIN_ACCESS_TOKEN`.

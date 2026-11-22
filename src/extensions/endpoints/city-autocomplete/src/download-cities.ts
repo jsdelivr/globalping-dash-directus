@@ -6,8 +6,7 @@ import AdmZip from 'adm-zip';
 import axios from 'axios';
 import csvParser from 'csv-parser';
 import { normalizeCityName } from '../../../lib/src/normalize-city.js';
-
-const URL = 'https://download.geonames.org/export/dump/cities500.zip';
+import geonames from './geonames.json' with { type: 'json' };
 
 export const FILENAME = 'GEONAMES_CITIES.json';
 
@@ -41,18 +40,18 @@ type CityCsvRow = {
 	modificationDate: string;
 };
 
-const query = async (url: string): Promise<Buffer> => {
-	const result = await axios.get(url, {
+export const downloadCities = async (expectedEtag?: string): Promise<City[]> => {
+	const result = await axios.get<Buffer>(geonames.url, {
 		responseType: 'arraybuffer',
 		timeout: 60000,
+		headers: expectedEtag ? { 'If-Match': expectedEtag } : undefined,
 	});
 
-	return result.data;
-};
+	if (expectedEtag && result.headers.etag !== expectedEtag) {
+		throw new Error('GeoNames archive changed after cache validation');
+	}
 
-export const downloadCities = async (): Promise<City[]> => {
-	const response = await query(URL);
-	const zip = new AdmZip(response);
+	const zip = new AdmZip(result.data);
 	const buffer = zip.readFile('cities500.txt');
 	const stream = Readable.from([ buffer ]);
 
@@ -81,7 +80,7 @@ export const downloadCities = async (): Promise<City[]> => {
 	});
 };
 
-export const generateCitiesJsonFile = async (cities: City[]): Promise<void> => {
+export const getCitiesJson = (cities: City[]): string => {
 	const citiesOfCountries: Record<string, City[]> = {};
 	cities.sort((a, b) => b.population - a.population);
 
@@ -93,9 +92,13 @@ export const generateCitiesJsonFile = async (cities: City[]): Promise<void> => {
 		citiesOfCountries[city.country]!.push(city);
 	}
 
+	return JSON.stringify(citiesOfCountries, null, 2);
+};
+
+export const generateCitiesJsonFile = async (cities: City[]): Promise<void> => {
 	const __dirname = dirname(fileURLToPath(import.meta.url));
 	const dirPath = path.resolve(__dirname, '../data');
 	const filePath = path.resolve(dirPath, FILENAME);
 	await fs.promises.mkdir(dirPath, { recursive: true });
-	await fs.promises.writeFile(filePath, JSON.stringify(citiesOfCountries, null, 2));
+	await fs.promises.writeFile(filePath, getCitiesJson(cities));
 };

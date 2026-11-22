@@ -1,0 +1,59 @@
+{
+	"$schema": "https://turborepo.dev/schema.json",
+	"cacheMaxSize": "128MB",
+	"concurrency": "4",
+	"globalDependencies": [
+		"pnpm-lock.yaml",
+		"src/extensions/lib/src/**",
+		"src/extensions/lib/package.json",
+		"src/extensions/lib/tsconfig.json"
+	],
+	"globalEnv": [
+		"CI",
+		"NODE_ENV",
+		"NODE_OPTIONS",
+		"TURBO_RUNTIME"
+	],
+	"tasks": {
+		"build": {
+			"outputLogs": "new-only",
+			"outputs": [
+				"dist/**"
+			]
+		},
+		"lib#build": {},
+		"city-autocomplete#build": {
+			"outputLogs": "new-only",
+			"env": [
+				"GEONAMES_ETAG"
+			],
+			"passThroughEnv": [
+				"ALL_PROXY",
+				"all_proxy",
+				"HTTP_PROXY",
+				"http_proxy",
+				"HTTPS_PROXY",
+				"https_proxy",
+				"NO_PROXY",
+				"no_proxy",
+				"NPM_CONFIG_*PROXY",
+				"npm_config_*proxy",
+				"NODE_EXTRA_CA_CERTS",
+				"NODE_USE_SYSTEM_CA",
+				"SSL_CERT_DIR",
+				"SSL_CERT_FILE"
+			],
+			"outputs": [
+				"dist/**",
+				"data/**"
+			]
+		},
+		"test": {
+			"outputLogs": "new-only",
+			"env": [
+				"MOCHA_OPTIONS",
+				"TURBO_TEST_TIME_ZONE"
+			]
+		}
+	}
+}
