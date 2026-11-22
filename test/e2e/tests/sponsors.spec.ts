@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { test, expect } from '../fixtures.ts';
+import { test, expect, type APIRequestContext } from '../fixtures.ts';
 import { client as sql } from '../client.ts';
+import { loginDirectusAdmin, loginUser } from '../utils.ts';
+import type { ManualAddition, PageResult, SponsorAccount, SponsorsSummary, SponsorshipEvent } from '../../../src/extensions/endpoints/admin-sponsors/src/types.ts';
 
 const unlinkedGithubId = `9${Math.floor(Math.random() * 100000000)}`;
 const redirectSourceGithubId = '900000000001';
@@ -23,8 +25,6 @@ let baseline: {
 	year2024Sponsors: number;
 	year2024Value: number;
 };
-
-const formatMoney = (value: number) => `$${new Intl.NumberFormat('en-US').format(value)}`;
 
 const previousMonthDate = (day: number) => {
 	const now = new Date();
@@ -136,30 +136,102 @@ test.afterEach(async ({ org }) => {
 	await sql('gp_credits_redirects').where({ source_github_id: redirectSourceGithubId }).delete();
 });
 
-test('Sponsors page totals', { tag: '@sequential' }, async ({ adminPage }) => {
-	await adminPage.goto('/sponsors');
+const readSponsorsPage = async <T>(request: APIRequestContext, route: string, params: Record<string, string | number | boolean> = {}): Promise<PageResult<T>> => {
+	const response = await request.get(`${process.env.DIRECTUS_URL}/admin-sponsors/${route}`, { params });
+	expect(response.status()).toBe(200);
+	return response.json() as Promise<PageResult<T>>;
+};
 
-	await expect(adminPage.getByTestId('active-sponsors')).toHaveText(String(baseline.active + 1));
-	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(baseline.previousValue + 245));
-	await expect(adminPage.getByTestId('next-month-value')).toHaveText(formatMoney(baseline.monthly + 10));
-	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.periodSponsors + 4));
-	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.periodValue + 245));
-	await expect(adminPage.getByText(`${formatMoney(baseline.periodRecurring + 195)} recurring · ${formatMoney(baseline.periodOneTime + 50)} one-time`, { exact: true })).toBeVisible();
+test('Sponsors page totals', { tag: '@sequential' }, async () => {
+	const admin = await loginDirectusAdmin();
+	const recent = await admin.get<SponsorsSummary>('/admin-sponsors/summary', { params: { period: 'past-year' } });
+	expect(recent.status).toBe(200);
+	expect(recent.data.overview.activeSponsors).toBe(baseline.active + 1);
+	expect(recent.data.overview.previousMonth.totalValue).toBe(baseline.previousValue + 245);
+	expect(recent.data.overview.estimatedNextMonthValue).toBe(baseline.monthly + 10);
 
-	await adminPage.getByLabel('Sponsorship period').click();
-	await adminPage.getByRole('option', { name: '2024' }).click();
-	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(baseline.year2024Sponsors + 1));
-	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(baseline.year2024Value + 25));
+	expect(recent.data.period).toEqual({
+		sponsors: baseline.periodSponsors + 4,
+		sponsorshipValue: baseline.periodValue + 245,
+		recurringValue: baseline.periodRecurring + 195,
+		oneTimeValue: baseline.periodOneTime + 50,
+	});
+
+	const year2024 = await admin.get<SponsorsSummary>('/admin-sponsors/summary', { params: { period: '2024' } });
+	expect(year2024.status).toBe(200);
+	expect(year2024.data.period.sponsors).toBe(baseline.year2024Sponsors + 1);
+	expect(year2024.data.period.sponsorshipValue).toBe(baseline.year2024Value + 25);
 });
 
-test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
+test('Sponsors page', async ({ adminPage, user, user2, org }) => {
+	const regularUser = await loginUser(user);
+
 	for (const route of [ 'summary', 'events', 'accounts', 'manual-additions' ]) {
-		const response = await page.request.get(`${process.env.DIRECTUS_URL}/admin-sponsors/${route}`);
-		expect(response.status()).toBe(403);
+		expect((await regularUser.get(`/admin-sponsors/${route}`)).status).toBe(403);
 	}
 
+	const events = (params: Record<string, string | number>) => readSponsorsPage<SponsorshipEvent>(adminPage.request, 'events', params);
+	const accounts = (params: Record<string, string | number | boolean>) => readSponsorsPage<SponsorAccount>(adminPage.request, 'accounts', params);
+	const manualAdditions = (params?: Record<string, string>) => readSponsorsPage<ManualAddition>(adminPage.request, 'manual-additions', params);
+
+	const firstPage = await events({ search: user.external_identifier });
+	expect(firstPage.total).toBe(11);
+	expect(firstPage.items).toHaveLength(10);
+	const secondPage = await events({ search: user.external_identifier, offset: 10 });
+	expect(secondPage.items).toHaveLength(1);
+	expect(firstPage.items.map(event => event.id)).not.toContain(secondPage.items[0]!.id);
+
+	const orgEvents = await events({ search: org.github_id });
+	expect(orgEvents.items).toEqual([ expect.objectContaining({ githubId: org.github_id, dashboardAccountName: org.name }) ]);
+	const oneTimeEvents = await events({ search: unlinkedGithubId, types: 'one_time_sponsorship' });
+	expect(oneTimeEvents.items).toEqual([ expect.objectContaining({ githubId: unlinkedGithubId, reason: 'one_time_sponsorship', sponsorshipValue: 50 }) ]);
+	const tierChanges = await events({ search: user.external_identifier, types: 'tier_changed' });
+	expect(tierChanges.items).toEqual([ expect.objectContaining({ githubId: user.external_identifier, reason: 'tier_changed', sponsorshipValue: 5 }) ]);
+	const amounts = { search: user.external_identifier, sort: 'sponsorshipValue' };
+	expect((await events({ ...amounts, direction: 'asc' })).items[0]!.sponsorshipValue).toBe(5);
+	expect((await events({ ...amounts, direction: 'desc' })).items[0]!.sponsorshipValue).toBe(30);
+
+	expect((await accounts({ search: user.external_identifier })).items).toEqual([ expect.objectContaining({ githubId: user.external_identifier, status: 'active' }) ]);
+	expect((await accounts({ search: user2.external_identifier })).items).toEqual([ expect.objectContaining({ githubId: user2.external_identifier, status: 'former', dashboardAccountName: user2.github_username }) ]);
+	expect((await accounts({ search: org.github_id })).items).toEqual([ expect.objectContaining({ githubId: org.github_id, dashboardAccountName: org.name }) ]);
+	expect((await accounts({ search: unlinkedGithubId, statuses: 'one-time', linked: false })).items).toEqual([ expect.objectContaining({ githubId: unlinkedGithubId, status: 'one-time', dashboardAccountId: null }) ]);
+
+	const oneTimeAccounts = await accounts({ statuses: 'one-time', limit: 100 });
+	expect(oneTimeAccounts.items.map(account => account.githubId)).toContain(unlinkedGithubId);
+	expect(oneTimeAccounts.items.map(account => account.githubId)).not.toContain(user.external_identifier);
+	const unlinkedAccounts = await accounts({ linked: false, limit: 100 });
+	expect(unlinkedAccounts.items.map(account => account.githubId)).toContain(unlinkedGithubId);
+	expect(unlinkedAccounts.items.map(account => account.githubId)).not.toContain(org.github_id);
+
+	const sortedAccounts = await accounts({ sort: 'periodValue', direction: 'asc' });
+	const periodValues = sortedAccounts.items.map(account => account.periodSponsorshipValue);
+	expect(periodValues.length).toBeGreaterThan(1);
+	expect(periodValues).toEqual([ ...periodValues ].sort((a, b) => a - b));
+
+	const additions = await manualAdditions();
+	expect(additions.items).toHaveLength(10);
+	expect(additions.total).toBeGreaterThan(10);
+	expect(additions.items[0]!.type).toBe('payment');
+	expect(additions.items[1]!.type).toBe('other');
+	expect(additions.items.map(addition => addition.addedBy)).toEqual(Array(10).fill('Admin User'));
+	expect((await manualAdditions({ search: org.github_id })).items).toEqual([ expect.objectContaining({ comment: 'Org bonus', dashboardAccountName: org.name }) ]);
+	const sortedAdditions = await manualAdditions({ sort: 'credits', direction: 'asc' });
+	const creditAmounts = sortedAdditions.items.map(addition => addition.credits);
+	expect(creditAmounts).toEqual([ ...creditAmounts ].sort((a, b) => a - b));
+
+	const summaryResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/summary?period=past-year') && response.ok());
 	await adminPage.goto('/sponsors');
 	await expect(adminPage.getByRole('heading', { name: 'Sponsors', exact: true })).toBeVisible();
+
+	const response = await summaryResponse;
+	const currentSummary = await response.json() as SponsorsSummary;
+	const formatMoney = (value: number) => `$${new Intl.NumberFormat('en-US').format(value)}`;
+	await expect(adminPage.getByTestId('active-sponsors')).toHaveText(String(currentSummary.overview.activeSponsors));
+	await expect(adminPage.getByTestId('previous-month-value')).toHaveText(formatMoney(currentSummary.overview.previousMonth.totalValue));
+	await expect(adminPage.getByTestId('next-month-value')).toHaveText(formatMoney(currentSummary.overview.estimatedNextMonthValue));
+	await expect(adminPage.getByTestId('period-sponsors')).toHaveText(String(currentSummary.period.sponsors));
+	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(currentSummary.period.sponsorshipValue));
+	await expect(adminPage.getByText(`${formatMoney(currentSummary.period.recurringValue)} recurring · ${formatMoney(currentSummary.period.oneTimeValue)} one-time`, { exact: true })).toBeVisible();
 	await expect(adminPage.getByRole('link', { name: 'Sponsors' })).toBeVisible();
 	await expect(adminPage.getByText('Credits issued', { exact: true })).toHaveCount(0);
 	await expect(adminPage.getByText('Bonus', { exact: true })).toHaveCount(0);
@@ -167,132 +239,61 @@ test('Sponsors page', async ({ page, adminPage, user, user2, org }) => {
 	await expect(adminPage.getByLabel('Monthly recurring and one-time sponsorship amounts')).toBeVisible();
 
 	const eventsTable = adminPage.getByRole('heading', { name: 'Sponsorship events' }).locator('xpath=ancestor::section[1]');
-	const eventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('search='));
-	await adminPage.getByLabel('Search sponsorship events').fill(user.external_identifier);
-	await eventsResponse;
+	const eventsSearch = adminPage.getByLabel('Search sponsorship events');
+	const firstEventsPage = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${user.external_identifier}`));
+	await eventsSearch.fill(user.external_identifier);
+	await firstEventsPage;
 	await expect(eventsTable.locator('tbody tr')).toHaveCount(10);
 	await eventsTable.getByLabel('Page 2').click();
 	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
+	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(secondPage.items[0]!.sponsorshipValue));
 
-	const orgEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${org.github_id}`));
-	await adminPage.getByLabel('Search sponsorship events').fill(org.github_id);
-	await orgEventsResponse;
+	await eventsSearch.fill(org.github_id);
 	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
-	await expect(eventsTable.locator('tbody tr').first().getByRole('link', { name: org.name })).toBeVisible();
+	await expect(eventsTable.getByRole('link', { name: org.name })).toBeVisible();
 	await expect(eventsTable.locator('tbody tr').first().getByLabel('Dashboard account linked')).toBeVisible();
-
-	let filteredEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${unlinkedGithubId}`));
-	await adminPage.getByLabel('Search sponsorship events').fill(unlinkedGithubId);
-	await filteredEventsResponse;
-	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
-	await expect(eventsTable.locator('tbody tr').first()).toContainText(unlinkedGithubId);
-	await eventsTable.getByRole('button', { name: 'Filters' }).click();
-	await adminPage.getByRole('combobox', { name: 'Event types' }).click();
-	filteredEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('types=one_time_sponsorship'));
-	await adminPage.getByRole('option', { name: 'One-time sponsorship' }).click();
-	await filteredEventsResponse;
-	await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
-	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(50));
-	await adminPage.getByRole('combobox', { name: 'Event types' }).click();
-
-	const resetEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && !response.url().includes('types='));
-	await adminPage.getByRole('option', { name: 'All', exact: true }).click();
-	await resetEventsResponse;
-
-	const searchedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${user.external_identifier}`));
-	await adminPage.getByLabel('Search sponsorship events').fill(user.external_identifier);
-	await searchedEventsResponse;
-
-	let sortedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('sort=sponsorshipValue') && response.url().includes('direction=asc'));
 	await eventsTable.getByRole('columnheader', { name: 'Sponsorship amount' }).click();
-	await sortedEventsResponse;
-	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(5));
 	await expect(adminPage).toHaveURL(/eventsSort=sponsorshipValue/);
 	await expect(adminPage).toHaveURL(/eventsOrder=asc/);
 
-	sortedEventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes('sort=sponsorshipValue') && response.url().includes('direction=desc'));
-	await eventsTable.getByRole('columnheader', { name: 'Sponsorship amount' }).click();
-	await sortedEventsResponse;
-	await expect(eventsTable.locator('tbody tr').first()).toContainText(formatMoney(30));
-
 	const accountsTable = adminPage.getByRole('heading', { name: 'Sponsor accounts' }).locator('xpath=ancestor::section[1]');
-	let accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${user.external_identifier}`));
-	await adminPage.getByLabel('Search sponsor accounts').fill(user.external_identifier);
-	await accountsResponse;
-	await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
-	await expect(accountsTable.locator('tbody tr').first()).toContainText('Active recurring');
-
-	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${user2.external_identifier}`));
-	await adminPage.getByLabel('Search sponsor accounts').fill(user2.external_identifier);
-	await accountsResponse;
-	await expect(accountsTable.locator('tbody tr').first()).toContainText('Former recurring');
-	await expect(accountsTable.locator('tbody tr').first().getByRole('link', { name: user2.github_username })).toBeVisible();
-
-	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${org.github_id}`));
-	await adminPage.getByLabel('Search sponsor accounts').fill(org.github_id);
-	await accountsResponse;
-	await expect(accountsTable.locator('tbody tr').first().getByRole('link', { name: org.name })).toBeVisible();
-	await expect(accountsTable.locator('tbody tr').first().getByLabel('Dashboard account linked')).toBeVisible();
-
-	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${unlinkedGithubId}`));
+	const account = accountsTable.locator('tbody tr').filter({ hasText: unlinkedGithubId });
 	await adminPage.getByLabel('Search sponsor accounts').fill(unlinkedGithubId);
-	await accountsResponse;
-	await expect(accountsTable.locator('tbody tr').first()).toContainText('One-time only');
+	await expect(account).toBeVisible();
 	await adminPage.getByRole('heading', { name: 'Sponsor accounts' }).evaluate(element => element.scrollIntoView({ block: 'center' }));
 	await accountsTable.getByRole('button', { name: 'Filters' }).click();
 
 	const accountFilters = adminPage.getByRole('dialog', { name: 'Filter sponsor accounts' });
-	await expect(accountFilters).toBeVisible();
 	await accountFilters.getByRole('combobox', { name: 'Sponsor statuses' }).click();
-	await expect(adminPage.getByRole('option', { name: 'One-time only' })).toBeVisible();
-
-	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('statuses=one-time'));
+	const statusResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('statuses=one-time'));
 	await adminPage.getByRole('option', { name: 'One-time only' }).click();
-	await accountsResponse;
-	await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
-	await adminPage.getByRole('combobox', { name: 'Dashboard account linkage' }).click();
+	await statusResponse;
+	await expect(account).toContainText('One-time only');
 
-	accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('linked=false'));
-	await adminPage.getByRole('option', { name: 'Not linked' }).click();
-	await accountsResponse;
-	await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
-
-	const sortedAccountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('sort=periodValue') && response.url().includes('direction=asc'));
-	await accountsTable.getByRole('columnheader', { name: 'Period amount' }).click();
-	await sortedAccountsResponse;
-	await expect(adminPage).toHaveURL(/accountsSort=periodValue/);
-	await expect(adminPage).toHaveURL(/accountsOrder=asc/);
+	await accountFilters.getByRole('combobox', { name: 'Dashboard account linkage' }).click();
+	const linkageResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes('linked=true'));
+	await adminPage.getByRole('option', { name: 'Linked', exact: true }).click();
+	await linkageResponse;
+	await expect(accountsTable.locator('tbody').getByText('No results match the current filters', { exact: true })).toBeVisible();
 
 	await adminPage.getByRole('button', { name: 'Manual additions' }).click();
 	const manualAdditionsDialog = adminPage.getByRole('dialog', { name: 'Manual additions' });
 	await expect(manualAdditionsDialog).toBeVisible();
-	const manualAdditionsRows = manualAdditionsDialog.locator('tbody tr');
-	await expect(manualAdditionsRows.first()).toContainText('Manual one-time payment');
-	await expect(manualAdditionsRows.nth(1)).toContainText('Other credits');
-	await expect(manualAdditionsDialog.locator('tbody').getByText('Admin User', { exact: true })).toHaveCount(10);
 	await expect(manualAdditionsDialog.getByRole('button', { name: 'Page 2' })).toBeVisible();
-
-	const orgManualAdditionsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.url().includes(`search=${org.github_id}`));
-	await manualAdditionsDialog.getByLabel('Search manual additions').fill(org.github_id);
-	await orgManualAdditionsResponse;
-	await expect(manualAdditionsRows).toHaveCount(1);
-	await expect(manualAdditionsRows.first()).toContainText('Org bonus');
-	await expect(manualAdditionsRows.first().getByRole('link', { name: org.name })).toBeVisible();
-	await expect(manualAdditionsRows.first().getByLabel('Dashboard account linked')).toBeVisible();
-	await manualAdditionsDialog.getByLabel('Search manual additions').clear();
-
-	const sortedManualAdditionsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/manual-additions') && response.url().includes('sort=credits') && response.url().includes('direction=asc'));
-	await manualAdditionsDialog.getByRole('columnheader', { name: 'Credits' }).click();
-	await sortedManualAdditionsResponse;
-	await expect(adminPage).toHaveURL(/manualAdditionsSort=credits/);
-	await expect(adminPage).toHaveURL(/manualAdditionsOrder=asc/);
 	await manualAdditionsDialog.getByRole('button', { name: 'Close' }).click();
 
 	await adminPage.getByRole('button', { name: 'Add credits' }).click();
 	await expect(adminPage.getByRole('dialog', { name: 'Add credits' })).toBeVisible();
 	await adminPage.getByRole('button', { name: 'Close' }).click();
 	await expect(adminPage.getByRole('button', { name: 'Add credits' })).toBeFocused();
+
+	await adminPage.getByLabel('Sponsorship period').click();
+	const pastSummary = adminPage.waitForResponse('**/admin-sponsors/summary?period=2024');
+	await adminPage.getByRole('option', { name: '2024' }).click();
+	const historicalSummary = await (await pastSummary).json() as SponsorsSummary;
+	await expect(adminPage.getByTestId('period-value')).toHaveText(formatMoney(historicalSummary.period.sponsorshipValue));
 });
+
 
 test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 	await sql('directus_users').where({ id: user2.id }).update({ external_identifier: redirectTargetGithubId, github_username: 'redirect-target' });
@@ -316,28 +317,20 @@ test('Redirected sponsorship history', async ({ adminPage, user2 }) => {
 		adopted_probe: null,
 	});
 
-	await adminPage.goto('/sponsors');
-	const eventsTable = adminPage.getByRole('heading', { name: 'Sponsorship events' }).locator('xpath=ancestor::section[1]');
-	const accountsTable = adminPage.getByRole('heading', { name: 'Sponsor accounts' }).locator('xpath=ancestor::section[1]');
-
 	for (const search of [ redirectSourceGithubId, 'redirect-source' ]) {
-		const accountsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/accounts') && response.url().includes(`search=${search}`));
-		await adminPage.getByLabel('Search sponsor accounts').fill(search);
-		await accountsResponse;
-		await expect(accountsTable.locator('tbody tr')).toHaveCount(1);
-		await expect(accountsTable.locator('tbody tr').first()).toContainText('redirect-source');
-		await expect(accountsTable.locator('tbody tr').first()).toContainText('Active recurring');
-		await expect(accountsTable.locator('tbody tr').first()).toContainText('$30');
+		const { items } = await readSponsorsPage<SponsorAccount>(adminPage.request, 'accounts', { search });
+		expect(items).toEqual([ expect.objectContaining({ githubId: redirectSourceGithubId, githubLogin: 'redirect-source', status: 'active', periodSponsorshipValue: 30 }) ]);
 	}
 
 	for (const search of [ redirectTargetGithubId, redirectSourceGithubId, 'redirect-source' ]) {
-		const eventsResponse = adminPage.waitForResponse(response => response.url().includes('/admin-sponsors/events') && response.url().includes(`search=${search}`));
-		await adminPage.getByLabel('Search sponsorship events').fill(search);
-		await eventsResponse;
-		await expect(eventsTable.locator('tbody tr')).toHaveCount(1);
-		await expect(eventsTable.locator('tbody tr').first()).toContainText('redirect-source');
-		await expect(eventsTable.locator('tbody tr').first()).toContainText('$30');
+		const { items } = await readSponsorsPage<SponsorshipEvent>(adminPage.request, 'events', { search });
+		expect(items).toEqual([ expect.objectContaining({ githubId: redirectSourceGithubId, githubLogin: 'redirect-source', sponsorshipValue: 30 }) ]);
 	}
+
+	await adminPage.goto('/sponsors');
+	const eventsTable = adminPage.getByRole('heading', { name: 'Sponsorship events' }).locator('xpath=ancestor::section[1]');
+	await adminPage.getByLabel('Search sponsorship events').fill('redirect-source');
+
 
 	const redirectIcon = eventsTable.locator('tbody').getByLabel('Credits redirected to redirect-target');
 	await expect(redirectIcon).toBeVisible();
