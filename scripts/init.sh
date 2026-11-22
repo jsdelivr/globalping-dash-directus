@@ -41,9 +41,19 @@ fi
 
 perl -pi -e "s/ADMIN_ACCESS_TOKEN=.*/ADMIN_ACCESS_TOKEN=$token/" ".env.scripts.$1"
 
-pnpm run schema:apply:$1
+if [[ "$1" == "e2e" ]]; then
+  cli=(docker compose --file "$compose_file" exec -T
+    -e NODE_OPTIONS= -e EXTENSIONS_PATH=/tmp/e2e-cli-extensions
+    -e MIGRATIONS_PATH=/e2e/extensions/migrations
+    -e DIRECTUS_URL=http://127.0.0.1:8055 -e ADMIN_ACCESS_TOKEN
+    directus node /directus/cli.js)
 
-pnpm run migrate:$1
+  ADMIN_ACCESS_TOKEN="$token" MSYS2_ARG_CONV_EXCL='*' "${cli[@]}" schema apply --yes /e2e/snapshots/collections-schema.yml
+  ADMIN_ACCESS_TOKEN="$token" MSYS2_ARG_CONV_EXCL='*' "${cli[@]}" database migrate:latest
+else
+  pnpm run schema:apply:$1
+  pnpm run migrate:$1
+fi
 
 user_role_id=$(curl -H "Authorization: Bearer $token" $DIRECTUS_URL/roles | jq -r '.data[] | select(.name == "User") | .id')
 

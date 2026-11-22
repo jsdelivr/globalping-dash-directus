@@ -26,5 +26,9 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env.docker.e2e
+    volumes:
+      - ./snapshots:/e2e/snapshots:ro
+      - ./src/extensions:/e2e/extensions:ro
+      - ./node_modules:/e2e/node_modules:ro
     ports:
       - "28055:8055"
