@@ -50,7 +50,7 @@ describe('/organizations endpoint', () => {
 	const getAsset = sinon.stub();
 	const AssetsService = sinon.stub().returns({ getAsset });
 	const BANNER_PRESET = { key: 'banner', fit: 'cover', width: 1224, height: 200, quality: 80, format: 'webp' };
-	const BANNER_2X_PRESET = { key: 'banner-2x', fit: 'cover', width: 2448, height: 400, withoutEnlargement: true, quality: 80, format: 'webp' };
+	const BANNER_2X_PRESET = { key: 'banner-2x', fit: 'cover', width: 2448, height: 400, withoutEnlargement: true, quality: 90, format: 'webp' };
 	const SettingsService = sinon.stub().returns({ readSingleton: async () => ({ storage_asset_presets: [{ key: 'other' }, BANNER_PRESET, BANNER_2X_PRESET ] }) });
 
 	const context = {

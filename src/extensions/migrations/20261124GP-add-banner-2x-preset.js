@@ -1,6 +1,6 @@
 import { directusRequest } from '../migration-utils/directus-request.js';
 
-const BANNER_2X_PRESET = { key: 'banner-2x', fit: 'cover', width: 2448, height: 400, withoutEnlargement: true, quality: 80, format: 'webp' };
+const BANNER_2X_PRESET = { key: 'banner-2x', fit: 'cover', width: 2448, height: 400, withoutEnlargement: true, quality: 90, format: 'webp' };
 
 export async function up () {
 	const settings = await directusRequest('/settings?fields=storage_asset_presets');
