@@ -117,15 +117,20 @@ test('the mobile menu switches the account too', async ({ browser, org }) => {
 	await page.setViewportSize({ width: 400, height: 900 });
 	await page.goto('/');
 
+	const drawer = page.locator('[data-pc-name=drawer]');
+	const accountTitle = drawer.locator('[data-pc-section=title]');
 	await page.getByLabel('Menu').click();
-	await expect(page.locator('[data-pc-name=drawer]')).toContainText('Switch account');
-	await expect(page.locator('[data-pc-name=drawer]')).toContainText('Account tier: Sponsor');
-	await Promise.all([ page.waitForEvent('load'), page.locator('[data-pc-name="drawer"]').getByRole('button', { name: org.name }).click() ]);
+	await expect(drawer).toContainText('Switch account');
+	await expect(accountTitle).toHaveText(org.member.github_username);
+	await expect(drawer).not.toContainText('Account tier:');
+	await Promise.all([ page.waitForEvent('load'), drawer.getByRole('button', { name: org.name }).click() ]);
 
 	await expect.poll(() => sessionAccount(page)).toBe(org.account_id);
 	await page.getByLabel('Menu').click();
-	await expect(page.locator('[data-pc-name=drawer]')).toContainText('Account tier: Member');
-	await expect(page.locator('[data-pc-name=drawer]').getByRole('button', { name: `${org.name} Member` })).toBeVisible();
+	await expect(accountTitle.getByText(org.name, { exact: true })).toBeVisible();
+	await expect(accountTitle.getByText(org.member.github_username, { exact: true })).toBeVisible();
+	await expect(drawer).not.toContainText('Account tier:');
+	await expect(drawer.getByRole('button', { name: `${org.name} Member` })).toBeVisible();
 });
 
 test('the account submenu keeps keyboard and touch activation', async ({ browser, org }) => {
