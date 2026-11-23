@@ -8,6 +8,7 @@ import { BANNERS_FOLDER_ID } from '../../../../lib/src/constants.js';
 const MAX_BYTES = 5 * 1024 * 1024;
 const MIN_WIDTH = 1224;
 const MIN_HEIGHT = 200;
+const BANNER_PRESETS = [ 'banner', 'banner-2x' ];
 
 // The file signature of each accepted format.
 const FORMATS = [
@@ -88,20 +89,31 @@ const checkSize = async (bannerId: string, { database, env }: EndpointExtensionC
 	}
 };
 
-// Renders the banner preset to catch images that can't be decoded. Directus caches the result for public requests.
-const renderPreset = async (bannerId: string, { services, getSchema, logger }: EndpointExtensionContext) => {
+// Renders the banner presets to catch images that can't be decoded. Directus caches the results for public requests.
+const renderPresets = async (bannerId: string, { services, getSchema, logger }: EndpointExtensionContext) => {
 	const schema = await getSchema();
 	const { storage_asset_presets: presets } = await new services.SettingsService({ schema }).readSingleton({ fields: [ 'storage_asset_presets' ] });
-	const preset = (presets as TransformationParams[]).find(({ key }) => key === 'banner')!;
+	const assets = new services.AssetsService({ schema });
 
-	await new services.AssetsService({ schema }).getAsset(bannerId, { transformationParams: preset }, undefined, true).catch((error: Error & { status?: number }) => {
-		if (error.status === 503) {
-			throw error;
-		}
+	const results = await Promise.allSettled(BANNER_PRESETS.map((key) => {
+		const transformationParams = (presets as TransformationParams[]).find(preset => preset.key === key)!;
+		return assets.getAsset(bannerId, { transformationParams }, undefined, true);
+	}));
 
-		logger.warn(error, `Banner ${bannerId} failed to render.`);
-		throw new InvalidFormatError();
-	});
+	const errors = results.flatMap(result => result.status === 'rejected' ? [ result.reason as Error & { status?: number } ] : []);
+
+	if (!errors.length) {
+		return;
+	}
+
+	const busyError = errors.find(error => error.status === 503);
+
+	if (busyError) {
+		throw busyError;
+	}
+
+	logger.warn(errors[0], `Banner ${bannerId} failed to render.`);
+	throw new InvalidFormatError();
 };
 
 export const uploadBanner = async (orgId: string, image: Buffer, context: EndpointExtensionContext): Promise<string> => {
@@ -118,7 +130,7 @@ export const uploadBanner = async (orgId: string, image: Buffer, context: Endpoi
 	}) as string;
 
 	const previous = await checkSize(bannerId, context)
-		.then(() => renderPreset(bannerId, context))
+		.then(() => renderPresets(bannerId, context))
 		.then(() => setBanner(orgId, bannerId, context)).catch(async (error: unknown) => {
 			await deleteFile(bannerId, context);
 			throw error;

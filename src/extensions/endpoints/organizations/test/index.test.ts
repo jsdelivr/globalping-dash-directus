@@ -50,7 +50,8 @@ describe('/organizations endpoint', () => {
 	const getAsset = sinon.stub();
 	const AssetsService = sinon.stub().returns({ getAsset });
 	const BANNER_PRESET = { key: 'banner', fit: 'cover', width: 1224, height: 200, quality: 80, format: 'webp' };
-	const SettingsService = sinon.stub().returns({ readSingleton: async () => ({ storage_asset_presets: [{ key: 'other' }, BANNER_PRESET ] }) });
+	const BANNER_2X_PRESET = { key: 'banner-2x', fit: 'cover', width: 2448, height: 400, withoutEnlargement: true, quality: 90, format: 'webp' };
+	const SettingsService = sinon.stub().returns({ readSingleton: async () => ({ storage_asset_presets: [{ key: 'other' }, BANNER_PRESET, BANNER_2X_PRESET ] }) });
 
 	const context = {
 		logger: { error: console.error, warn: sinon.stub() },
@@ -149,7 +150,12 @@ describe('/organizations endpoint', () => {
 
 			expect(Buffer.concat(chunks)).to.deep.equal(source);
 			expect(data).to.deep.equal({ folder: BANNERS_FOLDER_ID, filename_download: 'banner.jpeg', type: 'image/jpeg' });
-			expect(getAsset.args).to.deep.equal([ [ 'new-banner-id', { transformationParams: BANNER_PRESET }, undefined, true ] ]);
+
+			expect(getAsset.args).to.deep.equal([
+				[ 'new-banner-id', { transformationParams: BANNER_PRESET }, undefined, true ],
+				[ 'new-banner-id', { transformationParams: BANNER_2X_PRESET }, undefined, true ],
+			]);
+
 			expect(callsOf('gp_orgs', 'update')).to.deep.equal([ [{ banner: 'new-banner-id' }] ]);
 			expect(deleteOne.callCount).to.equal(0);
 		});
@@ -281,6 +287,17 @@ describe('/organizations endpoint', () => {
 
 			expect(res.status).to.equal(503);
 			expect(deleteOne.args).to.deep.equal([ [ 'new-banner-id' ] ]);
+		});
+
+		it('should pass on a busy server error when another preset fails to render', async () => {
+			getAsset.onFirstCall().rejects(new Error('VipsJpeg: premature end of input file'));
+			getAsset.onSecondCall().rejects(new (createError('SERVICE_UNAVAILABLE', 'Server too busy', 503))());
+
+			const res = await upload(image());
+
+			expect(res.status).to.equal(503);
+			expect(deleteOne.args).to.deep.equal([ [ 'new-banner-id' ] ]);
+			expect(callsOf('gp_orgs', 'update')).to.have.length(0);
 		});
 
 		// supertest fails with EPIPE when the server answers before the whole body is sent, so these use a plain client.
