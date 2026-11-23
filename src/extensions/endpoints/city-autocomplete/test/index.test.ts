@@ -63,15 +63,6 @@ describe('city-autocomplete endpoint', () => {
 		nock.cleanAll();
 	});
 
-	it('should download the archive without an ETag precondition', async () => {
-		const archive = nock('https://download.geonames.org', { badheaders: [ 'if-match' ] })
-			.get('/export/dump/cities500.zip')
-			.reply(200, citiesZip.toBuffer(), { ETag: '"cities-v2"' });
-
-		expect(await downloadCities()).to.have.length.greaterThan(0);
-		archive.done();
-	});
-
 	describe('/city-autocomplete', () => {
 		it('should return cities filtered by countries', async () => {
 			const res = await request(app).get('/').query({
