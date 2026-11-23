@@ -1,18 +1,19 @@
 name: globalping-dash-directus
 services:
   mariadb:
-    image: mariadb:11.8.6
+    image: mariadb:12.3.3
     environment:
       - MARIADB_DATABASE=dashboard-globalping
       - MARIADB_USER=directus
       - MARIADB_PASSWORD=password
       - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_AUTO_UPGRADE=1
     ports:
       - "13306:3306"
     volumes:
       - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "mariadb-admin", "ping", "-u", "directus", "-ppassword"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 3s
       timeout: 2s
       retries: 10

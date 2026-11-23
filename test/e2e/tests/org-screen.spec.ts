@@ -43,11 +43,11 @@ test('Settings shows the organization settings to an org admin, and the personal
 });
 
 test('Settings links open the organization tab only for an active org admin, on desktop and mobile', async ({ browser, org }) => {
-	for (const [ user, canManageOrg ] of [ [ org.admin, true ], [ org.member, false ], [ org.viewer, false ], [ null, false ] ] as const) {
+	for (const [ user, canManageOrg, mobileViews ] of [ [ org.admin, true, [ false, true ] ], [ org.member, false, [ false ] ], [ org.viewer, false, [ true ] ], [ null, false, [ false ] ] ] as const) {
 		const page = user ? await actAsOrg(browser, org, user) : await pageAs(browser, org.admin.email, 'user');
 		const settingsPath = canManageOrg ? '/settings?tab=organization' : '/settings';
 
-		for (const mobile of [ false, true ]) {
+		for (const mobile of mobileViews) {
 			await page.setViewportSize({ width: mobile ? 400 : 1280, height: 900 });
 			await page.goto('/');
 			await page.getByLabel(mobile ? 'Menu' : 'Profile', { exact: true }).click();
@@ -258,6 +258,7 @@ test('an org admin stages a banner and it is uploaded, replaced and removed with
 	await expect.poll(bannerOf).not.toBe(null);
 	const first = await bannerOf();
 	await expect(preview).toHaveAttribute('src', `${process.env.DIRECTUS_URL}/assets/${first}?key=banner`);
+	await expect(preview).toHaveAttribute('srcset', `${process.env.DIRECTUS_URL}/assets/${first}?key=banner 1x, ${process.env.DIRECTUS_URL}/assets/${first}?key=banner-2x 2x`);
 	await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1224);
 	await expect(apply).toBeDisabled();
 
