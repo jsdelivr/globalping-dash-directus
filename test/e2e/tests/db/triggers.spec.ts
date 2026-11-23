@@ -114,3 +114,30 @@ test('The search index of a probe carries the name of its owner', async ({ user,
 	const forOrg = await sql('gp_probes').where({ id: orgProbe }).first('searchIndex');
 	expect(forOrg.searchIndex).toContain(`u-${org.name.toLowerCase()}`);
 });
+
+test('search inputs and owner changes refresh the index on the next probe update', async ({ user, org }) => {
+	const id = await addProbe({ account_id: user.account_id, name: 'Original' });
+	const index = async () => (await sql('gp_probes').where({ id }).first('searchIndex')).searchIndex as string;
+	const original = await index();
+	await sql('gp_probes').where({ id }).increment('onlineTimesToday', 1);
+	expect(await index()).toBe(original);
+	await sql('gp_probes').where({ id }).update({ searchIndex: 'invalid' });
+	expect(await index()).toBe(original);
+	await sql('gp_probes').where({ id }).update({ name: 'Updated', tags: JSON.stringify([{ prefix: 'Owner', value: 'Tagged ' }]) });
+	expect(await index()).toContain('updated');
+	expect(await index()).toContain('u-owner:tagged ');
+	await sql('directus_users').where({ id: user.id }).update({ github_username: 'renamed-owner' });
+	await sql('gp_probes').where({ id }).increment('onlineTimesToday', 1);
+	expect(await index()).toContain('u-renamed-owner');
+
+	await sql('gp_probes').where({ id }).update({ account_id: org.account_id });
+	await sql('gp_orgs').where({ id: org.id }).update({ name: 'renamed-org' });
+	await sql('gp_probes').where({ id }).increment('onlineTimesToday', 1);
+	expect(await index()).toContain('u-renamed-org');
+	expect(await index()).not.toContain('u-renamed-owner');
+	await sql('gp_orgs').where({ id: org.id }).delete();
+	await sql('gp_probes').where({ id }).increment('onlineTimesToday', 1);
+	expect(await index()).not.toContain('u-renamed-org');
+	expect((await sql('gp_probes').where({ id }).first('account_id')).account_id).toBeNull();
+	await sql('gp_probes').where({ id }).delete();
+});

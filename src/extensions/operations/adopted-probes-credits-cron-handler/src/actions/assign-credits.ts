@@ -1,5 +1,5 @@
 import type { OperationContext } from '@directus/extensions';
-import { getAdoptedProbes, addProbeCredits, resetOnlineTimes } from '../repositories/directus.js';
+import { grantProbeCredits } from '../repositories/directus.js';
 
 export const assignCredits = async (context: OperationContext) => {
 	const requiredOnlineTimes = context.env.ADOPTED_PROBES_REQUIRED_ONLINE_TIMES;
@@ -8,12 +8,16 @@ export const assignCredits = async (context: OperationContext) => {
 		throw new Error('ADOPTED_PROBES_REQUIRED_ONLINE_TIMES was not provided');
 	}
 
-	const adoptedProbes = await getAdoptedProbes(context);
+	if (!context.env.CREDITS_PER_ADOPTED_PROBE_DAY || !String(context.env.CREDITS_PER_ADOPTED_PROBE_DAY).trim()) {
+		throw new Error('CREDITS_PER_ADOPTED_PROBE_DAY was not provided');
+	}
 
-	const onlineAdoptedProbes = adoptedProbes.filter(({ onlineTimesToday }) => onlineTimesToday >= requiredOnlineTimes);
+	const amount = Number(context.env.CREDITS_PER_ADOPTED_PROBE_DAY);
+	const required = Number(requiredOnlineTimes);
 
-	const creditIds = await addProbeCredits(onlineAdoptedProbes, context);
-	await resetOnlineTimes(context);
+	if (!Number.isSafeInteger(amount) || amount < 0 || !Number.isSafeInteger(required) || required < 1) {
+		throw new Error('Probe credit amount and required online times must be valid integers');
+	}
 
-	return creditIds;
+	return grantProbeCredits(context, amount, required);
 };

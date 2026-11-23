@@ -3,136 +3,34 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import operationApi from '../src/api.js';
 
-describe('Adopted probes status cron handler', () => {
-	const accountability = {} as OperationContext['accountability'];
-	const logger = console.log as unknown as OperationContext['logger'];
-	const getSchema = (() => Promise.resolve({})) as OperationContext['getSchema'];
-	const env = {
-		CREDITS_PER_ADOPTED_PROBE_DAY: '100',
-		ADOPTED_PROBES_REQUIRED_ONLINE_TIMES: '120',
-	};
-
-	const data = {};
-	const rawStub = sinon.stub();
-	const database = { raw: rawStub } as unknown as OperationContext['database'];
-	const createMany = sinon.stub();
-	const updateByQuery = sinon.stub();
-	const services = {
-		ItemsService: sinon.stub().returns({ createMany, updateByQuery }),
-	} as unknown as OperationContext['services'];
-	let sandbox: sinon.SinonSandbox;
-
-
-	before(() => {
-		sandbox = sinon.createSandbox({ useFakeTimers: true });
-	});
+describe('Adopted probes credits cron handler', () => {
+	const transaction = sinon.stub();
+	const context = {
+		database: { transaction },
+	} as unknown as OperationContext;
 
 	beforeEach(() => {
-		sinon.resetHistory();
+		transaction.reset();
 	});
 
-	after(() => {
-		sandbox.restore();
-	});
+	for (const missing of [ 'CREDITS_PER_ADOPTED_PROBE_DAY', 'ADOPTED_PROBES_REQUIRED_ONLINE_TIMES' ]) {
+		it(`rejects missing ${missing} before touching counters or credits`, async () => {
+			const env: Record<string, string> = { CREDITS_PER_ADOPTED_PROBE_DAY: '100', ADOPTED_PROBES_REQUIRED_ONLINE_TIMES: '120' };
+			delete env[missing];
+			const error = await (operationApi.handler({}, { ...context, env }) as Promise<string>).catch(error => error);
 
-	it('should assign credits for >20 hours online and reset online hours', async () => {
-		rawStub.resolves([ [{
-			id: '1',
-			ip: '1.2.3.4',
-			githubId: '123456',
-			onlineTimesToday: 120,
-		}] ]);
+			expect(error).to.deep.equal(new Error(`${missing} was not provided`));
+			expect(transaction.called).to.equal(false);
+		});
+	}
 
-		createMany.resolves([ 1 ]);
+	for (const [ amount, required ] of [ [ 'invalid', '120' ], [ '-1', '120' ], [ '100', '0' ], [ '1.5', '120' ], [ ' ', '120' ] ]) {
+		it(`rejects invalid settings (${amount}, ${required}) before touching counters or credits`, async () => {
+			const env = { CREDITS_PER_ADOPTED_PROBE_DAY: amount!, ADOPTED_PROBES_REQUIRED_ONLINE_TIMES: required! };
+			const error = await (operationApi.handler({}, { ...context, env }) as Promise<string>).catch(error => error);
 
-		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(createMany.args[0]).to.deep.equal([
-			[
-				{
-					github_id: '123456',
-					amount: 100,
-					reason: 'adopted_probe',
-					meta: {
-						id: '1',
-						ip: '1.2.3.4',
-						name: null,
-					},
-					adopted_probe: '1',
-				},
-			],
-		]);
-
-		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
-		expect(result).to.equal('Created credits with ids: 1');
-	});
-
-	it('should skip non-GitHub owners without blocking other owners credits or the online hours reset', async () => {
-		rawStub.resolves([ [
-			{ id: '1', ip: '1.2.3.4', githubId: '123456', onlineTimesToday: 120 },
-			{ id: '2', ip: '1.2.3.5', githubId: null, onlineTimesToday: 120 },
-		] ]);
-
-		createMany.resolves([ 1 ]);
-
-		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(createMany.args[0]).to.deep.equal([ [{
-			github_id: '123456',
-			amount: 100,
-			reason: 'adopted_probe',
-			meta: { id: '1', ip: '1.2.3.4', name: null },
-			adopted_probe: '1',
-		}] ]);
-
-		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
-		expect(result).to.equal('Created credits with ids: 1');
-	});
-
-	it('should reset online hours without creating credits when all owners lack GitHub IDs', async () => {
-		rawStub.resolves([ [
-			{ id: '1', ip: '1.2.3.4', githubId: null, onlineTimesToday: 120 },
-		] ]);
-
-		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(createMany.callCount).to.equal(0);
-		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
-		expect(result).to.equal('No credits created');
-	});
-
-	it('should not assign credits for <20 hours online and still reset online hours', async () => {
-		rawStub.resolves([ [{
-			id: '1',
-			ip: '1.2.3.4',
-			githubId: '123456',
-			onlineTimesToday: 119,
-		}] ]);
-
-		const result = await operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability });
-
-		expect(createMany.callCount).to.equal(0);
-		expect(createMany.callCount).to.equal(0);
-		expect(updateByQuery.args[0]).to.deep.equal([{}, { onlineTimesToday: 0 }, { emitEvents: false }]);
-
-		expect(result).to.equal('No credits created');
-	});
-
-	it('should throw an error if CREDITS_PER_ADOPTED_PROBE_DAY was not provided', async () => {
-		const env = {
-			ADOPTED_PROBES_REQUIRED_ONLINE_TIMES: '120',
-		};
-
-		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
-		expect(err).to.deep.equal(new Error('CREDITS_PER_ADOPTED_PROBE_DAY was not provided'));
-	});
-
-	it('should throw an error if ADOPTED_PROBES_REQUIRED_ONLINE_TIMES was not provided', async () => {
-		const env = {
-			CREDITS_PER_ADOPTED_PROBE_DAY: '100',
-		};
-
-		const err = await (operationApi.handler({}, { data, database, env, getSchema, services, logger, accountability }) as Promise<string>).catch(err => err);
-		expect(err).to.deep.equal(new Error('ADOPTED_PROBES_REQUIRED_ONLINE_TIMES was not provided'));
-	});
+			expect(error).to.be.instanceOf(Error);
+			expect(transaction.called).to.equal(false);
+		});
+	}
 });

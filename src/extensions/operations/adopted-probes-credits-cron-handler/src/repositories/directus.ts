@@ -8,58 +8,43 @@ type AdoptedProbe = {
 	githubId: string | null;
 };
 
-// The additions are stored per github id, so the owner's one comes with the probes: a user account resolves to the user, an org
-// account to the org.
-export const getAdoptedProbes = async ({ database }: OperationContext) => {
-	const [ rows ] = await database.raw(`
-		SELECT p.id, p.name, p.ip, p.onlineTimesToday, COALESCE(u.external_identifier, o.github_id) AS githubId
-		FROM gp_probes p
-		JOIN gp_accounts a ON a.id = p.account_id
-		LEFT JOIN directus_users u ON a.user = u.id
-		LEFT JOIN gp_orgs o ON a.org = o.id
-	`) as [AdoptedProbe[]];
+export const grantProbeCredits = async ({ database }: OperationContext, amount: number, requiredOnlineTimes: number): Promise<number[]> => database.transaction(async (trx) => {
+	// Follow the account -> probe order of account deletion cascades, without locking parent users or orgs.
+	await trx('gp_accounts').select('id').orderBy('id').forShare();
+	const lockedProbes = await trx<{ id: string }>('gp_probes').select('id').orderBy('id').forUpdate();
+	const probeIds = lockedProbes.map(probe => probe.id);
 
-	return rows;
-};
-
-export const addProbeCredits = async (adoptedProbes: AdoptedProbe[], { services, getSchema, env }: OperationContext) => {
-	if (!env.CREDITS_PER_ADOPTED_PROBE_DAY) {
-		throw new Error('CREDITS_PER_ADOPTED_PROBE_DAY was not provided');
-	}
-
-	const eligibleProbes = adoptedProbes.filter(({ githubId }) => githubId);
-
-	if (eligibleProbes.length === 0) {
+	if (!probeIds.length) {
 		return [];
 	}
 
-	const { ItemsService } = services;
+	const probes = await trx('gp_probes as p')
+		.join('gp_accounts as a', 'a.id', 'p.account_id')
+		.leftJoin('directus_users as u', 'a.user', 'u.id')
+		.leftJoin('gp_orgs as o', 'a.org', 'o.id')
+		.whereIn('p.id', probeIds).orderBy('p.id')
+		.select<AdoptedProbe[]>('p.id', 'p.name', 'p.ip', 'p.onlineTimesToday', trx.raw('COALESCE(u.external_identifier, o.github_id) AS githubId'));
+	const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+	const additions = probes
+		.filter(probe => probe.githubId && probe.onlineTimesToday >= requiredOnlineTimes)
+		.map(({ id, githubId, ip, name }) => ({
+			github_id: githubId!,
+			amount,
+			reason: 'adopted_probe',
+			meta: JSON.stringify({ id, ip, name: name ?? null }),
+			adopted_probe: id,
+			date_created: createdAt,
+		}));
 
-	const creditsAdditionsService = new ItemsService('gp_credits_additions', {
-		schema: await getSchema(),
-	});
+	// Reset before acquiring wallet locks. Both changes commit together, so a failed run grants nothing and loses no counters.
+	await trx('gp_probes').whereIn('id', probeIds).update({ onlineTimesToday: 0, date_updated: trx.fn.now() });
 
-	const result = await creditsAdditionsService.createMany(eligibleProbes.map(({ id, githubId, ip, name }) => ({
-		github_id: githubId,
-		amount: parseInt(env.CREDITS_PER_ADOPTED_PROBE_DAY, 10),
-		reason: 'adopted_probe',
-		meta: {
-			id,
-			ip,
-			name: name ?? null,
-		},
-		adopted_probe: id,
-	}))) as number[];
+	if (!additions.length) {
+		return [];
+	}
 
-	return result;
-};
-
-export const resetOnlineTimes = async ({ services, getSchema }: OperationContext) => {
-	const { ItemsService } = services;
-
-	const itemsService = new ItemsService('gp_probes', {
-		schema: await getSchema(),
-	});
-
-	await itemsService.updateByQuery({}, { onlineTimesToday: 0 }, { emitEvents: false });
-};
+	// Plain INSERT preserves the ledger's accounting trigger. RETURNING gives actual IDs without assuming consecutive values.
+	const { sql, bindings } = trx('gp_credits_additions').insert(additions).toSQL();
+	const [ rows ] = await trx.raw(`${sql} RETURNING id`, bindings) as [{ id: number }[]];
+	return rows.map(({ id }) => id);
+}, { isolationLevel: 'read committed' });
