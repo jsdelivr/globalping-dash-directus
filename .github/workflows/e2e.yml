@@ -22,7 +22,7 @@ jobs:
           pnpm install
       - name: Install Playwright browsers
         run: |
-          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright install --only-shell chromium
       - name: Generate env files
         run: |
           cp .env.docker.e2e.example .env.docker.e2e
