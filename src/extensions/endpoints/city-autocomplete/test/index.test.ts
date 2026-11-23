@@ -1,4 +1,4 @@
-import path, { dirname } from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { EndpointExtensionContext } from '@directus/extensions';
 import AdmZip from 'adm-zip';
@@ -7,8 +7,11 @@ import express, { type NextFunction } from 'express';
 import nock from 'nock';
 import * as sinon from 'sinon';
 import request from 'supertest';
-import { downloadCities, generateCitiesJsonFile } from '../src/download-cities.js';
+import { downloadCities, FILENAME, getCitiesJson } from '../src/download-cities.js';
 import endpoint from '../src/index.js';
+
+const citiesZip = new AdmZip();
+citiesZip.addLocalFile(fileURLToPath(new URL('./cities500.txt', import.meta.url)));
 
 describe('city-autocomplete endpoint', () => {
 	const endpointContext = {
@@ -27,16 +30,17 @@ describe('city-autocomplete endpoint', () => {
 	}) as NextFunction);
 
 	const router = express.Router();
+	let readFile: sinon.SinonStub;
 
 	before(async () => {
 		nock.disableNetConnect();
 		nock.enableNetConnect('127.0.0.1');
-		const zip = new AdmZip();
-		const __dirname = dirname(fileURLToPath(import.meta.url));
-		zip.addLocalFile(path.join(__dirname, 'cities500.txt'));
-		nock('https://download.geonames.org').get('/export/dump/cities500.zip').reply(200, zip.toBuffer());
+		nock('https://download.geonames.org').get('/export/dump/cities500.zip').reply(200, citiesZip.toBuffer());
 
-		await downloadCities().then(generateCitiesJsonFile);
+		const citiesJson = await downloadCities().then(getCitiesJson);
+		const dataPath = fileURLToPath(new URL(`../data/${FILENAME}`, import.meta.url));
+		readFile = sinon.stub(fs.promises, 'readFile').callThrough();
+		readFile.withArgs(dataPath, 'utf-8').resolves(citiesJson);
 		(endpoint as any)(router, endpointContext);
 		app.use(router);
 	});
@@ -55,7 +59,17 @@ describe('city-autocomplete endpoint', () => {
 	});
 
 	after(() => {
+		readFile?.restore();
 		nock.cleanAll();
+	});
+
+	it('should download the archive without an ETag precondition', async () => {
+		const archive = nock('https://download.geonames.org', { badheaders: [ 'if-match' ] })
+			.get('/export/dump/cities500.zip')
+			.reply(200, citiesZip.toBuffer(), { ETag: '"cities-v2"' });
+
+		expect(await downloadCities()).to.have.length.greaterThan(0);
+		archive.done();
 	});
 
 	describe('/city-autocomplete', () => {

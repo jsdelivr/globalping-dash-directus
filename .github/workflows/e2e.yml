@@ -27,9 +27,23 @@ jobs:
         run: |
           cp .env.docker.e2e.example .env.docker.e2e
           cp .env.scripts.e2e.example .env.scripts.e2e
-      - name: Build docker compose
+      - name: Restore Docker Turbo cache
+        uses: actions/cache@v6
+        with:
+          path: .local/docker-turbo-cache
+          key: docker-turbo-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            docker-turbo-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'turbo.json') }}-
+      - name: Persist Docker cache mount
+        uses: reproducible-containers/buildkit-cache-dance@5422eac04292c961a382e0f584ea0f03ad9da723 # v3.4.0
+        continue-on-error: true
+        with:
+          builder: default
+          cache-dir: .local/docker-turbo-cache
+      - name: Build Directus image
+        run: docker compose -f docker-compose.e2e.yml build --builder default
+      - name: Initialize E2E database
         run: |
-          docker compose -f docker-compose.e2e.yml build
           sudo systemctl restart docker
           docker compose -f docker-compose.e2e.yml up -d
           pnpm run init:e2e
