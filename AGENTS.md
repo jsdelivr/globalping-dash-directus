@@ -38,7 +38,7 @@ Use email/password login directly in [Directus](http://localhost:18055). Use the
 
 ## Verification
 
-- For code changes, run sequentially: `pnpm run lint`, `pnpm test`, `pnpm -r build`.
+- For code changes, run sequentially: `pnpm run lint`, `pnpm test`, `pnpm build`.
 - Use `pnpm --filter <extension-name> test` and `build` for focused checks. Shared-helper changes require checking affected consumers. Use `test`, not `test:dev`, for verification so TypeScript checking runs.
 - Set `MOCHA_OPTIONS="--reporter=min"` unless passing-test details are needed.
 - Update tests for already-tested behavior; do not add tests to existing untested code unless asked. Test behavior and restore mocks.

@@ -1,5 +1,6 @@
 /extensions/
 .local/
+.turbo/
 node_modules/
 config/local*
 .DS_Store
