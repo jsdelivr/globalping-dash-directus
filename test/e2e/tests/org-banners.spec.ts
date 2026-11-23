@@ -123,6 +123,7 @@ test('an uploaded banner is served to anyone through the banner preset only', as
 	expect(asset.status).toBe(200);
 	expect(asset.headers['content-type']).toBe('image/webp');
 	expect(await imageSize(browser, `${process.env.DIRECTUS_URL}/assets/${bannerId}?key=banner`)).toEqual({ width: 1224, height: 200 });
+	expect(await imageSize(browser, `${process.env.DIRECTUS_URL}/assets/${bannerId}?key=banner-2x`)).toEqual({ width: 2448, height: 400 });
 
 	// A listing of the files shows the banner ids only, nothing that names the org.
 	for (const api of [ anonymous, actors.outsider ]) {
@@ -134,6 +135,11 @@ test('an uploaded banner is served to anyone through the banner preset only', as
 
 	expect((await anonymous.get(`/assets/${bannerId}`, { params: { width: 10 } })).status).toBe(400);
 	expect((await actors.admin.get(`/assets/${bannerId}`, { params: { width: 10 } })).status).toBe(400);
+});
+
+test('the 2x banner of a small upload is not scaled up', async ({ browser, org, actors }) => {
+	const { bannerId } = (await upload(actors.admin, org, png(1500, 300))).data;
+	expect(await imageSize(browser, `${process.env.DIRECTUS_URL}/assets/${bannerId}?key=banner-2x`)).toEqual({ width: 1500, height: 300 });
 });
 
 test('a file outside the banners folder is not readable by anonymous visitors or users', async ({ actors }) => {
