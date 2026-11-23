@@ -1,7 +1,7 @@
 {
 	"$schema": "https://turborepo.dev/schema.json",
 	"cacheMaxSize": "128MB",
-	"concurrency": "4",
+	"concurrency": "8",
 	"globalDependencies": [
 		"pnpm-lock.yaml",
 		"src/extensions/lib/src/**",
