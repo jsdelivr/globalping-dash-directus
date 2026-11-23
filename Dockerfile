@@ -63,7 +63,7 @@ FROM dependencies AS builder
 COPY .gitignore turbo.json ./
 COPY scripts/run-turbo.js scripts/
 COPY src src
-RUN --mount=type=cache,target=/builder/.turbo/cache,sharing=locked pnpm run build --concurrency=8
+RUN --mount=type=cache,target=/builder/.turbo/cache,sharing=locked pnpm run build
 
 # Gathering all extensions into one folder to copy in a single COPY command.
 RUN set -eux; \
