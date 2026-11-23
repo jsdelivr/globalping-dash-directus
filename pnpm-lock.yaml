@@ -117,6 +117,9 @@ importers:
       relative-day-utc:
         specifier: ^1.3.0
         version: 1.3.0
+      turbo:
+        specifier: 2.11.11
+        version: 2.11.11
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
@@ -4085,6 +4088,36 @@ packages:
   '@tsconfig/node16@1.0.4':
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
 
+  '@turbo/darwin-64@2.11.11':
+    resolution: {integrity: sha512-HMMeUIEAsmyIbSYn1ySvF/4gGMa0joiTMq4dQDuloIAnOpbtFT3JEiVsYnASdTWDXvplbRbZlqjU1EBeSR9G1A==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@turbo/darwin-arm64@2.11.11':
+    resolution: {integrity: sha512-+8iySNgqYWY6PZYUQzYu6zn0C04z2OEq1vQ6oMGsJ9sxN6wOpg1gzi1AJ5VKDHviWvMUjhqng51hTEQZOuiqYQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@turbo/linux-64@2.11.11':
+    resolution: {integrity: sha512-uImTKFYCFKsoFxjaXeJXlMPv4uU3OIIDjyzoIwYVqOtu9LnCZ/5/fzu/WP6+G9YfwGAPRplTHkKFfcI5t97RGw==}
+    cpu: [x64]
+    os: [android, linux]
+
+  '@turbo/linux-arm64@2.11.11':
+    resolution: {integrity: sha512-Y7xffSVfyyYRGzNy6PLdrFL4xXN6iTuR3W0SyJvH/yd3d4defA6dansZwJpPDVnIpD8a2Qn256DwY/Qin4Ip4g==}
+    cpu: [arm64]
+    os: [android, linux]
+
+  '@turbo/windows-64@2.11.11':
+    resolution: {integrity: sha512-e2WqNtkPGo3QDwNNwwBo89Dx3PtSJ9Wp9QuRNzn80rrRnSHB+1mfBMZTpdHjA8/G/sG9rl76TdWdpgVsimjRdg==}
+    cpu: [x64]
+    os: [win32]
+
+  '@turbo/windows-arm64@2.11.11':
+    resolution: {integrity: sha512-LURivfmgv34Osm8NR1gZGx4vdlux9KAgRM+FoooXNG0838ff0+akWZ76iPSke0NS2rsf7Z4Gw+YSaygzNTZuRA==}
+    cpu: [arm64]
+    os: [win32]
+
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
 
@@ -7517,6 +7550,10 @@ packages:
   tsx@4.20.6:
     resolution: {integrity: sha512-ytQKuwgmrrkDTFP4LjR0ToE2nqgy886GpvRSpU0JAnrdBYppuY5rLkRUYPU1yCryb24SsKBTL/hlDQAEFVwtZg==}
     engines: {node: '>=18.0.0'}
+    hasBin: true
+
+  turbo@2.11.11:
+    resolution: {integrity: sha512-AI4UJbUE/2cVZdoXJ4PODc8qvrjhQQX9Fa93eKGOI6Ims/w7+kUIb9T1jhlgSnZcf+gtUruci/ohSwqtNNC5Yw==}
     hasBin: true
 
   tv4@1.3.0:
@@ -11253,6 +11290,24 @@ snapshots:
   '@tsconfig/node14@1.0.3': {}
 
   '@tsconfig/node16@1.0.4': {}
+
+  '@turbo/darwin-64@2.11.11':
+    optional: true
+
+  '@turbo/darwin-arm64@2.11.11':
+    optional: true
+
+  '@turbo/linux-64@2.11.11':
+    optional: true
+
+  '@turbo/linux-arm64@2.11.11':
+    optional: true
+
+  '@turbo/windows-64@2.11.11':
+    optional: true
+
+  '@turbo/windows-arm64@2.11.11':
+    optional: true
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -15588,6 +15643,15 @@ snapshots:
       get-tsconfig: 4.11.0
     optionalDependencies:
       fsevents: 2.3.3
+
+  turbo@2.11.11:
+    optionalDependencies:
+      '@turbo/darwin-64': 2.11.11
+      '@turbo/darwin-arm64': 2.11.11
+      '@turbo/linux-64': 2.11.11
+      '@turbo/linux-arm64': 2.11.11
+      '@turbo/windows-64': 2.11.11
+      '@turbo/windows-arm64': 2.11.11
 
   tv4@1.3.0: {}
 

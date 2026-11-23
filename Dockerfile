@@ -60,8 +60,10 @@ FROM dependencies AS apm
 RUN pnpm --filter elastic-apm deploy --prod --legacy /apm-deploy
 
 FROM dependencies AS builder
+COPY .gitignore turbo.json ./
+COPY scripts/run-turbo.js scripts/
 COPY src src
-RUN pnpm -r --workspace-concurrency=8 build
+RUN --mount=type=cache,target=/builder/.turbo/cache,sharing=locked pnpm run build
 
 # Gathering all extensions into one folder to copy in a single COPY command.
 RUN set -eux; \
