@@ -1,4 +1,4 @@
-import { test as baseTest, request, type Page } from '@playwright/test';
+import { test as baseTest, expect, request, type Page } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
 import { clearOrgData, clearUserData, generateOrg, generateUser, loginDirectusAdmin, loginUser } from './utils.ts';
@@ -49,11 +49,13 @@ export const test = baseTest.extend<{ browserContextsCleanup: void; user: User; 
 			throw new Error(`${loginResponse.status()} ${loginResponse.statusText()}`);
 		}
 
-		await context.addInitScript(() => {
-			sessionStorage.setItem('adminConfig', JSON.stringify({ adminMode: true, impersonation: null }));
-		});
-
 		const page = await context.newPage();
+		await page.goto('/');
+		const adminPanel = page.getByLabel('Admin Panel');
+		await adminPanel.click();
+		await page.getByRole('switch').click();
+		await expect(adminPanel).toHaveText('Admin Mode');
+
 		await use(page);
 		await context.close();
 	},
