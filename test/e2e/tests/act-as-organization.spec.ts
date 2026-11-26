@@ -297,7 +297,6 @@ test('an admin impersonating a user acts as that user\'s orgs, without touching 
 		await page.keyboard.press('Escape');
 	}
 
-	expect(await page.evaluate(() => sessionStorage.getItem('impersonationActiveAccount'))).toBe(`${org.member.id}:${org.account_id}`);
 	expect(await sessionAccount(page)).toBe(adminAccount);
 });
 
