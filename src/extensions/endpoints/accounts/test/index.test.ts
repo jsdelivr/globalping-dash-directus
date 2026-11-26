@@ -28,7 +28,7 @@ describe('/accounts endpoint', () => {
 
 	const app = express();
 	app.use(express.json());
-	let accountability: { user: string; session?: string } = { user: 'user-id' };
+	let accountability: { user: string | null; session?: string } = { user: 'user-id' };
 	let claims: Record<string, string> = {};
 	const tokenWith = (payload: object) => `header.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.signature`;
 	app.use(((req: any, _res: any, next: NextFunction) => {
@@ -58,6 +58,15 @@ describe('/accounts endpoint', () => {
 
 			expect(res.status).to.equal(200);
 			expect(res.body).to.deep.equal({ accountId: ACCOUNT_ID });
+		});
+
+		it('should return no account for a signed-out request', async () => {
+			accountability = { user: null };
+
+			const res = await request(app).get('/active');
+
+			expect(res.status).to.equal(200);
+			expect(res.body).to.deep.equal({ accountId: null });
 		});
 	});
 
