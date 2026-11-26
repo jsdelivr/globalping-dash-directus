@@ -29,7 +29,14 @@ const getClaims = (token: string) => JSON.parse(Buffer.from(token.split('.')[1] 
 export default defineEndpoint((router, context) => {
 	const { database } = context;
 
-	router.get('/active', validate(sessionSchema), asyncWrapper(async (_req, res) => {
+	router.get('/active', (req, res, next) => {
+		if (!(req as Partial<Request>).accountability?.user) {
+			res.send({ accountId: null });
+			return;
+		}
+
+		next();
+	}, validate(sessionSchema), asyncWrapper(async (_req, res) => {
 		const req = _req as Request;
 
 		res.send({ accountId: getClaims(req.token).active_account_id });
